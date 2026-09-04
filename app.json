@@ -1,14 +1,15 @@
 {
   "expo": {
-    "name": "experimente-plus-app",
-    "slug": "experimente-plus-app",
+    "name": "Experimente+",
+    "slug": "experimente-plus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "experimenteplusapp",
+    "scheme": "experimenteplus",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "br.com.experimentemais"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +18,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "br.com.experimentemais"
     },
     "web": {
       "output": "static",
@@ -32,7 +34,20 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-localization",
+      "expo-image",
+      "expo-maps",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado pelo cliente.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,

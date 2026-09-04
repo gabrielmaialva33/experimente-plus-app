@@ -54,3 +54,30 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Decisões pendentes de confirmação
+
+- **Identificador do aplicativo** — `br.com.experimentemais`, escolhido por convenção
+  (reverso do domínio comercial, como a referência de mercado). Trocar depois de
+  qualquer distribuição significa um aplicativo novo para as lojas e a quebra de
+  App Links já verificados, então confirme antes do primeiro build de release.
+- **`src/api/schema.d.ts` é versionado.** É gerado de `docs/openapi.yaml` por
+  `pnpm api:types`, mas fica no repositório para que o aplicativo compile sem
+  depender do backend estar disponível. Regere sempre que o contrato mudar.
+
+## Mapa
+
+O aplicativo carrega dois renderizadores e escolhe por configuração:
+
+- **Google Maps** (`expo-maps`) quando `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` existe;
+- **MapLibre** (`@maplibre/maplibre-react-native`) caso contrário, que não exige
+  credencial e mantém o mapa funcionando em desenvolvimento e em builds sem chave.
+
+O estilo do MapLibre vem de `EXPO_PUBLIC_MAP_STYLE_URL`. O padrão são as tiles de
+demonstração, documentadas como uso apenas de desenvolvimento. Em produção aponte
+para um estilo próprio — um arquivo Protomaps no armazenamento da operação também
+dispensa chave, já que o MapLibre Native lê fontes `pmtiles://` diretamente.
+
+> Manter os dois renderizadores custa tamanho de binário e uma segunda
+> implementação para manter. É uma escolha deliberada e revisitável: consolidar
+> em um só, provavelmente MapLibre, elimina a dependência de credencial de vez.

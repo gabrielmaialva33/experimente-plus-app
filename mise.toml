@@ -1,0 +1,16 @@
+# Runtime do cliente móvel do Experimente+.
+# O global da workstation usa node 26 e temurin-25; ambos quebram este stack:
+# Metro/Expo 57 ainda não suportam node 26, e o Gradle do RN espera JDK 21.
+[tools]
+java = "temurin-21"
+node = "24"
+pnpm = "11"
+
+[env]
+ANDROID_HOME = "{{env.HOME}}/.local/share/android-sdk"
+ANDROID_SDK_ROOT = "{{env.HOME}}/.local/share/android-sdk"
+_.path = [
+  "{{env.HOME}}/.local/share/android-sdk/platform-tools",
+  "{{env.HOME}}/.local/share/android-sdk/cmdline-tools/latest/bin",
+  "{{env.HOME}}/.local/share/android-sdk/emulator",
+]

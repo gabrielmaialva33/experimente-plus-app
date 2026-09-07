@@ -932,7 +932,7 @@ export interface paths {
         };
         /**
          * Health check
-         * @description Check the health status of the API and its services
+         * @description Check the current health of the API and its services without creating a session or a cacheable response.
          */
         get: operations["healthCheck"];
         put?: never;
@@ -954,7 +954,7 @@ export interface paths {
         put?: never;
         /**
          * User login
-         * @description Authenticate a user and receive a short-lived access JWT plus an opaque rotating refresh token.
+         * @description Authenticate a user and receive a short-lived access JWT plus an opaque rotating refresh token. The fields are accepted only from a canonical `application/json` object body.
          */
         post: operations["signIn"];
         delete?: never;
@@ -974,7 +974,7 @@ export interface paths {
         put?: never;
         /**
          * Request a password reset link
-         * @description Returns the same accepted response whether or not the email exists. Any issued token is opaque, single-use, and stored only as an HMAC.
+         * @description Returns the same accepted response whether or not the email exists or delivery succeeds. Any issued token is opaque, single-use, and stored only as an HMAC. Token rotation is committed only after the delivery provider accepts the new message, so a rejected delivery preserves any previous active link. The email is accepted only from a canonical `application/json` object body.
          */
         post: operations["requestPasswordReset"];
         delete?: never;
@@ -994,7 +994,7 @@ export interface paths {
         put?: never;
         /**
          * Reset an account password
-         * @description Consumes a valid reset token, changes the password, invalidates other reset links, and revokes active API refresh tokens.
+         * @description Consumes a valid reset token, changes the password, invalidates other reset links, and immediately revokes active API refresh tokens and previously issued access JWTs.
          */
         post: operations["resetPassword"];
         delete?: never;
@@ -1300,7 +1300,7 @@ export interface paths {
         put?: never;
         /**
          * User registration
-         * @description Creates a user after explicit acceptance of the current Terms of Use and Privacy Policy, assigns the default role, optionally creates a personal workspace according to `REGISTRATION_WORKSPACE_MODE`, and returns tenant-scoped API tokens. Acceptance is required at the request boundary; this version does not claim to persist versioned legal evidence. Email delivery failure does not roll back the account.
+         * @description Creates a user from a canonical `application/json` object body after explicit acceptance of the current Terms of Use and Privacy Policy, assigns the default role, optionally creates a personal workspace according to `REGISTRATION_WORKSPACE_MODE`, and returns tenant-scoped API tokens. Acceptance is required at the request boundary; this version does not claim to persist versioned legal evidence. Email delivery failure does not roll back the account.
          */
         post: operations["signUp"];
         delete?: never;
@@ -1318,7 +1318,7 @@ export interface paths {
         };
         /**
          * Verify user email
-         * @description Verify a user's email address using a token from the verification link.
+         * @description Atomically consumes the exact canonical token from the query string. The token is single-use and is never accepted from a request body or normalized.
          */
         get: operations["verifyEmail"];
         put?: never;
@@ -1415,7 +1415,7 @@ export interface paths {
         };
         /**
          * List users
-         * @description Get a paginated list of users with optional search and sorting
+         * @description Get a paginated list of users with optional case-insensitive search and sorting. Only the documented query-string fields are accepted; request-body fields and aliases such as `perPage` or `sortBy` are not part of the contract. Requires the global `users.list` permission.
          */
         get: operations["listUsers"];
         put?: never;
@@ -1444,13 +1444,13 @@ export interface paths {
         get: operations["getUserById"];
         /**
          * Update user
-         * @description Update user details (email and username cannot be changed)
+         * @description Requires `users.update`. A currently active Root or Admin may update their own profile or password; another account must have only strictly lower canonical platform roles. Email, username and roles cannot be changed here.
          */
         put: operations["updateUser"];
         post?: never;
         /**
          * Delete user
-         * @description Soft delete a user (marks as deleted)
+         * @description Requires `users.delete` and a currently active Root or Admin role. Administrative self-deletion is rejected; use `DELETE /api/v1/me` instead. Another account must have only strictly lower canonical platform roles, and at least one active Root is always preserved.
          */
         delete: operations["deleteUser"];
         options?: never;
@@ -1467,7 +1467,7 @@ export interface paths {
         };
         /**
          * List roles
-         * @description Get a paginated list of roles (requires ADMIN or ROOT role)
+         * @description Get a paginated list of stored platform roles, including non-canonical compatibility records for migration and audit visibility. Compatibility records never acquire authority because authorization and assignment policies fail closed for unknown slugs. Only the documented query-string fields are accepted; request-body fields and aliases such as `perPage` or `sortBy` are not part of the contract. Requires the Root or Admin ACL and the global `roles.list` permission.
          */
         get: operations["listRoles"];
         put?: never;
@@ -1488,7 +1488,7 @@ export interface paths {
         get?: never;
         /**
          * Attach roles to user
-         * @description Assign roles to a user (requires ADMIN or ROOT role)
+         * @description Add canonical platform roles without removing existing assignments. Requires a fresh Root or Admin role and `roles.assign` inside the transaction. Root may attach any canonical role, including Root, to another active user; Admin may attach only roles strictly below Admin. Self-assignment and unknown or custom roles are rejected.
          */
         put: operations["attachRoles"];
         post?: never;
@@ -1507,13 +1507,13 @@ export interface paths {
         };
         /**
          * List permissions
-         * @description Get a paginated list of permissions
+         * @description Get a paginated permission list. Only query-string filters are accepted. Requires the Root or Admin ACL and `permissions.list`.
          */
         get: operations["listPermissions"];
         put?: never;
         /**
          * Create permission
-         * @description Create a new permission
+         * @description Atomically create or update the canonical resource/action/context permission tuple from the JSON request body. The stored `name` is always derived as `resource.action` for `any`, or `resource.action.context` otherwise. The legacy request field remains accepted but is ignored. A collision with a mismatched legacy tuple returns the canonical 422 validation response. Requires a fresh Root or Admin role and `permissions.create` inside the transaction.
          */
         post: operations["createPermission"];
         delete?: never;
@@ -1532,7 +1532,7 @@ export interface paths {
         get?: never;
         /**
          * Sync role permissions
-         * @description Sync all permissions for a specific role
+         * @description Replace all permissions for a lower canonical role. The root role is immutable, and the actor is reauthorized inside the transaction.
          */
         put: operations["syncRolePermissions"];
         post?: never;
@@ -1552,7 +1552,7 @@ export interface paths {
         get?: never;
         /**
          * Attach permissions to role
-         * @description Attach one or more permissions to a role
+         * @description Attach permissions to a lower canonical role. The root role is immutable, and the actor is reauthorized inside the transaction.
          */
         put: operations["attachRolePermissions"];
         post?: never;
@@ -1572,7 +1572,7 @@ export interface paths {
         get?: never;
         /**
          * Detach permissions from role
-         * @description Detach one or more permissions from a role
+         * @description Detach permissions from a lower canonical role. The root role is immutable, and the actor is reauthorized inside the transaction.
          */
         put: operations["detachRolePermissions"];
         post?: never;
@@ -1592,7 +1592,7 @@ export interface paths {
         get?: never;
         /**
          * Sync user permissions
-         * @description Sync all direct permissions for a specific user
+         * @description Replace a lower-ranked user's direct permissions from the JSON request body. Self, peer, higher-ranked and root targets are rejected, and the actor is reauthorized inside the transaction.
          */
         put: operations["syncUserPermissions"];
         post?: never;
@@ -1610,8 +1610,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get user's direct permissions
-         * @description Get a list of direct permissions for a specific user
+         * Get user's effective permissions
+         * @description Get the effective permission names resolved from direct grants, roles and canonical role inheritance.
          */
         get: operations["getUserPermissions"];
         put?: never;
@@ -2482,64 +2482,159 @@ export interface components {
             is_active?: boolean;
         };
         User: {
-            /** @example 1 */
-            id?: number;
+            /**
+             * Format: int32
+             * @example 1
+             */
+            id: number;
             /** @example John Doe */
-            full_name?: string;
+            full_name: string;
             /**
              * Format: email
              * @example john@example.com
              */
-            email?: string;
+            email: string;
             /** @example johndoe */
-            username?: string | null;
+            username: string | null;
             /** @example true */
-            email_verified?: boolean;
+            email_verified: boolean;
             /** Format: date-time */
-            email_verified_at?: string | null;
+            email_verified_at: string | null;
             /**
              * Format: date-time
              * @example 2024-01-01T00:00:00.000Z
              */
-            created_at?: string;
+            created_at: string;
             /**
              * Format: date-time
              * @example 2024-01-01T00:00:00.000Z
              */
-            updated_at?: string;
+            updated_at: string | null;
             roles?: components["schemas"]["Role"][];
         };
+        /** @description Stored platform role. Canonical slugs drive authorization; non-canonical compatibility records remain visible to administrators but fail closed in authorization and assignment policies. */
         Role: {
-            /** @example 1 */
-            id?: number;
-            /** @example User */
-            name?: string;
-            /** @example Regular user role */
-            description?: string;
             /**
+             * Format: int32
+             * @example 1
+             */
+            id: number;
+            /** @example User */
+            name: string;
+            /** @example Regular user role */
+            description: string | null;
+            /**
+             * @description Canonical values are `root`, `admin`, `moderator`, `user`, and `guest`; other persisted values are compatibility records without authority.
              * @example user
+             */
+            slug: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        Permission: {
+            /** Format: int32 */
+            id: number;
+            /** @description Canonical tuple projection. The `any` context is implicit; other contexts are appended. */
+            name: string;
+            description: string | null;
+            resource: string;
+            action: string;
+            /** @enum {string} */
+            context: "own" | "any" | "team" | "department";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        RolePermissionProjection: {
+            id: number;
+            name: string;
+            resource: string;
+            action: string;
+            description: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            slug?: "root" | "admin" | "user" | "guest" | "editor";
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
+            source: "role";
         };
-        AuthResponse: {
-            id?: number;
-            full_name?: string;
+        DirectPermissionProjection: {
+            id: number;
+            name: string;
+            resource: string;
+            action: string;
+            description: string | null;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** @constant */
+            granted: true;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            source: "direct";
+        };
+        EffectivePermissionProjection: components["schemas"]["RolePermissionProjection"] | components["schemas"]["DirectPermissionProjection"];
+        MyPermissionsResponse: {
+            total: number;
+            permissions: components["schemas"]["EffectivePermissionProjection"][];
+            grouped: {
+                [key: string]: components["schemas"]["EffectivePermissionProjection"][];
+            };
+        };
+        AssignedRole: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+            description: string | null;
+            /** @description Canonical values drive authorization; any compatibility value is returned for visibility but grants no authority. */
+            slug: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            assigned_at: string;
+        };
+        MyRolesResponse: {
+            total: number;
+            roles: components["schemas"]["AssignedRole"][];
+        };
+        SignInResponse: {
+            id: number;
+            full_name: string;
             /** Format: email */
-            email?: string;
-            username?: string | null;
+            email: string;
+            username: string | null;
+            email_verified: boolean;
             /** Format: date-time */
-            created_at?: string;
+            email_verified_at: string | null;
             /** Format: date-time */
-            updated_at?: string;
-            roles?: components["schemas"]["Role"][];
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string | null;
+            roles: components["schemas"]["Role"][];
             auth: components["schemas"]["AuthTokens"];
-            /** @description Present on sign-up responses; false means the account was created but email delivery failed. */
-            email_verification_sent?: boolean;
+        };
+        SignUpResponse: {
+            id: number;
+            full_name: string;
+            /** Format: email */
+            email: string;
+            username: string | null;
+            email_verified: boolean;
+            /** Format: date-time */
+            email_verified_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string | null;
+            roles: components["schemas"]["Role"][];
+            auth: components["schemas"]["AuthTokens"];
+            /** @description False means the account was created but email delivery failed. */
+            email_verification_sent: boolean;
         };
         AuthTokens: {
             /**
@@ -2616,10 +2711,11 @@ export interface components {
             operations: components["schemas"]["MobileOperationMembership"][];
             capabilities: components["schemas"]["MobileCapabilities"];
         };
-        /** @description Partial self-service update. The runtime also strips unknown properties. */
+        /** @description Partial self-service update. Unknown properties are accepted and discarded; omitted properties remain unchanged. */
         UpdateMobileProfileRequest: {
             full_name?: string;
-            username?: string;
+            /** @description Send `null`, an empty string, or whitespace only to clear the username. A non-empty value is trimmed and canonicalized to lowercase before validation. */
+            username?: string | null;
         };
         UpdateMobileProfileResponse: {
             user: components["schemas"]["MobileUser"];
@@ -2807,6 +2903,9 @@ export interface components {
             status: number;
             message: string;
         };
+        MessageResponse: {
+            message: string;
+        };
         ApiRateLimitError: {
             errors: {
                 /** @constant */
@@ -2836,9 +2935,21 @@ export interface components {
             tenant_id: number;
             refresh_token: components["schemas"]["RefreshToken"];
         };
+        /** @description Canonical unpadded base64url encoding of 48 random bytes. Whitespace is part of the credential and is never normalized. */
+        PasswordResetToken: string;
+        /** @description Canonical unpadded base64url encoding of 32 random bytes. It is read only from the query string and is never trimmed or normalized. */
+        EmailVerificationToken: string;
+        EmailVerificationResponse: {
+            /** @constant */
+            message: "Email verified successfully";
+            /** @constant */
+            email_verified: true;
+            /** Format: date-time */
+            email_verified_at: string;
+        };
+        /** @description Unknown request properties are accepted and discarded. The opaque token itself is read exactly from a canonical application/json body. */
         PasswordResetRequest: {
-            /** @description Opaque single-use password reset token delivered by email. */
-            token: string;
+            token: components["schemas"]["PasswordResetToken"];
             /** Format: password */
             password: string;
             /** Format: password */
@@ -2880,27 +2991,30 @@ export interface components {
                 [key: string]: unknown;
             })[];
         };
-        Pagination: {
-            meta?: {
-                /** @example 100 */
-                total?: number;
-                /** @example 10 */
-                per_page?: number;
-                /** @example 1 */
-                current_page?: number;
-                /** @example 10 */
-                last_page?: number;
-                /** @example 1 */
-                first_page?: number;
-                /** @example /?page=1 */
-                first_page_url?: string;
-                /** @example /?page=10 */
-                last_page_url?: string;
-                /** @example /?page=2 */
-                next_page_url?: string;
-                /** @example null */
-                previous_page_url?: string;
-            };
+        AdministrativePaginationMeta: {
+            total: number;
+            per_page: number;
+            /** Format: int32 */
+            current_page: number;
+            last_page: number;
+            /** @constant */
+            first_page: 1;
+            first_page_url: string;
+            last_page_url: string;
+            next_page_url: string | null;
+            previous_page_url: string | null;
+        };
+        PaginatedUsersResponse: {
+            meta: components["schemas"]["AdministrativePaginationMeta"];
+            data: (components["schemas"]["User"] & Record<string, never>)[];
+        };
+        PaginatedRolesResponse: {
+            meta: components["schemas"]["AdministrativePaginationMeta"];
+            data: components["schemas"]["Role"][];
+        };
+        PaginatedPermissionsResponse: {
+            meta: components["schemas"]["AdministrativePaginationMeta"];
+            data: components["schemas"]["Permission"][];
         };
         FileUploadResponse: {
             /** @example https://storage.example.com/files/abc123.pdf */
@@ -3708,6 +3822,12 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
         };
+        /**
+         * @description `search_without_results` requires `search_term` and forbids `establishment_slug`.
+         *     Every other event type requires `establishment_slug` and canonical clients must omit
+         *     `search_term`. During the current rollout, the server tolerates and discards
+         *     `search_term` on legacy `catalog_impression` requests; it is never stored for impressions.
+         */
         AnalyticsEventInput: {
             /** Format: uuid */
             event_id: string;
@@ -3716,8 +3836,18 @@ export interface components {
             city_slug: string;
             establishment_slug?: string;
             category_slug?: string;
+            /** @description Accepted only for `search_without_results` in the canonical contract. */
             search_term?: string;
-        };
+        } & ({
+            /** @constant */
+            event_type?: "search_without_results";
+        } | {
+            /** @enum {unknown} */
+            event_type?: "catalog_impression" | "establishment_view" | "route_click" | "whatsapp_click" | "phone_click" | "website_click" | "share_click";
+        } | {
+            /** @constant */
+            event_type?: "catalog_impression";
+        });
         AnalyticsEventsRequest: {
             events: components["schemas"]["AnalyticsEventInput"][];
         };
@@ -3837,6 +3967,10 @@ export interface components {
         /** @description Authentication required */
         UnauthorizedError: {
             headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
                 [name: string]: unknown;
             };
             content: {
@@ -3844,7 +3978,7 @@ export interface components {
                  * @example {
                  *       "errors": [
                  *         {
-                 *           "message": "Unauthorized"
+                 *           "message": "Unauthorized access"
                  *         }
                  *       ]
                  *     }
@@ -3892,6 +4026,70 @@ export interface components {
                 "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
                 Pragma: components["headers"]["PrivatePragma"];
                 "X-RateLimit-Limit": components["headers"]["AuthRateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiRateLimitError"];
+            };
+        };
+        /** @description Password reset email throttle exceeded (5 requests per 15 minutes for the IP and body email). */
+        PrivatePasswordResetRequestRateLimitError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-RateLimit-Limit": components["headers"]["PasswordResetRequestRateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiRateLimitError"];
+            };
+        };
+        /** @description Password reset token throttle exceeded (10 requests per 15 minutes for the IP). */
+        PrivatePasswordResetRateLimitError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-RateLimit-Limit": components["headers"]["PasswordResetRateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiRateLimitError"];
+            };
+        };
+        /** @description Public email-verification throttle exceeded (10 attempts per 15 minutes per IP address). */
+        PrivateEmailVerificationRateLimitError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-RateLimit-Limit": components["headers"]["EmailVerificationRateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiRateLimitError"];
+            };
+        };
+        /** @description Verification-email resend throttle exceeded (3 attempts per hour per authenticated user and IP address). */
+        PrivateEmailVerificationResendRateLimitError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-RateLimit-Limit": components["headers"]["EmailVerificationResendRateLimitLimit"];
                 "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                 "Retry-After": components["headers"]["RetryAfter"];
                 [name: string]: unknown;
@@ -3975,6 +4173,25 @@ export interface components {
                  * @example {
                  *       "status": 400,
                  *       "message": "An active tenant is required for this operation"
+                 *     }
+                 */
+                "application/json": components["schemas"]["ApiMessageError"];
+            };
+        };
+        /** @description The canonical password reset credential is unknown, expired, or already consumed. */
+        PrivatePasswordResetBadRequestError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "status": 400,
+                 *       "message": "Invalid or expired password reset token"
                  *     }
                  */
                 "application/json": components["schemas"]["ApiMessageError"];
@@ -4079,6 +4296,22 @@ export interface components {
                 "application/json": components["schemas"]["ApiRateLimitError"];
             };
         };
+        /** @description Authenticated admin throttle exceeded (200 requests per minute per user). */
+        PrivateAdminRateLimitError: {
+            headers: {
+                "Cache-Control": components["headers"]["PrivateCacheControl"];
+                "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                Pragma: components["headers"]["PrivatePragma"];
+                "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                "Retry-After": components["headers"]["RetryAfter"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiRateLimitError"];
+            };
+        };
     };
     parameters: {
         /** @description Identificador do tenant ativo para operações privadas. */
@@ -4087,33 +4320,45 @@ export interface components {
         pathId: number;
         /** @description Page number for pagination */
         pageParam: number;
+        /** @description Administrative result page. Decimal and exponential notations are rejected. */
+        administrativePageParam: number;
         /** @description Number of items per page */
         perPageParam: number;
-        /** @description Field to sort by */
-        sortByParam: string;
-        /** @description Sort order */
-        orderParam: "asc" | "desc";
-        /** @description Search term for filtering results */
-        searchParam: string;
+        /** @description Administrative page size. Values above 100 are rejected rather than silently capped. */
+        administrativePerPageParam: number;
+        /** @description Administrative sort direction. */
+        administrativeOrderParam: "asc" | "desc";
         /** @description Optional active operation override. Membership and active status are always validated. */
         tenantHeader: number;
     };
     requestBodies: never;
     headers: {
+        /** @description Prevents health responses from being stored and replayed by HTTP caches. */
+        ReadinessCacheControl: "no-store";
         /** @description Prevents storage in shared or device HTTP caches. */
         PrivateCacheControl: "private, no-store";
         /** @description Prevents indexing of private API representations. */
         PrivateRobotsTag: "noindex, nofollow";
-        /** @description Prevents a presentation token in a validation URL from leaking as a referrer. */
+        /** @description Prevents sensitive credentials in verification, reset, or presentation URLs from leaking as referrers. */
         PrivateReferrerPolicy: "no-referrer";
         /** @description Legacy cache directive for clients and intermediaries that do not fully honor Cache-Control. */
         PrivatePragma: "no-cache";
         /** @description Maximum authentication attempts allowed in the current fifteen-minute window. */
         AuthRateLimitLimit: 5;
+        /** @description Maximum password reset email requests allowed in the current fifteen-minute window. */
+        PasswordResetRequestRateLimitLimit: 5;
+        /** @description Maximum password reset submissions allowed in the current fifteen-minute window. */
+        PasswordResetRateLimitLimit: 10;
+        /** @description Maximum public verification attempts allowed per IP in the current fifteen-minute window. */
+        EmailVerificationRateLimitLimit: 10;
+        /** @description Maximum resend attempts allowed per authenticated user and IP in the current one-hour window. */
+        EmailVerificationResendRateLimitLimit: 3;
         /** @description Maximum unauthenticated API requests allowed in the current one-minute window per IP address. */
         GuestRateLimitLimit: 10;
         /** @description Maximum authenticated requests allowed in the current one-minute window. */
         RateLimitLimit: 100;
+        /** @description Maximum authenticated admin requests allowed in the current one-minute window. */
+        AdminRateLimitLimit: 200;
         /** @description Requests remaining in the current rate-limit window. */
         RateLimitRemaining: number;
         /** @description Seconds until another request may be attempted. */
@@ -6804,6 +7049,7 @@ export interface operations {
             /** @description Service is healthy */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["ReadinessCacheControl"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -6822,6 +7068,7 @@ export interface operations {
             /** @description Too Many Requests */
             429: {
                 headers: {
+                    "Cache-Control": components["headers"]["ReadinessCacheControl"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -6831,6 +7078,7 @@ export interface operations {
             /** @description Service unhealthy */
             503: {
                 headers: {
+                    "Cache-Control": components["headers"]["ReadinessCacheControl"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -6879,7 +7127,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthResponse"];
+                    "application/json": components["schemas"]["SignInResponse"];
                 };
             };
             /** @description Invalid credentials, or a syntactically malformed JSON request body. */
@@ -6918,22 +7166,21 @@ export interface operations {
             /** @description Request accepted without revealing account existence */
             202: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["PasswordResetRequestRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        message?: string;
-                    };
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
-            422: components["responses"]["ValidationError"];
-            /** @description Too many password reset requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            400: components["responses"]["PrivateMalformedJsonError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivatePasswordResetRequestRateLimitError"];
         };
     };
     resetPassword: {
@@ -6952,25 +7199,21 @@ export interface operations {
             /** @description Password reset successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["PasswordResetRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Invalid or expired token */
-            400: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
-                content?: never;
             };
-            422: components["responses"]["ValidationError"];
-            /** @description Too many password reset attempts */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            400: components["responses"]["PrivatePasswordResetBadRequestError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivatePasswordResetRateLimitError"];
         };
     };
     refreshSession: {
@@ -7053,8 +7296,11 @@ export interface operations {
             200: {
                 headers: {
                     "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
                     "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
                     "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7062,6 +7308,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["UnauthorizedError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     deleteOwnAccount: {
@@ -7085,6 +7332,12 @@ export interface operations {
             /** @description Account anonymized and credentials revoked */
             204: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -7097,7 +7350,8 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["UnauthorizedError"];
-            422: components["responses"]["ValidationError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     updateProfile: {
@@ -7117,6 +7371,7 @@ export interface operations {
             200: {
                 headers: {
                     "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
                     "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
                     "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
                     "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
@@ -7456,18 +7711,23 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Permissions retrieved successfully */
+            /** @description Effective direct and role-derived permissions grouped for client rendering */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        permissions?: string[];
-                    };
+                    "application/json": components["schemas"]["MyPermissionsResponse"];
                 };
             };
             401: components["responses"]["UnauthorizedError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     getMyRoles: {
@@ -7479,18 +7739,23 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Roles retrieved successfully */
+            /** @description Assigned roles and assignment timestamps */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        roles?: components["schemas"]["Role"][];
-                    };
+                    "application/json": components["schemas"]["MyRolesResponse"];
                 };
             };
             401: components["responses"]["UnauthorizedError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     signUp: {
@@ -7511,10 +7776,10 @@ export interface operations {
                      */
                     email: string;
                     /**
-                     * @description Optional username
+                     * @description Optional username. Omitted, `null`, empty, or whitespace-only input is stored as `null`; a non-empty value is trimmed and canonicalized to lowercase.
                      * @example johndoe
                      */
-                    username?: string;
+                    username?: string | null;
                     /**
                      * Format: password
                      * @example password123
@@ -7546,7 +7811,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthResponse"];
+                    "application/json": components["schemas"]["SignUpResponse"];
                 };
             };
             400: components["responses"]["PrivateMalformedJsonError"];
@@ -7557,8 +7822,8 @@ export interface operations {
     verifyEmail: {
         parameters: {
             query: {
-                /** @description The email verification token */
-                token: string;
+                /** @description Canonical email-verification credential from the link. */
+                token: components["schemas"]["EmailVerificationToken"];
             };
             header?: never;
             path?: never;
@@ -7569,13 +7834,25 @@ export interface operations {
             /** @description Email verified successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["EmailVerificationRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["EmailVerificationResponse"];
+                };
             };
             /** @description The verification token expired or its email is already verified */
             400: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7585,6 +7862,10 @@ export interface operations {
             /** @description No user has the supplied verification token */
             404: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7597,6 +7878,20 @@ export interface operations {
                     "application/json": components["schemas"]["ApiMessageError"];
                 };
             };
+            /** @description The query token is absent or is not a canonical 43-character credential. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["PrivateEmailVerificationRateLimitError"];
         };
     };
     resendVerificationEmail: {
@@ -7611,17 +7906,64 @@ export interface operations {
             /** @description Verification email sent successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["EmailVerificationResendRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Verification email sent successfully"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description The authenticated user's email is already verified. */
+            400: {
+                headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["EmailVerificationResendRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Email already verified"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
             };
             401: components["responses"]["UnauthorizedError"];
+            429: components["responses"]["PrivateEmailVerificationResendRateLimitError"];
             /** @description Verification email could not be delivered */
             503: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["EmailVerificationResendRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    /**
+                     * @example {
+                     *       "message": "Verification email could not be delivered. Please try again later."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
             };
         };
     };
@@ -7734,16 +8076,16 @@ export interface operations {
     listUsers: {
         parameters: {
             query?: {
-                /** @description Page number for pagination */
-                page?: components["parameters"]["pageParam"];
-                /** @description Number of items per page */
-                per_page?: components["parameters"]["perPageParam"];
-                /** @description Field to sort by */
-                sort_by?: components["parameters"]["sortByParam"];
-                /** @description Sort order */
-                order?: components["parameters"]["orderParam"];
-                /** @description Search term for filtering results */
-                search?: components["parameters"]["searchParam"];
+                /** @description Administrative result page. Decimal and exponential notations are rejected. */
+                page?: components["parameters"]["administrativePageParam"];
+                /** @description Administrative page size. Values above 100 are rejected rather than silently capped. */
+                per_page?: components["parameters"]["administrativePerPageParam"];
+                /** @description User field used for sorting. */
+                sort_by?: "id" | "full_name" | "email" | "username" | "created_at" | "updated_at";
+                /** @description Administrative sort direction. */
+                order?: components["parameters"]["administrativeOrderParam"];
+                /** @description Case-insensitive search across full name, email, and username. */
+                search?: string;
             };
             header?: never;
             path?: never;
@@ -7754,15 +8096,22 @@ export interface operations {
             /** @description User list retrieved successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Pagination"] & {
-                        data?: components["schemas"]["User"][];
-                    };
+                    "application/json": components["schemas"]["PaginatedUsersResponse"];
                 };
             };
             401: components["responses"]["UnauthorizedError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     createUser: {
@@ -7778,7 +8127,8 @@ export interface operations {
                     full_name: string;
                     /** Format: email */
                     email: string;
-                    username?: string;
+                    /** @description Optional username. Omitted, `null`, empty, or whitespace-only input is stored as `null`; a non-empty value is trimmed and canonicalized to lowercase. */
+                    username?: string | null;
                     /** Format: password */
                     password: string;
                     /** Format: password */
@@ -7790,6 +8140,12 @@ export interface operations {
             /** @description User created successfully */
             201: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7797,7 +8153,9 @@ export interface operations {
                 };
             };
             401: components["responses"]["UnauthorizedError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     getUserById: {
@@ -7805,8 +8163,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource ID */
-                id: components["parameters"]["pathId"];
+                /** @description User ID */
+                id: number;
             };
             cookie?: never;
         };
@@ -7815,6 +8173,12 @@ export interface operations {
             /** @description User details retrieved successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7822,7 +8186,10 @@ export interface operations {
                 };
             };
             401: components["responses"]["UnauthorizedError"];
-            404: components["responses"]["NotFoundError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     updateUser: {
@@ -7830,8 +8197,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource ID */
-                id: components["parameters"]["pathId"];
+                /** @description User ID */
+                id: number;
             };
             cookie?: never;
         };
@@ -7853,6 +8220,12 @@ export interface operations {
             /** @description User updated successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -7860,8 +8233,10 @@ export interface operations {
                 };
             };
             401: components["responses"]["UnauthorizedError"];
-            404: components["responses"]["NotFoundError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     deleteUser: {
@@ -7869,8 +8244,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource ID */
-                id: components["parameters"]["pathId"];
+                /** @description User ID */
+                id: number;
             };
             cookie?: never;
         };
@@ -7879,21 +8254,53 @@ export interface operations {
             /** @description User deleted successfully */
             204: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content?: never;
             };
+            /** @description The deletion would remove the last active Root account. */
+            400: {
+                headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": 400,
+                     *       "message": "The last active root user cannot be deleted"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiMessageError"];
+                };
+            };
             401: components["responses"]["UnauthorizedError"];
-            404: components["responses"]["NotFoundError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateRateLimitError"];
         };
     };
     listRoles: {
         parameters: {
             query?: {
-                /** @description Page number for pagination */
-                page?: components["parameters"]["pageParam"];
-                /** @description Number of items per page */
-                per_page?: components["parameters"]["perPageParam"];
+                /** @description Administrative result page. Decimal and exponential notations are rejected. */
+                page?: components["parameters"]["administrativePageParam"];
+                /** @description Administrative page size. Values above 100 are rejected rather than silently capped. */
+                per_page?: components["parameters"]["administrativePerPageParam"];
+                /** @description Role field used for sorting. */
+                sort_by?: "id" | "name" | "description" | "slug" | "created_at" | "updated_at";
+                /** @description Administrative sort direction. */
+                order?: components["parameters"]["administrativeOrderParam"];
             };
             header?: never;
             path?: never;
@@ -7904,16 +8311,22 @@ export interface operations {
             /** @description Role list retrieved successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Pagination"] & {
-                        data?: components["schemas"]["Role"][];
-                    };
+                    "application/json": components["schemas"]["PaginatedRolesResponse"];
                 };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     attachRoles: {
@@ -7926,7 +8339,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example 1 */
+                    /**
+                     * Format: int32
+                     * @example 1
+                     */
                     user_id: number;
                     /**
                      * @example [
@@ -7943,18 +8359,26 @@ export interface operations {
             /** @description Roles attached successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @example Role attached successfully */
-                        message?: string;
+                        /** @constant */
+                        message: "Role attached successfully";
                     };
                 };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     listPermissions: {
@@ -7964,6 +8388,8 @@ export interface operations {
                 page?: components["parameters"]["pageParam"];
                 /** @description Number of items per page */
                 per_page?: components["parameters"]["perPageParam"];
+                resource?: "users" | "roles" | "permissions" | "files" | "media" | "tenants" | "regions" | "cities" | "category_families" | "categories" | "category_attributes" | "organizations" | "organization_members" | "organization_invitations" | "organization_claims" | "establishments" | "benefit_editions" | "benefit_offers" | "benefit_accesses" | "analytics" | "pilot_feedback" | "settings" | "reports" | "audit" | "dashboard";
+                action?: "create" | "read" | "update" | "delete" | "list" | "export" | "import" | "assign" | "revoke" | "submit" | "approve" | "reject" | "request_changes" | "suspend" | "restore" | "resend" | "accept" | "archive";
             };
             header?: never;
             path?: never;
@@ -7974,12 +8400,22 @@ export interface operations {
             /** @description Permission list retrieved successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PaginatedPermissionsResponse"];
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     createPermission: {
@@ -7992,12 +8428,28 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example posts */
-                    resource: string;
-                    /** @example create */
-                    action: string;
+                    /**
+                     * @deprecated
+                     * @description Legacy compatibility field. It is validated and discarded; the server derives the stored name from resource, action and context.
+                     */
+                    name?: string;
+                    /**
+                     * @example users
+                     * @enum {string}
+                     */
+                    resource: "users" | "roles" | "permissions" | "files" | "media" | "tenants" | "regions" | "cities" | "category_families" | "categories" | "category_attributes" | "organizations" | "organization_members" | "organization_invitations" | "organization_claims" | "establishments" | "benefit_editions" | "benefit_offers" | "benefit_accesses" | "analytics" | "pilot_feedback" | "settings" | "reports" | "audit" | "dashboard";
+                    /**
+                     * @example create
+                     * @enum {string}
+                     */
+                    action: "create" | "read" | "update" | "delete" | "list" | "export" | "import" | "assign" | "revoke" | "submit" | "approve" | "reject" | "request_changes" | "suspend" | "restore" | "resend" | "accept" | "archive";
                     /** @example Allow creating posts */
                     description?: string;
+                    /**
+                     * @default any
+                     * @enum {string}
+                     */
+                    context?: "own" | "any" | "team" | "department";
                 };
             };
         };
@@ -8005,13 +8457,22 @@ export interface operations {
             /** @description Permission created successfully */
             201: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Permission"];
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     syncRolePermissions: {
@@ -8024,7 +8485,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example 2 */
+                    /**
+                     * Format: int32
+                     * @example 2
+                     */
                     role_id: number;
                     /**
                      * @example [
@@ -8041,13 +8505,26 @@ export interface operations {
             /** @description Permissions synced successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Permissions synced successfully";
+                    };
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     attachRolePermissions: {
@@ -8060,7 +8537,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example 2 */
+                    /**
+                     * Format: int32
+                     * @example 2
+                     */
                     role_id: number;
                     /**
                      * @example [
@@ -8076,13 +8556,26 @@ export interface operations {
             /** @description Permissions attached successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Permissions attached successfully";
+                    };
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     detachRolePermissions: {
@@ -8095,7 +8588,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example 2 */
+                    /**
+                     * Format: int32
+                     * @example 2
+                     */
                     role_id: number;
                     /**
                      * @example [
@@ -8110,13 +8606,26 @@ export interface operations {
             /** @description Permissions detached successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Permissions detached successfully";
+                    };
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     syncUserPermissions: {
@@ -8129,15 +8638,28 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @example 3 */
+                    /**
+                     * Format: int32
+                     * @example 3
+                     */
                     user_id: number;
                     /**
                      * @example [
-                     *       10,
-                     *       11
+                     *       {
+                     *         "permission_id": 10,
+                     *         "granted": true,
+                     *         "expires_at": null
+                     *       }
                      *     ]
                      */
-                    permission_ids: number[];
+                    permissions: {
+                        /** Format: int32 */
+                        permission_id: number;
+                        /** @default true */
+                        granted?: boolean;
+                        /** Format: date-time */
+                        expires_at?: string | null;
+                    }[];
                 };
             };
         };
@@ -8145,13 +8667,45 @@ export interface operations {
             /** @description User permissions synced successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "User permissions synced successfully";
+                    };
+                };
+            };
+            /** @description A supplied `expires_at` value is not a valid ISO 8601 date-time. */
+            400: {
+                headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": 400,
+                     *       "message": "expires_at must be a valid ISO date"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApiMessageError"];
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     getUserPermissions: {
@@ -8159,8 +8713,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource ID */
-                id: components["parameters"]["pathId"];
+                /** @description Active target user ID. */
+                id: number;
             };
             cookie?: never;
         };
@@ -8169,12 +8723,25 @@ export interface operations {
             /** @description User permissions retrieved successfully */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        permissions: string[];
+                    };
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     checkUserPermissions: {
@@ -8182,8 +8749,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource ID */
-                id: components["parameters"]["pathId"];
+                /** @description Active target user ID. */
+                id: number;
             };
             cookie?: never;
         };
@@ -8197,6 +8764,8 @@ export interface operations {
                      *     ]
                      */
                     permissions: string[];
+                    /** @default false */
+                    require_all?: boolean;
                 };
             };
         };
@@ -8204,13 +8773,25 @@ export interface operations {
             /** @description Check result */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    Pragma: components["headers"]["PrivatePragma"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["AdminRateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        has_permission: boolean;
+                    };
+                };
             };
             401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            422: components["responses"]["ValidationError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            404: components["responses"]["PrivateNotFoundError"];
+            422: components["responses"]["PrivateValidationError"];
+            429: components["responses"]["PrivateAdminRateLimitError"];
         };
     };
     listFiles: {

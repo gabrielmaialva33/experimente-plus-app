@@ -2307,6 +2307,250 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/benefit-editions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vitrine pública de edições compráveis, sem login ou aquisição prévia
+         * @description Operação resolvida pelo hostname confiável. Até 100 edições publicadas com preço positivo em BRL, venda iniciada e ainda aberta, uso ainda não encerrado, ao menos uma oferta ativa de unidade publicada e meio de pagamento habilitado. Pré-venda é permitida quando a venda está aberta e o uso começa no futuro. Edições sem meios disponíveis são omitidas; nenhuma resulta em editions vazio com HTTP 200. Somente dados públicos da edição, cidade e ofertas; não inclui titular, pedidos ou dados do PSP. O catálogo de descoberta permanece público e independente da compra e da disponibilidade do PSP.
+         */
+        get: operations["purchaseCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Últimas 100 compras do titular
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        get: operations["listMyPurchases"];
+        put?: never;
+        /**
+         * Iniciar compra da edição inteira; acesso somente após confirmação
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["createPurchase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/purchases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar compra e instruções de pagamento
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        get: operations["getMyPurchase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/purchases/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Solicitar cancelamento de compra não paga
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["cancelPurchase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/purchases/{id}/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Solicitar reembolso e bloquear novos usos
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["refundPurchase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Últimas 100 compras da operação
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        get: operations["listOperationPurchases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Auditoria, comandos, bloqueios e comprovantes de uso
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        get: operations["getOperationPurchase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases/{id}/refunds/{refundId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decisão comercial auditada após uso ou política manual
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["decidePurchaseRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases/{id}/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reenfileirar consulta; operador não declara pagamento
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["reconcilePurchase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar linha cumulativa do fechamento bruto/taxas/reembolso/líquido
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        post: operations["recordPurchaseSettlement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/purchases/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Últimas 100 linhas e divergências financeiras
+         * @description Resposta privada, no-store. Só o titular pode ler/comprar; operações administrativas exigem admin/root e membership da operação. Nenhum dado de cartão bruto é aceito.
+         */
+        get: operations["purchaseReconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/webhooks/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Receber sinal autenticado; nenhum status do corpo concede acesso
+         * @description Mercado Pago Payments: HMAC SHA-256 de id/data.id, x-request-id e ts, com x-signature e tolerância de 5 minutos. GET autenticado no PSP verifica conta, live_mode, valor, moeda e referência. Fake apenas development/test usa assinatura derivada da configuração local. Retorno 202 confirma persistência, não pagamento.
+         */
+        post: operations["purchaseWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2773,6 +3017,8 @@ export interface components {
                 status: "active" | "revoked";
                 /** Format: date-time */
                 granted_at: string;
+                /** @description Impedimento financeiro reversível; quando ativo, availability usa paused. Não altera status nem cotas. */
+                financially_blocked?: boolean;
                 /** @enum {string} */
                 availability: "available" | "upcoming" | "outside_schedule" | "paused" | "expired" | "revoked" | "redeemed";
             };
@@ -3961,6 +4207,220 @@ export interface components {
                 [key: string]: unknown;
             };
             data: components["schemas"]["PilotFeedback"][];
+        };
+        PurchaseOfferSnapshot: {
+            id: number;
+            establishment_id: number;
+            title: string;
+            description: string;
+            terms: string | null;
+            benefit_type: string;
+            discount_percentage: number | null;
+            discount_amount_cents: number | null;
+            available_weekdays_mask: number;
+            daily_start_time: string | null;
+            daily_end_time: string | null;
+            starts_at: string | null;
+            ends_at: string | null;
+            reservation_required: boolean;
+            on_premise_only: boolean;
+            minimum_party_size: number;
+            max_redemptions_per_access: number;
+        };
+        PurchaseSnapshot: {
+            name: string;
+            description: string | null;
+            /** Format: date-time */
+            usage_starts_at: string;
+            /** Format: date-time */
+            usage_ends_at: string;
+            sales_starts_at: string;
+            sales_ends_at: string;
+            terms_version: string;
+            offers: components["schemas"]["PurchaseOfferSnapshot"][];
+        };
+        PurchaseRefund: {
+            /** Format: uuid */
+            id: string;
+            amount_cents: number;
+            /** @enum {string} */
+            status: "review" | "approved" | "processing" | "succeeded" | "failed" | "rejected";
+            reason: string;
+        };
+        Purchase: {
+            /** Format: uuid */
+            id: string;
+            edition_id: number;
+            amount_cents: number;
+            /** @constant */
+            currency: "BRL";
+            /** @enum {unknown} */
+            status: "pending" | "paid" | "review" | "failed" | "cancelled" | "refunded";
+            /** @enum {unknown} */
+            method: "pix" | "card";
+            snapshot: components["schemas"]["PurchaseSnapshot"];
+            access_id: number | null;
+            financially_blocked: boolean;
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: date-time */
+            paid_at: string | null;
+            refunded_cents: number;
+            instructions: null | {
+                pix_code?: string;
+                /** Format: uri */
+                pix_url?: string;
+            };
+            /** Format: date-time */
+            created_at: string;
+            refunds: components["schemas"]["PurchaseRefund"][];
+        };
+        /**
+         * @description Meio fornecido em payment_methods da vitrine; disponibilidade revalidada ao criar a compra.
+         * @enum {string}
+         */
+        PaymentMethod: "pix" | "card";
+        PurchaseRequest: {
+            edition_id: number;
+            amount_cents: number;
+            terms_version: string;
+            method: components["schemas"]["PaymentMethod"];
+            card_token?: string;
+            payment_method_id?: string;
+            /** @enum {unknown} */
+            document_type?: "CPF" | "CNPJ";
+            document_number?: string;
+        };
+        PurchaseAccepted: {
+            /** Format: uuid */
+            id: string;
+        };
+        PurchaseRefundAccepted: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            purchase_id: string;
+        };
+        PurchaseRefundRequest: {
+            reason: string;
+        };
+        PurchaseRefundDecision: {
+            approve: boolean;
+            amount_cents?: number;
+            reason: string;
+        };
+        PurchaseReconciliationRequest: {
+            reason: string;
+            provider_id?: string;
+        };
+        PurchaseList: {
+            purchases: components["schemas"]["Purchase"][];
+        };
+        PurchaseCatalog: {
+            editions: components["schemas"]["PurchasableEdition"][];
+        };
+        PurchasableEdition: {
+            id: number;
+            name: string;
+            description: string | null;
+            city: {
+                id: number;
+                name: string;
+                slug: string;
+                state_code: string;
+                timezone: string;
+            };
+            /** @constant */
+            status: "published";
+            /** Format: date-time */
+            sales_starts_at: string;
+            /** Format: date-time */
+            sales_ends_at: string;
+            /** Format: date-time */
+            usage_starts_at: string;
+            /** Format: date-time */
+            usage_ends_at: string;
+            /** @description Meios habilitados na configuração do servidor para esta edição e provedor. Copiar um destes valores para PurchaseRequest.method. Não garante aprovação nem disponibilidade transitória do PSP. Edições sem meios habilitados são omitidas. */
+            payment_methods: components["schemas"]["PaymentMethod"][];
+            amount_cents: number;
+            /** @constant */
+            currency: "BRL";
+            snapshot: components["schemas"]["PurchaseSnapshot"];
+            /** @constant */
+            purchasable: true;
+        };
+        PurchaseSettlementRequest: {
+            provider_id: string;
+            statement_reference: string;
+            line_reference: string;
+            /** @constant */
+            currency: "BRL";
+            gross_cents: number;
+            fee_cents: number;
+            net_cents: number;
+            refunded_cents: number;
+            /** Format: date-time */
+            settled_at: string;
+        };
+        PurchaseOperationsDetail: {
+            /** Format: uuid */
+            id: string;
+            provider: string;
+            provider_id: string | null;
+            issue: string | null;
+            events: {
+                id: number | string;
+                action: string;
+                actor_id: number | null;
+                data: {
+                    [key: string]: unknown;
+                };
+                /** Format: date-time */
+                created_at: string;
+            }[];
+            commands: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {unknown} */
+                kind: "create" | "refund" | "cancel" | "reconcile";
+                /** @enum {unknown} */
+                status: "pending" | "processing" | "done" | "review";
+                attempts: number;
+                last_error: string | null;
+                /** Format: date-time */
+                created_at: string;
+            }[];
+            holds: {
+                reason: string;
+                /** Format: date-time */
+                created_at: string;
+                /** Format: date-time */
+                released_at: string | null;
+            }[];
+            redemptions: {
+                id: number | string;
+                receipt_code: string;
+                /** Format: date-time */
+                redeemed_at: string;
+            }[];
+        };
+        PurchaseReconciliation: {
+            settlements_checked: number;
+            issues: {
+                /** Format: uuid */
+                settlement_id: string;
+                /** Format: uuid */
+                purchase_id: string | null;
+                reasons: string[];
+            }[];
+            paid_without_access: {
+                /** Format: uuid */
+                id: string;
+                issue: string | null;
+            }[];
+            unlinked_payment_accesses: {
+                id: number;
+            }[];
         };
     };
     responses: {
@@ -10312,6 +10772,1069 @@ export interface operations {
             401: components["responses"]["UnauthorizedError"];
             403: components["responses"]["ForbiddenError"];
             404: components["responses"]["NotFoundError"];
+        };
+    };
+    purchaseCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Edições elegíveis; lista vazia quando nenhuma está disponível. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseCatalog"];
+                };
+            };
+            404: components["responses"]["NotFoundError"];
+            /** @description Limite de consultas públicas excedido. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyPurchases: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseList"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createPurchase: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+                /** @description Persistir por intenção. Mesma chave e corpo devolvem o identificador original; corpo divergente retorna 409. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Resultado original para replay; estado atual deve ser consultado por GET. */
+            202: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMyPurchase: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelPurchase: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+                /** @description Persistir por intenção. Mesma chave e corpo devolvem o identificador original; corpo divergente retorna 409. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Resultado original para replay; estado atual deve ser consultado por GET. */
+            202: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refundPurchase: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+                /** @description Persistir por intenção. Mesma chave e corpo devolvem o identificador original; corpo divergente retorna 409. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseRefundRequest"];
+            };
+        };
+        responses: {
+            /** @description Resultado original para replay; estado atual deve ser consultado por GET. */
+            202: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRefundAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listOperationPurchases: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseList"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getOperationPurchase: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOperationsDetail"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    decidePurchaseRefund: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path: {
+                id: string;
+                refundId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseRefundDecision"];
+            };
+        };
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRefundAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reconcilePurchase: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+                /** @description Persistir por intenção. Mesma chave e corpo devolvem o identificador original; corpo divergente retorna 409. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseReconciliationRequest"];
+            };
+        };
+        responses: {
+            /** @description Resultado original para replay; estado atual deve ser consultado por GET. */
+            202: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    recordPurchaseSettlement: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseSettlementRequest"];
+            };
+        };
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    purchaseReconciliation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Operação validada por membership; também pode ser resolvida pela sessão. */
+                "X-Tenant-Id"?: number;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sucesso */
+            200: {
+                headers: {
+                    "Cache-Control"?: "private, no-store";
+                    "Referrer-Policy"?: "no-referrer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseReconciliation"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    purchaseWebhook: {
+        parameters: {
+            query?: {
+                "data.id"?: string;
+            };
+            header?: {
+                "x-signature"?: string;
+                "x-request-id"?: string;
+                "x-fake-signature"?: string;
+            };
+            path: {
+                provider: "fake" | "mercado_pago";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": ({
+                    /** @constant */
+                    type: "payment";
+                    data: {
+                        id: string | number;
+                    };
+                } & {
+                    [key: string]: unknown;
+                }) | {
+                    resource_id: string;
+                    event_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Resultado original para replay; estado atual deve ser consultado por GET. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAccepted"];
+                };
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
 }

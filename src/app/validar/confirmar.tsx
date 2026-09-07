@@ -26,6 +26,8 @@ export default function ConfirmRedemptionScreen() {
     queryFn: () => previewRedemption(token as string),
     enabled: Boolean(token),
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
   })
 
   const confirm = useMutation({
@@ -51,6 +53,8 @@ export default function ConfirmRedemptionScreen() {
             ? 'Este código não vale mais. Peça ao cliente para gerar um novo.'
             : status === 403
               ? 'Sua conta não pode validar este benefício.'
+              : status === 400 || status === 409
+                ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
               : 'Não foi possível ler este código agora.'}
         </Text>
         <Pressable onPress={() => router.back()}>
@@ -61,6 +65,20 @@ export default function ConfirmRedemptionScreen() {
   }
 
   const { holder, benefit } = preview.data!
+  const refused = confirm.error instanceof ApiError && [400, 403, 409, 422].includes(confirm.error.status)
+
+  if (refused) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.message, { color: colors.foreground }]}>
+          Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.
+        </Text>
+        <Pressable onPress={() => router.back()}>
+          <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>
+        </Pressable>
+      </View>
+    )
+  }
 
   return (
     <ScrollView

@@ -6,6 +6,8 @@
  * availability is a server decision the client only renders.
  */
 
+import type { components } from '@/api/schema'
+
 export type Availability =
   | 'available'
   | 'upcoming'
@@ -35,7 +37,7 @@ export interface WalletBenefit {
 }
 
 export interface WalletPass {
-  access: { id: number; status: string; granted_at: string; availability: Availability }
+  access: components['schemas']['WalletPass']['access']
   edition: {
     id: number
     name: string

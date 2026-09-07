@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { radius, spacing, typography } from '@/theme/tokens'
+import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
-import { useCreatePresentation } from '@/wallet/queries'
+import { FinancialRestrictionError, useCreatePresentation, useWallet } from '@/wallet/queries'
+import { FINANCIAL_RESTRICTION_MESSAGE, presentationEligibility } from '@/wallet/financial-restriction'
 
 /** Seconds remaining until `expiresAt`, floored at zero. */
 function useCountdown(expiresAt: string | undefined): number {
@@ -40,6 +42,10 @@ export default function PresentScreen() {
   const colors = useColors()
   const { accessId, offerId } = useLocalSearchParams<{ accessId: string; offerId: string }>()
   const presentation = useCreatePresentation()
+  const wallet = useWallet(15_000)
+  const eligibility = wallet.data
+    ? presentationEligibility(wallet.data, Number(accessId), Number(offerId))
+    : null
 
   const create = () =>
     presentation.mutate({ accessId: Number(accessId), offerId: Number(offerId) })
@@ -53,7 +59,26 @@ export default function PresentScreen() {
   const remaining = useCountdown(data?.expires_at)
   const expired = Boolean(data) && remaining === 0
 
-  if (presentation.isPending) {
+  if (eligibility?.blocked || presentation.error instanceof FinancialRestrictionError) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.message, { color: colors.foreground }]}>{FINANCIAL_RESTRICTION_MESSAGE}</Text>
+      </View>
+    )
+  }
+
+  const refused = presentation.error instanceof ApiError && [400, 403, 409, 422].includes(presentation.error.status)
+  if (wallet.isError || refused || (eligibility && !eligibility.allowed)) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.message, { color: colors.foreground }]}>
+          Não é possível apresentar este benefício agora. Volte à carteira para atualizar o acesso.
+        </Text>
+      </View>
+    )
+  }
+
+  if (presentation.isPending || wallet.isPending || wallet.isFetching) {
     return <ActivityIndicator style={styles.center} color={colors.primary} />
   }
 
@@ -86,7 +111,7 @@ export default function PresentScreen() {
           </Text>
         </View>
       ) : (
-        <Image source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
+        <Image accessibilityLabel="Código temporário do benefício" source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
       )}
 
       <Text style={[styles.countdown, { color: expired ? colors.warning : colors.foreground }]}>

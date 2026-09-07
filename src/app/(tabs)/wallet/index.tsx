@@ -6,7 +6,8 @@ import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
-import { AVAILABILITY_LABEL, type WalletBenefit } from '@/wallet/types'
+import { AVAILABILITY_LABEL, type WalletBenefit, type WalletPass } from '@/wallet/types'
+import { canPresentBenefit, FINANCIAL_RESTRICTION_MESSAGE, financiallyBlocked } from '@/wallet/financial-restriction'
 
 export default function WalletScreen() {
   const colors = useColors()
@@ -33,37 +34,49 @@ export default function WalletScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
       <ScrollView contentContainerStyle={styles.page}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/wallet/edicoes')} style={styles.historyLink}>
+          <Text style={[styles.actionLabel, { color: colors.cta }]}>Conhecer edições e acompanhar pedidos</Text>
+        </Pressable>
         {/* Reaching past uses must not depend on holding a current benefit:
             somebody who spent everything is exactly who has a history. */}
         <Pressable onPress={() => router.push('/carteira/historico')} style={styles.historyLink}>
           <Text style={[styles.actionLabel, { color: colors.primary }]}>Meus usos</Text>
         </Pressable>
 
-        {/* An empty wallet is a valid state, not an error. It explains how
-            access appears without inventing a checkout the product lacks. */}
-        {passes.length === 0 ? (
+        {wallet.isError ? (
+          <View style={styles.empty}>
+            <Text style={[styles.message, { color: colors.foreground }]}>Não foi possível atualizar a carteira. Tente novamente antes de apresentar um benefício.</Text>
+            <Pressable accessibilityRole="button" onPress={() => void wallet.refetch()}>
+              <Text style={[styles.actionLabel, { color: colors.primary }]}>Atualizar carteira</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {!wallet.isError && passes.length === 0 ? (
           <View style={styles.empty}>
             <Text style={[styles.heading, { color: colors.foreground }]}>
               Sua carteira está vazia
             </Text>
             <Text style={[styles.message, { color: colors.mutedForeground }]}>
-              Quando você receber acesso a uma edição de benefícios, ela aparece aqui com tudo o que
-              dá para usar.
+              Ao receber acesso a uma edição, ela aparece aqui. Compras aguardam confirmação de pagamento; o uso segue as datas e condições de cada benefício.
             </Text>
           </View>
         ) : null}
 
-        {passes.map((pass) => (
+        {!wallet.isError && passes.map((pass) => (
           <View key={pass.access.id} style={styles.section}>
             <Text style={[styles.heading, { color: colors.foreground }]}>{pass.edition.name}</Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {pass.edition.city.name} · {pass.edition.city.state_code}
             </Text>
+            {financiallyBlocked(pass.access) ? (
+              <Text style={[styles.body, { color: colors.foreground }]}>{FINANCIAL_RESTRICTION_MESSAGE}</Text>
+            ) : null}
 
             {pass.benefits.map((benefit) => (
               <BenefitRow
                 key={benefit.key}
                 benefit={benefit}
+                pass={pass}
                 onUse={() =>
                   router.push(
                     `/carteira/apresentar?accessId=${benefit.access_id}&offerId=${benefit.offer_id}`
@@ -78,9 +91,10 @@ export default function WalletScreen() {
   )
 }
 
-function BenefitRow({ benefit, onUse }: { benefit: WalletBenefit; onUse: () => void }) {
+function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: WalletPass; onUse: () => void }) {
   const colors = useColors()
-  const usable = benefit.availability === 'available'
+  const usable = canPresentBenefit(pass, benefit)
+  const blocked = financiallyBlocked(pass.access)
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -106,7 +120,7 @@ function BenefitRow({ benefit, onUse }: { benefit: WalletBenefit; onUse: () => v
       ) : (
         // The reason comes from the server, and the action stays disabled.
         <Text style={[styles.unavailable, { color: colors.warning }]}>
-          {AVAILABILITY_LABEL[benefit.availability]}
+          {blocked ? FINANCIAL_RESTRICTION_MESSAGE : AVAILABILITY_LABEL[benefit.availability]}
         </Text>
       )}
     </View>

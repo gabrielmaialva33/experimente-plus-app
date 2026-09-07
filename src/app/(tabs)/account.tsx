@@ -19,11 +19,15 @@ export default function AccountScreen() {
   const [fullName, setFullName] = useState(user?.full_name ?? '')
   const [username, setUsername] = useState(user?.username ?? '')
 
+  const fullNameChanged = fullName !== (user?.full_name ?? '')
+  // An untouched null username is displayed as an empty string, not a clear request.
+  const usernameChanged = username !== (user?.username ?? '')
+
   const save = useMutation({
     mutationFn: () =>
       updateProfile({
-        ...(fullName !== user?.full_name ? { full_name: fullName } : {}),
-        ...(username !== user?.username ? { username } : {}),
+        ...(fullNameChanged ? { full_name: fullName } : {}),
+        ...(usernameChanged ? { username: username.trim() ? username : null } : {}),
       }),
     retry: false,
     onSuccess: (result) => {
@@ -35,9 +39,9 @@ export default function AccountScreen() {
     },
   })
 
-  const changed = fullName !== (user?.full_name ?? '') || username !== (user?.username ?? '')
+  const changed = fullNameChanged || usernameChanged
   // The server requires a non-empty name whenever the key is sent.
-  const valid = fullName.trim().length > 0 && username.trim().length > 0
+  const valid = !fullNameChanged || fullName.trim().length > 0
 
   const message =
     save.error instanceof ApiError && save.error.status === 422
@@ -126,6 +130,7 @@ function Field({
     <View style={styles.field}>
       <Text style={[styles.label, { color: colors.mutedForeground }]}>{label}</Text>
       <TextInput
+        accessibilityLabel={label}
         value={value}
         onChangeText={onChange}
         autoCapitalize={autoCapitalize}

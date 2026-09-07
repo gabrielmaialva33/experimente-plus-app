@@ -15,7 +15,7 @@ export type MobileUser = components['schemas']['MobileUser']
  * password, verification and administrative fields are out of this operation's
  * reach by contract (UC-M06), and the server echoes the public projection only.
  */
-export const updateProfile = (changes: { full_name?: string; username?: string }) =>
+export const updateProfile = (changes: components['schemas']['UpdateMobileProfileRequest']) =>
   request<{ user: MobileUser }>('/api/v1/me', {
     method: 'PATCH',
     authenticated: true,

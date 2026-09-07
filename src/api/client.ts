@@ -28,6 +28,10 @@ export interface RequestOptions {
   /** Sends the bearer token and enables the single refresh-and-replay. */
   authenticated?: boolean
   signal?: AbortSignal
+  /** Stable purchase intention, preserved by the authenticated replay. */
+  idempotencyKey?: string
+  /** Financial and presentation payloads must never reach development logs. */
+  sensitive?: boolean
 }
 
 const parseRetryAfter = (header: string | null): number | undefined => {
@@ -45,6 +49,7 @@ async function send(path: string, options: RequestOptions, accessToken?: string)
   if (accessToken) {
     headers.authorization = `Bearer ${accessToken}`
   }
+  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
 
   return fetch(apiUrl(path), {
     method: options.method ?? 'GET',
@@ -97,7 +102,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   // A failed request is far easier to place with the route on it. The detail
   // stays out of the interface: production shows the product's own message.
-  if (__DEV__) {
+  if (__DEV__ && !options.sensitive) {
     error.message = `${response.status} ${options.method ?? 'GET'} ${path}`
     console.warn(`[api] ${error.message}`, body)
   }

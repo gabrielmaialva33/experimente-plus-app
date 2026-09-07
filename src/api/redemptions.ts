@@ -13,6 +13,7 @@ export const previewRedemption = (token: string) =>
   request<Preview>('/api/v1/benefit-redemptions/preview', {
     method: 'POST',
     authenticated: true,
+    sensitive: true,
     body: { token },
   })
 
@@ -25,6 +26,7 @@ export const confirmRedemption = (token: string) =>
   request<Receipt>('/api/v1/benefit-redemptions', {
     method: 'POST',
     authenticated: true,
+    sensitive: true,
     body: { token },
   })
 

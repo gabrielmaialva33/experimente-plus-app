@@ -128,20 +128,35 @@ export default function ExploreScreen() {
 
       <View style={{ backgroundColor: colors.background, flex: 1 }}>
         {/* Changing city is discovery state only: no tenant request, no token. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
-          <View style={styles.rowInner}>
-            {cities.data?.map((item) => (
-              <Chip
-                key={item.slug}
-                label={item.name}
-                selected={item.slug === selectedCity}
-                onPress={() => selectCity(item.slug)}
-              />
-            ))}
-          </View>
-        </ScrollView>
+        <View style={[styles.citySelector, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.controlLabel, { color: colors.mutedForeground }]}>Cidade</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
+            <View style={styles.cities}>
+              {cities.data?.map((item) => (
+                <Pressable
+                  key={item.slug}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}, ${item.state_code}`}
+                  accessibilityState={{ selected: item.slug === selectedCity }}
+                  onPress={() => selectCity(item.slug)}
+                  style={[
+                    styles.cityOption,
+                    { borderBottomColor: item.slug === selectedCity ? colors.primary : colors.border },
+                  ]}>
+                  <Text style={[
+                    styles.cityLabel,
+                    { color: item.slug === selectedCity ? colors.primary : colors.mutedForeground },
+                  ]}>
+                    {item.name} · {item.state_code}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
 
-        {/* One filter state, shared by the list and — later — the map. */}
+        {/* One filter state, shared by the list and the map. */}
+        <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>Filtros</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
           <View style={styles.rowInner}>
             <Chip label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
@@ -166,10 +181,24 @@ export default function ExploreScreen() {
         </ScrollView>
 
         <View style={styles.viewToggle}>
-          <Chip
-            label={view === 'list' ? 'Ver no mapa' : 'Ver em lista'}
-            onPress={() => setView(view === 'list' ? 'map' : 'list')}
-          />
+          <View style={[styles.viewOptions, { backgroundColor: colors.muted }]}>
+            {(['list', 'map'] as const).map((mode) => (
+              <Pressable
+                key={mode}
+                accessibilityRole="button"
+                accessibilityLabel={mode === 'list' ? 'Ver em lista' : 'Ver no mapa'}
+                accessibilityState={{ selected: view === mode }}
+                onPress={() => setView(mode)}
+                style={[styles.viewOption, view === mode && { backgroundColor: colors.primary }]}>
+                <Text style={[
+                  styles.cityLabel,
+                  { color: view === mode ? colors.primaryForeground : colors.mutedForeground },
+                ]}>
+                  {mode === 'list' ? 'Lista' : 'Mapa'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         {search.isPending ? (
@@ -181,7 +210,7 @@ export default function ExploreScreen() {
             </Text>
             {/* Manual retry preserving the filters, per the retry contract. */}
             <Pressable onPress={() => search.refetch()}>
-              <Text style={[styles.action, { color: colors.cta }]}>Tentar de novo</Text>
+              <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
             </Pressable>
           </View>
         ) : view === 'map' ? (
@@ -216,7 +245,7 @@ export default function ExploreScreen() {
                 </Text>
                 {hasFilters ? (
                   <Pressable onPress={clearFilters}>
-                    <Text style={[styles.action, { color: colors.cta }]}>Limpar filtros</Text>
+                    <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
                   </Pressable>
                 ) : null}
               </View>
@@ -233,12 +262,32 @@ const styles = StyleSheet.create({
   city: { ...typography.heading, fontWeight: '700' },
   search: {
     ...typography.body,
-    borderRadius: radius.pill,
+    borderRadius: radius.surface,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   row: { flexGrow: 0 },
-  viewToggle: { alignItems: 'flex-start', paddingBottom: spacing.sm, paddingHorizontal: spacing.md },
+  citySelector: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, borderBottomWidth: 1 },
+  controlLabel: { ...typography.caption, fontWeight: '600' },
+  filterLabel: {
+    ...typography.caption,
+    fontWeight: '600',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+  },
+  cities: { flexDirection: 'row', gap: spacing.lg },
+  cityOption: { borderBottomWidth: 2, paddingVertical: spacing.md, minHeight: 48 },
+  cityLabel: { ...typography.body, fontWeight: '600' },
+  viewToggle: { paddingBottom: spacing.sm, paddingHorizontal: spacing.md },
+  viewOptions: { flexDirection: 'row', borderRadius: radius.surface, padding: spacing.xs },
+  viewOption: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    padding: spacing.sm,
+    borderRadius: radius.surface,
+  },
   rowInner: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   list: { padding: spacing.lg },
   feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },

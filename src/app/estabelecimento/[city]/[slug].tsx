@@ -1,15 +1,14 @@
-import { Image } from 'expo-image'
-
-import { resolveMediaUrl } from '@/api/config'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { track } from '@/analytics/events'
 import { brazilianWhatsApp, dialable } from '@/catalog/contact-links'
-import { formatTime, weekdayName } from '@/catalog/opening-hours'
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
+import { EstablishmentCover } from '@/components/establishment-cover'
+import { EstablishmentHours } from '@/components/establishment-hours'
+import { OperatingStatus } from '@/components/operating-status'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -44,6 +43,7 @@ export default function EstablishmentScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Text style={[styles.name, { color: colors.foreground }]}>{page.name}</Text>
+        <OperatingStatus establishment={{ ...page, is_open_now: false }} />
         <Text style={[styles.message, { color: colors.mutedForeground }]}>{page.message}</Text>
       </View>
     )
@@ -106,6 +106,9 @@ function Detail({
     },
     { label: 'Site', onPress: open('website_click', contacts.website) },
   ].filter((action) => action.onPress)
+  // Visiting is the primary discovery conversion. Without coordinates, promote
+  // the first available contact rather than offering an unusable route.
+  const [primaryAction, ...secondaryActions] = actions
 
   const street = [address.street, address.without_number ? 's/n' : address.number]
     .filter(Boolean)
@@ -113,13 +116,7 @@ function Detail({
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Image
-        source={{ uri: resolveMediaUrl(detail.cover.asset.url) }}
-        accessibilityLabel={detail.cover.alt_text}
-        style={styles.cover}
-        contentFit="cover"
-        transition={150}
-      />
+      <EstablishmentCover cover={detail.cover} detail />
 
       <View style={styles.section}>
         <Text style={[styles.name, { color: colors.foreground }]}>{detail.name}</Text>
@@ -128,27 +125,38 @@ function Detail({
             .filter(Boolean)
             .join(' · ')}
         </Text>
-        {detail.is_open_now ? (
-          <Text style={[styles.open, { color: colors.success }]}>Aberto agora</Text>
-        ) : null}
+        <OperatingStatus establishment={detail} />
         {detail.is_sponsored ? (
           <Text style={[styles.sponsored, { color: colors.mutedForeground }]}>Patrocinado</Text>
         ) : null}
       </View>
 
-      {actions.length > 0 ? (
+      {primaryAction ? (
         <View style={styles.actions}>
-          {actions.map((action) => (
-            <Pressable
-              key={action.label}
-              accessibilityRole="button"
-              onPress={action.onPress}
-              style={[styles.action, { backgroundColor: colors.cta }]}>
-              <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-                {action.label}
-              </Text>
-            </Pressable>
-          ))}
+          <Pressable
+            accessibilityRole="button"
+            onPress={primaryAction.onPress}
+            style={[styles.action, { backgroundColor: colors.cta }]}>
+            <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
+              {primaryAction.label}
+            </Text>
+          </Pressable>
+          <View style={styles.secondaryActions}>
+            {secondaryActions.map((action) => (
+              <Pressable
+                key={action.label}
+                accessibilityRole="button"
+                onPress={action.onPress}
+                style={[
+                  styles.secondaryAction,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}>
+                <Text style={[styles.actionLabel, { color: colors.primary }]}>
+                  {action.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       ) : null}
 
@@ -169,20 +177,7 @@ function Detail({
         </View>
       ) : null}
 
-      {detail.opening_hours.weekly.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={[styles.heading, { color: colors.foreground }]}>Horários</Text>
-          {detail.opening_hours.weekly.map((hour) => (
-            <Text
-              key={`${hour.weekday}-${hour.sort_order}`}
-              style={[styles.body, { color: colors.mutedForeground }]}>
-              {weekdayName(hour.weekday)} · {formatTime(hour.opens_at)} às{' '}
-              {formatTime(hour.closes_at)}
-              {hour.spans_next_day ? ' (vira o dia)' : ''}
-            </Text>
-          ))}
-        </View>
-      ) : null}
+      <EstablishmentHours establishment={detail} />
 
       {detail.attributes.length > 0 ? (
         <View style={styles.section}>
@@ -202,16 +197,24 @@ function Detail({
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
-  cover: { height: 220, width: '100%' },
   section: { gap: spacing.xs, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   name: { ...typography.title },
   meta: typography.caption,
-  open: { ...typography.caption, fontWeight: '600' },
   sponsored: { ...typography.caption, fontWeight: '600', textTransform: 'uppercase' },
   heading: { ...typography.heading, marginBottom: spacing.xs },
   body: typography.body,
   message: { ...typography.body, textAlign: 'center' },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, padding: spacing.lg },
-  action: { borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actions: { gap: spacing.sm, padding: spacing.lg },
+  action: { borderRadius: radius.surface, padding: spacing.md, minHeight: 48 },
+  secondaryActions: { flexDirection: 'row', gap: spacing.sm },
+  secondaryAction: {
+    flex: 1,
+    borderRadius: radius.surface,
+    borderWidth: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
 })

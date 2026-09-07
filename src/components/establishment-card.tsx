@@ -1,9 +1,8 @@
-import { Image } from 'expo-image'
-
-import { resolveMediaUrl } from '@/api/config'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { EstablishmentSummary } from '@/catalog/types'
+import { EstablishmentCover } from '@/components/establishment-cover'
+import { OperatingStatus } from '@/components/operating-status'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -22,24 +21,16 @@ export function EstablishmentCard({ establishment, onPress }: Props) {
       accessibilityRole="button"
       onPress={onPress}
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Image
-        source={{ uri: resolveMediaUrl(establishment.cover.asset.url) }}
-        accessibilityLabel={establishment.cover.alt_text}
-        style={styles.cover}
-        contentFit="cover"
-        transition={150}
-      />
+      <EstablishmentCover cover={establishment.cover} />
 
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-            {establishment.name}
-          </Text>
-          {/* Server-projected. The client never recomputes `open_now`. */}
-          {establishment.is_open_now ? (
-            <Text style={[styles.open, { color: colors.success }]}>Aberto agora</Text>
-          ) : null}
-        </View>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={2}>
+          {establishment.name}
+        </Text>
+        <OperatingStatus establishment={{
+          business_status: establishment.business_status,
+          is_open_now: establishment.is_open_now,
+        }} />
 
         {establishment.short_description ? (
           <Text style={[styles.description, { color: colors.mutedForeground }]} numberOfLines={2}>
@@ -67,11 +58,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
-  cover: { height: 160, width: '100%' },
   body: { gap: spacing.xs, padding: spacing.lg },
-  titleRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
-  name: { ...typography.heading, flexShrink: 1 },
-  open: { ...typography.caption, fontWeight: '600' },
+  name: typography.heading,
   description: typography.body,
   meta: typography.caption,
   sponsored: { ...typography.caption, fontWeight: '600', textTransform: 'uppercase' },

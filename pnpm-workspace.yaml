@@ -1,5 +1,6 @@
 allowBuilds:
-  msw: set this to true or false
+  # Native/Jest consumers do not need MSW's browser-worker postinstall.
+  msw: false
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.22'
   - '@expo/ui@57.0.16'

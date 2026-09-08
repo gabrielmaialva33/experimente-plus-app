@@ -1,7 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useRef, useState } from 'react'
+import { View } from 'react-native'
 
+import { ChoiceControl } from '@/components/choice-control'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod } from '@/api/purchases'
 import { EditionTerms, PurchaseAction, PurchasePage, PurchaseText, RetryPurchase, price } from '@/purchases/components'
@@ -81,11 +83,13 @@ export default function PurchaseEditionScreen() {
       </> : edition ? <>
         {!edition.purchasable ? <PurchaseText>Compra indisponível no momento.</PurchaseText> : null}
         {!edition.payment_methods.length ? <PurchaseText>Os meios de pagamento ainda não estão disponíveis. Consulte novamente mais tarde.</PurchaseText> : null}
-        {edition.payment_methods.map((option) => <PurchaseAction key={option}
-          label={`${method === option ? 'Selecionado: ' : ''}${option}`}
-          disabled={start.isPending} onPress={() => setMethod(option)} />)}
+        <View accessibilityRole="radiogroup" accessibilityLabel="Meio de pagamento">
+          {edition.payment_methods.map((option) => <ChoiceControl key={option} shape="segment" role="radio" selected={method === option}
+            label={option}
+            disabled={start.isPending} onPress={() => setMethod(option)} />)}
+        </View>
         {needsCardToken ? <PurchaseText>Este meio de pagamento ainda não pode ser iniciado pelo aplicativo. Escolha outro meio disponível.</PurchaseText> : null}
-        <PurchaseAction label={accepted === edition.snapshot.terms_version ? 'Condições lidas e aceitas' : 'Li e aceito as condições desta edição'}
+        <ChoiceControl shape="segment" role="checkbox" selected={accepted === edition.snapshot.terms_version} label={accepted === edition.snapshot.terms_version ? 'Condições lidas e aceitas' : 'Li e aceito as condições desta edição'}
           disabled={start.isPending} onPress={() => setAccepted(accepted ? null : edition.snapshot.terms_version)} />
         <PurchaseAction label={start.isPending ? 'Iniciando pedido…' : 'Iniciar compra'} conversion
           disabled={!userId || !edition.purchasable || !method || needsCardToken || !edition.payment_methods.includes(method) || accepted !== edition.snapshot.terms_version || start.isPending}

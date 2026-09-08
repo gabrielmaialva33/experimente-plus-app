@@ -23,7 +23,7 @@ export function PurchaseAction({ label, onPress, disabled = false, conversion = 
   return (
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[
       styles.action,
-      { backgroundColor: conversion ? colors.cta : colors.muted, opacity: disabled ? 0.5 : 1 },
+      { backgroundColor: conversion ? colors.cta : colors.surfaceRaised, opacity: disabled ? 0.5 : 1 },
     ]}>
       <Text style={[styles.actionLabel, { color: conversion ? colors.ctaForeground : colors.primary }]}>{label}</Text>
     </Pressable>
@@ -75,6 +75,6 @@ export function EditionTerms({ snapshot }: { snapshot: PurchaseSnapshot }) {
 const styles = StyleSheet.create({
   page: { padding: spacing.lg, gap: spacing.lg },
   terms: { gap: spacing.sm },
-  action: { borderRadius: radius.surface, padding: spacing.md, minHeight: 48, justifyContent: 'center' },
+  action: { borderRadius: radius.md, padding: spacing.md, minHeight: 48, justifyContent: 'center' },
   actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
 })

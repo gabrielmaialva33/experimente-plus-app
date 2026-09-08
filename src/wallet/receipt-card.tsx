@@ -16,7 +16,7 @@ export function ReceiptCard({ receipt, compact = false }: { receipt: Receipt; co
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.code, { color: colors.primary }]}>{receipt.receipt_code}</Text>
+      <Text style={[styles.code, { color: colors.foreground }]}>{receipt.receipt_code}</Text>
       <Text style={[styles.title, { color: colors.foreground }]}>{receipt.offer.title}</Text>
       <Text style={[styles.meta, { color: colors.mutedForeground }]}>
         {receipt.establishment.name}

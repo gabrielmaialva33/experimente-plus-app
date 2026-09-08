@@ -31,7 +31,7 @@ export function HistoryScreen({ queryKey, load, emptyMessage, receiptHref }: Pro
           Não foi possível carregar o histórico agora.
         </Text>
         <Pressable onPress={() => history.refetch()}>
-          <Text style={[styles.link, { color: colors.cta }]}>Tentar de novo</Text>
+          <Text style={[styles.link, { color: colors.primary }]}>Tentar de novo</Text>
         </Pressable>
       </View>
     )

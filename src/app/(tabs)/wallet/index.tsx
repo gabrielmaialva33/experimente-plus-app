@@ -32,16 +32,17 @@ export default function WalletScreen() {
   const passes = wallet.data?.passes ?? []
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
       <ScrollView contentContainerStyle={styles.page}>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/wallet/edicoes')} style={styles.historyLink}>
-          <Text style={[styles.actionLabel, { color: colors.cta }]}>Conhecer edições e acompanhar pedidos</Text>
-        </Pressable>
-        {/* Reaching past uses must not depend on holding a current benefit:
-            somebody who spent everything is exactly who has a history. */}
-        <Pressable onPress={() => router.push('/carteira/historico')} style={styles.historyLink}>
-          <Text style={[styles.actionLabel, { color: colors.primary }]}>Meus usos</Text>
-        </Pressable>
+        <View testID="wallet-navigation" style={styles.navigation}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/wallet/edicoes')} style={styles.historyLink}>
+            <Text style={[styles.navigationLabel, { color: colors.primary }]}>Conhecer edições e acompanhar pedidos</Text>
+          </Pressable>
+          {/* Past uses remain reachable without holding a current benefit. */}
+          <Pressable accessibilityRole="button" onPress={() => router.push('/carteira/historico')} style={styles.historyLink}>
+            <Text style={[styles.navigationLabel, { color: colors.primary }]}>Meus usos</Text>
+          </Pressable>
+        </View>
 
         {wallet.isError ? (
           <View style={styles.empty}>
@@ -63,7 +64,7 @@ export default function WalletScreen() {
         ) : null}
 
         {!wallet.isError && passes.map((pass) => (
-          <View key={pass.access.id} style={styles.section}>
+          <View key={pass.access.id} style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
             <Text style={[styles.heading, { color: colors.foreground }]}>{pass.edition.name}</Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {pass.edition.city.name} · {pass.edition.city.state_code}
@@ -97,7 +98,7 @@ function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: Wa
   const blocked = financiallyBlocked(pass.access)
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>{benefit.title}</Text>
       <Text style={[styles.meta, { color: colors.mutedForeground }]}>
         {benefit.establishment.public_name}
@@ -105,7 +106,7 @@ function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: Wa
       <Text style={[styles.body, { color: colors.mutedForeground }]}>{benefit.description}</Text>
 
       {benefit.remaining_redemptions != null ? (
-        <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+        <Text style={[styles.meta, { color: colors.ctaAccent }]}>
           {benefit.remaining_redemptions} uso(s) restante(s)
         </Text>
       ) : null}
@@ -119,7 +120,7 @@ function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: Wa
         </Pressable>
       ) : (
         // The reason comes from the server, and the action stays disabled.
-        <Text style={[styles.unavailable, { color: colors.warning }]}>
+        <Text style={[styles.unavailable, { color: colors.statusNeutralForeground, backgroundColor: colors.statusNeutral }]}>
           {blocked ? FINANCIAL_RESTRICTION_MESSAGE : AVAILABILITY_LABEL[benefit.availability]}
         </Text>
       )}
@@ -135,14 +136,14 @@ function Centered({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   page: { padding: spacing.lg },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
-  section: { gap: spacing.sm, marginBottom: spacing.xl },
+  section: { gap: spacing.sm, marginBottom: spacing.xl, padding: spacing.md, borderWidth: 1, borderRadius: radius.surface },
   card: { borderRadius: radius.surface, borderWidth: 1, gap: spacing.xs, padding: spacing.lg },
   heading: typography.heading,
   title: { ...typography.body, fontWeight: '700' },
   meta: typography.caption,
   body: typography.body,
   message: { ...typography.body, textAlign: 'center' },
-  unavailable: { ...typography.caption, fontWeight: '700' },
+  unavailable: { ...typography.caption, fontWeight: '700', padding: spacing.sm, borderRadius: radius.sm },
   action: {
     alignItems: 'center',
     borderRadius: radius.pill,
@@ -150,6 +151,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   actionLabel: { ...typography.body, fontWeight: '700' },
-  historyLink: { alignItems: 'flex-end', paddingBottom: spacing.md },
+  // Keep wrapping navigation in normal flow, clear of top-right floating tools.
+  navigation: { flexDirection: 'column', paddingRight: spacing.xxl * 2, marginBottom: spacing.md },
+  historyLink: { alignItems: 'flex-start', justifyContent: 'center', minHeight: 48, paddingVertical: spacing.sm },
+  navigationLabel: { ...typography.body, fontWeight: '700', textAlign: 'left', flexShrink: 1 },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
 })

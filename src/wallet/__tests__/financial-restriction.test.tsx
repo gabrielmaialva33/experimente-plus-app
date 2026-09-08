@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, waitFor } from '@testing-library/react-native'
 
+import { palette } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import WalletScreen from '@/app/(tabs)/wallet'
 import PresentScreen from '@/app/carteira/apresentar'
@@ -8,6 +9,7 @@ import ConfirmScreen from '@/app/validar/confirmar'
 import { canPresentBenefit, FINANCIAL_RESTRICTION_MESSAGE, presentationEligibility } from '../financial-restriction'
 import type { Wallet, WalletBenefit } from '../types'
 
+jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
   useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: 'private-test-token' }),
@@ -33,7 +35,7 @@ const redemptions = jest.requireMock('@/api/redemptions') as { previewRedemption
 const benefit: WalletBenefit = {
   key: '1:2', access_id: 1, offer_id: 2, availability: 'available', title: 'Benefício', description: 'Condições',
   benefit_type: 'discount', terms: null, reservation_required: false, on_premise_only: true,
-  minimum_party_size: 1, max_redemptions_per_access: 1,
+  minimum_party_size: 1, max_redemptions_per_access: 1, remaining_redemptions: 1,
   establishment: { id: 1, public_name: 'Café', slug: 'cafe' },
 }
 
@@ -60,6 +62,7 @@ function page(node: React.ReactNode) {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
   api.getWallet.mockResolvedValue(blockedWallet)
 })
 
@@ -126,4 +129,36 @@ it('a partner preview refused by the server has no confirmation action or financ
   expect(view.queryByText(/private financial detail/)).toBeNull()
   expect(view.queryByRole('button', { name: 'Confirmar utilização' })).toBeNull()
   expect(redemptions.confirmRedemption).not.toHaveBeenCalled()
+})
+
+it.each(['light', 'dark'] as const)('uses bounded E1 for editions and benefits with a localized neutral blocked state in %s', async (mode) => {
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+  api.getWallet.mockResolvedValue(wallet)
+  const available = await page(<WalletScreen />)
+  expect((await available.findByText('Edição')).parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised, borderWidth: 1 })
+  expect(available.getByText('Benefício').parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
+  await available.unmount()
+  api.getWallet.mockResolvedValue(blockedWallet)
+  const blocked = await page(<WalletScreen />)
+  expect((await blocked.findByText('Benefício')).parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
+  expect(blocked.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).at(-1)).toHaveStyle({ backgroundColor: palette[mode].statusNeutral, color: palette[mode].statusNeutralForeground })
+  expect(blocked.queryByRole('button', { name: 'Usar benefício' })).toBeNull()
+})
+
+it.each(['light', 'dark'] as const)('keeps wallet navigation left in its own flow and reserves CTA for use in %s', async (mode) => {
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+  api.getWallet.mockResolvedValue(wallet)
+  const view = await page(<WalletScreen />)
+  const editions = await view.findByRole('button', { name: 'Conhecer edições e acompanhar pedidos' })
+  const history = view.getByRole('button', { name: 'Meus usos' })
+  for (const button of [editions, history]) {
+    expect(button).toHaveStyle({ alignItems: 'flex-start', minHeight: 48 })
+  }
+  expect(view.getByTestId('wallet-navigation')).toHaveStyle({ flexDirection: 'column', paddingRight: 64 })
+  for (const label of ['Conhecer edições e acompanhar pedidos', 'Meus usos']) {
+    expect(view.getByText(label)).toHaveStyle({ color: palette[mode].primary, textAlign: 'left' })
+  }
+  expect(view.getByRole('button', { name: 'Usar benefício' })).toHaveStyle({ backgroundColor: palette[mode].cta })
+  expect(view.getByText('Usar benefício')).toHaveStyle({ color: palette[mode].ctaForeground })
+  expect(view.getByText('1 uso(s) restante(s)')).toHaveStyle({ color: palette[mode].ctaAccent })
 })

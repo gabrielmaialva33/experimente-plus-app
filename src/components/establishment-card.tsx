@@ -23,7 +23,7 @@ export function EstablishmentCard({ establishment, onPress }: Props) {
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <EstablishmentCover cover={establishment.cover} />
 
-      <View style={styles.body}>
+      <View style={[styles.body, { borderTopColor: colors.border }]}>
         <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={2}>
           {establishment.name}
         </Text>
@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
-  body: { gap: spacing.xs, padding: spacing.lg },
+  // A continuous seam plus an inset keeps any photo edge away from the text.
+  body: { borderTopWidth: 1, gap: spacing.xs, padding: spacing.lg },
   name: typography.heading,
   description: typography.body,
   meta: typography.caption,

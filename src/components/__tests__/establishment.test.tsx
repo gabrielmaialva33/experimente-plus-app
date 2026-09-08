@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native'
-import { Linking } from 'react-native'
+import { Linking, StyleSheet } from 'react-native'
 
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
 import type { EstablishmentDetail, EstablishmentSummary } from '@/catalog/types'
@@ -10,6 +10,7 @@ import { OperatingStatus } from '@/components/operating-status'
 import { palette } from '@/theme/tokens'
 
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ city: 'londrina', slug: 'cafe' }) }))
+jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 jest.mock('@/catalog/queries', () => ({ useEstablishment: jest.fn() }))
@@ -65,12 +66,28 @@ describe('establishment presentation', () => {
     const route = view.getByRole('button', { name: 'Como chegar' })
     expect(route).toHaveStyle({ backgroundColor: palette[mode].cta })
     for (const label of ['WhatsApp', 'Ligar', 'Site']) {
-      expect(view.getByRole('button', { name: label })).toHaveStyle({ backgroundColor: palette[mode].card })
-      expect(view.getByText(label)).toHaveStyle({ color: palette[mode].primary })
+      expect(view.getByRole('button', { name: label })).toHaveStyle({ backgroundColor: palette[mode].actionSecondary, borderRadius: 8, minHeight: 48 })
+      expect(view.getByText(label)).toHaveStyle({ color: palette[mode].actionSecondaryForeground })
     }
     await fireEvent.press(route)
     expect(openURL).toHaveBeenCalledWith('https://www.google.com/maps/dir/?api=1&destination=-23.31,-51.16')
     expect(view.getByText('Fechado agora')).toBeOnTheScreen()
+  })
+
+  it.each(['light', 'dark'] as const)('never sinks interactive contacts below their supporting plane in %s', async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(<EstablishmentScreen />)
+    const levels = [palette[mode].surfaceBase, palette[mode].surfaceRaised, palette[mode].surfaceOverlay] as readonly string[]
+    for (const name of ['WhatsApp', 'Ligar', 'Site']) {
+      const button = view.getByRole('button', { name })
+      const background = StyleSheet.flatten(button.props.style).backgroundColor
+      let parent = button.parent
+      while (parent && !StyleSheet.flatten(parent.props.style)?.backgroundColor) parent = parent.parent
+      const support = StyleSheet.flatten(parent?.props.style)?.backgroundColor
+      expect(levels.indexOf(support)).toBeGreaterThanOrEqual(0)
+      expect(levels.indexOf(background)).toBeGreaterThanOrEqual(levels.indexOf(support))
+      expect(background).not.toBe(palette[mode].cta)
+    }
   })
 
   it('promotes an existing contact when coordinates are absent', async () => {
@@ -152,8 +169,8 @@ describe.each(['light', 'dark'] as const)('canonical status appearance in %s', (
     const colors = palette[mode]
     theme.useColors.mockReturnValue(colors)
     const borders = {
-      light: { warning: 'rgba(220, 143, 9, 0.3)', info: 'rgba(16, 120, 158, 0.25)', success: 'rgba(27, 126, 70, 0.25)' },
-      dark: { warning: 'rgba(244, 170, 42, 0.3)', info: 'rgba(67, 193, 239, 0.25)', success: 'rgba(47, 198, 110, 0.25)' },
+      light: { warning: 'rgba(233, 175, 65, 0.3)', info: 'rgba(27, 102, 132, 0.25)', success: 'rgba(17, 115, 66, 0.25)' },
+      dark: { warning: 'rgba(246, 185, 81, 0.3)', info: 'rgba(105, 205, 242, 0.25)', success: 'rgba(81, 214, 137, 0.25)' },
     }[mode]
     const expected = {
       muted: { backgroundColor: colors.muted, color: colors.mutedForeground, borderColor: colors.border },
@@ -190,4 +207,58 @@ describe('cover fallback', () => {
     expect(view.queryByText('Foto indisponível')).toBeNull()
     expect(view.getByLabelText('Fachada do café')).toBeOnTheScreen()
   })
+})
+
+it.each(['light', 'dark'] as const)('keeps missing and tiny photos on absence, never brand or conversion, in %s', async (mode) => {
+  theme.useColors.mockReturnValue(palette[mode])
+  const view = await render(<EstablishmentCover cover={null} />)
+  const label = view.getByText('Foto indisponível')
+  expect(label).toHaveStyle({ color: palette[mode].contentAbsentForeground })
+  expect(label.parent?.parent).toHaveStyle({ backgroundColor: palette[mode].contentAbsent })
+  expect(label.parent?.parent).not.toHaveStyle({ backgroundColor: palette[mode].primary })
+  expect(label.parent?.parent).not.toHaveStyle({ backgroundColor: palette[mode].cta })
+  await view.rerender(<EstablishmentCover cover={{ ...detail.cover, asset: { ...detail.cover.asset, width: 8, height: 6 } }} detail />)
+  expect(view.getByText('Foto indisponível').parent?.parent).toHaveStyle({ backgroundColor: palette[mode].contentAbsent })
+})
+
+
+describe.each(['light', 'dark'] as const)('card cover seam in %s', (mode) => {
+  it.each([true, false])('separates the body with a continuous border and inset, with photo=%s', async (photo) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(<EstablishmentCard
+      establishment={{ ...detail, primary_category: null, cover: photo ? detail.cover : {
+        ...detail.cover, asset: { ...detail.cover.asset, width: 8, height: 6 },
+      } }}
+      onPress={jest.fn()}
+    />)
+    if (photo) expect(view.getByLabelText('Fachada do café')).toBeOnTheScreen()
+    else expect(view.getByText('Foto indisponível')).toBeOnTheScreen()
+    const body = view.getByText(detail.name).parent!
+    expect(body).toHaveStyle({ borderTopWidth: 1, borderTopColor: palette[mode].border })
+    expect(StyleSheet.flatten(body.props.style).padding).toBeGreaterThan(0)
+    expect(view.getByRole('button')).toHaveStyle({ overflow: 'hidden' })
+  })
+})
+
+it.each(['light', 'dark'] as const)('keeps absence, today and neutral status distinct in the rendered surfaces in %s', async (mode) => {
+  jest.useFakeTimers({ now: new Date('2026-09-07T16:00:00Z') })
+  theme.useColors.mockReturnValue(palette[mode])
+  const view = await render(<>
+    <EstablishmentCover />
+    <EstablishmentHours establishment={detail} />
+    <OperatingStatus establishment={detail} />
+  </>)
+  const absentLabel = view.getByText('Foto indisponível')
+  const absent = absentLabel.parent!.parent!
+  expect(absent).toHaveStyle({ backgroundColor: palette[mode].contentAbsent })
+  expect(absentLabel).toHaveStyle({ color: palette[mode].contentAbsentForeground })
+  expect(absentLabel.parent).toHaveStyle({ borderStyle: 'dashed', borderColor: palette[mode].contentAbsentBorder })
+  const todayLabel = view.getByText('Segunda · Hoje')
+  const today = todayLabel.parent!
+  expect(today).toHaveStyle({ backgroundColor: palette[mode].temporalEmphasis, borderLeftWidth: 4, borderLeftColor: palette[mode].temporalEmphasisBorder })
+  expect(todayLabel).toHaveStyle({ color: palette[mode].temporalEmphasisForeground })
+  const status = view.getByTestId('operating-status')
+  expect(status).toHaveStyle({ backgroundColor: palette[mode].statusNeutral, borderStyle: undefined })
+  expect(view.getByText('Fechado agora')).toHaveStyle({ color: palette[mode].statusNeutralForeground })
+  expect(new Set([absent, today, status].map((node) => StyleSheet.flatten(node.props.style).backgroundColor)).size).toBe(3)
 })

@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import type { Media } from '@/catalog/types'
-import { spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export function EstablishmentCover({
@@ -28,8 +28,10 @@ export function EstablishmentCover({
 
   if (!usable || !url?.trim() || !cover || failedUrl === url) {
     return (
-      <View style={[styles.fallback, { backgroundColor: colors.muted }]}>
-        <Text style={[styles.caption, { color: colors.mutedForeground }]}>Foto indisponível</Text>
+      <View style={[styles.fallback, { backgroundColor: colors.contentAbsent }]}>
+        <View style={[styles.identifier, { borderColor: colors.contentAbsentBorder }]}>
+          <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
+        </View>
       </View>
     )
   }
@@ -50,5 +52,6 @@ const styles = StyleSheet.create({
   cover: { height: 160, width: '100%' },
   detail: { height: 220 },
   fallback: { minHeight: 72, justifyContent: 'center', padding: spacing.lg },
+  identifier: { alignSelf: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.md, padding: spacing.sm },
   caption: typography.caption,
 })

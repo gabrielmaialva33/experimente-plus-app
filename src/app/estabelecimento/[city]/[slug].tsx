@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -89,22 +90,22 @@ function Detail({
       : null
 
   const actions = [
-    { label: 'Como chegar', onPress: open('route_click', routeUrl) },
+    { label: 'Como chegar', icon: 'navigate-outline' as const, onPress: open('route_click', routeUrl) },
     {
-      label: 'WhatsApp',
+      label: 'WhatsApp', icon: 'logo-whatsapp' as const,
       onPress: open('whatsapp_click', (() => {
         const number = brazilianWhatsApp(contacts.whatsapp)
         return number && `https://wa.me/${number}`
       })()),
     },
     {
-      label: 'Ligar',
+      label: 'Ligar', icon: 'call-outline' as const,
       onPress: open('phone_click', (() => {
         const number = dialable(contacts.phone)
         return number && `tel:${number}`
       })()),
     },
-    { label: 'Site', onPress: open('website_click', contacts.website) },
+    { label: 'Site', icon: 'globe-outline' as const, onPress: open('website_click', contacts.website) },
   ].filter((action) => action.onPress)
   // Visiting is the primary discovery conversion. Without coordinates, promote
   // the first available contact rather than offering an unusable route.
@@ -118,7 +119,7 @@ function Detail({
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <EstablishmentCover cover={detail.cover} detail />
 
-      <View style={styles.section}>
+      <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
         <Text style={[styles.name, { color: colors.foreground }]}>{detail.name}</Text>
         <Text style={[styles.meta, { color: colors.mutedForeground }]}>
           {[detail.categories.find((item) => item.is_primary)?.name, address.district]
@@ -132,7 +133,7 @@ function Detail({
       </View>
 
       {primaryAction ? (
-        <View style={styles.actions}>
+        <View style={[styles.actions, { backgroundColor: colors.surfaceBase }]}>
           <Pressable
             accessibilityRole="button"
             onPress={primaryAction.onPress}
@@ -149,9 +150,10 @@ function Detail({
                 onPress={action.onPress}
                 style={[
                   styles.secondaryAction,
-                  { backgroundColor: colors.card, borderColor: colors.border },
+                  { backgroundColor: colors.actionSecondary, borderColor: colors.actionSecondaryBorder },
                 ]}>
-                <Text style={[styles.actionLabel, { color: colors.primary }]}>
+                <Ionicons name={action.icon} size={18} color={colors.actionSecondaryForeground} accessible={false} />
+                <Text style={[styles.actionLabel, { color: colors.actionSecondaryForeground }]}>
                   {action.label}
                 </Text>
               </Pressable>
@@ -161,13 +163,13 @@ function Detail({
       ) : null}
 
       {detail.description ? (
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
           <Text style={[styles.body, { color: colors.foreground }]}>{detail.description}</Text>
         </View>
       ) : null}
 
       {street ? (
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
           <Text style={[styles.heading, { color: colors.foreground }]}>Endereço</Text>
           <Text style={[styles.body, { color: colors.mutedForeground }]}>
             {[street, address.district, `${detail.city.name} · ${detail.city.state_code}`]
@@ -180,7 +182,7 @@ function Detail({
       <EstablishmentHours establishment={detail} />
 
       {detail.attributes.length > 0 ? (
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
           <Text style={[styles.heading, { color: colors.foreground }]}>Este lugar oferece</Text>
           <Text style={[styles.body, { color: colors.mutedForeground }]}>
             {detail.attributes
@@ -197,7 +199,7 @@ function Detail({
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
-  section: { gap: spacing.xs, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  section: { gap: spacing.xs, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
   name: { ...typography.title },
   meta: typography.caption,
   sponsored: { ...typography.caption, fontWeight: '600', textTransform: 'uppercase' },
@@ -209,12 +211,15 @@ const styles = StyleSheet.create({
   secondaryActions: { flexDirection: 'row', gap: spacing.sm },
   secondaryAction: {
     flex: 1,
-    borderRadius: radius.surface,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    borderRadius: radius.md,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.md,
     minHeight: 48,
     justifyContent: 'center',
   },
-  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
+  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center', flexShrink: 1 },
 })

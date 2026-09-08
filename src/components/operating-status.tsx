@@ -18,7 +18,7 @@ export function OperatingStatus({
   const colors = useColors()
   const { label, tone } = operatingStatus(establishment)
   const appearance = {
-    muted: { backgroundColor: colors.muted, color: colors.mutedForeground, borderColor: colors.border },
+    muted: { backgroundColor: colors.statusNeutral, color: colors.statusNeutralForeground, borderColor: colors.statusNeutralBorder },
     warning: {
       backgroundColor: colors.warningSoft,
       color: colors.warningAccent,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
     borderWidth: 1,
-    borderRadius: radius.surface,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },

@@ -1,0 +1,115 @@
+name: Mobile CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  EXPO_NO_TELEMETRY: '1'
+  # Never load a developer's .env into a distributable APK.
+  EXPO_NO_DOTENV: '1'
+
+jobs:
+  verify:
+    name: Types and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install_args: node pnpm
+      - name: Locate pnpm store
+        id: pnpm
+        run: echo "path=$(mise exec -- pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.path }}
+          key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'mise.toml') }}
+          restore-keys: pnpm-${{ runner.os }}-${{ runner.arch }}-
+      - run: mise exec -- pnpm install --frozen-lockfile
+      - run: mise exec -- pnpm typecheck
+      - run: mise exec -- pnpm test --runInBand
+
+  apk:
+    name: Standalone APK (debug key)
+    needs: verify
+    # Build merged/default-branch changes, not every PR revision; manual builds
+    # can select another branch. Both paths must pass verify first.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      NODE_ENV: production
+      # Public pilot origin, inlined by Expo during bundling. Not a secret.
+      EXPO_PUBLIC_API_BASE_URL: https://experimente-plus.mahina.fun
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Remember runner SDK before mise loads project environment
+        run: echo "RUNNER_ANDROID_SDK=$ANDROID_HOME" >> "$GITHUB_ENV"
+      # Node, pnpm and Temurin versions all come from mise.toml.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+      - name: Reuse runner SDK at the path declared by mise
+        run: |
+          test -d "$RUNNER_ANDROID_SDK"
+          if [ "$ANDROID_HOME" != "$RUNNER_ANDROID_SDK" ] && [ ! -e "$ANDROID_HOME" ]; then
+            mkdir -p "$(dirname "$ANDROID_HOME")"
+            ln -s "$RUNNER_ANDROID_SDK" "$ANDROID_HOME"
+          fi
+      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Locate pnpm store
+        id: pnpm
+        run: echo "path=$(mise exec -- pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.path }}
+          key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'mise.toml') }}
+          restore-keys: pnpm-${{ runner.os }}-${{ runner.arch }}-
+      - run: mise exec -- pnpm install --frozen-lockfile --prod=false
+      - name: Generate Android from app.json and config plugins
+        run: mise exec -- pnpm exec expo prebuild --platform android --no-install
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+      - name: Bundle and compile release with the generated debug key
+        working-directory: android
+        # Release embeds JS/assets and disables the Metro/dev-launcher path.
+        # SDK/NDK/build-tools versions come from the generated Gradle project;
+        # Gradle installs missing packages using the licenses accepted above.
+        run: >-
+          mise exec -- ./gradlew :app:assembleRelease --no-daemon --no-parallel --max-workers=2
+          -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=768m"
+          -PreactNativeArchitectures=arm64-v8a,x86_64
+      - name: Verify standalone payload, pilot origin and debug signature
+        run: mise exec -- python3 scripts/ci/verify-apk.py android/app/build/outputs/apk/release/app-release.apk
+      - name: Name APK by commit and UTC date
+        id: artifact
+        run: |
+          name="experimente-plus-pilot-debug-key-${GITHUB_SHA:0:12}-$(date -u +%Y%m%dT%H%M%SZ)-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p artifacts
+          cp android/app/build/outputs/apk/release/app-release.apk "artifacts/$name.apk"
+          (cd artifacts && sha256sum "$name.apk" > "$name.apk.sha256")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 
+import { palette } from '@/theme/tokens'
 import type { MobileUser } from '@/api/me'
 import AccountScreen from '@/app/(tabs)/account'
 
+jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
@@ -54,7 +56,10 @@ async function expectProfilePatch(body: { full_name?: string; username?: string 
   expect(api.request).toHaveBeenCalledTimes(1)
 }
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => {
+  jest.clearAllMocks()
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
+})
 
 describe('account profile editing', () => {
   it.each(['', '   '])('clears username with %p without sending the untouched name', async (value) => {
@@ -131,4 +136,13 @@ describe('account profile editing', () => {
 
     expect(api.request).not.toHaveBeenCalled()
   })
+})
+
+it.each(['light', 'dark'] as const)('styles profile maintenance as a utility action instead of a conversion in %s', async (mode) => {
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+  const view = await renderAccount()
+  await fireEvent.changeText(view.getByLabelText('Nome'), 'Ana Souza')
+  expect(view.getByRole('button', { name: 'Salvar alterações' })).toHaveStyle({ backgroundColor: palette[mode].primary })
+  expect(view.getByText('Salvar alterações')).toHaveStyle({ color: palette[mode].primaryForeground })
+  expect(view.getByText('Sair')).toHaveStyle({ color: palette[mode].primary })
 })

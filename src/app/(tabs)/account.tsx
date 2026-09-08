@@ -53,10 +53,8 @@ export default function AccountScreen() {
           : null
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
       <ScrollView contentContainerStyle={styles.page}>
-        <Text style={[styles.heading, { color: colors.foreground }]}>Conta</Text>
-
         <Field label="Nome" value={fullName} onChange={setFullName} />
         <Field label="Usuário" value={username} onChange={setUsername} autoCapitalize="none" />
 
@@ -79,7 +77,7 @@ export default function AccountScreen() {
           <Text
             style={[
               styles.message,
-              { color: save.isSuccess ? colors.success : colors.destructive },
+              { color: save.isSuccess ? colors.successAccent : colors.destructiveAccent },
             ]}>
             {message}
           </Text>
@@ -91,9 +89,9 @@ export default function AccountScreen() {
           onPress={() => save.mutate()}
           style={[
             styles.action,
-            { backgroundColor: colors.cta, opacity: !changed || !valid || save.isPending ? 0.5 : 1 },
+            { backgroundColor: colors.primary, opacity: !changed || !valid || save.isPending ? 0.5 : 1 },
           ]}>
-          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
+          <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>
             {save.isPending ? 'Salvando…' : 'Salvar alterações'}
           </Text>
         </Pressable>
@@ -106,7 +104,7 @@ export default function AccountScreen() {
           accessibilityRole="button"
           onPress={() => router.push('/conta/excluir')}
           style={styles.destructive}>
-          <Text style={[styles.message, { color: colors.destructive }]}>Excluir minha conta</Text>
+          <Text style={[styles.message, { color: colors.destructiveAccent }]}>Excluir minha conta</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -137,7 +135,7 @@ function Field({
         autoCorrect={false}
         style={[
           styles.input,
-          { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+          { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground },
         ]}
       />
     </View>
@@ -146,14 +144,13 @@ function Field({
 
 const styles = StyleSheet.create({
   page: { gap: spacing.md, padding: spacing.xl },
-  heading: { ...typography.title, marginBottom: spacing.sm },
   field: { gap: spacing.xs },
   readOnly: { gap: 2, paddingVertical: spacing.xs },
   label: { ...typography.caption, textTransform: 'uppercase' },
   value: typography.body,
   input: {
     ...typography.body,
-    borderRadius: radius.surface,
+    borderRadius: radius.md,
     borderWidth: 1,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,

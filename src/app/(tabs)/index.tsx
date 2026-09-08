@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +15,8 @@ import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
+import { ChoiceRow } from '@/components/choice-row'
+import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
@@ -109,12 +110,8 @@ export default function ExploreScreen() {
   )
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.primary, flex: 1 }}>
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.city, { color: colors.primaryForeground }]}>
-          {city ? `${city.name} · ${city.state_code}` : 'Escolha uma cidade'}
-        </Text>
-
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.surfaceBase, flex: 1 }}>
+      <View style={[styles.header, { backgroundColor: colors.surfaceBase }]}>
         <TextInput
           value={term}
           onChangeText={setTerm}
@@ -128,41 +125,34 @@ export default function ExploreScreen() {
 
       <View style={{ backgroundColor: colors.background, flex: 1 }}>
         {/* Changing city is discovery state only: no tenant request, no token. */}
-        <View style={[styles.citySelector, { borderBottomColor: colors.border }]}>
+        <View style={styles.citySelector}>
           <Text style={[styles.controlLabel, { color: colors.mutedForeground }]}>Cidade</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
-            <View style={styles.cities}>
-              {cities.data?.map((item) => (
-                <Pressable
+          <ChoiceRow label="Cidade" single>
+            {(maxWidth) => cities.data?.map((item) => (
+                <ChoiceControl
                   key={item.slug}
-                  accessibilityRole="button"
+                  shape="tab"
+                  compact
+                  maxWidth={maxWidth}
+                  role="radio"
                   accessibilityLabel={`${item.name}, ${item.state_code}`}
-                  accessibilityState={{ selected: item.slug === selectedCity }}
+                  label={`${item.name} · ${item.state_code}`}
+                  selected={item.slug === selectedCity}
                   onPress={() => selectCity(item.slug)}
-                  style={[
-                    styles.cityOption,
-                    { borderBottomColor: item.slug === selectedCity ? colors.primary : colors.border },
-                  ]}>
-                  <Text style={[
-                    styles.cityLabel,
-                    { color: item.slug === selectedCity ? colors.primary : colors.mutedForeground },
-                  ]}>
-                    {item.name} · {item.state_code}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </ScrollView>
+                />
+            ))}
+          </ChoiceRow>
         </View>
 
         {/* One filter state, shared by the list and the map. */}
         <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>Filtros</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
-          <View style={styles.rowInner}>
-            <Chip label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
+        <ChoiceRow label="Filtros">
+          {(maxWidth) => <>
+            <Chip maxWidth={maxWidth} label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
             {categories.data?.categories.map((item) => (
               <Chip
                 key={item.slug}
+                maxWidth={maxWidth}
                 label={item.name}
                 selected={category === item.slug}
                 onPress={() => setCategory(category === item.slug ? undefined : item.slug)}
@@ -172,31 +162,29 @@ export default function ExploreScreen() {
             {filters.data?.attributes.map((item) => (
               <Chip
                 key={item.key}
+                maxWidth={maxWidth}
                 label={item.name}
                 selected={attributes.includes(item.key)}
                 onPress={() => toggleAttribute(item.key)}
               />
             ))}
-          </View>
-        </ScrollView>
+          </>}
+        </ChoiceRow>
 
         <View style={styles.viewToggle}>
-          <View style={[styles.viewOptions, { backgroundColor: colors.muted }]}>
+          <View accessibilityRole="radiogroup" accessibilityLabel="Visualização dos resultados" style={styles.viewOptions}>
             {(['list', 'map'] as const).map((mode) => (
-              <Pressable
+              <ChoiceControl
                 key={mode}
-                accessibilityRole="button"
+                shape="segment"
+                compact
+                fill
+                role="radio"
                 accessibilityLabel={mode === 'list' ? 'Ver em lista' : 'Ver no mapa'}
-                accessibilityState={{ selected: view === mode }}
+                label={mode === 'list' ? 'Lista' : 'Mapa'}
+                selected={view === mode}
                 onPress={() => setView(mode)}
-                style={[styles.viewOption, view === mode && { backgroundColor: colors.primary }]}>
-                <Text style={[
-                  styles.cityLabel,
-                  { color: view === mode ? colors.primaryForeground : colors.mutedForeground },
-                ]}>
-                  {mode === 'list' ? 'Lista' : 'Mapa'}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -259,36 +247,22 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   header: { gap: spacing.md, paddingBottom: spacing.lg, paddingHorizontal: spacing.lg },
-  city: { ...typography.heading, fontWeight: '700' },
   search: {
     ...typography.body,
     borderRadius: radius.surface,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
-  row: { flexGrow: 0 },
-  citySelector: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, borderBottomWidth: 1 },
-  controlLabel: { ...typography.caption, fontWeight: '600' },
+  citySelector: { paddingTop: spacing.sm },
+  controlLabel: { ...typography.caption, fontWeight: '600', paddingHorizontal: spacing.lg },
   filterLabel: {
     ...typography.caption,
     fontWeight: '600',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  cities: { flexDirection: 'row', gap: spacing.lg },
-  cityOption: { borderBottomWidth: 2, paddingVertical: spacing.md, minHeight: 48 },
-  cityLabel: { ...typography.body, fontWeight: '600' },
-  viewToggle: { paddingBottom: spacing.sm, paddingHorizontal: spacing.md },
-  viewOptions: { flexDirection: 'row', borderRadius: radius.surface, padding: spacing.xs },
-  viewOption: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-    padding: spacing.sm,
-    borderRadius: radius.surface,
-  },
-  rowInner: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  viewToggle: { paddingVertical: spacing.xs, paddingHorizontal: spacing.lg, width: '100%', minWidth: 0 },
+  viewOptions: { flexDirection: 'row', gap: spacing.sm, width: '100%', minWidth: 0, paddingVertical: spacing.xs },
   list: { padding: spacing.lg },
   feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
   message: { ...typography.body, textAlign: 'center' },

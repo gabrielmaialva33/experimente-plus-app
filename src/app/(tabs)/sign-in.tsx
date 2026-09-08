@@ -31,19 +31,17 @@ export default function SignInScreen() {
         : null
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
       <View style={styles.page}>
-        <Text style={[styles.heading, { color: colors.foreground }]}>Entrar</Text>
-
         {/* A stored credential whose context could not load: discovery still
             works, and this is the escape from a half-loaded session. */}
         {status === 'unavailable' ? (
           <View style={styles.notice}>
-            <Text style={[styles.error, { color: colors.warning }]}>
+            <Text style={[styles.error, { color: colors.warningAccent }]}>
               Não foi possível carregar sua conta. Explorar continua disponível.
             </Text>
             <Pressable onPress={() => refresh()}>
-              <Text style={[styles.actionLabel, { color: colors.cta }]}>Tentar de novo</Text>
+              <Text style={[styles.actionLabel, { color: colors.primary }]}>Tentar de novo</Text>
             </Pressable>
             <Pressable onPress={signOut}>
               <Text style={[styles.actionLabel, { color: colors.mutedForeground }]}>
@@ -62,7 +60,7 @@ export default function SignInScreen() {
           autoCorrect={false}
           keyboardType="email-address"
           textContentType="username"
-          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground }]}
         />
 
         <TextInput
@@ -72,10 +70,10 @@ export default function SignInScreen() {
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry
           textContentType="password"
-          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground }]}
         />
 
-        {message ? <Text style={[styles.error, { color: colors.destructive }]}>{message}</Text> : null}
+        {message ? <Text style={[styles.error, { color: colors.destructiveAccent }]}>{message}</Text> : null}
 
         <Pressable
           accessibilityRole="button"
@@ -83,9 +81,9 @@ export default function SignInScreen() {
           onPress={() => mutation.mutate()}
           style={[
             styles.action,
-            { backgroundColor: colors.cta, opacity: mutation.isPending || !uid || !password ? 0.6 : 1 },
+            { backgroundColor: colors.primary, opacity: mutation.isPending || !uid || !password ? 0.6 : 1 },
           ]}>
-          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
+          <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>
             {mutation.isPending ? 'Entrando…' : 'Entrar'}
           </Text>
         </Pressable>
@@ -96,7 +94,6 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   page: { gap: spacing.md, padding: spacing.xl },
-  heading: { ...typography.title, marginBottom: spacing.sm },
   input: {
     ...typography.body,
     borderRadius: radius.pill,

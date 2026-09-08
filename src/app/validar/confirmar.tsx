@@ -58,7 +58,7 @@ export default function ConfirmRedemptionScreen() {
               : 'Não foi possível ler este código agora.'}
         </Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={[styles.link, { color: colors.cta }]}>Voltar ao leitor</Text>
+          <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>
         </Pressable>
       </View>
     )
@@ -94,7 +94,7 @@ export default function ConfirmRedemptionScreen() {
       {benefit.terms ? <Field label="Regras" value={benefit.terms} /> : null}
 
       {confirm.isError ? (
-        <Text style={[styles.message, { color: colors.warning }]}>
+        <Text style={[styles.message, { color: colors.warningAccent }]}>
           A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o mesmo
           comprovante será devolvido.
         </Text>
@@ -123,7 +123,7 @@ function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.heading, { color: colors.success }]}>Utilização registrada</Text>
+      <Text style={[styles.heading, { color: colors.successAccent }]}>Utilização registrada</Text>
 
       <Field label="Comprovante" value={receipt.receipt_code} />
       <Field label="Cliente" value={receipt.holder.full_name} />

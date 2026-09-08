@@ -80,8 +80,8 @@ export default function ValidateScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={requestPermission}
-          style={[styles.action, { backgroundColor: colors.cta }]}>
-          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>Permitir câmera</Text>
+          style={[styles.action, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>Permitir câmera</Text>
         </Pressable>
         <HistoryLink />
       </Centered>
@@ -89,7 +89,7 @@ export default function ValidateScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
       {/* Unmounted when the screen loses focus: a camera running behind a
           pushed screen keeps scanning and keeps costing battery. */}
       {active ? (

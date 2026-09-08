@@ -4,6 +4,9 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useEffect } from 'react'
 import { useColorScheme } from 'react-native'
 
+import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
+import { useColors } from '@/theme/use-colors'
+
 import { createQueryClient, installQueryEnvironment } from '@/api/query-client'
 import { SessionProvider, useSession } from '@/session/context'
 
@@ -41,14 +44,16 @@ function SplashGate() {
  */
 function Shell() {
   const colorScheme = useColorScheme()
+  const colors = useColors()
+  const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
+    <ThemeProvider value={{ ...baseTheme, colors: navigationColors(colors) }}>
+      <Stack screenOptions={stackSurfaceOptions(colors)}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="estabelecimento/[city]/[slug]"
-          options={{ headerShown: true, title: '' }}
+          options={{ title: 'Estabelecimento' }}
         />
         <Stack.Screen
           name="carteira/apresentar"
@@ -97,4 +102,3 @@ export default function RootLayout() {
     </QueryClientProvider>
   )
 }
-

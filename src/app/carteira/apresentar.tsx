@@ -89,7 +89,7 @@ export default function PresentScreen() {
           Não foi possível gerar o código agora.
         </Text>
         <Pressable onPress={create}>
-          <Text style={[styles.link, { color: colors.cta }]}>Tentar de novo</Text>
+          <Text style={[styles.link, { color: colors.primary }]}>Tentar de novo</Text>
         </Pressable>
       </View>
     )
@@ -114,7 +114,7 @@ export default function PresentScreen() {
         <Image accessibilityLabel="Código temporário do benefício" source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
       )}
 
-      <Text style={[styles.countdown, { color: expired ? colors.warning : colors.foreground }]}>
+      <Text style={[styles.countdown, { color: expired ? colors.warningAccent : colors.foreground }]}>
         {expired ? 'Expirado' : `Válido por ${clock(remaining)}`}
       </Text>
 

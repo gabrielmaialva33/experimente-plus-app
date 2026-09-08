@@ -40,8 +40,6 @@ export default function DeleteAccountScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.heading, { color: colors.destructive }]}>Excluir minha conta</Text>
-
       <Text style={[styles.body, { color: colors.foreground }]}>
         Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
       </Text>
@@ -53,7 +51,7 @@ export default function DeleteAccountScreen() {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
-          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground }]}
         />
       </View>
 
@@ -70,14 +68,14 @@ export default function DeleteAccountScreen() {
             styles.input,
             {
               backgroundColor: colors.card,
-              borderColor: matches ? colors.destructive : colors.border,
+              borderColor: matches ? colors.destructive : colors.input,
               color: colors.foreground,
             },
           ]}
         />
       </View>
 
-      {message ? <Text style={[styles.error, { color: colors.destructive }]}>{message}</Text> : null}
+      {message ? <Text style={[styles.error, { color: colors.destructiveAccent }]}>{message}</Text> : null}
 
       <Pressable
         accessibilityRole="button"
@@ -87,7 +85,7 @@ export default function DeleteAccountScreen() {
           styles.action,
           { backgroundColor: colors.destructive, opacity: !ready || remove.isPending ? 0.4 : 1 },
         ]}>
-        <Text style={[styles.actionLabel, { color: '#ffffff' }]}>
+        <Text style={[styles.actionLabel, { color: colors.destructiveForeground }]}>
           {remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
         </Text>
       </Pressable>
@@ -97,13 +95,12 @@ export default function DeleteAccountScreen() {
 
 const styles = StyleSheet.create({
   page: { gap: spacing.md, padding: spacing.xl },
-  heading: typography.title,
   body: typography.body,
   field: { gap: spacing.xs },
   label: { ...typography.caption, textTransform: 'uppercase' },
   input: {
     ...typography.body,
-    borderRadius: radius.surface,
+    borderRadius: radius.md,
     borderWidth: 1,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,

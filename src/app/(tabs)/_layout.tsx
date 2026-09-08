@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs } from 'expo-router'
-import { useColorScheme, type ColorValue } from 'react-native'
+import { StyleSheet, type ColorValue } from 'react-native'
 
 import { usePartnerAreas, useSession } from '@/session/context'
-import { palette } from '@/theme/tokens'
+import { screenHeaderOptions } from '@/theme/navigation'
+import { elevation } from '@/theme/tokens'
+import { useColors } from '@/theme/use-colors'
 
 /**
  * The tab set is derived from the session and from server-projected
@@ -24,13 +26,12 @@ import { palette } from '@/theme/tokens'
  */
 const icon =
   (name: keyof typeof Ionicons.glyphMap) =>
-  ({ color, size }: { color: ColorValue; size: number }) => (
-    <Ionicons name={name} color={color as string} size={size} />
+  ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) => (
+    <Ionicons name={focused ? name.replace('-outline', '') as keyof typeof Ionicons.glyphMap : name} color={color as string} size={size} />
   )
 
 export default function TabsLayout() {
-  const scheme = useColorScheme()
-  const colors = palette[scheme === 'dark' ? 'dark' : 'light']
+  const colors = useColors()
   const { status } = useSession()
   const { canValidate } = usePartnerAreas()
 
@@ -39,10 +40,13 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        ...screenHeaderOptions(colors),
+        tabBarActiveTintColor: colors.primaryAccent,
+        // Selection uses tint and a filled icon, not a background with a different mask.
+        tabBarActiveBackgroundColor: colors.surfaceBase,
+        tabBarInactiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
+        tabBarStyle: { ...elevation.raised, backgroundColor: colors.surfaceBase, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
       }}>
       <Tabs.Screen
         name="index"
@@ -52,7 +56,7 @@ export default function TabsLayout() {
       <Tabs.Protected guard={authenticated}>
         <Tabs.Screen
           name="wallet"
-          options={{ title: 'Carteira', tabBarIcon: icon('ticket-outline') }}
+          options={{ title: 'Carteira', headerShown: false, tabBarIcon: icon('ticket-outline') }}
         />
       </Tabs.Protected>
 

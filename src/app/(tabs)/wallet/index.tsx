@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { purchaseDate } from '@/purchases/components'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -36,7 +37,7 @@ export default function WalletScreen() {
       <ScrollView contentContainerStyle={styles.page}>
         <View testID="wallet-navigation" style={styles.navigation}>
           <Pressable accessibilityRole="button" onPress={() => router.push('/wallet/edicoes')} style={styles.historyLink}>
-            <Text style={[styles.navigationLabel, { color: colors.primary }]}>Conhecer edições e acompanhar pedidos</Text>
+            <Text style={[styles.navigationLabel, { color: colors.primary }]}>Conhecer pacotes, vouchers e pedidos</Text>
           </Pressable>
           {/* Past uses remain reachable without holding a current benefit. */}
           <Pressable accessibilityRole="button" onPress={() => router.push('/carteira/historico')} style={styles.historyLink}>
@@ -58,16 +59,26 @@ export default function WalletScreen() {
               Sua carteira está vazia
             </Text>
             <Text style={[styles.message, { color: colors.mutedForeground }]}>
-              Ao receber acesso a uma edição, ela aparece aqui. Compras aguardam confirmação de pagamento; o uso segue as datas e condições de cada benefício.
+              Ao receber acesso a um pacote ou voucher, ele aparece aqui. Compras aguardam confirmação de pagamento; o uso segue as datas e condições de cada benefício.
             </Text>
           </View>
         ) : null}
 
         {!wallet.isError && passes.map((pass) => (
-          <View key={pass.access.id} style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-            <Text style={[styles.heading, { color: colors.foreground }]}>{pass.edition.name}</Text>
+          <View key={pass.access.id} testID={`wallet-pass-${pass.access.id}`} style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+            <Text style={[styles.heading, { color: colors.foreground }]}>
+              {pass.access.product_type === 'offer' ? 'Voucher avulso' : 'Pacote da cidade'}
+            </Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>
+              {pass.access.product_type === 'offer'
+                ? pass.benefits.find((benefit) => benefit.offer_id === pass.access.offer_id)?.establishment.public_name
+                : pass.edition.name}
+            </Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {pass.edition.city.name} · {pass.edition.city.state_code}
+            </Text>
+            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+              Uso: {purchaseDate(pass.access.usage_starts_at)} até {purchaseDate(pass.access.usage_ends_at)}
             </Text>
             {financiallyBlocked(pass.access) ? (
               <Text style={[styles.body, { color: colors.foreground }]}>{FINANCIAL_RESTRICTION_MESSAGE}</Text>

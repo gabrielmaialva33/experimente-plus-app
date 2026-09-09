@@ -8,8 +8,8 @@ export default function WalletLayout() {
   return (
     <Stack screenOptions={stackSurfaceOptions(colors)}>
       <Stack.Screen name="index" options={{ title: 'Carteira' }} />
-      <Stack.Screen name="edicoes" options={{ title: 'Edições e pedidos' }} />
-      <Stack.Screen name="edicao/[id]" options={{ title: 'Comprar edição' }} />
+      <Stack.Screen name="edicoes" options={{ title: 'Pacotes, vouchers e pedidos' }} />
+      <Stack.Screen name="edicao/[id]" options={{ title: 'Comprar benefício' }} />
       <Stack.Screen name="pedido/[id]" options={{ title: 'Meu pedido' }} />
     </Stack>
   )

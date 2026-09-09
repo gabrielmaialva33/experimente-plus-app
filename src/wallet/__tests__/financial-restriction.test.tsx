@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, waitFor } from '@testing-library/react-native'
+import { act, render, waitFor, within } from '@testing-library/react-native'
 
 import { palette } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
@@ -42,7 +42,7 @@ const benefit: WalletBenefit = {
 const wallet: Wallet = {
   summary: { passes: 1, benefits: 1, available: 1, upcoming: 0, redeemed: 0 },
   passes: [{
-    access: { id: 1, source: 'payment', status: 'active', availability: 'available', granted_at: '' },
+    access: { offer_id: null, product_type: 'edition', usage_starts_at: '2026-10-01T00:00:00Z', usage_ends_at: '2026-12-31T00:00:00Z', id: 1, source: 'payment', status: 'active', availability: 'available', granted_at: '' },
     edition: { id: 1, name: 'Edição', slug: 'edicao', description: null, usage_starts_at: '', usage_ends_at: '',
       city: { id: 1, name: 'Londrina', slug: 'londrina', state_code: 'PR', timezone: 'America/Sao_Paulo' } },
     benefits: [benefit],
@@ -149,16 +149,48 @@ it.each(['light', 'dark'] as const)('keeps wallet navigation left in its own flo
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   api.getWallet.mockResolvedValue(wallet)
   const view = await page(<WalletScreen />)
-  const editions = await view.findByRole('button', { name: 'Conhecer edições e acompanhar pedidos' })
+  const editions = await view.findByRole('button', { name: 'Conhecer pacotes, vouchers e pedidos' })
   const history = view.getByRole('button', { name: 'Meus usos' })
   for (const button of [editions, history]) {
     expect(button).toHaveStyle({ alignItems: 'flex-start', minHeight: 48 })
   }
   expect(view.getByTestId('wallet-navigation')).toHaveStyle({ flexDirection: 'column', paddingRight: 64 })
-  for (const label of ['Conhecer edições e acompanhar pedidos', 'Meus usos']) {
+  for (const label of ['Conhecer pacotes, vouchers e pedidos', 'Meus usos']) {
     expect(view.getByText(label)).toHaveStyle({ color: palette[mode].primary, textAlign: 'left' })
   }
   expect(view.getByRole('button', { name: 'Usar benefício' })).toHaveStyle({ backgroundColor: palette[mode].cta })
   expect(view.getByText('Usar benefício')).toHaveStyle({ color: palette[mode].ctaForeground })
   expect(view.getByText('1 uso(s) restante(s)')).toHaveStyle({ color: palette[mode].ctaAccent })
+})
+
+it('distinguishes a multi-offer package from one store voucher and uses the effective access window', async () => {
+  const storeBenefit = { ...benefit, key: '2:3', access_id: 2, offer_id: 3, title: 'Voucher do Bistrô', establishment: { id: 2, public_name: 'Bistrô', slug: 'bistro' } }
+  api.getWallet.mockResolvedValue({ ...wallet, passes: [
+    { ...wallet.passes[0], benefits: [benefit, { ...storeBenefit, key: '1:3', access_id: 1 }] },
+    { ...wallet.passes[0], access: { ...wallet.passes[0].access, id: 2, product_type: 'offer', offer_id: 3,
+      usage_starts_at: '2026-11-01T00:00:00Z', usage_ends_at: '2026-11-30T00:00:00Z' }, benefits: [storeBenefit] },
+  ] })
+  const view = await page(<WalletScreen />)
+  const pack = within(await view.findByTestId('wallet-pass-1'))
+  const voucher = within(view.getByTestId('wallet-pass-2'))
+  expect(pack.getByText('Pacote da cidade')).toBeOnTheScreen()
+  expect(pack.getAllByRole('button', { name: 'Usar benefício' })).toHaveLength(2)
+  expect(voucher.getByText('Voucher avulso')).toBeOnTheScreen()
+  expect(voucher.getAllByText('Bistrô').length).toBeGreaterThan(0)
+  expect(voucher.queryByText('Café')).toBeNull()
+  expect(voucher.getAllByRole('button', { name: 'Usar benefício' })).toHaveLength(1)
+  expect(voucher.getByText(/Uso:.*01\/11\/2026.*30\/11\/2026/)).toBeOnTheScreen()
+  expect(pack.getByText(/Uso:.*01\/10\/2026.*31\/12\/2026/)).toBeOnTheScreen()
+})
+
+it('uses the server product type rather than counting remaining benefits and preserves voucher financial blocking', async () => {
+  api.getWallet.mockResolvedValue({ ...wallet, passes: [wallet.passes[0], {
+    ...blockedWallet.passes[0], access: { ...blockedWallet.passes[0].access, id: 2, product_type: 'offer', offer_id: 2 },
+  }] })
+  const view = await page(<WalletScreen />)
+  expect(within(await view.findByTestId('wallet-pass-1')).getByText('Pacote da cidade')).toBeOnTheScreen()
+  const voucher = within(view.getByTestId('wallet-pass-2'))
+  expect(voucher.getByText('Voucher avulso')).toBeOnTheScreen()
+  expect(voucher.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).length).toBeGreaterThan(0)
+  expect(voucher.queryByRole('button', { name: 'Usar benefício' })).toBeNull()
 })

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 
 import { PurchaseAction, PurchasePage, PurchaseText, RetryPurchase, price } from '@/purchases/components'
+import { productKey, productLabel, productRoute } from '@/purchases/products'
 import { ORDER_COPY, orderState } from '@/purchases/order-state'
 import { usePurchaseEditions, usePurchases } from '@/purchases/queries'
 
@@ -11,17 +12,17 @@ export default function PurchaseEditionsScreen() {
 
   return (
     <PurchasePage>
-      <PurchaseText heading>Conheça as edições</PurchaseText>
-      <PurchaseText>Explorar lugares é livre. Comprar uma edição é opcional.</PurchaseText>
-      {editions.isPending ? <PurchaseText>Carregando edições…</PurchaseText> : null}
+      <PurchaseText heading>Pacotes e vouchers</PurchaseText>
+      <PurchaseText>Explorar lugares é livre. Comprar um pacote ou voucher é opcional.</PurchaseText>
+      {editions.isPending ? <PurchaseText>Carregando produtos…</PurchaseText> : null}
       {editions.isError ? <>
-        <PurchaseText>As edições não estão disponíveis agora. Você pode continuar explorando.</PurchaseText>
+        <PurchaseText>Os produtos não estão disponíveis agora. Você pode continuar explorando.</PurchaseText>
         <RetryPurchase error={editions.error} onRetry={() => void editions.refetch()} />
       </> : null}
-      {editions.data?.editions.length === 0 ? <PurchaseText>Nenhuma edição disponível no momento.</PurchaseText> : null}
-      {editions.data?.editions.map((edition) => (
-        <PurchaseAction key={edition.id} label={`${edition.snapshot.name} · ${price(edition.amount_cents, edition.currency)}`}
-          onPress={() => router.push(`/wallet/edicao/${edition.id}`)} />
+      {editions.data?.products.length === 0 ? <PurchaseText>Nenhum produto disponível no momento.</PurchaseText> : null}
+      {editions.data?.products.map((product) => (
+        <PurchaseAction key={productKey(product)} label={`${productLabel(product)} · ${product.name} · ${price(product.amount_cents, product.currency)}`}
+          onPress={() => router.push(productRoute(product, 'wallet'))} />
       ))}
       <PurchaseText heading>Meus pedidos</PurchaseText>
       {orders.isPending ? <PurchaseText>Carregando pedidos…</PurchaseText> : null}

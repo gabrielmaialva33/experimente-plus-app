@@ -10,6 +10,7 @@ import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
+import { EstablishmentOffers } from '@/purchases/establishment-offers'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -161,6 +162,8 @@ function Detail({
           </View>
         </View>
       ) : null}
+
+      <EstablishmentOffers citySlug={citySlug} slug={detail.slug} />
 
       {detail.description ? (
         <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>

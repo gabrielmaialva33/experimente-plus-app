@@ -9,10 +9,12 @@ import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
 import { palette } from '@/theme/tokens'
 
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ city: 'londrina', slug: 'cafe' }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => ({ city: 'londrina', slug: 'cafe' }) }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
+jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
+jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: () => ({ data: { products: [] } }) }))
 jest.mock('@/catalog/queries', () => ({ useEstablishment: jest.fn() }))
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 

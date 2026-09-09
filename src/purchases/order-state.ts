@@ -15,7 +15,7 @@ export function orderState(order: Purchase): OrderState {
 export const ORDER_COPY: Record<OrderState, { title: string; message: string }> = {
   pending: {
     title: 'Pedido pendente',
-    message: 'Aguardando confirmação do pagamento. O pedido ainda não concede acesso à edição.',
+    message: 'Aguardando confirmação do pagamento. O pedido ainda não concede acesso aos benefícios.',
   },
   confirmed: {
     title: 'Pagamento confirmado',

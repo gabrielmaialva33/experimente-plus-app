@@ -48,7 +48,7 @@ export function price(amountCents: number, currency: string) {
   catch { return `${amountCents / 100} ${currency}` }
 }
 
-function date(value: string) {
+export function purchaseDate(value: string) {
   if (!value || !Number.isFinite(Date.parse(value))) return 'Não informado'
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value)) + ' UTC'
 }
@@ -58,12 +58,13 @@ export function EditionTerms({ snapshot }: { snapshot: PurchaseSnapshot }) {
     <View style={styles.terms}>
       <PurchaseText heading>{snapshot.name}</PurchaseText>
       {snapshot.description ? <PurchaseText>{snapshot.description}</PurchaseText> : null}
-      <PurchaseText>Venda: {date(snapshot.sales_starts_at)} até {date(snapshot.sales_ends_at)}</PurchaseText>
-      <PurchaseText>Uso: {date(snapshot.usage_starts_at)} até {date(snapshot.usage_ends_at)}</PurchaseText>
-      <PurchaseText>A compra é da edição inteira. A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
+      <PurchaseText>Venda: {purchaseDate(snapshot.sales_starts_at)} até {purchaseDate(snapshot.sales_ends_at)}</PurchaseText>
+      <PurchaseText>Uso: {purchaseDate(snapshot.usage_starts_at)} até {purchaseDate(snapshot.usage_ends_at)}</PurchaseText>
+      <PurchaseText>{snapshot.product_type === 'offer' ? 'A compra é de um voucher desta loja.' : 'A compra é do pacote da cidade.'} A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
       {snapshot.offers.map((offer) => (
         <View key={offer.id} style={styles.terms}>
           <PurchaseText heading>{offer.title}</PurchaseText>
+          <PurchaseText>{offer.establishment.public_name}</PurchaseText>
           {offer.terms ? <PurchaseText>{offer.terms}</PurchaseText> : null}
           <PurchaseText>Limite por acesso: {offer.max_redemptions_per_access}</PurchaseText>
         </View>

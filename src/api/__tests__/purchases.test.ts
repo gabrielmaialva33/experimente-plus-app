@@ -12,7 +12,7 @@ it('replays the exact same purchase body and idempotency key after one 401 refre
   const fetchMock = jest.spyOn(globalThis, 'fetch')
     .mockResolvedValueOnce(new Response('{}', { status: 401 }))
     .mockResolvedValueOnce(new Response('{"id":"98b8ff53-9cd5-4a48-9f32-731a11cbe7f1"}', { status: 202 }))
-  const body: CreatePurchaseRequest = { edition_id: 1, amount_cents: 10000, terms_version: 'a'.repeat(64), method: 'pix' }
+  const body: CreatePurchaseRequest = { edition_id: 1, offer_id: 3, amount_cents: 1490, terms_version: 'b'.repeat(64), method: 'pix' }
   expect(await createPurchase(body, 'stable-intention-123')).toEqual({ id: '98b8ff53-9cd5-4a48-9f32-731a11cbe7f1' })
   expect(fetchMock).toHaveBeenCalledTimes(2)
   for (const [, options] of fetchMock.mock.calls) {
@@ -34,8 +34,8 @@ it('reads the public empty catalog without credentials, authorization or a tenan
   const session = jest.requireMock('../session') as { readCredentials: jest.Mock; refreshSession: jest.Mock }
   session.readCredentials.mockClear()
   session.refreshSession.mockClear()
-  const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"editions":[]}', { status: 200 }))
-  expect(await listPurchaseEditions()).toEqual({ editions: [] })
+  const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"products":[],"editions":[],"offers":[]}', { status: 200 }))
+  expect(await listPurchaseEditions()).toEqual({ products: [], editions: [], offers: [] })
   expect(fetchMock).toHaveBeenCalledTimes(1)
   const [url, options] = fetchMock.mock.calls[0]
   expect(String(url)).toMatch(/\/api\/v1\/catalog\/benefit-editions$/)

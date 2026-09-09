@@ -2315,8 +2315,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Vitrine pública de edições compráveis, sem login ou aquisição prévia
-         * @description Operação resolvida pelo hostname confiável. Até 100 edições publicadas com preço positivo em BRL, venda iniciada e ainda aberta, uso ainda não encerrado, ao menos uma oferta ativa de unidade publicada e meio de pagamento habilitado. Pré-venda é permitida quando a venda está aberta e o uso começa no futuro. Edições sem meios disponíveis são omitidas; nenhuma resulta em editions vazio com HTTP 200. Somente dados públicos da edição, cidade e ofertas; não inclui titular, pedidos ou dados do PSP. O catálogo de descoberta permanece público e independente da compra e da disponibilidade do PSP.
+         * Vitrine pública de pacotes e vouchers avulsos, sem login ou aquisição prévia
+         * @description Operação resolvida pelo hostname confiável. Até 100 edições de origem, publicadas, com produtos de preço positivo em BRL, venda iniciada e ainda aberta, uso ainda não encerrado, ao menos uma oferta ativa de unidade publicada e meio de pagamento habilitado. Pré-venda é permitida quando a venda está aberta e o uso começa no futuro. products é a lista canônica dos dois tipos, discriminados por product_type (edition ou offer). editions e offers são subconjuntos preservados por compatibilidade, com preços e snapshots próprios. Cada produto expõe terms_version diretamente (igual a snapshot.terms_version): SHA-256 hexadecimal minúsculo de 64 caracteres, que o cliente copia literalmente para o POST de compra, junto de edition_id, offer_id, amount_cents e um dos payment_methods. Cotação alterada exige nova consulta. Produtos sem meios disponíveis são omitidos; listas vazias mantêm HTTP 200. Offer_id NULL representa pacote; ID limita a compra a uma oferta. A janela de uso avulsa é a interseção da edição com a oferta; venda termina até o fim desse uso. Somente dados públicos da edição, cidade e ofertas; não inclui titular, pedidos ou dados do PSP. O catálogo de descoberta permanece público e independente da compra e da disponibilidade do PSP.
          */
         get: operations["purchaseCatalog"];
         put?: never;
@@ -2542,7 +2542,7 @@ export interface paths {
         put?: never;
         /**
          * Receber sinal autenticado; nenhum status do corpo concede acesso
-         * @description Mercado Pago Payments: HMAC SHA-256 de id/data.id, x-request-id e ts, com x-signature e tolerância de 5 minutos. GET autenticado no PSP verifica conta, live_mode, valor, moeda e referência. Fake apenas development/test usa assinatura derivada da configuração local. Retorno 202 confirma persistência, não pagamento.
+         * @description Mercado Pago Payments: HMAC SHA-256 de id/data.id, x-request-id e ts, com x-signature e tolerância de 5 minutos. GET autenticado no PSP verifica conta, live_mode, valor, moeda e referência. Fake apenas DEPLOYMENT_ENV development/homologation usa assinatura derivada da configuração local. Retorno 202 confirma persistência, não pagamento. Stripe valida Stripe-Signature sobre o corpo bruto com o segredo do endpoint e tolerância de 300 segundos; somente o worker consulta PaymentIntent, Charge e Refund autenticados. Sem segredo de webhook o endpoint Stripe recusa notificações. Respostas não 2xx, inclusive 4xx, podem provocar reentrega pelo Stripe.
          */
         post: operations["purchaseWebhook"];
         delete?: never;
@@ -3010,6 +3010,20 @@ export interface components {
         };
         WalletPass: {
             access: {
+                /**
+                 * Format: date-time
+                 * @description Início efetivo do acesso, interseção com a oferta no produto avulso.
+                 */
+                usage_starts_at: string;
+                /**
+                 * Format: date-time
+                 * @description Fim efetivo do acesso, interseção com a oferta no produto avulso.
+                 */
+                usage_ends_at: string;
+                /** @description NULL representa o pacote da edição; ID limita a compra/acesso exclusivamente a esta oferta. */
+                offer_id: number | null;
+                /** @enum {string} */
+                product_type: "edition" | "offer";
                 id: number;
                 /** @enum {string} */
                 source: "manual" | "courtesy" | "payment" | "promo_code" | "migration";
@@ -4208,9 +4222,15 @@ export interface components {
             };
             data: components["schemas"]["PilotFeedback"][];
         };
+        PurchaseEstablishment: {
+            id: number;
+            public_name: string;
+            slug: string | null;
+        };
         PurchaseOfferSnapshot: {
             id: number;
             establishment_id: number;
+            establishment: components["schemas"]["PurchaseEstablishment"];
             title: string;
             description: string;
             terms: string | null;
@@ -4228,6 +4248,13 @@ export interface components {
             max_redemptions_per_access: number;
         };
         PurchaseSnapshot: {
+            /** @description NULL representa o pacote da edição; ID limita a compra/acesso exclusivamente a esta oferta. */
+            offer_id: number | null;
+            /** @enum {string} */
+            product_type: "edition" | "offer";
+            amount_cents: number;
+            /** @constant */
+            currency: "BRL";
             name: string;
             description: string | null;
             /** Format: date-time */
@@ -4248,6 +4275,10 @@ export interface components {
             reason: string;
         };
         Purchase: {
+            /** @description NULL representa o pacote da edição; ID limita a compra/acesso exclusivamente a esta oferta. */
+            offer_id: number | null;
+            /** @enum {string} */
+            product_type: "edition" | "offer";
             /** Format: uuid */
             id: string;
             edition_id: number;
@@ -4281,11 +4312,16 @@ export interface components {
          */
         PaymentMethod: "pix" | "card";
         PurchaseRequest: {
+            /** @description NULL representa o pacote da edição; ID limita a compra/acesso exclusivamente a esta oferta. */
+            offer_id?: number | null;
             edition_id: number;
             amount_cents: number;
+            /** @description Copiar literalmente products[].terms_version da vitrine pública. SHA-256 hexadecimal minúsculo de 64 caracteres; não é data, número sequencial ou versão do app. Cotação desatualizada é recusada com 400 e requer nova consulta. */
             terms_version: string;
             method: components["schemas"]["PaymentMethod"];
+            /** @description Token opaco do PSP. Para Stripe, ID de PaymentMethod de cartão criado pelo SDK cliente; nunca PAN/CVV. Este corte não completa desafios 3DS. */
             card_token?: string;
+            /** @description Para Stripe usar card; para Mercado Pago, o identificador do meio tokenizado. */
             payment_method_id?: string;
             /** @enum {unknown} */
             document_type?: "CPF" | "CNPJ";
@@ -4317,9 +4353,22 @@ export interface components {
             purchases: components["schemas"]["Purchase"][];
         };
         PurchaseCatalog: {
+            /** @description Lista canônica completa de produtos elegíveis, pacotes seguidos de avulsos. Distinguir por product_type; id sozinho não é único entre tipos. Usar edition_id e offer_id na compra. */
+            products: (components["schemas"]["PurchasableEdition"] | components["schemas"]["PurchasableOffer"])[];
+            /** @description Subconjunto de products com product_type=offer, mantido por compatibilidade. */
+            offers: components["schemas"]["PurchasableOffer"][];
+            /** @description Subconjunto de products com product_type=edition, mantido por compatibilidade. Não representa a vitrine inteira. */
             editions: components["schemas"]["PurchasableEdition"][];
         };
         PurchasableEdition: {
+            edition_id: number;
+            offer_id: null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            product_type: "edition";
+            establishment: null;
             id: number;
             name: string;
             description: string | null;
@@ -4340,11 +4389,53 @@ export interface components {
             usage_starts_at: string;
             /** Format: date-time */
             usage_ends_at: string;
-            /** @description Meios habilitados na configuração do servidor para esta edição e provedor. Copiar um destes valores para PurchaseRequest.method. Não garante aprovação nem disponibilidade transitória do PSP. Edições sem meios habilitados são omitidas. */
+            /** @description Meios habilitados na configuração do servidor para este produto, preço e provedor. Copiar um destes valores para PurchaseRequest.method. Não garante aprovação nem disponibilidade transitória do PSP. Produtos sem meios habilitados são omitidos. */
             payment_methods: components["schemas"]["PaymentMethod"][];
             amount_cents: number;
             /** @constant */
             currency: "BRL";
+            /** @description SHA-256 hexadecimal minúsculo de 64 caracteres, idêntico a snapshot.terms_version. Copiar literalmente para PurchaseRequest.terms_version; não calcular nem inventar uma versão no cliente. */
+            terms_version: string;
+            snapshot: components["schemas"]["PurchaseSnapshot"];
+            /** @constant */
+            purchasable: true;
+        };
+        PurchasableOffer: {
+            edition_id: number;
+            offer_id: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            product_type: "offer";
+            establishment: components["schemas"]["PurchaseEstablishment"];
+            id: number;
+            name: string;
+            description: string | null;
+            city: {
+                id: number;
+                name: string;
+                slug: string;
+                state_code: string;
+                timezone: string;
+            };
+            /** @constant */
+            status: "published";
+            /** Format: date-time */
+            sales_starts_at: string;
+            /** Format: date-time */
+            sales_ends_at: string;
+            /** Format: date-time */
+            usage_starts_at: string;
+            /** Format: date-time */
+            usage_ends_at: string;
+            /** @description Meios habilitados na configuração do servidor para este produto, preço e provedor. Copiar um destes valores para PurchaseRequest.method. Não garante aprovação nem disponibilidade transitória do PSP. Produtos sem meios habilitados são omitidos. */
+            payment_methods: components["schemas"]["PaymentMethod"][];
+            amount_cents: number;
+            /** @constant */
+            currency: "BRL";
+            /** @description SHA-256 hexadecimal minúsculo de 64 caracteres, idêntico a snapshot.terms_version. Copiar literalmente para PurchaseRequest.terms_version; não calcular nem inventar uma versão no cliente. */
+            terms_version: string;
             snapshot: components["schemas"]["PurchaseSnapshot"];
             /** @constant */
             purchasable: true;
@@ -10783,7 +10874,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Edições elegíveis; lista vazia quando nenhuma está disponível. */
+            /** @description Pacotes e vouchers elegíveis; listas vazias quando nenhum está disponível. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10956,6 +11047,13 @@ export interface operations {
             };
             /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configuração do provedor inválida; requer intervenção operacional. */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11746,16 +11844,29 @@ export interface operations {
             header?: {
                 "x-signature"?: string;
                 "x-request-id"?: string;
+                "Stripe-Signature"?: string;
                 "x-fake-signature"?: string;
             };
             path: {
-                provider: "fake" | "mercado_pago";
+                provider: "fake" | "mercado_pago" | "stripe";
             };
             cookie?: never;
         };
         requestBody: {
             content: {
                 "application/json": ({
+                    id: string;
+                    type: string;
+                    livemode: boolean;
+                    created: number;
+                    data: {
+                        object: {
+                            [key: string]: unknown;
+                        };
+                    };
+                } & {
+                    [key: string]: unknown;
+                }) | ({
                     /** @constant */
                     type: "payment";
                     data: {
@@ -11779,7 +11890,7 @@ export interface operations {
                     "application/json": components["schemas"]["PurchaseAccepted"];
                 };
             };
-            /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
+            /** @description Assinatura Stripe ausente, inválida ou expirada; nenhum evento entra no inbox. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -11823,6 +11934,13 @@ export interface operations {
             };
             /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configuração do provedor inválida; requer intervenção operacional, sem aceitar o evento. */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

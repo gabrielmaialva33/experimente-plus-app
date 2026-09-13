@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -9,8 +10,9 @@ import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-export default function SignInScreen() {
+export default function SignInScreen({ purchase = false }: { purchase?: boolean }) {
   const colors = useColors()
+  const router = useRouter()
   const { status, refresh, signOut } = useSession()
   const [uid, setUid] = useState('')
   const [password, setPassword] = useState('')
@@ -87,6 +89,14 @@ export default function SignInScreen() {
             {mutation.isPending ? 'Entrando…' : 'Entrar'}
           </Text>
         </Pressable>
+        <Pressable accessibilityRole="button" disabled={mutation.isPending} style={styles.registration}
+          onPress={() => router.push('/recuperar-senha')}>
+          <Text style={[styles.actionLabel, { color: colors.primary }]}>Esqueci minha senha</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" disabled={mutation.isPending} style={styles.registration}
+          onPress={() => purchase ? router.replace('/cadastro?origin=compra') : router.push('/cadastro')}>
+          <Text style={[styles.actionLabel, { color: colors.primary }]}>Não tenho conta. Criar conta</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   )
@@ -94,6 +104,7 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   page: { gap: spacing.md, padding: spacing.xl },
+  registration: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   input: {
     ...typography.body,
     borderRadius: radius.pill,

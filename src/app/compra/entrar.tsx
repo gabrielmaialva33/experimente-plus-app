@@ -13,5 +13,5 @@ export default function PurchaseSignInScreen() {
       else router.replace('/wallet/edicoes')
     }
   }, [router, status])
-  return <SignInScreen />
+  return <SignInScreen purchase />
 }

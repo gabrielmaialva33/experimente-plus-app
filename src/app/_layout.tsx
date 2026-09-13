@@ -51,6 +51,7 @@ function Shell() {
     <ThemeProvider value={{ ...baseTheme, colors: navigationColors(colors) }}>
       <Stack screenOptions={stackSurfaceOptions(colors)}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="cadastro" options={{ title: 'Criar conta' }} />
         <Stack.Screen name="compra/[id]" options={{ title: 'Comprar benefício' }} />
         <Stack.Screen name="compra/entrar" options={{ title: 'Entrar' }} />
         <Stack.Screen

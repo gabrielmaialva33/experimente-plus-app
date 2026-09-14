@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, waitFor, within } from '@testing-library/react-native'
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 
 import { palette } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
@@ -9,9 +9,11 @@ import ConfirmScreen from '@/app/validar/confirmar'
 import { canPresentBenefit, FINANCIAL_RESTRICTION_MESSAGE, presentationEligibility } from '../financial-restriction'
 import type { Wallet, WalletBenefit } from '../types'
 
+const mockPush = jest.fn()
+
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: jest.fn(), setParams: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn(), setParams: jest.fn() }),
   useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: 'private-test-token' }),
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
@@ -85,7 +87,7 @@ it('removing a hold preserves server availability and does not restore consumed 
 it('explains the blocked wallet without offering a presentation or financial details', async () => {
   const view = await page(<WalletScreen />)
   await waitFor(() => expect(view.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).length).toBeGreaterThan(0))
-  expect(view.queryByRole('button', { name: 'Usar benefício' })).toBeNull()
+  expect(view.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
   expect(view.queryByText(/disputa|reembolso|cartão/i)).toBeNull()
 })
 
@@ -125,7 +127,7 @@ it('removes an already displayed code when a fresh wallet reports a hold', async
 it('a partner preview refused by the server has no confirmation action or financial detail', async () => {
   redemptions.previewRedemption.mockRejectedValue(new ApiError(400, { message: 'private financial detail' }))
   const view = await page(<ConfirmScreen />)
-  expect(await view.findByText('Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.')).toBeOnTheScreen()
+  expect(await view.findByText('Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.')).toBeOnTheScreen()
   expect(view.queryByText(/private financial detail/)).toBeNull()
   expect(view.queryByRole('button', { name: 'Confirmar utilização' })).toBeNull()
   expect(redemptions.confirmRedemption).not.toHaveBeenCalled()
@@ -142,7 +144,7 @@ it.each(['light', 'dark'] as const)('uses bounded E1 for editions and benefits w
   const blocked = await page(<WalletScreen />)
   expect((await blocked.findByText('Benefício')).parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
   expect(blocked.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).at(-1)).toHaveStyle({ backgroundColor: palette[mode].statusNeutral, color: palette[mode].statusNeutralForeground })
-  expect(blocked.queryByRole('button', { name: 'Usar benefício' })).toBeNull()
+  expect(blocked.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
 })
 
 it.each(['light', 'dark'] as const)('keeps wallet navigation left in its own flow and reserves CTA for use in %s', async (mode) => {
@@ -192,5 +194,69 @@ it('uses the server product type rather than counting remaining benefits and pre
   const voucher = within(view.getByTestId('wallet-pass-2'))
   expect(voucher.getByText('Voucher avulso')).toBeOnTheScreen()
   expect(voucher.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).length).toBeGreaterThan(0)
-  expect(voucher.queryByRole('button', { name: 'Usar benefício' })).toBeNull()
+  expect(voucher.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+})
+
+
+it.each([
+  ['upcoming', 'Ainda não começou'], ['outside_schedule', 'Fora do horário'],
+  ['paused', 'Pausado'], ['expired', 'Expirado'], ['revoked', 'Revogado'], ['redeemed', 'Já utilizado'],
+] as const)('shows server availability %s and disables use for both access and benefit restrictions', async (availability, label) => {
+  for (const target of ['access', 'benefit']) {
+    api.getWallet.mockResolvedValue({ ...wallet, passes: [{ ...wallet.passes[0],
+      access: { ...wallet.passes[0].access, ...(target === 'access' ? { availability } : {}) },
+      benefits: [{ ...benefit, ...(target === 'benefit' ? { availability } : {}) }],
+    }] })
+    const view = await page(<WalletScreen />)
+    expect(await view.findByText(label)).toBeOnTheScreen()
+    expect(view.queryByText('Disponível')).toBeNull()
+    const action = view.getByRole('button', { name: 'Usar benefício' })
+    expect(action).toBeDisabled()
+    await fireEvent.press(action)
+    expect(mockPush).not.toHaveBeenCalled()
+    await view.unmount()
+  }
+})
+
+it('explains a revoked access even if availability still reads available', async () => {
+  api.getWallet.mockResolvedValue({ ...wallet, passes: [{ ...wallet.passes[0],
+    access: { ...wallet.passes[0].access, status: 'revoked' },
+  }] })
+  const view = await page(<WalletScreen />)
+  expect(await view.findByText('Revogado')).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+})
+
+it.each([
+  ['wallet', 'Carregando carteira'], ['presentation', 'Gerando apresentação'], ['preview', 'Carregando apresentação'],
+])('shows an initial skeleton for %s without an actionable benefit', async (kind, label) => {
+  api.getWallet.mockReturnValue(new Promise(() => {}))
+  redemptions.previewRedemption.mockReturnValue(new Promise(() => {}))
+  const view = await page(kind === 'wallet' ? <WalletScreen /> : kind === 'presentation' ? <PresentScreen /> : <ConfirmScreen />)
+  expect((await view.findByRole('progressbar', { name: label })).props.accessibilityState).toEqual({ busy: true })
+  expect(view.queryByRole('button', { name: /Usar benefício|Confirmar utilização|Gerar outro/ })).toBeNull()
+  expect(view.queryByLabelText('Código temporário do benefício')).toBeNull()
+})
+
+
+it.each([400, 422])('asks for a new presentation after an invalid/expired token response (%s), including during confirmation', async (status) => {
+  const message = status === 400
+    ? 'Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.'
+    : 'Este código não vale mais. Peça ao cliente para gerar um novo.'
+  redemptions.previewRedemption.mockRejectedValueOnce(new ApiError(status, { message: 'private rejection detail' }))
+  const previewView = await page(<ConfirmScreen />)
+  expect(await previewView.findByText(message)).toBeOnTheScreen()
+  expect(previewView.queryByRole('button', { name: 'Confirmar utilização' })).toBeNull()
+  await previewView.unmount()
+  redemptions.previewRedemption.mockResolvedValue({
+    token: 'private-test-token', holder: { full_name: 'Cliente' },
+    benefit: { establishment_name: 'Café', offer_title: 'Benefício', edition_name: 'Edição', remaining_redemptions: 1 },
+  })
+  redemptions.confirmRedemption.mockRejectedValueOnce(new ApiError(status, { message: 'private rejection detail' }))
+  const confirmView = await page(<ConfirmScreen />)
+  await fireEvent.press(await confirmView.findByRole('button', { name: 'Confirmar utilização' }))
+  expect(await confirmView.findByText(message)).toBeOnTheScreen()
+  expect(confirmView.queryByRole('button', { name: 'Confirmar utilização' })).toBeNull()
+  expect(confirmView.queryByText('private rejection detail')).toBeNull()
+  expect(redemptions.confirmRedemption).toHaveBeenCalledTimes(1)
 })

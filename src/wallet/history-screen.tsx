@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter, type Href } from 'expo-router'
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
@@ -21,7 +22,7 @@ export function HistoryScreen({ queryKey, load, emptyMessage, receiptHref }: Pro
   const history = useQuery({ queryKey, queryFn: load })
 
   if (history.isPending) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Carregando histórico" variant="list" />
   }
 
   if (history.isError) {

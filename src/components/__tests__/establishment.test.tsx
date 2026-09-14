@@ -264,3 +264,15 @@ it.each(['light', 'dark'] as const)('keeps absence, today and neutral status dis
   expect(view.getByText('Fechado agora')).toHaveStyle({ color: palette[mode].statusNeutralForeground })
   expect(new Set([absent, today, status].map((node) => StyleSheet.flatten(node.props.style).backgroundColor)).size).toBe(3)
 })
+
+
+it('reserves an initial detail skeleton until the establishment resolves', async () => {
+  queries.useEstablishment.mockReturnValue({ isPending: true })
+  const view = await render(<EstablishmentScreen />)
+  expect(view.getByRole('progressbar', { name: 'Carregando lugar' }).props.accessibilityState).toEqual({ busy: true })
+  expect(view.queryByRole('button', { name: 'Como chegar' })).toBeNull()
+  queries.useEstablishment.mockReturnValue({ data: detail })
+  await view.rerender(<EstablishmentScreen />)
+  expect(view.queryByRole('progressbar')).toBeNull()
+  expect(view.getByRole('button', { name: 'Como chegar' })).toBeOnTheScreen()
+})

@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { purchaseDate } from '@/purchases/components'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -27,7 +28,7 @@ export default function WalletScreen() {
   }
 
   if (wallet.isPending) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Carregando carteira" variant="list" />
   }
 
   const passes = wallet.data?.passes ?? []
@@ -107,6 +108,10 @@ function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: Wa
   const colors = useColors()
   const usable = canPresentBenefit(pass, benefit)
   const blocked = financiallyBlocked(pass.access)
+  const unavailableReason = blocked
+    ? FINANCIAL_RESTRICTION_MESSAGE
+    : AVAILABILITY_LABEL[pass.access.status === 'revoked' ? 'revoked'
+      : pass.access.availability !== 'available' ? pass.access.availability : benefit.availability]
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
@@ -122,19 +127,21 @@ function BenefitRow({ benefit, pass, onUse }: { benefit: WalletBenefit; pass: Wa
         </Text>
       ) : null}
 
-      {usable ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onUse}
-          style={[styles.action, { backgroundColor: colors.cta }]}>
-          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>Usar benefício</Text>
-        </Pressable>
-      ) : (
-        // The reason comes from the server, and the action stays disabled.
+      {!usable ? (
         <Text style={[styles.unavailable, { color: colors.statusNeutralForeground, backgroundColor: colors.statusNeutral }]}>
-          {blocked ? FINANCIAL_RESTRICTION_MESSAGE : AVAILABILITY_LABEL[benefit.availability]}
+          {unavailableReason}
         </Text>
-      )}
+      ) : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !usable }}
+        disabled={!usable}
+        onPress={onUse}
+        style={[styles.action, { backgroundColor: usable ? colors.cta : colors.statusNeutral }]}>
+        <Text style={[styles.actionLabel, { color: usable ? colors.ctaForeground : colors.statusNeutralForeground }]}>
+          Usar benefício
+        </Text>
+      </Pressable>
     </View>
   )
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 
 import { StyleSheet } from 'react-native'
 import { spacing } from '@/theme/tokens'
@@ -52,7 +52,7 @@ it('keeps all discovery filters when switching between list and map', async () =
   await waitFor(() => expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected))
 
   await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
-  expect(view.getByText('Mapa de resultados')).toBeOnTheScreen()
+  expect(view.getByText(/Nada encontrado em Londrina com os filtros/)).toBeOnTheScreen()
   expect(view.getByRole('radio', { name: 'Ver no mapa', selected: true })).toBeOnTheScreen()
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected)
 
@@ -75,7 +75,7 @@ it('allows discovery without login or purchase checks even when payments are una
   const view = await render(<ExploreScreen />)
   expect(view.getByPlaceholderText('Buscar lugares')).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
-  expect(view.getByText('Mapa de resultados')).toBeOnTheScreen()
+  expect(view.getByText('Ainda não há lugares publicados em Londrina.')).toBeOnTheScreen()
   expect(view.queryByText(/comprar|pagamento|assinar|entre para explorar/i)).toBeNull()
   expect(jest.requireMock('@/session/context').useSession).not.toHaveBeenCalled()
   expect(jest.requireMock('@/api/purchases').listPurchaseEditions).not.toHaveBeenCalled()
@@ -143,4 +143,73 @@ it('keeps city identity only in the selector beneath the existing screen chrome'
   const view = await render(<ExploreScreen />)
   expect(view.getAllByText('Londrina · PR')).toHaveLength(1)
   expect(within(view.getByTestId('choice-row-Cidade')).getByRole('radio', { name: 'Londrina, PR', checked: true })).toBeOnTheScreen()
+})
+
+
+it('shows a stable skeleton while the initial catalog is pending, without empty feedback', async () => {
+  queries.useSearch.mockReturnValue({ isPending: true })
+  const view = await render(<ExploreScreen />)
+  expect(view.getByRole('progressbar', { name: 'Carregando lugares' }).props.accessibilityState).toEqual({ busy: true })
+  expect(view.queryByText(/Ainda não há|Nada encontrado/)).toBeNull()
+  queries.useSearch.mockReturnValue({ data: { organic: [], meta: { total: 0 } } })
+  await view.rerender(<ExploreScreen />)
+  expect(view.queryByRole('progressbar')).toBeNull()
+  expect(view.getByText('Ainda não há lugares publicados em Londrina.')).toBeOnTheScreen()
+})
+
+it.each(['list', 'map'])('explains and clears a text-only empty search in %s without changing city or view', async (mode) => {
+  jest.useFakeTimers()
+  try {
+    const view = await render(<ExploreScreen />)
+    await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'pizzaria')
+    await act(async () => { jest.advanceTimersByTime(350) })
+    if (mode === 'map') await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+    expect(view.getByText('Nada encontrado em Londrina com os filtros: “pizzaria”.')).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
+    expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('')
+    expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })
+    await act(async () => { jest.advanceTimersByTime(350) })
+    expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })
+    expect(view.getByRole('radio', { name: mode === 'map' ? 'Ver no mapa' : 'Ver em lista', selected: true })).toBeOnTheScreen()
+    expect(cityStore.selectCity).not.toHaveBeenCalled()
+  } finally { jest.useRealTimers() }
+})
+
+it('names active category and attribute filters and clears them together', async () => {
+  const view = await render(<ExploreScreen />)
+  await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Aberto agora' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Wi-Fi' }))
+  expect(view.getByText('Nada encontrado em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi.')).toBeOnTheScreen()
+  await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
+  expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })
+  expect(view.queryByRole('button', { name: 'Limpar filtros' })).toBeNull()
+})
+
+
+it('still renders results in both views when the catalog is not empty', async () => {
+  queries.useSearch.mockReturnValue({ data: { organic: [{
+    slug: 'cafe', name: 'Café da Praça', address: { district: 'Centro' },
+    business_status: 'open', is_open_now: true,
+  }], meta: { total: 1 } } })
+  const view = await render(<ExploreScreen />)
+  expect(view.getByText('Café da Praça')).toBeOnTheScreen()
+  expect(view.queryByText(/Ainda não há|Nada encontrado/)).toBeNull()
+  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  expect(view.getByText('Mapa de resultados')).toBeOnTheScreen()
+  expect(view.queryByText(/Ainda não há|Nada encontrado/)).toBeNull()
+})
+
+
+it('keeps long empty feedback scrollable so clear filters remains reachable', async () => {
+  const view = await render(<ExploreScreen />)
+  await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))
+  for (const mode of ['Ver em lista', 'Ver no mapa']) {
+    await fireEvent.press(view.getByRole('radio', { name: mode }))
+    const empty = view.getByTestId('catalog-empty')
+    expect(empty.type).toBe('RCTScrollView')
+    expect(within(empty).getByRole('button', { name: 'Limpar filtros' })).toBeOnTheScreen()
+    expect(empty.props.keyboardShouldPersistTaps).toBe('handled')
+    expect(empty.props.scrollEnabled).not.toBe(false)
+  }
 })

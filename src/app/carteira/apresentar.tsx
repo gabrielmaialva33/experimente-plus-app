@@ -1,8 +1,9 @@
 import { Image } from 'expo-image'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
@@ -84,7 +85,7 @@ export default function PresentScreen() {
   }
 
   if (presentation.isPending || wallet.isPending || wallet.isFetching) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Gerando apresentação" variant="presentation" />
   }
 
   if (presentation.isError) {

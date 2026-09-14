@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
@@ -64,8 +65,16 @@ export default function ExploreScreen() {
   )
   const search = useSearch(selectedCity, params)
 
-  const hasFilters = Boolean(category) || openNow || attributes.length > 0
+  const activeFilters = [
+    debouncedTerm ? `“${debouncedTerm}”` : null,
+    category ? categories.data?.categories.find((item) => item.slug === category)?.name ?? category : null,
+    openNow ? 'Aberto agora' : null,
+    ...attributes.map((key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key),
+  ].filter(Boolean)
+  const hasFilters = activeFilters.length > 0
   const clearFilters = () => {
+    setTerm('')
+    setDebouncedTerm('')
     setCategory(undefined)
     setOpenNow(false)
     setAttributes([])
@@ -190,7 +199,7 @@ export default function ExploreScreen() {
         </View>
 
         {search.isPending ? (
-          <ActivityIndicator style={styles.feedback} color={colors.primary} />
+          <ContentSkeleton label="Carregando lugares" variant="catalog" />
         ) : search.isError ? (
           <View style={styles.feedback}>
             <Text style={[styles.message, { color: colors.foreground }]}>
@@ -201,6 +210,19 @@ export default function ExploreScreen() {
               <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
             </Pressable>
           </View>
+        ) : !search.data?.organic.length ? (
+          <ScrollView testID="catalog-empty" contentContainerStyle={styles.feedback} keyboardShouldPersistTaps="handled">
+            <Text style={[styles.message, { color: colors.foreground }]}>
+              {hasFilters
+                ? `Nada encontrado em ${city?.name ?? 'sua cidade'} com os filtros: ${activeFilters.join(', ')}.`
+                : `Ainda não há lugares publicados em ${city?.name ?? 'sua cidade'}.`}
+            </Text>
+            {hasFilters ? (
+              <Pressable accessibilityRole="button" onPress={clearFilters}>
+                <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
+              </Pressable>
+            ) : null}
+          </ScrollView>
         ) : view === 'map' ? (
           <EstablishmentMap
             establishments={search.data?.organic ?? []}
@@ -224,20 +246,6 @@ export default function ExploreScreen() {
                 onPress={() => openEstablishment(item.slug)}
               />
             )}
-            ListEmptyComponent={
-              <View style={styles.feedback}>
-                <Text style={[styles.message, { color: colors.foreground }]}>
-                  {hasFilters
-                    ? `Nada encontrado em ${city?.name ?? 'sua cidade'} com esses filtros.`
-                    : `Ainda não há lugares publicados em ${city?.name ?? 'sua cidade'}.`}
-                </Text>
-                {hasFilters ? (
-                  <Pressable onPress={clearFilters}>
-                    <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            }
           />
         )}
       </View>

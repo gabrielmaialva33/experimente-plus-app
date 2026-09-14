@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect } from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
 import { brazilianWhatsApp, dialable } from '@/catalog/contact-links'
 import { useEstablishment } from '@/catalog/queries'
@@ -28,7 +29,7 @@ export default function EstablishmentScreen() {
   }, [page, city, slug])
 
   if (query.isPending) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Carregando lugar" variant="catalog" />
   }
 
   if (query.isError || !page) {

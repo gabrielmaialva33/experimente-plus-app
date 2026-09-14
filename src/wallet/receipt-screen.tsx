@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
@@ -21,7 +22,7 @@ export function ReceiptScreen({
   const receipt = useQuery({ queryKey, queryFn: load, retry: false })
 
   if (receipt.isPending) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Carregando comprovante" variant="detail" />
   }
 
   if (receipt.isError || !receipt.data) {

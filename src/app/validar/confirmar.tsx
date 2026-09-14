@@ -2,13 +2,19 @@ import { useEffect, useRef } from 'react'
 import { focusManager, onlineManager } from '@tanstack/react-query'
 import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { ContentSkeleton } from '@/components/content-skeleton'
 import { ApiError } from '@/api/client'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { Receipt } from '@/wallet/types'
+
+const NEW_PRESENTATION_MESSAGE = 'Este código não vale mais. Peça ao cliente para gerar um novo.'
+// A 400 covers both expired/invalid tokens and domain refusals. Do not claim
+// that a new code can bypass a benefit restriction or expose the raw error.
+const UNAVAILABLE_PRESENTATION_MESSAGE = 'Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.'
 
 /**
  * Preview and confirmation.
@@ -65,7 +71,7 @@ export default function ConfirmRedemptionScreen() {
   }
 
   if (preview.isPending) {
-    return <ActivityIndicator style={styles.center} color={colors.primary} />
+    return <ContentSkeleton label="Carregando apresentação" variant="detail" />
   }
 
   if (preview.isError) {
@@ -75,12 +81,14 @@ export default function ConfirmRedemptionScreen() {
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Text style={[styles.message, { color: colors.foreground }]}>
           {status === 404 || status === 422
-            ? 'Este código não vale mais. Peça ao cliente para gerar um novo.'
+            ? NEW_PRESENTATION_MESSAGE
             : status === 403
               ? 'Sua conta não pode validar este benefício.'
-              : status === 400 || status === 409
-                ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
-              : 'Não foi possível ler este código agora.'}
+              : status === 400
+                ? UNAVAILABLE_PRESENTATION_MESSAGE
+                : status === 409
+                  ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
+                  : 'Não foi possível ler este código agora.'}
         </Text>
         <Pressable onPress={() => router.back()}>
           <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>
@@ -92,13 +100,18 @@ export default function ConfirmRedemptionScreen() {
   if (!preview.data) return null
 
   const { holder, benefit } = preview.data
-  const refused = confirm.error instanceof ApiError && [400, 403, 409, 422].includes(confirm.error.status)
+  const confirmationStatus = confirm.error instanceof ApiError ? confirm.error.status : 0
+  const refused = [400, 403, 409, 422].includes(confirmationStatus)
 
   if (refused) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Text style={[styles.message, { color: colors.foreground }]}>
-          Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.
+          {confirmationStatus === 400
+            ? UNAVAILABLE_PRESENTATION_MESSAGE
+            : confirmationStatus === 422
+              ? NEW_PRESENTATION_MESSAGE
+              : 'Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.'}
         </Text>
         <Pressable onPress={() => router.back()}>
           <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>

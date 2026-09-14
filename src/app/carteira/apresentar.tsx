@@ -1,6 +1,6 @@
 import { Image } from 'expo-image'
 import { useLocalSearchParams } from 'expo-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -50,10 +50,15 @@ export default function PresentScreen() {
   const create = () =>
     presentation.mutate({ accessId: Number(accessId), offerId: Number(offerId) })
 
+  const startedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (accessId && offerId) create()
+    const key = `${accessId}:${offerId}`
+    if (presentation.ready && accessId && offerId && startedFor.current !== key) {
+      startedFor.current = key
+      create()
+    }
     // A presentation is created once per screen entry, on purpose.
-  }, [accessId, offerId])
+  }, [accessId, offerId, presentation.ready])
 
   const data = presentation.data
   const remaining = useCountdown(data?.expires_at)
@@ -111,7 +116,7 @@ export default function PresentScreen() {
           </Text>
         </View>
       ) : (
-        <Image accessibilityLabel="Código temporário do benefício" source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
+        <Image cachePolicy="none" accessibilityLabel="Código temporário do benefício" source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
       )}
 
       <Text style={[styles.countdown, { color: expired ? colors.warningAccent : colors.foreground }]}>

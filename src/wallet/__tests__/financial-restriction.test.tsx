@@ -11,7 +11,7 @@ import type { Wallet, WalletBenefit } from '../types'
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), setParams: jest.fn() }),
   useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: 'private-test-token' }),
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))

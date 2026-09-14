@@ -1,4 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { focusManager, onlineManager } from '@tanstack/react-query'
+import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
@@ -19,21 +21,44 @@ import type { Receipt } from '@/wallet/types'
 export default function ConfirmRedemptionScreen() {
   const colors = useColors()
   const router = useRouter()
-  const { token } = useLocalSearchParams<{ token: string }>()
+  const { token: incomingToken } = useLocalSearchParams<{ token?: string }>()
+  const token = useRef<string | undefined>(incomingToken)
+  const started = useRef(false)
+  const confirmationStarted = useRef(false)
+  const clearToken = () => { token.current = undefined }
 
-  const preview = useQuery({
-    queryKey: ['redemption-preview', token],
-    queryFn: () => previewRedemption(token as string),
-    enabled: Boolean(token),
-    retry: false,
-    staleTime: 0,
-    gcTime: 0,
-  })
+  const preview = usePrivateOperation(async (_: void, signal) => {
+    if (!token.current) throw new ApiError(422, null)
+    return previewRedemption(token.current, signal)
+  }, { onDispose: clearToken, keepPreviousData: true })
+  const confirm = usePrivateOperation(async (_: void, signal) => {
+    if (!token.current) throw new ApiError(422, null)
+    return confirmRedemption(token.current, signal)
+  }, { onDispose: clearToken })
 
-  const confirm = useMutation({
-    mutationFn: () => confirmRedemption(token as string),
-    retry: false,
-  })
+  useEffect(() => {
+    // The route is only a handoff. History must not retain the private token.
+    if (incomingToken) router.setParams({ token: undefined })
+  }, [incomingToken, router])
+
+  useEffect(() => {
+    if (preview.ready && !started.current) {
+      started.current = true
+      preview.mutate()
+    }
+  }, [preview.ready, preview.mutate])
+
+  useEffect(() => {
+    if (!preview.ready) return
+    const repeat = (available: boolean) => {
+      // After confirmation starts, preserve the original nonce and its retry
+      // even if the preview would now be expired or already redeemed.
+      if (available && !confirmationStarted.current) preview.mutate()
+    }
+    const removeFocus = focusManager.subscribe(repeat)
+    const removeOnline = onlineManager.subscribe(repeat)
+    return () => { removeFocus(); removeOnline() }
+  }, [preview.ready, preview.mutate])
 
   if (confirm.data) {
     return <ReceiptView receipt={confirm.data} onDone={() => router.back()} />
@@ -64,7 +89,9 @@ export default function ConfirmRedemptionScreen() {
     )
   }
 
-  const { holder, benefit } = preview.data!
+  if (!preview.data) return null
+
+  const { holder, benefit } = preview.data
   const refused = confirm.error instanceof ApiError && [400, 403, 409, 422].includes(confirm.error.status)
 
   if (refused) {
@@ -104,7 +131,11 @@ export default function ConfirmRedemptionScreen() {
       <Pressable
         accessibilityRole="button"
         disabled={confirm.isPending}
-        onPress={() => confirm.mutate()}
+        onPress={() => {
+          confirmationStarted.current = true
+          preview.cancel()
+          confirm.mutate()
+        }}
         style={[styles.action, { backgroundColor: colors.cta, opacity: confirm.isPending ? 0.6 : 1 }]}>
         <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
           {confirm.isPending ? 'Confirmando…' : 'Confirmar utilização'}

@@ -9,9 +9,10 @@ import type { History, Preview, Receipt } from '@/wallet/types'
  * capability on both, and confirmation requires explicit human intent
  * (ADR-0021). A preview never redeems.
  */
-export const previewRedemption = (token: string) =>
+export const previewRedemption = (token: string, signal?: AbortSignal) =>
   request<Preview>('/api/v1/benefit-redemptions/preview', {
     method: 'POST',
+    signal,
     authenticated: true,
     sensitive: true,
     body: { token },
@@ -22,9 +23,10 @@ export const previewRedemption = (token: string) =>
  * network response returns the original receipt instead of creating a second
  * redemption, so a retry is safe.
  */
-export const confirmRedemption = (token: string) =>
+export const confirmRedemption = (token: string, signal?: AbortSignal) =>
   request<Receipt>('/api/v1/benefit-redemptions', {
     method: 'POST',
+    signal,
     authenticated: true,
     sensitive: true,
     body: { token },

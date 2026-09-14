@@ -7,7 +7,8 @@ jest.mock('expo-secure-store', () => ({
 }))
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => true, set: jest.fn() }) }))
 
-import { signUp, type SignUpRequest, type SignUpResponse } from '../auth'
+import type { SignUpRequest, SignUpResponse } from '../auth'
+let signUp: typeof import('../auth').signUp
 import { apiUrl } from '../config'
 
 const body: SignUpRequest = {
@@ -21,7 +22,12 @@ const response: SignUpResponse = {
   auth: { access_token: 'test-access', refresh_token: 'test-refresh', token_type: 'Bearer', expires_in: 900, refresh_expires_in: 259200 },
 }
 
-beforeEach(() => { mockStore.clear(); jest.clearAllMocks() })
+beforeEach(() => {
+  jest.resetModules()
+  mockStore.clear()
+  jest.clearAllMocks()
+  signUp = require('../auth').signUp
+})
 afterEach(() => jest.restoreAllMocks())
 
 it('POSTs the generated request publicly and stores the issued credential pair on 201', async () => {

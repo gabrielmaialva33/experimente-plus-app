@@ -1,4 +1,5 @@
-import { forgotPassword, type ForgotPasswordRequest, type ForgotPasswordResponse } from '../auth'
+import type { ForgotPasswordRequest, ForgotPasswordResponse } from '../auth'
+let forgotPassword: typeof import('../auth').forgotPassword
 import { apiUrl } from '../config'
 
 jest.mock('../session', () => ({
@@ -6,7 +7,11 @@ jest.mock('../session', () => ({
   credentialsFromPayload: jest.fn(), refreshSession: jest.fn(),
 }))
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => {
+  jest.resetModules()
+  jest.clearAllMocks()
+  forgotPassword = require('../auth').forgotPassword
+})
 afterEach(() => jest.restoreAllMocks())
 
 it('makes only the public request and returns the neutral 202 receipt without touching credentials', async () => {

@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
+import { subscribeSessionEvents } from '@/api/session-events'
 import { revokeSession } from '@/api/auth'
 import { getContext, type MobileCapabilities, type MobileContext } from '@/api/me'
-import { clearCredentials, readCredentials, SessionExpiredError } from '@/api/session'
+import { readCredentials, SessionExpiredError } from '@/api/session'
 
 /**
  * Session and capability state.
@@ -27,40 +28,63 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('loading')
   const [context, setContext] = useState<MobileContext | null>(null)
 
-  const load = async () => {
-    try {
-      // Reading the keystore can itself fail — a locked device, a corrupted
-      // flag store. Outside the try that rejection escapes and the app stays on
-      // the splash screen forever with no way out.
-      const credentials = await readCredentials()
+  const generation = useRef(0)
+  const revalidating = useRef(false)
+  const changing = useRef(false)
+  const closing = useRef(false)
 
+  const load = useCallback(async () => {
+    if (changing.current || closing.current) return
+    const version = ++generation.current
+    try {
+      const credentials = await readCredentials()
+      if (version !== generation.current) return
       if (!credentials) {
         setContext(null)
         setStatus('anonymous')
         return
       }
-
-      setContext(await getContext())
+      const next = await getContext()
+      if (version !== generation.current) return
+      setContext(next)
       setStatus('authenticated')
     } catch (error) {
+      if (version !== generation.current) return
       setContext(null)
-
-      // Only a rejected credential ends the session. A network failure or a
-      // server error must not sign the person out: they still hold a valid
-      // refresh token, and discarding it would lose a session over a blip.
+      // Network/rule failures must not discard a still-valid refresh credential.
       if (error instanceof SessionExpiredError) {
-        await clearCredentials()
+        // Credential disposal belongs to the serialized session layer, which
+        // knows whether the rejected pair has already been replaced.
         setStatus('anonymous')
         return
       }
-
       setStatus('unavailable')
+    } finally {
+      if (version === generation.current) revalidating.current = false
     }
-  }
+  }, [])
 
   useEffect(() => {
+    const unsubscribe = subscribeSessionEvents((event) => {
+      if (closing.current && event !== 'expired') return
+      if (event === 'context-invalidated' && (changing.current || revalidating.current)) return
+      if (event === 'operation-changing') changing.current = true
+      if (event === 'operation-settled' || event === 'expired') changing.current = false
+      generation.current += 1
+      revalidating.current = false
+      setContext(null)
+      setStatus(event === 'expired' ? 'anonymous' : 'loading')
+      if (event === 'context-invalidated' || event === 'operation-settled') {
+        revalidating.current = true
+        void load()
+      }
+    })
     void load()
-  }, [])
+    return () => {
+      unsubscribe()
+      generation.current += 1
+    }
+  }, [load])
 
   const value = useMemo<SessionValue>(
     () => ({
@@ -71,12 +95,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         // Revoking server-side matters on a shared or resold device: the opaque
         // refresh token would otherwise stay valid for its full lifetime.
-        await revokeSession()
+        generation.current += 1
+        closing.current = true
         setContext(null)
-        setStatus('anonymous')
+        setStatus('loading')
+        try {
+          await revokeSession()
+        } finally {
+          generation.current += 1
+          closing.current = false
+          changing.current = false
+          revalidating.current = false
+          setContext(null)
+          setStatus('anonymous')
+        }
       },
     }),
-    [status, context]
+    [status, context, load]
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

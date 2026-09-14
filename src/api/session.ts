@@ -1,7 +1,8 @@
 import * as SecureStore from 'expo-secure-store'
 import { createMMKV } from 'react-native-mmkv'
 
-import { apiUrl } from './config'
+import { notifySessionEvent } from './session-events'
+import { responseError, send } from './transport'
 
 /**
  * Session credentials live only in the platform keystore (ADR-0022 §4).
@@ -11,8 +12,8 @@ import { apiUrl } from './config'
  * 1. Persistent credentials never leave Keychain/Keystore, and never reach a
  *    log, analytics event, clipboard or notification.
  * 2. Every operation that consumes the refresh token — renewal, operation
- *    creation and operation switch — is serialized into a single in-flight
- *    rotation. The server revokes the parent and mints exactly one child, so
+ *    creation and operation switch — is serialized into a single queue. The
+ *    server revokes the parent and mints exactly one child, so
  *    two concurrent consumers would produce one success and one `401`.
  */
 
@@ -76,7 +77,8 @@ export const credentialsFromPayload = (payload: AuthTokensPayload): Credentials 
 })
 
 let cache: Credentials | null | undefined
-let rotation: Promise<Credentials> | null = null
+let queue: Promise<unknown> = Promise.resolve()
+let refreshInFlight: Promise<Credentials> | null = null
 
 export async function readCredentials(): Promise<Credentials | null> {
   if (cache !== undefined) {
@@ -128,67 +130,136 @@ export async function clearCredentials(): Promise<void> {
   ])
 }
 
-/**
- * Serializes every refresh-consuming call.
- *
- * `consume` receives the current refresh token and must return the credential
- * envelope the server minted. Callers that arrive while a rotation is already
- * running await the same promise instead of spending the credential twice.
- */
-export async function rotateCredentials(
+/** Distinct operations must run, in order, even after a predecessor fails. */
+function serializeSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = queue.then(operation)
+  queue = result.catch(() => {})
+  return result
+}
+
+export async function expireSession(expectedAccessToken?: string): Promise<boolean> {
+  return serializeSessionOperation(async () => {
+    const current = await readCredentials()
+    // A delayed rejection from an old pair must not erase a newer session.
+    if (expectedAccessToken && current?.accessToken !== expectedAccessToken) return false
+    await clearCredentials()
+    notifySessionEvent('expired')
+    return true
+  })
+}
+
+async function currentCredentials(): Promise<Credentials> {
+  const current = await readCredentials()
+  if (!current) throw new SessionExpiredError()
+  return current
+}
+
+async function consumeCredentials(
   consume: (refreshToken: string) => Promise<AuthTokensPayload>
 ): Promise<Credentials> {
-  if (rotation) {
-    return rotation
-  }
-
-  rotation = (async () => {
-    const current = await readCredentials()
-
-    if (!current) {
-      throw new SessionExpiredError()
-    }
-
-    try {
-      const payload = await consume(current.refreshToken)
-      const next = credentialsFromPayload(payload)
-      await writeCredentials(next)
-      return next
-    } catch (error) {
-      if (error instanceof SessionExpiredError) {
-        await clearCredentials()
-      }
-      throw error
-    }
-  })()
-
+  const current = await currentCredentials()
   try {
-    return await rotation
-  } finally {
-    rotation = null
+    const next = credentialsFromPayload(await consume(current.refreshToken))
+    await writeCredentials(next)
+    return next
+  } catch (error) {
+    if (error instanceof SessionExpiredError) {
+      await clearCredentials()
+      notifySessionEvent('expired')
+    }
+    throw error
   }
 }
 
-/** Renews the pair. A `401` here is terminal: the local session ends. */
-export async function refreshSession(): Promise<Credentials> {
-  return rotateCredentials(async (refreshToken) => {
-    const response = await fetch(apiUrl('/api/v1/sessions/refresh'), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'accept': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+/** Each callback consumes the latest pair inside the queue, never at enqueue time. */
+export function rotateCredentials(
+  consume: (refreshToken: string) => Promise<AuthTokensPayload>
+): Promise<Credentials> {
+  return serializeSessionOperation(() => consumeCredentials(consume))
+}
+
+async function renewCredentials(): Promise<Credentials> {
+  return consumeCredentials(async (refreshToken) => {
+    const response = await send('/api/v1/sessions/refresh', {
+      method: 'POST', sensitive: true, body: { refresh_token: refreshToken },
     })
-
-    if (response.status === 401) {
-      throw new SessionExpiredError()
-    }
-
+    if (response.status === 401) throw new SessionExpiredError()
     if (!response.ok) {
-      throw new Error(`refresh failed with ${response.status}`)
+      if (response.status === 403) notifySessionEvent('context-invalidated')
+      throw await responseError(response, true)
     }
-
-    // Every credential-issuing endpoint wraps the pair in `auth`. Reading the
-    // body directly yields undefined tokens, which the keystore then rejects.
     const body = (await response.json()) as { auth: AuthTokensPayload }
     return body.auth
+  })
+}
+
+/** Share renewals only. A late 401 reuses the pair that replaced its access token. */
+export function refreshSession(rejectedAccessToken?: string): Promise<Credentials> {
+  if (refreshInFlight) return refreshInFlight
+  const result = serializeSessionOperation(async () => {
+    const current = await currentCredentials()
+    if (rejectedAccessToken && current.accessToken !== rejectedAccessToken) return current
+    return renewCredentials()
+  })
+  refreshInFlight = result
+  void result.then(
+    () => { refreshInFlight = null },
+    () => { refreshInFlight = null }
+  )
+  return result
+}
+
+/** Called only inside the queue; a replay rebuilds JSON with the new refresh. */
+async function sendSessionMutation(path: string, body: Record<string, unknown>) {
+  let current = await currentCredentials()
+  const sendCurrent = () => send(path, {
+    method: 'POST', authenticated: true, sensitive: true,
+    body: { ...body, refresh_token: current.refreshToken },
+  }, current.accessToken)
+  let response = await sendCurrent()
+  if (response.status === 401) {
+    current = await renewCredentials()
+    response = await sendCurrent()
+    if (response.status === 401) {
+      await clearCredentials()
+      notifySessionEvent('expired')
+      throw new SessionExpiredError()
+    }
+  }
+  if (!response.ok) {
+    if (response.status === 403) notifySessionEvent('context-invalidated')
+    throw await responseError(response, true)
+  }
+  return response
+}
+
+export function rotateSessionRequest<T extends { auth: AuthTokensPayload }>(
+  path: '/api/v1/tenants' | '/api/v1/tenants/switch', body: Record<string, unknown>
+): Promise<T> {
+  return serializeSessionOperation(async () => {
+    notifySessionEvent('operation-changing')
+    try {
+      const response = await sendSessionMutation(path, body)
+      const result = await response.json() as T
+      await writeCredentials(credentialsFromPayload(result.auth))
+      return result
+    } finally {
+      notifySessionEvent('operation-settled')
+    }
+  })
+}
+
+/** Logout waits for rotations, revokes the current pair and cannot resurrect it. */
+export function endSession(): Promise<void> {
+  return serializeSessionOperation(async () => {
+    notifySessionEvent('operation-changing')
+    try {
+      if (await readCredentials()) await sendSessionMutation('/api/v1/sessions/logout', {})
+    } catch {
+      // Best effort server revocation; local logout is unconditional.
+    } finally {
+      await clearCredentials()
+      notifySessionEvent('expired')
+    }
   })
 }

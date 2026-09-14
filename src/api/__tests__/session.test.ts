@@ -48,31 +48,18 @@ beforeEach(() => {
 })
 
 describe('credential rotation', () => {
-  it('serializes concurrent consumers into a single rotation', async () => {
+  it('runs distinct refresh consumers in order using each newly issued pair', async () => {
     seedSession()
     const { rotateCredentials } = loadSession()
-
-    let consumed = 0
-    const consume = jest.fn(async (token: string) => {
-      consumed += 1
-      expect(token).toBe('refresh-0')
-      await new Promise((resolve) => setTimeout(resolve, 20))
-      return payload('1')
-    })
-
-    // Renewal, operation creation and operation switch all consume the same
-    // credential: the server revokes the parent and mints exactly one child, so
-    // two concurrent consumers would produce one success and one 401.
-    const [a, b, c] = await Promise.all([
-      rotateCredentials(consume),
-      rotateCredentials(consume),
-      rotateCredentials(consume),
-    ])
-
-    expect(consumed).toBe(1)
-    expect(a).toEqual(b)
-    expect(b).toEqual(c)
-    expect(a.refreshToken).toBe('refresh-1')
+    const consumed: string[] = []
+    const results = await Promise.all(['1', '2', '3'].map((suffix) =>
+      rotateCredentials(async (token) => {
+        consumed.push(token)
+        return payload(suffix)
+      })
+    ))
+    expect(consumed).toEqual(['refresh-0', 'refresh-1', 'refresh-2'])
+    expect(results.map((item) => item.refreshToken)).toEqual(['refresh-1', 'refresh-2', 'refresh-3'])
   })
 
   it('persists the child pair and allows a later, separate rotation', async () => {

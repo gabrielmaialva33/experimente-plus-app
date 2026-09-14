@@ -1,9 +1,8 @@
 import { request } from './client'
 import type { components, operations } from './schema'
 import {
-  clearCredentials,
+  endSession,
   credentialsFromPayload,
-  readCredentials,
   writeCredentials,
   type AuthTokensPayload,
 } from './session'
@@ -46,6 +45,7 @@ export async function signIn(uid: string, password: string): Promise<SignInRespo
   const result = await request<SignInResponse>('/api/v1/sessions/sign-in', {
     method: 'POST',
     body: { uid, password },
+    sensitive: true,
   })
 
   await writeCredentials(credentialsFromPayload(result.auth))
@@ -57,20 +57,4 @@ export async function signIn(uid: string, password: string): Promise<SignInRespo
  * failure must not leave the person signed in on the device, and the endpoint
  * is idempotent, so a missed revocation can be retried by signing in again.
  */
-export async function revokeSession(): Promise<void> {
-  try {
-    const credentials = await readCredentials()
-
-    if (credentials) {
-      await request<unknown>('/api/v1/sessions/logout', {
-        method: 'POST',
-        authenticated: true,
-        body: { refresh_token: credentials.refreshToken },
-      })
-    }
-  } catch {
-    // Best effort; the local credential is cleared either way.
-  } finally {
-    await clearCredentials()
-  }
-}
+export const revokeSession = endSession

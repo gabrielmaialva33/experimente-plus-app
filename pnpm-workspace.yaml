@@ -1,6 +1,7 @@
 allowBuilds:
   # Native/Jest consumers do not need MSW's browser-worker postinstall.
   msw: false
+  unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.22'
   - '@expo/ui@57.0.16'

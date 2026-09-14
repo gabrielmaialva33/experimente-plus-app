@@ -46,8 +46,18 @@ certificate = subprocess.check_output([
 ])
 expected = hashlib.sha256(certificate).hexdigest()
 actual = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([a-fA-F0-9]+)", signature)
-if [digest.lower() for digest in actual] != [expected]:
-    raise SystemExit("APK must be signed only with the generated debug certificate")
+if not actual or {digest.lower() for digest in actual} != {expected.lower()}:
+    # Print the evidence instead of discarding it: this check passes locally and
+    # has never passed in CI, so the difference is environmental and a bare
+    # failure gives the next run nothing to go on. Digests and tool paths are
+    # not secrets; the keystore password is not printed.
+    raise SystemExit(
+        "APK must be signed only with the generated debug certificate\n"
+        f"  expected (android/app/debug.keystore): {expected}\n"
+        f"  found in APK: {actual or '<no digest matched the apksigner output>'}\n"
+        f"  apksigner: {signer}\n"
+        f"  apksigner output:\n{signature}"
+    )
 
 print(f"Verified {apk.name}: embedded bundle ({len(bundle)} bytes), pilot origin,")
 print("arm64-v8a + x86_64, debuggable=false, valid generated debug-key signature.")

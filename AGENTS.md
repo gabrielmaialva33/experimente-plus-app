@@ -81,7 +81,9 @@ Não use `pnpm reset-project` como limpeza: o script do template move ou remove 
 
 As variáveis `EXPO_PUBLIC_*` entram no bundle e não guardam segredos. Não versione `.env`, credenciais de assinatura ou tokens. Use `resolveMediaUrl` para URLs relativas de mídia retornadas pela API.
 
-`EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` seleciona o renderizador Google; sem ela, o código usa MapLibre. `EXPO_PUBLIC_MAP_STYLE_URL` configura o estilo do MapLibre; o fallback de demo é destinado ao desenvolvimento. Preserve os dois caminhos enquanto essa for a decisão vigente e valide a configuração nativa de cada provedor.
+`EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` seleciona o renderizador Google; sem ela, o código usa MapLibre. Em homologação, defina no `.env` local `EXPO_PUBLIC_MAP_STYLE_URL=https://midia-experimente.mahina.fun/maps/norte-parana/style.json`: é a URL pública esperada, alias estável do basemap regional Protomaps servido do R2 próprio (ADR 0026 do backend, caminho A). Sem a variável, permanece o fallback `demotiles.maplibre.org`, cujo tileset termina no zoom 6 e não fornece detalhe de rua para a câmera inicial no zoom 11. MapLibre Native lê fontes `pmtiles://` diretamente; não adicione a biblioteca JavaScript `pmtiles`. Preserve os dois renderizadores e valide a configuração nativa de cada provedor.
+
+A validação visual em Android e iOS reais ainda não foi feita e exige development build: zoom 11 a 15 nas três cidades, acentos nos rótulos e atribuição Protomaps/OpenStreetMap visível.
 
 `app.json` usa o identificador `br.com.experimentemais` e scheme `experimenteplus`. O README registra a identidade de distribuição como pendente de confirmação antes da primeira release; não a trate como decisão de loja já concluída.
 

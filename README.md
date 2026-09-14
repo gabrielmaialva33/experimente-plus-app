@@ -73,10 +73,23 @@ O aplicativo carrega dois renderizadores e escolhe por configuração:
 - **MapLibre** (`@maplibre/maplibre-react-native`) caso contrário, que não exige
   credencial e mantém o mapa funcionando em desenvolvimento e em builds sem chave.
 
-O estilo do MapLibre vem de `EXPO_PUBLIC_MAP_STYLE_URL`. O padrão são as tiles de
-demonstração, documentadas como uso apenas de desenvolvimento. Em produção aponte
-para um estilo próprio — um arquivo Protomaps no armazenamento da operação também
-dispensa chave, já que o MapLibre Native lê fontes `pmtiles://` diretamente.
+O estilo do MapLibre vem de `EXPO_PUBLIC_MAP_STYLE_URL`. Em homologação, configure
+no `.env` local (ignorado pelo Git) o alias estável do basemap regional Protomaps
+servido do R2 próprio, conforme o caminho A da ADR 0026 do backend:
+
+```dotenv
+EXPO_PUBLIC_MAP_STYLE_URL=https://midia-experimente.mahina.fun/maps/norte-parana/style.json
+```
+
+A URL é pública e é o valor esperado em homologação. Sem essa variável, o código
+ainda usa `demotiles.maplibre.org`: o tileset de demonstração termina no zoom 6,
+sem detalhe de rua para a câmera inicial no zoom 11. MapLibre Native lê fontes
+`pmtiles://` diretamente; não é necessário adicionar a biblioteca JavaScript
+`pmtiles`.
+
+A validação visual em dispositivos Android e iOS reais ainda **não foi feita** e
+exige development build: conferir zoom 11 a 15 nas três cidades, acentos nos
+rótulos e atribuição Protomaps/OpenStreetMap visível.
 
 > Manter os dois renderizadores custa tamanho de binário e uma segunda
 > implementação para manter. É uma escolha deliberada e revisitável: consolidar

@@ -31,7 +31,7 @@ function parseRetryAfter(header: string | null): number | undefined {
   return Number.isFinite(deadline) ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : undefined
 }
 
-/** JSON-only transport shared by requests and serialized session operations. */
+/** Transport shared by JSON requests, multipart uploads, and serialized session operations. */
 export async function send(path: string, options: RequestOptions, accessToken?: string) {
   // Query strings can contain private content; do not retain them in this map.
   const key = `${options.method ?? 'GET'} ${path.split('?')[0]}`
@@ -39,16 +39,23 @@ export async function send(path: string, options: RequestOptions, accessToken?: 
   if (remaining > 0) throw new ApiError(429, null, Math.ceil(remaining / 1000))
   retryDeadlines.delete(key)
 
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
   const headers: Record<string, string> = { accept: 'application/json' }
-  if (options.body !== undefined) headers['content-type'] = 'application/json'
+  if (options.body !== undefined && !isFormData) headers['content-type'] = 'application/json'
   if (accessToken) headers.authorization = `Bearer ${accessToken}`
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
   const privateRequest = options.authenticated || options.sensitive
   if (privateRequest) headers['cache-control'] = 'no-store'
 
+  const body = isFormData
+    ? options.body
+    : options.body === undefined
+      ? undefined
+      : JSON.stringify(options.body)
+
   const response = await fetch(apiUrl(path), {
     method: options.method ?? 'GET', headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: body as BodyInit | undefined,
     signal: options.signal,
     ...(privateRequest ? { cache: 'no-store' as const } : {}),
   })

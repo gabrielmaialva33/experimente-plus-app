@@ -79,7 +79,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         void load()
       }
     })
-    void load()
+    const init = async () => {
+      await load()
+    }
+    void init()
     return () => {
       unsubscribe()
       generation.current += 1

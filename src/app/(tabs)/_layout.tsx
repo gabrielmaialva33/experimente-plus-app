@@ -24,11 +24,17 @@ import { useColors } from '@/theme/use-colors'
  * triggers changes at runtime, which is exactly what capability-driven
  * navigation does on sign-in.
  */
-const icon =
-  (name: keyof typeof Ionicons.glyphMap) =>
-  ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) => (
-    <Ionicons name={focused ? name.replace('-outline', '') as keyof typeof Ionicons.glyphMap : name} color={color as string} size={size} />
-  )
+function icon(name: keyof typeof Ionicons.glyphMap) {
+  return function TabBarIcon({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) {
+    return (
+      <Ionicons
+        name={focused ? (name.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : name}
+        color={color as string}
+        size={size}
+      />
+    )
+  }
+}
 
 export default function TabsLayout() {
   const colors = useColors()

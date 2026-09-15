@@ -88,11 +88,13 @@ export default function ExploreScreen() {
   const city = cities.data?.find((item) => item.slug === selectedCity)
 
   const selectedCityRef = useRef<string | null>(selectedCity)
-  selectedCityRef.current = selectedCity
+  useEffect(() => {
+    selectedCityRef.current = selectedCity
+  }, [selectedCity])
 
   // A result impression is only counted once per establishment per session.
   const seen = useRef(new Set<string>())
-  const onViewableItemsChanged = useRef(
+  const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: { key: string }[] }) => {
       viewableItems.forEach(({ key }) => {
         if (!selectedCityRef.current || seen.current.has(key)) return
@@ -102,8 +104,9 @@ export default function ExploreScreen() {
           establishment_slug: key,
         })
       })
-    }
-  ).current
+    },
+    []
+  )
 
   // Searches that find nothing are a product signal, not a silent failure.
   const total = search.data?.meta.total

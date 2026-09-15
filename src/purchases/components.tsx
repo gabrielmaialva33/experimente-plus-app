@@ -32,14 +32,21 @@ export function PurchaseAction({ label, onPress, disabled = false, conversion = 
 
 /** Retry-After governs manual retries too; the status itself is never inferred from time. */
 export function RetryPurchase({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const [waiting, setWaiting] = useState(0)
+  const retrySeconds = error instanceof ApiError && error.status === 429 ? error.retryAfterSeconds ?? 60 : 0
+  const [waiting, setWaiting] = useState(retrySeconds)
+  const [prevError, setPrevError] = useState(error)
+
+  if (prevError !== error) {
+    setPrevError(error)
+    setWaiting(retrySeconds)
+  }
+
   useEffect(() => {
-    const seconds = error instanceof ApiError && error.status === 429 ? error.retryAfterSeconds ?? 60 : 0
-    setWaiting(seconds)
-    if (!seconds) return
-    const timer = setInterval(() => setWaiting((left) => Math.max(0, left - 1)), 1000)
-    return () => clearInterval(timer)
-  }, [error])
+    if (waiting <= 0) return
+    const timer = setTimeout(() => setWaiting((left) => Math.max(0, left - 1)), 1000)
+    return () => clearTimeout(timer)
+  }, [waiting])
+
   return <PurchaseAction label={waiting ? `Aguarde ${waiting}s` : 'Consultar novamente'} disabled={waiting > 0} onPress={onRetry} />
 }
 

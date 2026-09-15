@@ -13,8 +13,10 @@ export function usePrivateOperation<T, A = void>(
   const session = useSession()
   const owner = session.status === 'authenticated'
     ? `${session.context?.user.id}:${session.context?.active_operation?.id}` : undefined
-  const firstOwner = useRef(owner)
-  if (firstOwner.current === undefined && owner !== undefined) firstOwner.current = owner
+  const [initialOwner, setInitialOwner] = useState(owner)
+  if (initialOwner === undefined && owner !== undefined) {
+    setInitialOwner(owner)
+  }
   const [state, setState] = useState<State<T>>({ status: 'idle' })
   const [retired, setRetired] = useState(false)
   const live = useRef(false)
@@ -23,11 +25,14 @@ export function usePrivateOperation<T, A = void>(
   const controller = useRef<AbortController | null>(null)
   const operationRef = useRef<typeof operation | null>(operation)
   const disposeRef = useRef(options.onDispose)
-  operationRef.current = operation
-  disposeRef.current = options.onDispose
-  const ready = session.status === 'authenticated' && owner === firstOwner.current && !retired
+  const ready = session.status === 'authenticated' && owner !== undefined && owner === initialOwner && !retired
   const readyRef = useRef(ready)
-  readyRef.current = ready
+
+  useEffect(() => {
+    operationRef.current = operation
+    disposeRef.current = options.onDispose
+    readyRef.current = ready
+  })
 
   const reset = useCallback(() => {
     version.current += 1
@@ -66,8 +71,10 @@ export function usePrivateOperation<T, A = void>(
   }, [dispose, reset])
 
   useEffect(() => {
-    if (session.status === 'anonymous' || (owner !== undefined && owner !== firstOwner.current)) dispose()
-  }, [session.status, owner, dispose])
+    if (session.status === 'anonymous' || (owner !== undefined && initialOwner !== undefined && owner !== initialOwner)) {
+      dispose()
+    }
+  }, [session.status, owner, initialOwner, dispose])
 
   const run = useCallback(async (args: A) => {
     if (!live.current || revoked.current || !readyRef.current || !operationRef.current) return

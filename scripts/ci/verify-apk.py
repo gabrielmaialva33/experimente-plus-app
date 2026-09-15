@@ -45,7 +45,13 @@ certificate = subprocess.check_output([
     "-alias", "androiddebugkey", "-storepass", "android",
 ])
 expected = hashlib.sha256(certificate).hexdigest()
-actual = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([a-fA-F0-9]+)", signature)
+# apksigner labels the signer differently across build-tools: 36 prints
+# "Signer #1 certificate ...", 37 prints "V2 Signer: certificate ...", one line
+# per signature scheme. The runner installs a newer build-tools than a developer
+# usually has, which is why this check passed locally and never passed in CI.
+actual = re.findall(
+    r"(?:Signer #\d+|V\d+ Signer:) certificate SHA-256 digest: ([a-fA-F0-9]+)", signature
+)
 if not actual or {digest.lower() for digest in actual} != {expected.lower()}:
     # Print the evidence instead of discarding it: this check passes locally and
     # has never passed in CI, so the difference is environmental and a bare

@@ -1,3 +1,13 @@
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
+import { Text } from 'react-native'
+import PresentScreen from '@/app/carteira/apresentar'
+import ConfirmScreen from '@/app/validar/confirmar'
+import { SessionProvider, useSession } from '@/session/context'
+import { clearCredentials, writeCredentials } from '@/api/session'
+import { notifySessionEvent } from '@/api/session-events'
+import type { Presentation, Preview, Receipt, Wallet } from '../types'
+
 const mockStore = new Map<string, string>()
 const mockParams: Record<string, string | undefined> = { accessId: '1', offerId: '2' }
 const mockRouter = { back: jest.fn(), setParams: jest.fn((params) => Object.assign(mockParams, params)) }
@@ -14,16 +24,6 @@ jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => t
 jest.mock('@/api/me', () => ({ getContext: jest.fn(async () => ({ user: { id: 1 }, active_operation: { id: 1 }, capabilities: {} })) }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
 jest.mock('@/api/redemptions', () => ({ previewRedemption: jest.fn(), confirmRedemption: jest.fn() }))
-
-import { focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
-import { Text } from 'react-native'
-import PresentScreen from '@/app/carteira/apresentar'
-import ConfirmScreen from '@/app/validar/confirmar'
-import { SessionProvider, useSession } from '@/session/context'
-import { clearCredentials, writeCredentials } from '@/api/session'
-import { notifySessionEvent } from '@/api/session-events'
-import type { Presentation, Preview, Receipt, Wallet } from '../types'
 
 const api = jest.requireMock('@/api/wallet') as { getWallet: jest.Mock; createPresentation: jest.Mock }
 const redemption = jest.requireMock('@/api/redemptions') as { previewRedemption: jest.Mock; confirmRedemption: jest.Mock }

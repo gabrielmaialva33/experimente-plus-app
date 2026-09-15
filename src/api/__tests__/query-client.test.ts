@@ -1,10 +1,10 @@
-jest.mock('expo-network', () => ({}))
-jest.mock('expo-secure-store', () => ({}))
-jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({}) }))
-
 import { createQueryClient } from '../query-client'
 import { ApiError } from '../client'
 import { SessionExpiredError } from '../session'
+
+jest.mock('expo-network', () => ({}))
+jest.mock('expo-secure-store', () => ({}))
+jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({}) }))
 
 beforeEach(() => jest.useFakeTimers())
 afterEach(() => jest.useRealTimers())

@@ -1,3 +1,9 @@
+import { act, fireEvent, render } from '@testing-library/react-native'
+import { Text } from 'react-native'
+import { request } from '@/api/client'
+import { clearCredentials, readCredentials, SessionExpiredError, writeCredentials } from '@/api/session'
+import { SessionProvider, usePartnerAreas, useSession } from '../context'
+
 const mockStore = new Map<string, string>()
 jest.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'device-only',
@@ -6,12 +12,6 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: async (key: string) => { mockStore.delete(key) },
 }))
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => true }) }))
-
-import { act, fireEvent, render } from '@testing-library/react-native'
-import { Text } from 'react-native'
-import { request } from '@/api/client'
-import { clearCredentials, readCredentials, SessionExpiredError, writeCredentials } from '@/api/session'
-import { SessionProvider, usePartnerAreas, useSession } from '../context'
 
 const json = (status: number, body: unknown = {}) => new Response(JSON.stringify(body), { status })
 const context = (validate: boolean) => ({ user: { id: 1 }, capabilities: { partner: { redemptions: { validate } } } })

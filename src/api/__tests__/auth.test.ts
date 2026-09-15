@@ -1,3 +1,6 @@
+import type { SignUpRequest, SignUpResponse } from '../auth'
+import { apiUrl } from '../config'
+
 const mockStore = new Map<string, string>()
 jest.mock('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'device-only',
@@ -7,9 +10,7 @@ jest.mock('expo-secure-store', () => ({
 }))
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => true, set: jest.fn() }) }))
 
-import type { SignUpRequest, SignUpResponse } from '../auth'
 let signUp: typeof import('../auth').signUp
-import { apiUrl } from '../config'
 
 const body: SignUpRequest = {
   full_name: 'Ana Silva', email: 'ana@example.com', username: null,

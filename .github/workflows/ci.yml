@@ -39,6 +39,7 @@ jobs:
           key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'mise.toml') }}
           restore-keys: pnpm-${{ runner.os }}-${{ runner.arch }}-
       - run: mise exec -- pnpm install --frozen-lockfile
+      - run: mise exec -- pnpm lint
       - run: mise exec -- pnpm typecheck
       - run: mise exec -- pnpm test --runInBand
 

@@ -47,24 +47,26 @@ export default function ConfirmRedemptionScreen() {
     if (incomingToken) router.setParams({ token: undefined })
   }, [incomingToken, router])
 
-  useEffect(() => {
-    if (preview.ready && !started.current) {
-      started.current = true
-      preview.mutate()
-    }
-  }, [preview.ready, preview.mutate])
+  const { ready: previewReady, mutate: mutatePreview } = preview
 
   useEffect(() => {
-    if (!preview.ready) return
+    if (previewReady && !started.current) {
+      started.current = true
+      mutatePreview()
+    }
+  }, [previewReady, mutatePreview])
+
+  useEffect(() => {
+    if (!previewReady) return
     const repeat = (available: boolean) => {
       // After confirmation starts, preserve the original nonce and its retry
       // even if the preview would now be expired or already redeemed.
-      if (available && !confirmationStarted.current) preview.mutate()
+      if (available && !confirmationStarted.current) mutatePreview()
     }
     const removeFocus = focusManager.subscribe(repeat)
     const removeOnline = onlineManager.subscribe(repeat)
     return () => { removeFocus(); removeOnline() }
-  }, [preview.ready, preview.mutate])
+  }, [previewReady, mutatePreview])
 
   if (confirm.data) {
     return <ReceiptView receipt={confirm.data} onDone={() => router.back()} />

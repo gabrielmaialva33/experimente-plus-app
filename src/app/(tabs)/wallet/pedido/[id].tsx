@@ -21,9 +21,14 @@ export default function PurchaseOrderScreen() {
   const [openingError, setOpeningError] = useState(false)
   const colors = useColors()
 
+  const hasOrder = Boolean(order)
+  const orderStatus = order?.status
+  const accessId = order?.access_id
+  const financiallyBlocked = order?.financially_blocked
+
   useEffect(() => {
-    if (order) void client.invalidateQueries({ queryKey: walletKeys.wallet })
-  }, [client, order?.status, order?.access_id, order?.financially_blocked])
+    if (hasOrder) void client.invalidateQueries({ queryKey: walletKeys.wallet })
+  }, [client, hasOrder, orderStatus, accessId, financiallyBlocked])
 
   if (query.isPending) return <PurchasePage><PurchaseText>Consultando pedido…</PurchaseText></PurchasePage>
   if (query.isError || !order || !state) return <PurchasePage>

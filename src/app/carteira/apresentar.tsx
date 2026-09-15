@@ -1,6 +1,6 @@
 import { Image } from 'expo-image'
 import { useLocalSearchParams } from 'expo-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -43,13 +43,16 @@ export default function PresentScreen() {
   const colors = useColors()
   const { accessId, offerId } = useLocalSearchParams<{ accessId: string; offerId: string }>()
   const presentation = useCreatePresentation()
+  const { mutate: mutatePresentation } = presentation
   const wallet = useWallet(15_000)
   const eligibility = wallet.data
     ? presentationEligibility(wallet.data, Number(accessId), Number(offerId))
     : null
 
-  const create = () =>
-    presentation.mutate({ accessId: Number(accessId), offerId: Number(offerId) })
+  const create = useCallback(
+    () => mutatePresentation({ accessId: Number(accessId), offerId: Number(offerId) }),
+    [mutatePresentation, accessId, offerId]
+  )
 
   const startedFor = useRef<string | null>(null)
   useEffect(() => {
@@ -59,7 +62,7 @@ export default function PresentScreen() {
       create()
     }
     // A presentation is created once per screen entry, on purpose.
-  }, [accessId, offerId, presentation.ready])
+  }, [accessId, offerId, presentation.ready, create])
 
   const data = presentation.data
   const remaining = useCountdown(data?.expires_at)

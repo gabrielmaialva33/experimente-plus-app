@@ -1,6 +1,7 @@
 import type { ForgotPasswordRequest, ForgotPasswordResponse } from '../auth'
-let forgotPassword: typeof import('../auth').forgotPassword
 import { apiUrl } from '../config'
+
+let forgotPassword: typeof import('../auth').forgotPassword
 
 jest.mock('../session', () => ({
   readCredentials: jest.fn(), writeCredentials: jest.fn(), clearCredentials: jest.fn(),

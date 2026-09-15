@@ -1,5 +1,8 @@
 import type { CreatePurchaseRequest } from '@/api/purchases'
 import { randomUUID } from 'expo-crypto'
+import { clearIntent, purchaseIntent, readIntent } from '../intent-store'
+import { apiBaseUrl } from '@/api/config'
+
 const mockStorage = new Map<string, string>()
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({
   getString: (key: string) => mockStorage.get(key),
@@ -7,9 +10,6 @@ jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({
   remove: (key: string) => mockStorage.delete(key),
 }) }))
 jest.mock('expo-crypto', () => ({ randomUUID: jest.fn(() => 'stable-intention-123') }))
-
-import { clearIntent, purchaseIntent, readIntent } from '../intent-store'
-import { apiBaseUrl } from '@/api/config'
 
 beforeEach(() => mockStorage.clear())
 

@@ -1,4 +1,4 @@
-import type { CreatePurchaseRequest } from '@/api/purchases'
+import type { CreatePurchaseRequest, Purchase, PurchaseEdition, PurchaseProduct } from '@/api/purchases'
 import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import { Linking } from 'react-native'
@@ -8,7 +8,6 @@ import EditionsScreen from '@/app/(tabs)/wallet/edicoes'
 import OrderScreen from '@/app/(tabs)/wallet/pedido/[id]'
 import PublicProductScreen from '@/app/compra/[id]'
 import { EstablishmentOffers } from '@/purchases/establishment-offers'
-import type { Purchase, PurchaseEdition, PurchaseProduct } from '@/api/purchases'
 
 jest.mock('expo-router', () => ({ useLocalSearchParams: jest.fn(), useRouter: jest.fn() }))
 jest.mock('@/api/purchases', () => ({ ...jest.requireActual('@/api/purchases'), createPurchase: jest.fn() }))

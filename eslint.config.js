@@ -7,4 +7,12 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*', 'android/*', 'ios/*'],
   },
+  {
+    // In test files, dynamic require() is idiomatic for jest.resetModules(),
+    // jest.requireMock() and dynamic test fixture initialization.
+    files: ['**/__tests__/**/*', '**/*.test.*', '**/*.spec.*'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ]);

@@ -47,6 +47,13 @@
           "recordAudioAndroid": false
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Experimente+ precisa de acesso às suas fotos para você escolher imagens para a avaliação.",
+          "cameraPermission": "O Experimente+ precisa de acesso à câmera para você tirar fotos para a avaliação."
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {

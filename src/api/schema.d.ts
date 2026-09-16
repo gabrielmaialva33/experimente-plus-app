@@ -540,6 +540,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/concierge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the discovery assistant about places published in the catalogue
+         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything.
+         */
+        post: operations["askCatalogConcierge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/cities": {
         parameters: {
             query?: never;
@@ -2551,6 +2571,190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/establishments/{establishmentId}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List published reviews for an establishment
+         * @description Public regional discovery. Returns published reviews and their partner reply if present.
+         */
+        get: operations["getCatalogEstablishmentReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/reviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single published review */
+        get: operations["getCatalogReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List authenticated user's reviews */
+        get: operations["getMyReviews"];
+        put?: never;
+        /**
+         * Create a review for an establishment
+         * @description Enforces tenant review policy rules (limits, text length, visit proof if required).
+         */
+        post: operations["createMyReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update an existing review by author
+         * @description Allowed within the edit window and interval defined in tenant policy.
+         */
+        put: operations["updateMyReview"];
+        post?: never;
+        /** Delete an existing review by author */
+        delete: operations["deleteMyReview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/reviews/{reviewId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update existing partner reply
+         * @description Requires organization membership (owner/admin/editor) on the organization owning the establishment.
+         */
+        put: operations["updatePortalReviewReply"];
+        /**
+         * Reply to a review as establishment partner
+         * @description Requires organization membership (owner/admin/editor) on the organization owning the establishment.
+         */
+        post: operations["createPortalReviewReply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a review or reply for moderation */
+        post: operations["createContentReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List content reports for moderation queue
+         * @description Requires global role moderator, admin, or root.
+         */
+        get: operations["getAdminContentReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content-reports/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve or dismiss a content report
+         * @description Requires global role moderator, admin, or root. Optionally hides the reported content.
+         */
+        post: operations["resolveAdminContentReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/review-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get tenant review policy
+         * @description Requires admin or root role.
+         */
+        get: operations["getAdminReviewPolicy"];
+        /**
+         * Update tenant review policy
+         * @description Requires admin or root role.
+         */
+        put: operations["updateAdminReviewPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4512,6 +4716,134 @@ export interface components {
             unlinked_payment_accesses: {
                 id: number;
             }[];
+        };
+        ReviewPolicy: {
+            id: number;
+            tenant_id: number;
+            min_text_length: number;
+            max_text_length: number;
+            max_photos: number;
+            max_videos: number;
+            require_visit_proof: boolean;
+            daily_limit_per_user: number;
+            min_edit_interval_minutes: number;
+            edit_window_days: number;
+            auto_publish: boolean;
+            require_moderation_for_negative: boolean;
+            negative_score_threshold: number;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
+        EstablishmentReviewReply: {
+            id: number;
+            review_id: number;
+            user_id: number;
+            organization_id: number;
+            body: string;
+            /** @enum {string} */
+            status: "published" | "hidden";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
+        EstablishmentReview: {
+            id: number;
+            tenant_id: number;
+            establishment_id: number;
+            user_id: number;
+            redemption_id?: number | null;
+            rating: number;
+            title?: string | null;
+            comment?: string | null;
+            photos?: string[];
+            videos?: string[];
+            /** @enum {string} */
+            status: "published" | "hidden" | "pending_moderation";
+            visit_verified: boolean;
+            edit_count: number;
+            /** Format: date-time */
+            last_edited_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string | null;
+            reply?: components["schemas"]["EstablishmentReviewReply"];
+        };
+        ContentReport: {
+            id: number;
+            tenant_id: number;
+            reporter_id: number;
+            /** @enum {string} */
+            target_type: "review" | "review_reply";
+            target_id: number;
+            /** @enum {string} */
+            reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
+            details?: string | null;
+            /** @enum {string} */
+            status: "pending" | "in_review" | "resolved" | "dismissed";
+            moderator_id?: number | null;
+            resolution_notes?: string | null;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
+        CreateReviewRequest: {
+            establishment_id: number;
+            redemption_id?: number;
+            rating: number;
+            title?: string;
+            comment?: string;
+            photos?: string[];
+            videos?: string[];
+        };
+        UpdateReviewRequest: {
+            rating?: number;
+            title?: string;
+            comment?: string;
+            photos?: string[];
+            videos?: string[];
+        };
+        CreateReplyRequest: {
+            body: string;
+        };
+        CreateReportRequest: {
+            /** @enum {string} */
+            target_type: "review" | "review_reply";
+            target_id: number;
+            /** @enum {string} */
+            reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
+            details?: string;
+        };
+        ResolveReportRequest: {
+            /** @enum {string} */
+            status: "resolved" | "dismissed";
+            resolution_notes?: string;
+            hide_content?: boolean;
+        };
+        UpdateReviewPolicyRequest: {
+            min_text_length?: number;
+            max_text_length?: number;
+            max_photos?: number;
+            max_videos?: number;
+            require_visit_proof?: boolean;
+            daily_limit_per_user?: number;
+            min_edit_interval_minutes?: number;
+            edit_window_days?: number;
+            auto_publish?: boolean;
+            require_moderation_for_negative?: boolean;
+            negative_score_threshold?: number;
+        };
+        PaginatedReviewsResponse: {
+            data: components["schemas"]["EstablishmentReview"][];
+            meta: components["schemas"]["AdministrativePaginationMeta"];
+        };
+        PaginatedContentReportsResponse: {
+            data: components["schemas"]["ContentReport"][];
+            meta: components["schemas"]["AdministrativePaginationMeta"];
         };
     };
     responses: {
@@ -6520,6 +6852,65 @@ export interface operations {
             };
             /** @description Public operation could not be resolved */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    askCatalogConcierge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    question: string;
+                    /** @description Restricts grounding to one city of the operation */
+                    city?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description An answer grounded in the catalogue, a fixed refusal for a subject outside discovery, or a degraded reply carrying the catalogue when no model could be consulted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        outcome: "grounded" | "degraded" | "refused";
+                        /** @description Absent on a degraded reply, which carries items only */
+                        text: string | null;
+                        /** @description Catalogue places backing the reply, in order */
+                        items: {
+                            id?: number;
+                            /** @enum {string} */
+                            kind?: "establishment";
+                            name?: string;
+                            city?: string;
+                            district?: string | null;
+                            category?: string | null;
+                        }[];
+                        /** @description Null when no model was consulted */
+                        model: string | null;
+                    };
+                };
+            };
+            /** @description Public operation could not be resolved */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Question missing or outside the accepted length */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11948,6 +12339,643 @@ export interface operations {
             };
             /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCatalogEstablishmentReviews: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: components["parameters"]["pageParam"];
+                /** @description Number of items per page */
+                per_page?: components["parameters"]["perPageParam"];
+                rating?: number;
+                verified_only?: boolean;
+                order_by?: "recent" | "highest_rating" | "lowest_rating";
+            };
+            header?: never;
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated published reviews */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedReviewsResponse"];
+                };
+            };
+            /** @description Establishment not found or not published */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCatalogReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published review details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstablishmentReview"];
+                };
+            };
+            /** @description Review not found or not published */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMyReviews: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: components["parameters"]["pageParam"];
+                /** @description Number of items per page */
+                per_page?: components["parameters"]["perPageParam"];
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated user reviews */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedReviewsResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createMyReview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Review created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstablishmentReview"];
+                };
+            };
+            /** @description Policy validation failed or redemption not valid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Establishment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User already reviewed this establishment */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateMyReview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Review updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstablishmentReview"];
+                };
+            };
+            /** @description Edit window expired, minimum interval not reached, or policy limits exceeded */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not the author of this review */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteMyReview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not the author of this review */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updatePortalReviewReply: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                reviewId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Reply updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstablishmentReviewReply"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to reply for this establishment */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reply not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createPortalReviewReply: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                reviewId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Reply published */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstablishmentReviewReply"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to reply for this establishment */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Reply already exists for this review */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createContentReport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Content report created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentReport"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Target content not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Target content already reported by this user */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAdminContentReports: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: components["parameters"]["pageParam"];
+                /** @description Number of items per page */
+                per_page?: components["parameters"]["perPageParam"];
+                status?: "pending" | "in_review" | "resolved" | "dismissed";
+                target_type?: "review" | "review_reply";
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated content reports */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedContentReportsResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator, admin, or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resolveAdminContentReport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Content report resolved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentReport"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator, admin, or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content report not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAdminReviewPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tenant review policy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateAdminReviewPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description Tenant review policy updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

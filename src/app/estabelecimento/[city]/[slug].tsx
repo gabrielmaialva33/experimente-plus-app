@@ -12,6 +12,7 @@ import { EstablishmentCover } from '@/components/establishment-cover'
 import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
 import { EstablishmentOffers } from '@/purchases/establishment-offers'
+import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -184,6 +185,8 @@ function Detail({
       ) : null}
 
       <EstablishmentHours establishment={detail} />
+
+      <EstablishmentReviews establishmentId={detail.id} summary={detail.reviews} />
 
       {detail.attributes.length > 0 ? (
         <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>

@@ -2580,7 +2580,7 @@ export interface paths {
         };
         /**
          * List published reviews for an establishment
-         * @description Public regional discovery. Returns published reviews and their partner reply if present.
+         * @description Public regional discovery. Returns published reviews, newest first, with the author identity of ReviewAuthor and the partner reply when there is one. Ordering is fixed; only the rating filter narrows the list.
          */
         get: operations["getCatalogEstablishmentReviews"];
         put?: never;
@@ -4218,10 +4218,16 @@ export interface components {
                 [key: string]: unknown;
             };
             is_sponsored: boolean;
+            reviews: components["schemas"]["CatalogReviewSummary"];
             /** Format: date-time */
             published_at: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        /** @description Public rating of the place, read from the catalogue projection rather than from a live count (ADR-0027). The average is null while nothing has been published; zero would read as the worst possible score. */
+        CatalogReviewSummary: {
+            count: number;
+            average: number | null;
         };
         CatalogSearchResult: {
             context: components["schemas"]["CatalogSearchContext"];
@@ -4231,6 +4237,8 @@ export interface components {
             organic_results: components["schemas"]["CatalogSearchItem"][];
         };
         CatalogEstablishmentDetailProjection: {
+            /** @description Stable establishment identity, required to post a review about it. */
+            id: number;
             slug: string;
             name: string;
             short_description: string | null;
@@ -4265,6 +4273,7 @@ export interface components {
                 [key: string]: unknown;
             };
             is_sponsored: boolean;
+            reviews: components["schemas"]["CatalogReviewSummary"];
             /** Format: date-time */
             published_at: string;
             /** Format: date-time */
@@ -4720,28 +4729,38 @@ export interface components {
         ReviewPolicy: {
             id: number;
             tenant_id: number;
+            require_visit_proof: boolean;
             min_text_length: number;
             max_text_length: number;
             max_photos: number;
             max_videos: number;
-            require_visit_proof: boolean;
             daily_limit_per_user: number;
             min_edit_interval_minutes: number;
             edit_window_days: number;
-            auto_publish: boolean;
-            require_moderation_for_negative: boolean;
-            negative_score_threshold: number;
+            /** @description Deadline, in days, for a report to be answered by moderation. */
+            report_moderation_days: number;
+            /** Format: date-time */
+            created_at: string;
             /** Format: date-time */
             updated_at: string | null;
         };
+        /** @description Identity shown next to a published review. Only these fields leave the operation: the email and every other user attribute stay behind. */
+        ReviewAuthor: {
+            id: number;
+            full_name: string;
+            username?: string | null;
+        };
         EstablishmentReviewReply: {
             id: number;
+            tenant_id: number;
             review_id: number;
-            user_id: number;
             organization_id: number;
-            body: string;
+            user_id: number;
+            comment: string;
             /** @enum {string} */
             status: "published" | "hidden";
+            /** Format: date-time */
+            edited_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -4750,42 +4769,57 @@ export interface components {
         EstablishmentReview: {
             id: number;
             tenant_id: number;
+            /** @description Stable establishment identity, not a published revision. */
             establishment_id: number;
             user_id: number;
+            /** @description Redemption that proves the visit, when the tenant policy requires or the author supplies one. Null keeps the review; losing the proof does not erase what was written. */
             redemption_id?: number | null;
             rating: number;
-            title?: string | null;
             comment?: string | null;
-            photos?: string[];
-            videos?: string[];
             /** @enum {string} */
             status: "published" | "hidden" | "pending_moderation";
-            visit_verified: boolean;
-            edit_count: number;
+            /** @description Number of photos attached. The media pipeline of ADR-0014 owns the files; the review carries the count, never the URLs. */
+            photos_count: number;
+            videos_count: number;
             /** Format: date-time */
-            last_edited_at?: string | null;
+            edited_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string | null;
+            /** @description Present on the public routes. Absent from the author's own listing, where the author is the person asking. */
+            author?: components["schemas"]["ReviewAuthor"];
             reply?: components["schemas"]["EstablishmentReviewReply"];
         };
         ContentReport: {
             id: number;
             tenant_id: number;
-            reporter_id: number;
             /** @enum {string} */
             target_type: "review" | "review_reply";
             target_id: number;
+            /** @description Null when the report is anonymous. */
+            reporter_id?: number | null;
             /** @enum {string} */
             reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
             details?: string | null;
             /** @enum {string} */
             status: "pending" | "in_review" | "resolved" | "dismissed";
-            moderator_id?: number | null;
-            resolution_notes?: string | null;
+            /** @description Unique per operation; what the reporter quotes to follow up. */
+            protocol_number: string;
+            is_anonymous: boolean;
+            assigned_to?: number | null;
+            /**
+             * Format: date-time
+             * @description Moderation deadline, derived from the tenant policy.
+             */
+            due_at?: string | null;
+            /** Format: date-time */
+            sla_notified_at?: string | null;
+            resolved_by?: number | null;
             /** Format: date-time */
             resolved_at?: string | null;
+            resolution_action?: string | null;
+            resolution_notes?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -4793,22 +4827,18 @@ export interface components {
         };
         CreateReviewRequest: {
             establishment_id: number;
-            redemption_id?: number;
             rating: number;
-            title?: string;
-            comment?: string;
-            photos?: string[];
-            videos?: string[];
+            comment?: string | null;
+            redemption_id?: number | null;
+            photos_count?: number;
         };
         UpdateReviewRequest: {
             rating?: number;
-            title?: string;
-            comment?: string;
-            photos?: string[];
-            videos?: string[];
+            comment?: string | null;
+            photos_count?: number;
         };
         CreateReplyRequest: {
-            body: string;
+            comment: string;
         };
         CreateReportRequest: {
             /** @enum {string} */
@@ -4816,26 +4846,23 @@ export interface components {
             target_id: number;
             /** @enum {string} */
             reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
-            details?: string;
+            details?: string | null;
         };
         ResolveReportRequest: {
             /** @enum {string} */
             status: "resolved" | "dismissed";
-            resolution_notes?: string;
-            hide_content?: boolean;
+            resolution_action?: string | null;
+            resolution_notes?: string | null;
         };
         UpdateReviewPolicyRequest: {
+            require_visit_proof?: boolean;
             min_text_length?: number;
             max_text_length?: number;
             max_photos?: number;
             max_videos?: number;
-            require_visit_proof?: boolean;
             daily_limit_per_user?: number;
             min_edit_interval_minutes?: number;
             edit_window_days?: number;
-            auto_publish?: boolean;
-            require_moderation_for_negative?: boolean;
-            negative_score_threshold?: number;
         };
         PaginatedReviewsResponse: {
             data: components["schemas"]["EstablishmentReview"][];
@@ -12354,8 +12381,6 @@ export interface operations {
                 /** @description Number of items per page */
                 per_page?: components["parameters"]["perPageParam"];
                 rating?: number;
-                verified_only?: boolean;
-                order_by?: "recent" | "highest_rating" | "lowest_rating";
             };
             header?: never;
             path: {

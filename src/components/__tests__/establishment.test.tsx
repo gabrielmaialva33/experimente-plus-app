@@ -16,13 +16,16 @@ jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: () => ({ data: { products: [] } }) }))
 jest.mock('@/catalog/queries', () => ({ useEstablishment: jest.fn() }))
+jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'anonymous' }) }))
+jest.mock('@/reviews/queries', () => ({ useEstablishmentReviews: () => ({ data: undefined, isError: false }) }))
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 
 const queries = jest.requireMock('@/catalog/queries') as { useEstablishment: jest.Mock }
 const theme = jest.requireMock('@/theme/use-colors') as { useColors: jest.Mock }
 
 const detail: EstablishmentDetail = {
-  slug: 'cafe', name: 'Café da Praça', short_description: null, description: null,
+  id: 1, slug: 'cafe', name: 'Café da Praça', short_description: null, description: null,
+  reviews: { count: 0, average: null },
   city: { slug: 'londrina', name: 'Londrina', state_code: 'PR', timezone: 'America/Sao_Paulo' },
   address: {
     postal_code: null, street: 'Rua Central', number: '10', without_number: false,

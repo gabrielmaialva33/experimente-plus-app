@@ -96,6 +96,13 @@ export default function AccountScreen() {
           </Text>
         </Pressable>
 
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/conta/avaliacoes')}
+          style={styles.signOut}>
+          <Text style={[styles.actionLabel, { color: colors.primary }]}>Minhas avaliações</Text>
+        </Pressable>
+
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.signOut}>
           <Text style={[styles.actionLabel, { color: colors.primary }]}>Sair</Text>
         </Pressable>

@@ -41,6 +41,12 @@ export interface CategoryRef {
   sort_order: number
 }
 
+/** Public rating of a place, read from the projection (ADR-0027 §7). */
+export interface ReviewSummary {
+  count: number
+  average: number | null
+}
+
 export interface EstablishmentSummary {
   slug: string
   name: string
@@ -53,6 +59,7 @@ export interface EstablishmentSummary {
   categories: CategoryRef[]
   cover: Media
   is_sponsored: boolean
+  reviews: ReviewSummary
   published_at: string
   updated_at: string
 }
@@ -88,6 +95,8 @@ export interface Hour {
 }
 
 export interface EstablishmentDetail {
+  /** Needed to read and to write reviews; the page itself is addressed by slug. */
+  id: number
   slug: string
   name: string
   short_description: string | null
@@ -111,6 +120,7 @@ export interface EstablishmentDetail {
   media: Media[]
   cover: Media
   is_sponsored: boolean
+  reviews: ReviewSummary
   published_at: string
   updated_at: string
 }

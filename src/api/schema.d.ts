@@ -5886,6 +5886,14 @@ export interface components {
             data: components["schemas"]["EstablishmentReview"][];
             meta: components["schemas"]["AdministrativePaginationMeta"];
         };
+        /** @description A review as its author sees it. `awaiting_moderation` is true when an automatic rule is holding the review and no person has decided yet: the review is `hidden`, but it is under review, not hidden on its merits. Only the author's own listing carries it. */
+        MyReview: components["schemas"]["EstablishmentReview"] & {
+            awaiting_moderation: boolean;
+        };
+        PaginatedMyReviewsResponse: {
+            data: components["schemas"]["MyReview"][];
+            meta: components["schemas"]["AdministrativePaginationMeta"];
+        };
         PaginatedContentReportsResponse: {
             data: components["schemas"]["ContentReport"][];
             meta: components["schemas"]["AdministrativePaginationMeta"];
@@ -14638,7 +14646,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedReviewsResponse"];
+                    "application/json": components["schemas"]["PaginatedMyReviewsResponse"];
                 };
             };
             /** @description Authentication required */

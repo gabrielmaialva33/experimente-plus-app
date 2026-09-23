@@ -18,6 +18,14 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 /**
+ * A review an automatic rule is holding is `hidden` too, but nobody has decided
+ * about it yet. Calling it "hidden by moderation" would tell the author a
+ * person judged it, which has not happened.
+ */
+const statusLabel = (review: { status: string; awaiting_moderation?: boolean }) =>
+  review.awaiting_moderation ? 'Em análise' : (STATUS_LABEL[review.status] ?? review.status)
+
+/**
  * The reviews this person wrote.
  *
  * Status is shown as the server reports it: a review held for moderation is
@@ -56,7 +64,7 @@ export default function MyReviewsScreen() {
           <View style={styles.header}>
             <Stars rating={item.rating} />
             <Text style={[styles.status, { color: colors.mutedForeground }]}>
-              {STATUS_LABEL[item.status] ?? item.status}
+              {statusLabel(item)}
             </Text>
           </View>
 

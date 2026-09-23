@@ -15,6 +15,8 @@ export type Review = Schemas['EstablishmentReview']
 export type ReviewAuthor = Schemas['ReviewAuthor']
 export type ReviewReply = Schemas['EstablishmentReviewReply']
 export type PaginatedReviews = Schemas['PaginatedReviewsResponse']
+/** The author's own listing, which says when a rule is holding a review. */
+export type PaginatedMyReviews = Schemas['PaginatedMyReviewsResponse']
 export type CreateReview = Schemas['CreateReviewRequest']
 export type UpdateReview = Schemas['UpdateReviewRequest']
 export type ReportReason = Schemas['CreateReportRequest']['reason']
@@ -44,7 +46,7 @@ export const listEstablishmentReviews = (establishmentId: number, params: Review
   )
 
 export const listMyReviews = (params: ReviewPage = {}) =>
-  request<PaginatedReviews>(`/api/v1/me/reviews${query(params)}`, { authenticated: true })
+  request<PaginatedMyReviews>(`/api/v1/me/reviews${query(params)}`, { authenticated: true })
 
 export const createReview = (body: CreateReview) =>
   request<Review>('/api/v1/me/reviews', { method: 'POST', authenticated: true, body })

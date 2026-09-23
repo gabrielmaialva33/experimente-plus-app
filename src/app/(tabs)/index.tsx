@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
+import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
 import { ChoiceRow } from '@/components/choice-row'
@@ -21,6 +22,7 @@ import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
+import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -155,6 +157,15 @@ export default function ExploreScreen() {
             ))}
           </ChoiceRow>
         </View>
+
+        <DiscoveryAssistant
+          key={selectedCity ?? 'no-city'}
+          citySlug={selectedCity}
+          cityName={city?.name ?? null}
+        />
+
+        {/* Bands already resolved in the city's timezone by the server. */}
+        <CityAgenda citySlug={selectedCity} />
 
         {/* One filter state, shared by the list and the map. */}
         <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>Filtros</Text>

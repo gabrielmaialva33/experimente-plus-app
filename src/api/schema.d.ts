@@ -2571,6 +2571,318 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/establishments/{establishmentId}/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List an establishment's published experiences, events or showcase items
+         * @description Public regional discovery. Returns the approved version of each item — the snapshot, not the live columns — so an edit awaiting approval never changes what the public sees. Events are filtered by their own window and ordered by start, so one that has ended leaves discovery without anyone archiving it.
+         */
+        get: operations["getCatalogEstablishmentPartnerContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the content of every establishment the actor manages */
+        get: operations["listPartnerContent"];
+        put?: never;
+        /**
+         * Create a draft
+         * @description Content is created as a draft; publishing is a separate act.
+         */
+        post: operations["createPartnerContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Edit content in place
+         * @description If the operation requires approval and the item is published, the change moves it to `pending_review` **without** taking the approved version off the air.
+         */
+        put: operations["updatePartnerContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List media assigned to one partner-content item */
+        get: operations["listPartnerContentMedia"];
+        put?: never;
+        /**
+         * Upload an image to partner content
+         * @description Reuses the platform image pipeline: JPEG, PNG or WebP up to 10 MiB, binary signature validation, shared media_assets storage and an independent moderation state.
+         */
+        post: operations["uploadPartnerContentMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}/media/{mediaId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove media from partner content
+         * @description Removes the assignment. The underlying file and media asset are deleted only when no other platform resource still references the asset.
+         */
+        delete: operations["deletePartnerContentMedia"];
+        options?: never;
+        head?: never;
+        /**
+         * Update partner-content media metadata
+         * @description Updating approved metadata returns the image to pending moderation.
+         */
+        patch: operations["updatePartnerContentMedia"];
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}/media/{mediaId}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Select the cover image for partner content */
+        patch: operations["setPartnerContentMediaCover"];
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for the content to become public
+         * @description Publishes directly when the operation does not require approval for this kind, and otherwise joins the moderation queue.
+         */
+        post: operations["submitPartnerContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/content/{kind}/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw content from the public surfaces
+         * @description Archives. The row is preserved for history and audit, and the database refuses a physical delete.
+         */
+        post: operations["archivePartnerContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The moderation queue for one operation
+         * @description Oldest first, so the queue is worked in the order it formed.
+         */
+        get: operations["listPartnerContentForModeration"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/media/{mediaId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve one partner-content image */
+        post: operations["approvePartnerContentMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/media/{mediaId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject one partner-content image */
+        post: operations["rejectPartnerContentMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/media/{mediaId}/quarantine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Quarantine one partner-content image */
+        post: operations["quarantinePartnerContentMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve the version awaiting review
+         * @description Takes the snapshot the public will read. An administrator reaches this by inheriting the moderator role, so the queue stays a single one.
+         */
+        post: operations["approvePartnerContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refuse the version awaiting review
+         * @description Returns the item to a draft, or to its previously approved version when there is one: refusing an edit is not a reason to take down what was already accepted.
+         */
+        post: operations["rejectPartnerContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw content as an administrator
+         * @description What the scope calls "excluir". It archives: destroying the trail is the one thing that cannot be undone when a removal turns out to be wrong.
+         */
+        post: operations["archivePartnerContentAsModerator"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/partner-content-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the operation's partner content policy */
+        get: operations["getPartnerContentPolicy"];
+        /** Change the operation's partner content policy */
+        put: operations["updatePartnerContentPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/establishments/{establishmentId}/reviews": {
         parameters: {
             query?: never;
@@ -4725,6 +5037,170 @@ export interface components {
             unlinked_payment_accesses: {
                 id: number;
             }[];
+        };
+        /**
+         * @description The lifecycle every kind of partner content shares (ADR-0028). It is independent of the unit's publication workflow: a new approved revision of the establishment neither republishes nor invalidates this content.
+         * @enum {string}
+         */
+        PartnerContentStatus: "draft" | "pending_review" | "published" | "archived";
+        /** @description The version the public reads. It is a copy taken at approval, not a reference to the live columns, so editing a published item never changes what is on air before the change is approved. */
+        PartnerContentSnapshot: {
+            [key: string]: unknown;
+        };
+        PartnerContentPublicMedia: {
+            id: number;
+            is_cover: boolean;
+            sort_order: number;
+            alt_text: string;
+            caption: string | null;
+            asset: components["schemas"]["PublicMediaAsset"];
+        };
+        PartnerContentMedia: {
+            id: number;
+            establishment_id: number;
+            content_id: number;
+            is_cover: boolean;
+            sort_order: number;
+            alt_text: string;
+            caption: string | null;
+            /** @enum {string} */
+            moderation_status: "pending" | "approved" | "rejected" | "quarantined";
+            review_notes: string | null;
+            /** Format: date-time */
+            reviewed_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            asset: components["schemas"]["MediaAsset"];
+        };
+        EstablishmentExperience: {
+            id: number;
+            tenant_id: number;
+            /** @description Stable establishment identity, never a revision. */
+            establishment_id: number;
+            created_by: number;
+            title: string;
+            description?: string | null;
+            status: components["schemas"]["PartnerContentStatus"];
+            /** @description Approved media only on public catalogue responses. */
+            media?: components["schemas"]["PartnerContentPublicMedia"][];
+            published_snapshot?: components["schemas"]["PartnerContentSnapshot"] | null;
+            /** Format: date-time */
+            published_at?: string | null;
+            archived_by?: number | null;
+            /** Format: date-time */
+            archived_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        EstablishmentEvent: {
+            id: number;
+            tenant_id: number;
+            establishment_id: number;
+            created_by: number;
+            title: string;
+            description?: string | null;
+            status: components["schemas"]["PartnerContentStatus"];
+            /** @description Approved media only on public catalogue responses. */
+            media?: components["schemas"]["PartnerContentPublicMedia"][];
+            /**
+             * Format: date-time
+             * @description Resolved in the city's timezone when it is written, never in the server's or the device's.
+             */
+            starts_at: string;
+            /** Format: date-time */
+            ends_at: string;
+            published_snapshot?: components["schemas"]["PartnerContentSnapshot"] | null;
+            /** Format: date-time */
+            published_at?: string | null;
+            archived_by?: number | null;
+            /** Format: date-time */
+            archived_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        EstablishmentShowcaseItem: {
+            id: number;
+            tenant_id: number;
+            establishment_id: number;
+            created_by: number;
+            title: string;
+            description?: string | null;
+            status: components["schemas"]["PartnerContentStatus"];
+            /** @description Approved media only on public catalogue responses. */
+            media?: components["schemas"]["PartnerContentPublicMedia"][];
+            /** @description Displayed, never charged. No purchase route accepts a showcase item as a product, and the platform takes on no commercial obligation for it (ADR-0028). */
+            informational_price_cents?: number | null;
+            published_snapshot?: components["schemas"]["PartnerContentSnapshot"] | null;
+            /** Format: date-time */
+            published_at?: string | null;
+            archived_by?: number | null;
+            /** Format: date-time */
+            archived_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        PartnerContent: components["schemas"]["EstablishmentExperience"] | components["schemas"]["EstablishmentEvent"] | components["schemas"]["EstablishmentShowcaseItem"];
+        /** @description Per-operation configuration. The scope says an event's publication *may* depend on approval, so the requirement is a setting rather than a fixed workflow, and the defaults exist to make the feature buildable before the client decides. */
+        PartnerContentPolicy: {
+            id: number;
+            tenant_id: number;
+            require_experience_approval: boolean;
+            require_event_approval: boolean;
+            require_showcase_item_approval: boolean;
+            max_media_per_content: number;
+            min_event_notice_minutes: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        CreatePartnerContentRequest: {
+            establishment_id: number;
+            title: string;
+            description?: string | null;
+            /**
+             * Format: date-time
+             * @description Events only.
+             */
+            starts_at?: string;
+            /**
+             * Format: date-time
+             * @description Events only. Must be after `starts_at`.
+             */
+            ends_at?: string;
+            /** @description Showcase items only. Displayed, never charged. */
+            informational_price_cents?: number | null;
+        };
+        UpdatePartnerContentRequest: {
+            title?: string;
+            description?: string | null;
+            /** Format: date-time */
+            starts_at?: string;
+            /** Format: date-time */
+            ends_at?: string;
+            informational_price_cents?: number | null;
+        };
+        UpdatePartnerContentPolicyRequest: {
+            require_experience_approval?: boolean;
+            require_event_approval?: boolean;
+            require_showcase_item_approval?: boolean;
+            max_media_per_content?: number;
+            min_event_notice_minutes?: number;
+        };
+        PartnerContentListResponse: {
+            data: components["schemas"]["PartnerContent"][];
+        };
+        PaginatedPartnerContentResponse: {
+            data: components["schemas"]["PartnerContent"][];
+            meta: components["schemas"]["AdministrativePaginationMeta"];
         };
         ReviewPolicy: {
             id: number;
@@ -12366,6 +12842,902 @@ export interface operations {
             };
             /** @description Requisição recusada; nenhuma concessão é inferida pelo cliente. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCatalogEstablishmentPartnerContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                establishmentId: number;
+                kind: "experiences" | "events" | "showcase-items";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published partner content */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentListResponse"];
+                };
+            };
+            /** @description Operation could not be resolved from the hostname */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPartnerContent: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: components["parameters"]["pageParam"];
+                /** @description Number of items per page */
+                per_page?: components["parameters"]["perPageParam"];
+                status?: components["schemas"]["PartnerContentStatus"];
+                establishment_id?: number;
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated content, whatever its status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPartnerContentResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No active organization membership */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createPartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerContentRequest"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description An event was submitted without a window */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Establishment not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updatePartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerContentRequest"];
+            };
+        };
+        responses: {
+            /** @description Content updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description Archived content, or an invalid event window */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Administrative media projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"][];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    uploadPartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    alt_text: string;
+                    caption?: string | null;
+                    is_cover?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Pending media created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Image limit, archived content or binary validation failure */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Multipart or metadata validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deletePartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updatePartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    alt_text?: string;
+                    caption?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Media updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Archived content or empty update */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    setPartnerContentMediaCover: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cover selected */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Rejected or quarantined media cannot be selected */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    submitPartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published, or awaiting approval */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description Already awaiting approval, archived, or below the minimum notice */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archivePartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Content archived */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found, or not one the actor manages */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPartnerContentForModeration: {
+        parameters: {
+            query?: {
+                /** @description Page number for pagination */
+                page?: components["parameters"]["pageParam"];
+                /** @description Number of items per page */
+                per_page?: components["parameters"]["perPageParam"];
+                status?: components["schemas"]["PartnerContentStatus"];
+                establishment_id?: number;
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated content across the operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPartnerContentResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approvePartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image approved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rejectPartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Image rejected */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    quarantinePartnerContentMedia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+                mediaId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Image quarantined */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentMedia"];
+                };
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content or media not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approvePartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Content published */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description The content is not awaiting approval */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rejectPartnerContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Version refused */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description The content is not awaiting approval */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archivePartnerContentAsModerator: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Content archived */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPartnerContentPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current policy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentPolicy"];
+                };
+            };
+            /** @description Administrator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updatePartnerContentPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerContentPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description Policy updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentPolicy"];
+                };
+            };
+            /** @description Administrator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

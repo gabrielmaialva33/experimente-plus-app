@@ -13,6 +13,7 @@ import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
 import { EstablishmentOffers } from '@/purchases/establishment-offers'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
+import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -172,6 +173,8 @@ function Detail({
           <Text style={[styles.body, { color: colors.foreground }]}>{detail.description}</Text>
         </View>
       ) : null}
+
+      <EstablishmentPartnerContent establishmentId={detail.id} timeZone={detail.city.timezone} />
 
       {street ? (
         <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>

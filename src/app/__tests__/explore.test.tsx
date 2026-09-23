@@ -26,6 +26,9 @@ jest.mock('@/catalog/queries', () => ({
   useCategories: () => ({ data: { categories: [{ slug: 'cafes', name: 'Cafés' }] } }),
   useFilters: () => ({ data: { attributes: [{ key: 'wifi', name: 'Wi-Fi' }, { key: 'live_music', name: 'Música ao vivo' }] } }),
   useSearch: jest.fn(),
+  // The agenda is its own regression suite; here it only has to stay out of the
+  // way of the filter, city and view assertions.
+  useCityAgenda: () => ({ data: undefined, isPending: false }),
 }))
 jest.mock('@/components/establishment-map', () => ({
   EstablishmentMap: () => {

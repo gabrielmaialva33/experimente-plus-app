@@ -18,6 +18,7 @@ export type PaginatedReviews = Schemas['PaginatedReviewsResponse']
 export type CreateReview = Schemas['CreateReviewRequest']
 export type UpdateReview = Schemas['UpdateReviewRequest']
 export type ReportReason = Schemas['CreateReportRequest']['reason']
+export type ReportTargetType = Schemas['CreateReportRequest']['target_type']
 
 export interface ReviewPage {
   page?: number
@@ -57,7 +58,7 @@ export const deleteReview = (id: number) =>
  * the protocol the person quotes to follow the case up.
  */
 export const reportContent = (body: {
-  target_type: 'review' | 'review_reply'
+  target_type: ReportTargetType
   target_id: number
   reason: ReportReason
   details?: string

@@ -78,7 +78,7 @@ it('shows the author, the reply and both report entries', async () => {
   expect(view.getByText('Obrigado pela visita!')).toBeOnTheScreen()
 
   await fireEvent.press(view.getByText('Denunciar resposta'))
-  expect(report).toHaveBeenCalledWith({ type: 'review_reply', id: 9 })
+  expect(report).toHaveBeenCalledWith({ type: 'reply', id: 9 })
 
   await fireEvent.press(view.getByText('Denunciar avaliação'))
   expect(report).toHaveBeenCalledWith({ type: 'review', id: 1 })

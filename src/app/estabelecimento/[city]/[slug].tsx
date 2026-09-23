@@ -15,6 +15,7 @@ import { EstablishmentOffers } from '@/purchases/establishment-offers'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
 import { SaveActions } from '@/explorer/save-actions'
+import { ReportLink } from '@/reviews/report-link'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -209,6 +210,8 @@ function Detail({
           </Text>
         </View>
       ) : null}
+
+      <ReportLink type="establishment" id={detail.id} label="Denunciar este lugar" />
     </ScrollView>
   )
 }

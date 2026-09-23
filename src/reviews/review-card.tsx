@@ -17,7 +17,7 @@ export function ReviewCard({
   onReport,
 }: {
   review: Review
-  onReport?: (target: { type: 'review' | 'review_reply'; id: number }) => void
+  onReport?: (target: { type: 'review' | 'reply'; id: number }) => void
 }) {
   const colors = useColors()
   const author = review.author?.full_name ?? 'Visitante'
@@ -57,7 +57,7 @@ export function ReviewCard({
           <Text style={[styles.body, { color: colors.foreground }]}>{review.reply.comment}</Text>
           {onReport ? (
             <ReportLink
-              onPress={() => onReport({ type: 'review_reply', id: review.reply!.id })}
+              onPress={() => onReport({ type: 'reply', id: review.reply!.id })}
               label="Denunciar resposta"
             />
           ) : null}

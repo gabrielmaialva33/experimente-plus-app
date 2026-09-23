@@ -3,6 +3,7 @@ import { Image } from 'expo-image'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
+import { ReportLink } from '@/reviews/report-link'
 import type { PartnerContentKind } from '@/api/partner-content'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -142,6 +143,7 @@ export function EstablishmentPartnerContent({
                       {cover.caption}
                     </Text>
                   ) : null}
+                  <ReportLink type={item.kind} id={item.id} label="Denunciar" />
                 </View>
               )
             })}

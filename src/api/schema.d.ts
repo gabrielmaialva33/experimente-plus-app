@@ -3293,6 +3293,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{userId}/ban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current ban state and history of a member of this operation */
+        get: operations["getUserBan"];
+        put?: never;
+        /**
+         * Ban a member of this operation
+         * @description Hides every review the person wrote in this operation from public areas and recomputes the averages (ADR-0027 §6, Anexo I items 8 and 14). Nothing is deleted and no review status is rewritten, so lifting the ban restores exactly what was published. Banning an already banned member changes nothing and keeps the original author and reason.
+         */
+        post: operations["banUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/unban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lift the ban of a member of this operation
+         * @description Restores the published reviews to public areas and averages. Reviews a moderator hid on their merits stay hidden: the ban never touched them.
+         */
+        post: operations["unbanUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5511,15 +5552,15 @@ export interface components {
             id: number;
             tenant_id: number;
             /** @enum {string} */
-            target_type: "review" | "review_reply";
+            target_type: "review" | "reply" | "establishment" | "experience" | "event" | "showcase_item";
             target_id: number;
             /** @description Null when the report is anonymous. */
             reporter_id?: number | null;
             /** @enum {string} */
-            reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
+            reason: "spam" | "offensive" | "inappropriate" | "false_information" | "conflict_of_interest" | "harassment" | "other";
             details?: string | null;
             /** @enum {string} */
-            status: "pending" | "in_review" | "resolved" | "dismissed";
+            status: "pending" | "under_review" | "resolved" | "dismissed";
             /** @description Unique per operation; what the reporter quotes to follow up. */
             protocol_number: string;
             is_anonymous: boolean;
@@ -5558,10 +5599,10 @@ export interface components {
         };
         CreateReportRequest: {
             /** @enum {string} */
-            target_type: "review" | "review_reply";
+            target_type: "review" | "reply" | "establishment" | "experience" | "event" | "showcase_item";
             target_id: number;
             /** @enum {string} */
-            reason: "inappropriate" | "spam" | "fake" | "offensive" | "privacy_violation" | "other";
+            reason: "spam" | "offensive" | "inappropriate" | "false_information" | "conflict_of_interest" | "harassment" | "other";
             details?: string | null;
         };
         ResolveReportRequest: {
@@ -5587,6 +5628,38 @@ export interface components {
         PaginatedContentReportsResponse: {
             data: components["schemas"]["ContentReport"][];
             meta: components["schemas"]["AdministrativePaginationMeta"];
+        };
+        /** @description A ban belongs to the membership in one operation (ADR-0027 §6). It hides the person's reviews from public areas and averages without deleting or rewriting them. */
+        UserBanState: {
+            user_id: number;
+            banned: boolean;
+            /** Format: date-time */
+            banned_at: string | null;
+            banned_by: number | null;
+            reason: string | null;
+        };
+        UserBanEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "banned" | "unbanned";
+            reason: string | null;
+            actor: {
+                id: number;
+                full_name: string;
+            } | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        UserBanDetail: {
+            state: components["schemas"]["UserBanState"];
+            history: components["schemas"]["UserBanEvent"][];
+        };
+        BanUserRequest: {
+            /** @description Required. It is what the audit trail records and what a later moderator reads. */
+            reason: string;
+        };
+        UnbanUserRequest: {
+            reason?: string | null;
         };
         /** @description How an establishment appears inside the Explorer's own lists. Built from the discoverable projection, so a withdrawn unit produces no card. The public link is `/cidades/{city_slug}/estabelecimentos/{slug}`; the numeric `id` is an identity for the save endpoints, never an address. */
         ExplorerEstablishmentCard: {
@@ -14526,8 +14599,8 @@ export interface operations {
                 page?: components["parameters"]["pageParam"];
                 /** @description Number of items per page */
                 per_page?: components["parameters"]["perPageParam"];
-                status?: "pending" | "in_review" | "resolved" | "dismissed";
-                target_type?: "review" | "review_reply";
+                status?: "pending" | "under_review" | "resolved" | "dismissed";
+                target_type?: "review" | "reply" | "establishment" | "experience" | "event" | "showcase_item";
             };
             header: {
                 /** @description Identificador do tenant ativo para operações privadas. */
@@ -15347,6 +15420,166 @@ export interface operations {
                 content?: never;
             };
             /** @description Itinerary or stop not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getUserBan: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description State and append-only history, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBanDetail"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Platform moderator required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a member of this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    banUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BanUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Resulting ban state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBanState"];
+                };
+            };
+            /** @description A moderator cannot ban their own account */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Platform moderator required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a member of this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unbanUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UnbanUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Resulting ban state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBanState"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Platform moderator required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a member of this operation */
             404: {
                 headers: {
                     [name: string]: unknown;

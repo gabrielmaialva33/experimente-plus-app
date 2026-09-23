@@ -130,8 +130,12 @@ it('requires a reason before sending a report', async () => {
 })
 
 it('reports a reply as a reply, not as the review it hangs under', async () => {
+  // `reply`, the value the server accepts. This test used to assert
+  // `review_reply`, the value the document advertised, and passed while every
+  // real report of a reply was refused with 422 — it checked what the app sent,
+  // not what the server takes.
   const mutate = jest.fn()
-  params.useLocalSearchParams.mockReturnValue({ type: 'review_reply', id: '9' })
+  params.useLocalSearchParams.mockReturnValue({ type: 'reply', id: '9' })
   queries.useReportContent.mockReturnValue(idle({ mutate }))
 
   const view = await render(<ReportContentScreen />)
@@ -140,9 +144,56 @@ it('reports a reply as a reply, not as the review it hangs under', async () => {
 
   await waitFor(() =>
     expect(mutate).toHaveBeenCalledWith({
-      target_type: 'review_reply',
+      target_type: 'reply',
       target_id: 9,
       reason: 'offensive',
     })
   )
+})
+
+it('refuses a type it does not know instead of reporting a review with that number', async () => {
+  const mutate = jest.fn()
+  params.useLocalSearchParams.mockReturnValue({ type: 'review_reply', id: '9' })
+  queries.useReportContent.mockReturnValue(idle({ mutate }))
+
+  const view = await render(<ReportContentScreen />)
+
+  expect(view.getByTestId('report-unsupported')).toBeTruthy()
+  expect(view.queryByTestId('report-submit')).toBeNull()
+  expect(mutate).not.toHaveBeenCalled()
+})
+
+it('reports partner content under its own kind', async () => {
+  const mutate = jest.fn()
+  params.useLocalSearchParams.mockReturnValue({ type: 'experience', id: '31' })
+  queries.useReportContent.mockReturnValue(idle({ mutate }))
+
+  const view = await render(<ReportContentScreen />)
+  expect(view.getByText('Denunciar experiência')).toBeTruthy()
+  await fireEvent.press(view.getByTestId('reason-spam'))
+  await fireEvent.press(view.getByTestId('report-submit'))
+
+  await waitFor(() =>
+    expect(mutate).toHaveBeenCalledWith({ target_type: 'experience', target_id: 31, reason: 'spam' })
+  )
+})
+
+it('offers only reasons the server accepts', async () => {
+  params.useLocalSearchParams.mockReturnValue({ type: 'review', id: '3' })
+
+  const view = await render(<ReportContentScreen />)
+
+  for (const reason of [
+    'spam',
+    'offensive',
+    'inappropriate',
+    'false_information',
+    'conflict_of_interest',
+    'harassment',
+    'other',
+  ]) {
+    expect(view.getByTestId(`reason-${reason}`)).toBeTruthy()
+  }
+  expect(view.queryByTestId('reason-fake')).toBeNull()
+  expect(view.queryByTestId('reason-privacy_violation')).toBeNull()
 })

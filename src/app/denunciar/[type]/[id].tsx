@@ -3,22 +3,51 @@ import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
-import type { ReportReason } from '@/api/reviews'
+import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportContent } from '@/reviews/queries'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
+/**
+ * The reasons the server accepts, in the server's vocabulary.
+ *
+ * This list used to offer `fake` and `privacy_violation`, which the validator
+ * refuses: two of the six choices could only end in an error. The values are
+ * typed from the generated contract, so a reason the server does not know no
+ * longer compiles.
+ */
 const REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'inappropriate', label: 'Conteúdo inadequado' },
-  { value: 'spam', label: 'Spam ou propaganda' },
-  { value: 'fake', label: 'Avaliação falsa' },
   { value: 'offensive', label: 'Ofensivo ou discriminatório' },
-  { value: 'privacy_violation', label: 'Expõe dados de alguém' },
+  { value: 'harassment', label: 'Assédio' },
+  { value: 'inappropriate', label: 'Conteúdo inadequado' },
+  { value: 'false_information', label: 'Informação falsa' },
+  { value: 'spam', label: 'Spam ou propaganda' },
+  { value: 'conflict_of_interest', label: 'Conflito de interesse' },
   { value: 'other', label: 'Outro motivo' },
 ]
 
 /**
- * Reporting a review or a reply.
+ * What can be reported from the app, and what the screen calls it.
+ *
+ * An explicit list, with no fallback. The route used to treat anything it did
+ * not recognise as a review, so an unknown type with a real number would have
+ * reported the review that happened to share that number — the collision
+ * between species that the Concierge had to design its citations around.
+ */
+const TITLES: Partial<Record<ReportTargetType, string>> = {
+  review: 'Denunciar avaliação',
+  reply: 'Denunciar resposta',
+  establishment: 'Denunciar este lugar',
+  experience: 'Denunciar experiência',
+  event: 'Denunciar evento',
+  showcase_item: 'Denunciar item de vitrine',
+}
+
+export const reportableTarget = (value: string | undefined): ReportTargetType | null =>
+  value && value in TITLES ? (value as ReportTargetType) : null
+
+/**
+ * Reporting a review, a reply, a place or partner content.
  *
  * The answer carries a protocol number, and it is the one thing this screen
  * insists on showing: a report that vanishes without a receipt gives the person
@@ -27,7 +56,8 @@ const REASONS: { value: ReportReason; label: string }[] = [
 export default function ReportContentScreen() {
   const colors = useColors()
   const { type, id } = useLocalSearchParams<{ type: string; id: string }>()
-  const target = type === 'review_reply' ? 'review_reply' : 'review'
+  const target = reportableTarget(type)
+  const targetId = Number(id)
 
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [details, setDetails] = useState('')
@@ -53,11 +83,19 @@ export default function ReportContentScreen() {
     )
   }
 
+  if (!target || !Number.isInteger(targetId) || targetId <= 0) {
+    return (
+      <View style={[styles.page, styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.body, { color: colors.mutedForeground }]} testID="report-unsupported">
+          Não é possível denunciar este conteúdo por aqui.
+        </Text>
+      </View>
+    )
+  }
+
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.title, { color: colors.foreground }]}>
-        {target === 'review_reply' ? 'Denunciar resposta' : 'Denunciar avaliação'}
-      </Text>
+      <Text style={[styles.title, { color: colors.foreground }]}>{TITLES[target]}</Text>
 
       <View style={styles.reasons}>
         {REASONS.map((option) => (
@@ -113,7 +151,7 @@ export default function ReportContentScreen() {
           reason &&
           report.mutate({
             target_type: target,
-            target_id: Number(id),
+            target_id: targetId,
             reason,
             ...(details.trim() ? { details: details.trim() } : {}),
           })

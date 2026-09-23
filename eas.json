@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "node": "24.19.0",
+      "pnpm": "11.22.0"
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://experimente-plus.mahina.fun",
+        "EXPO_PUBLIC_MAP_STYLE_URL": "https://midia-experimente.mahina.fun/maps/norte-parana/style.json"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://experimente-plus.mahina.fun",
+        "EXPO_PUBLIC_MAP_STYLE_URL": "https://midia-experimente.mahina.fun/maps/norte-parana/style.json"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "environment": "production",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

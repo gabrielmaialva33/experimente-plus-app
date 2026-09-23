@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
-import { useCreateReview } from '@/reviews/queries'
+import { ImagePicker, type SelectedImage } from '@/components/image-picker'
+import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
 import { StarsInput } from '@/reviews/stars'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -28,14 +29,43 @@ export default function WriteReviewScreen() {
 
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-  const create = useCreateReview()
+  const [photos, setPhotos] = useState<SelectedImage[]>([])
+  const rules = useAuthorRules()
+  const create = useCreateReviewWithPhotos()
+  // The photo limit is the operation's (ADR-0027 scenario 10). Until it is
+  // known, and when it is zero, no picker is offered: a picker whose every
+  // upload fails is worse than none.
+  const maxPhotos = rules.data?.max_photos ?? 0
 
   const submit = () => {
     if (rating < 1) return
     const text = comment.trim()
     create.mutate(
-      { establishment_id: id, rating, ...(text ? { comment: text } : {}) },
-      { onSuccess: () => router.back() }
+      {
+        body: { establishment_id: id, rating, ...(text ? { comment: text } : {}) },
+        photos: photos.map(({ uri, fileName, mimeType }) => ({ uri, fileName, mimeType })),
+      },
+      { onSuccess: ({ failed }) => (failed === 0 ? router.back() : undefined) }
+    )
+  }
+
+  if (create.isSuccess && create.data.failed > 0) {
+    return (
+      <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Avaliação publicada</Text>
+        <Text style={[styles.error, { color: colors.destructiveAccent }]} testID="review-photos-failed">
+          {create.data.failed === 1
+            ? 'Uma foto não pôde ser enviada.'
+            : `${create.data.failed} fotos não puderam ser enviadas.`}{' '}
+          Você pode tentar de novo editando a avaliação.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={[styles.action, { backgroundColor: colors.cta }]}>
+          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>Voltar</Text>
+        </Pressable>
+      </View>
     )
   }
 
@@ -67,6 +97,16 @@ export default function WriteReviewScreen() {
         />
       </View>
 
+      {maxPhotos > 0 ? (
+        <ImagePicker
+          images={photos}
+          onChange={setPhotos}
+          maxImages={maxPhotos}
+          disabled={create.isPending}
+          label={`Fotos (até ${maxPhotos})`}
+        />
+      ) : null}
+
       {create.isError ? (
         <Text style={[styles.error, { color: colors.destructiveAccent }]} testID="review-error">
           {failureMessage(create.error)}
@@ -89,8 +129,9 @@ export default function WriteReviewScreen() {
       </Pressable>
 
       <Text style={[styles.note, { color: colors.mutedForeground }]}>
-        Dependendo das regras desta operação, sua avaliação pode passar por moderação antes de
-        aparecer publicamente.
+        Sua avaliação e as fotos aparecem na hora. Se alguém denunciar, a moderação pode
+        ocultá-las. A localização e os dados do aparelho são removidos das fotos antes de
+        publicar.
       </Text>
     </ScrollView>
   )

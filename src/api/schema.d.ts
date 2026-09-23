@@ -2941,6 +2941,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/reviews/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The review rules of the caller's operation */
+        get: operations["getMyReviewRules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/reviews/{id}": {
         parameters: {
             query?: never;
@@ -2957,6 +2974,43 @@ export interface paths {
         post?: never;
         /** Delete an existing review by author */
         delete: operations["deleteMyReview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reviews/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attach a photo to one of the caller's reviews
+         * @description JPEG, PNG or WebP up to 10 MiB (ADR-0014; HEIC is rejected). The file is stripped of its metadata — including GPS location — before it is probed and stored; only the orientation is kept. The number of photos is limited by the operation's review policy (`max_photos`), and attaching follows the review's edit window.
+         */
+        post: operations["addMyReviewPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reviews/{id}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a photo from one of the caller's reviews */
+        delete: operations["removeMyReviewPhoto"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5534,8 +5588,8 @@ export interface components {
             rating: number;
             comment?: string | null;
             /** @enum {string} */
-            status: "published" | "hidden" | "pending_moderation";
-            /** @description Number of photos attached. The media pipeline of ADR-0014 owns the files; the review carries the count, never the URLs. */
+            status: "published" | "hidden" | "archived";
+            /** @description Number of photos attached, derived by the server from the photos that exist. It is never accepted from the client. */
             photos_count: number;
             videos_count: number;
             /** Format: date-time */
@@ -5547,6 +5601,26 @@ export interface components {
             /** @description Present on the public routes. Absent from the author's own listing, where the author is the person asking. */
             author?: components["schemas"]["ReviewAuthor"];
             reply?: components["schemas"]["EstablishmentReviewReply"];
+            /** @description Photos in their display order. Public exactly when the review is: they have no moderation state of their own (ADR-0027). */
+            photos?: components["schemas"]["ReviewPhoto"][];
+        };
+        /** @description The rules an author must follow in this operation (ADR-0027 scenario 10). Clients read them rather than hard-coding them, so changing the policy changes what a screen allows without a release. */
+        ReviewAuthorRules: {
+            min_text_length: number;
+            max_text_length: number;
+            /** @description 0 means this operation does not accept photos on reviews. */
+            max_photos: number;
+            edit_window_days: number;
+            min_edit_interval_minutes: number;
+            daily_limit_per_user: number;
+        };
+        /** @description A review photo as anyone may see it. The file was stripped of its metadata (location, device, time) before being stored, and the response carries an address and a shape — never the storage key, the checksum or the identifiers behind them. */
+        ReviewPhoto: {
+            id: number;
+            url: string | null;
+            width: number | null;
+            height: number | null;
+            alt_text: string | null;
         };
         ContentReport: {
             id: number;
@@ -5587,12 +5661,10 @@ export interface components {
             rating: number;
             comment?: string | null;
             redemption_id?: number | null;
-            photos_count?: number;
         };
         UpdateReviewRequest: {
             rating?: number;
             comment?: string | null;
-            photos_count?: number;
         };
         CreateReplyRequest: {
             comment: string;
@@ -14306,6 +14378,36 @@ export interface operations {
             };
         };
     };
+    getMyReviewRules: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Author-facing rules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewAuthorRules"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     updateMyReview: {
         parameters: {
             query?: never;
@@ -14408,6 +14510,119 @@ export interface operations {
                 content?: never;
             };
             /** @description Review not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    addMyReviewPhoto: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    photo: string;
+                    alt_text?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Photo attached */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPhoto"];
+                };
+            };
+            /** @description Photo limit reached, photos not accepted by this operation, edit window expired, or the image could not be processed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The review belongs to someone else */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing photo, wrong extension or too large */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeMyReviewPhoto: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+                photoId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Photo removed, with its file */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The review belongs to someone else */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review or photo not found */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -8,10 +8,13 @@ import { Stars } from '@/reviews/stars'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
+// The statuses the server has: `pending_moderation` never existed — the API
+// document advertised it — and `archived`, which a deleted review has, fell
+// through to its raw value.
 const STATUS_LABEL: Record<string, string> = {
   published: 'Publicada',
-  pending_moderation: 'Em moderação',
   hidden: 'Oculta pela moderação',
+  archived: 'Excluída',
 }
 
 /**

@@ -18,6 +18,8 @@ export type PaginatedReviews = Schemas['PaginatedReviewsResponse']
 export type CreateReview = Schemas['CreateReviewRequest']
 export type UpdateReview = Schemas['UpdateReviewRequest']
 export type ReportReason = Schemas['CreateReportRequest']['reason']
+export type ReviewPhoto = Schemas['ReviewPhoto']
+export type AuthorRules = Schemas['ReviewAuthorRules']
 export type ReportTargetType = Schemas['CreateReportRequest']['target_type']
 
 export interface ReviewPage {
@@ -68,4 +70,41 @@ export const reportContent = (body: {
     authenticated: true,
     sensitive: true,
     body,
+  })
+
+/** The rules of this operation, read instead of hard-coded (ADR-0027 scenario 10). */
+export const getAuthorRules = () =>
+  request<AuthorRules>('/api/v1/me/reviews/rules', { authenticated: true })
+
+export interface PhotoUpload {
+  uri: string
+  fileName: string
+  mimeType: string
+}
+
+/**
+ * Sends one photo. The server strips its location and device metadata before
+ * storing it, so nothing here has to — and nothing here could guarantee it.
+ */
+export const uploadReviewPhoto = (reviewId: number, photo: PhotoUpload, altText?: string | null) => {
+  const form = new FormData()
+  // React Native's FormData takes an object with uri, name and type for a file.
+  form.append('photo', {
+    uri: photo.uri,
+    name: photo.fileName,
+    type: photo.mimeType,
+  } as unknown as Blob)
+  if (altText?.trim()) form.append('alt_text', altText.trim())
+
+  return request<ReviewPhoto>(`/api/v1/me/reviews/${reviewId}/photos`, {
+    method: 'POST',
+    authenticated: true,
+    body: form,
+  })
+}
+
+export const deleteReviewPhoto = (reviewId: number, photoId: number) =>
+  request<void>(`/api/v1/me/reviews/${reviewId}/photos/${photoId}`, {
+    method: 'DELETE',
+    authenticated: true,
   })

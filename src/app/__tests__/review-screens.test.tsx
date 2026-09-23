@@ -26,13 +26,32 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
 }))
 jest.mock('@/reviews/queries', () => ({
-  useCreateReview: jest.fn(),
+  useCreateReviewWithPhotos: jest.fn(),
+  useAuthorRules: jest.fn(),
   useReportContent: jest.fn(),
 }))
+// The real picker opens the system gallery. This one hands back a photo when
+// pressed, which is all the screen needs to be exercised.
+jest.mock('@/components/image-picker', () => {
+  const { Pressable, Text } = jest.requireActual('react-native')
+  return {
+    ImagePicker: ({ onChange, maxImages, label }: any) => (
+      <Pressable
+        testID="photo-picker"
+        accessibilityLabel={`${label} ${maxImages}`}
+        onPress={() =>
+          onChange([{ uri: 'file:///prato.jpg', fileName: 'prato.jpg', mimeType: 'image/jpeg', width: 8, height: 6 }])
+        }>
+        <Text>picker</Text>
+      </Pressable>
+    ),
+  }
+})
 
 const params = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
 const queries = jest.requireMock('@/reviews/queries') as {
-  useCreateReview: jest.Mock
+  useCreateReviewWithPhotos: jest.Mock
+  useAuthorRules: jest.Mock
   useReportContent: jest.Mock
 }
 
@@ -48,13 +67,14 @@ const idle = (overrides = {}) => ({
 
 beforeEach(() => {
   params.useLocalSearchParams.mockReturnValue({ establishmentId: '7', type: 'review', id: '3' })
-  queries.useCreateReview.mockReturnValue(idle())
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle())
+  queries.useAuthorRules.mockReturnValue({ data: { max_photos: 0 } })
   queries.useReportContent.mockReturnValue(idle())
 })
 
 it('will not submit a review without a rating', async () => {
   const mutate = jest.fn()
-  queries.useCreateReview.mockReturnValue(idle({ mutate }))
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
 
   const view = await render(<WriteReviewScreen />)
   await fireEvent.press(view.getByTestId('review-submit'))
@@ -64,21 +84,21 @@ it('will not submit a review without a rating', async () => {
 
 it('sends the rating and drops an empty comment rather than posting an empty string', async () => {
   const mutate = jest.fn()
-  queries.useCreateReview.mockReturnValue(idle({ mutate }))
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
 
   const view = await render(<WriteReviewScreen />)
   await fireEvent.press(view.getByLabelText('5 de 5, Ótimo'))
   await fireEvent.press(view.getByTestId('review-submit'))
 
   expect(mutate).toHaveBeenCalledWith(
-    { establishment_id: 7, rating: 5 },
+    { body: { establishment_id: 7, rating: 5 }, photos: [] },
     expect.objectContaining({ onSuccess: expect.any(Function) })
   )
 })
 
 it('trims the comment it does send', async () => {
   const mutate = jest.fn()
-  queries.useCreateReview.mockReturnValue(idle({ mutate }))
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
 
   const view = await render(<WriteReviewScreen />)
   await fireEvent.press(view.getByLabelText('4 de 5, Bom'))
@@ -86,7 +106,7 @@ it('trims the comment it does send', async () => {
   await fireEvent.press(view.getByTestId('review-submit'))
 
   expect(mutate).toHaveBeenCalledWith(
-    { establishment_id: 7, rating: 4, comment: 'ótimo atendimento' },
+    { body: { establishment_id: 7, rating: 4, comment: 'ótimo atendimento' }, photos: [] },
     expect.anything()
   )
 })
@@ -196,4 +216,49 @@ it('offers only reasons the server accepts', async () => {
   }
   expect(view.queryByTestId('reason-fake')).toBeNull()
   expect(view.queryByTestId('reason-privacy_violation')).toBeNull()
+})
+
+it('offers no photo picker where the operation accepts no photos', async () => {
+  queries.useAuthorRules.mockReturnValue({ data: { max_photos: 0 } })
+  const view = await render(<WriteReviewScreen />)
+  expect(view.queryByTestId('photo-picker')).toBeNull()
+
+  // Nor while the rule is still unknown: a picker that may reject everything is
+  // worse than none.
+  queries.useAuthorRules.mockReturnValue({ data: undefined })
+  const loading = await render(<WriteReviewScreen />)
+  expect(loading.queryByTestId('photo-picker')).toBeNull()
+})
+
+it('sends the chosen photos with the review, up to the operation limit', async () => {
+  const mutate = jest.fn()
+  queries.useAuthorRules.mockReturnValue({ data: { max_photos: 3 } })
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
+
+  const view = await render(<WriteReviewScreen />)
+  expect(view.getByLabelText('Fotos (até 3) 3')).toBeTruthy()
+  await fireEvent.press(view.getByTestId('photo-picker'))
+  await fireEvent.press(view.getByLabelText('5 de 5, Ótimo'))
+  await fireEvent.press(view.getByTestId('review-submit'))
+
+  expect(mutate).toHaveBeenCalledWith(
+    {
+      body: { establishment_id: 7, rating: 5 },
+      photos: [{ uri: 'file:///prato.jpg', fileName: 'prato.jpg', mimeType: 'image/jpeg' }],
+    },
+    expect.anything()
+  )
+})
+
+it('keeps the published review and says which photos did not go', async () => {
+  queries.useCreateReviewWithPhotos.mockReturnValue(
+    idle({ isSuccess: true, data: { review: { id: 1 }, failed: 2 } })
+  )
+
+  const view = await render(<WriteReviewScreen />)
+
+  expect(view.getByText('Avaliação publicada')).toBeTruthy()
+  expect(view.getByTestId('review-photos-failed').props.children[0]).toBe(
+    '2 fotos não puderam ser enviadas.'
+  )
 })

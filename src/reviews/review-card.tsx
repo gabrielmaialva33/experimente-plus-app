@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { Review } from '@/api/reviews'
+import { ReviewPhotos } from '@/reviews/review-photos'
 import { Stars } from '@/reviews/stars'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -43,11 +44,7 @@ export function ReviewCard({
         <Text style={[styles.body, { color: colors.foreground }]}>{review.comment}</Text>
       ) : null}
 
-      {review.photos_count > 0 ? (
-        <Text style={[styles.date, { color: colors.mutedForeground }]}>
-          {review.photos_count === 1 ? '1 foto' : `${review.photos_count} fotos`}
-        </Text>
-      ) : null}
+      <ReviewPhotos photos={review.photos ?? []} />
 
       {review.reply ? (
         <View style={[styles.reply, { borderColor: colors.border }]}>

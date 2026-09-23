@@ -4,7 +4,15 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import { failureMessage } from '@/app/avaliar/[establishmentId]'
 import type { Review } from '@/api/reviews'
-import { useMyReviews, useUpdateReview } from '@/reviews/queries'
+import { ImagePicker } from '@/components/image-picker'
+import {
+  useAddReviewPhoto,
+  useAuthorRules,
+  useMyReviews,
+  useRemoveReviewPhoto,
+  useUpdateReview,
+} from '@/reviews/queries'
+import { ReviewPhotos } from '@/reviews/review-photos'
 import { StarsInput } from '@/reviews/stars'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -58,6 +66,15 @@ function EditForm({ review }: { review: Review }) {
   const [rating, setRating] = useState(review.rating)
   const [comment, setComment] = useState(review.comment ?? '')
   const update = useUpdateReview(review.id)
+  const rules = useAuthorRules()
+  const addPhoto = useAddReviewPhoto(review.id)
+  const removePhoto = useRemoveReviewPhoto(review.id)
+  const photos = review.photos ?? []
+  // Photos are added and removed as they are chosen, not on save: each is its
+  // own request, and holding them until "Salvar" would lose them on a failed
+  // text edit that has nothing to do with them.
+  const remaining = Math.max(0, (rules.data?.max_photos ?? 0) - photos.length)
+  const photoBusy = addPhoto.isPending || removePhoto.isPending
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
@@ -79,6 +96,32 @@ function EditForm({ review }: { review: Review }) {
         ]}
         testID="edit-comment"
       />
+
+      <View style={styles.photos}>
+        <ReviewPhotos
+          photos={photos}
+          removing={photoBusy}
+          onRemove={(photo) => removePhoto.mutate(photo.id)}
+        />
+        {remaining > 0 ? (
+          <ImagePicker
+            images={[]}
+            onChange={(chosen) => {
+              for (const { uri, fileName, mimeType } of chosen) {
+                addPhoto.mutate({ uri, fileName, mimeType })
+              }
+            }}
+            maxImages={remaining}
+            disabled={photoBusy}
+            label="Adicionar fotos"
+          />
+        ) : null}
+        {addPhoto.isError || removePhoto.isError ? (
+          <Text style={[styles.body, { color: colors.destructiveAccent }]} testID="edit-photo-error">
+            {failureMessage(addPhoto.error ?? removePhoto.error)}
+          </Text>
+        ) : null}
+      </View>
 
       {update.isError ? (
         <Text style={[styles.body, { color: colors.destructiveAccent }]} testID="edit-error">
@@ -112,6 +155,7 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.surface, padding: spacing.lg },
   input: { borderWidth: 1, borderRadius: radius.md, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
   body: typography.body,
+  photos: { gap: spacing.sm },
   action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
   actionLabel: { ...typography.body, fontWeight: '700' },
 })

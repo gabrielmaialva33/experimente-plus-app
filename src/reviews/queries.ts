@@ -3,6 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createReview,
   deleteReview,
+  deleteReviewPhoto,
+  getAuthorRules,
+  uploadReviewPhoto,
+  type PhotoUpload,
   listEstablishmentReviews,
   listMyReviews,
   reportContent,
@@ -61,3 +65,44 @@ export const useDeleteReview = () => useReviewWrite((id: number) => deleteReview
 /** A report changes no listing, so it invalidates nothing; it returns a protocol. */
 export const useReportContent = () =>
   useMutation({ retry: false, gcTime: 0, mutationFn: reportContent })
+
+export const useAuthorRules = () =>
+  useQuery({ queryKey: ['reviews', 'rules'], queryFn: getAuthorRules, staleTime: 5 * 60_000 })
+
+/**
+ * Writes the review, then sends its photos one by one.
+ *
+ * A photo needs the review to exist, so they cannot travel in one request.
+ * When a photo fails after the review was published, the review stays and the
+ * result says how many photos did not go: redoing the whole review to retry a
+ * picture would be worse than telling the person which part is missing.
+ */
+export const useCreateReviewWithPhotos = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    retry: false,
+    gcTime: 0,
+    mutationFn: async ({ body, photos }: { body: CreateReview; photos: PhotoUpload[] }) => {
+      const review = await createReview(body)
+      let failed = 0
+      for (const photo of photos) {
+        try {
+          await uploadReviewPhoto(review.id, photo)
+        } catch {
+          failed++
+        }
+      }
+      return { review, failed }
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['reviews'] })
+    },
+  })
+}
+
+export const useAddReviewPhoto = (reviewId: number) =>
+  useReviewWrite((photo: PhotoUpload) => uploadReviewPhoto(reviewId, photo))
+
+export const useRemoveReviewPhoto = (reviewId: number) =>
+  useReviewWrite((photoId: number) => deleteReviewPhoto(reviewId, photoId))

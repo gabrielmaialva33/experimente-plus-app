@@ -2845,6 +2845,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/content/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Correct partner content as an administrator
+         * @description What the scope calls "editar" (Anexo I item 7, ADR-0028 §4). A moderator's edit is already approved, so it never enters the queue. On published content the public snapshot moves with it and the public reads the correction at once, while `published_at` stays; on a draft or an item awaiting approval only the live fields move and the item stays where the partner left it. Archived content is refused. Moving a published event's dates applies the operation's minimum notice. Every edit is recorded in the item's history as `admin_edited`.
+         */
+        put: operations["updatePartnerContentAsModerator"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{kind}/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The append-only history of one content item
+         * @description Every act — creation, edits, submission, approval, refusal, archiving and administrative correction — with who did it and only the fields that moved, newest first (ADR-0028 §4). Moderators only; it names people and is never part of a public payload.
+         */
+        get: operations["getPartnerContentHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/content/{kind}/{id}/archive": {
         parameters: {
             query?: never;
@@ -3114,6 +3154,30 @@ export interface paths {
          * @description Requires admin or root role.
          */
         put: operations["updateAdminReviewPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/moderation-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the operation's automatic moderation rules
+         * @description Requires admin or root role. Created with provisional defaults on first read (ADR-0031).
+         */
+        get: operations["getAutomaticModerationRules"];
+        /**
+         * Update the operation's automatic moderation rules
+         * @description Requires admin or root role. Changes apply to text written from now on; nothing already published is re-assessed.
+         */
+        put: operations["updateAutomaticModerationRules"];
         post?: never;
         delete?: never;
         options?: never;
@@ -5594,12 +5658,62 @@ export interface components {
             published_at: string;
             media: components["schemas"]["PartnerContentPublicMedia"][];
         };
+        /** @description One act in the history of a content item (ADR-0028 §4). */
+        PartnerContentEvent: {
+            id: number;
+            /** @enum {string} */
+            action: "created" | "updated" | "submitted" | "approved" | "rejected" | "archived" | "admin_edited";
+            from_status: components["schemas"]["PartnerContentStatus"] | null;
+            to_status: components["schemas"]["PartnerContentStatus"] | null;
+            actor: {
+                id: number;
+                full_name: string;
+            } | null;
+            /** @description Only the fields that moved, each as an object with `from` and `to`. Never identifiers. */
+            changes: {
+                [key: string]: {
+                    from: unknown;
+                    to: unknown;
+                };
+            } | null;
+            metadata: Record<string, never> | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        PartnerContentHistoryResponse: {
+            data: components["schemas"]["PartnerContentEvent"][];
+        };
         PartnerContentListResponse: {
             data: components["schemas"]["PartnerContentPublicItem"][];
         };
         PaginatedPartnerContentResponse: {
             data: components["schemas"]["PartnerContent"][];
             meta: components["schemas"]["AdministrativePaginationMeta"];
+        };
+        /** @description Automatic moderation rules of one operation (ADR-0031, Anexo I item 9). Each detector is `off`, `flag` (publish and open a report) or `hold` (keep out of public view until a person decides). All values are provisional until the contracting party defines them. */
+        AutomaticModerationPolicy: {
+            id: number;
+            tenant_id: number;
+            link_mode: components["schemas"]["AutomaticModerationMode"];
+            contact_mode: components["schemas"]["AutomaticModerationMode"];
+            payment_data_mode: components["schemas"]["AutomaticModerationMode"];
+            blocked_term_mode: components["schemas"]["AutomaticModerationMode"];
+            /** @description Matched as whole words, without regard to case or accents. */
+            blocked_terms: string[];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** @enum {string} */
+        AutomaticModerationMode: "off" | "flag" | "hold";
+        UpdateAutomaticModerationPolicyRequest: {
+            link_mode?: components["schemas"]["AutomaticModerationMode"];
+            contact_mode?: components["schemas"]["AutomaticModerationMode"];
+            payment_data_mode?: components["schemas"]["AutomaticModerationMode"];
+            blocked_term_mode?: components["schemas"]["AutomaticModerationMode"];
+            /** @description Replaces the whole list. Trimmed and de-duplicated on save. */
+            blocked_terms?: string[];
         };
         ReviewPolicy: {
             id: number;
@@ -5715,6 +5829,17 @@ export interface components {
             resolved_at?: string | null;
             resolution_action?: string | null;
             resolution_notes?: string | null;
+            /**
+             * @description `automatic` when a rule of ADR-0031 opened the report. Such a report has no reporter; a person resolves it like any other.
+             * @enum {string}
+             */
+            origin: "user" | "automatic";
+            /** @enum {string|null} */
+            automatic_rule?: "link" | "contact" | "payment_data" | "blocked_term" | null;
+            /** @description What made the rule fire, masked by the writer — a card number or an e-mail is never copied into the queue. */
+            automatic_evidence?: string | null;
+            /** @description The rule kept the content out of public view until a person decides. Resolving without `content_hidden` or dismissing releases it. */
+            holds_content: boolean;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -14206,6 +14331,113 @@ export interface operations {
             };
         };
     };
+    updatePartnerContentAsModerator: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerContentRequest"];
+            };
+        };
+        responses: {
+            /** @description The corrected content */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContent"];
+                };
+            };
+            /** @description Archived content, or an event window the policy refuses */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found in this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPartnerContentHistory: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events" | "showcase-items";
+                /** @description Resource ID */
+                id: components["parameters"]["pathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description History, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerContentHistoryResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Moderator privileges required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found in this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     archivePartnerContentAsModerator: {
         parameters: {
             query?: never;
@@ -15071,6 +15303,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReviewPolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAutomaticModerationRules: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Automatic moderation rules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomaticModerationPolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateAutomaticModerationRules: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAutomaticModerationPolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description Automatic moderation rules updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomaticModerationPolicy"];
                 };
             };
             /** @description Authentication required */

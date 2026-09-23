@@ -61,6 +61,18 @@ export const deleteReview = (id: number) =>
  * A report is a private act. It is sent authenticated and its response carries
  * the protocol the person quotes to follow the case up.
  */
+/**
+ * A report without an account (ADR-0027 scenarios 13 and 14). Public, like the
+ * catalogue: the base URL's hostname selects the operation. The answer is the
+ * protocol alone.
+ */
+export const reportAnonymously = (body: Schemas['CreateAnonymousReportRequest']) =>
+  request<Schemas['AnonymousReportReceipt']>('/api/v1/catalog/content-reports', {
+    method: 'POST',
+    sensitive: true,
+    body,
+  })
+
 export const reportContent = (body: {
   target_type: ReportTargetType
   target_id: number

@@ -9,12 +9,14 @@ import {
   type PhotoUpload,
   listEstablishmentReviews,
   listMyReviews,
+  reportAnonymously,
   reportContent,
   updateReview,
   type CreateReview,
   type ReviewPage,
   type UpdateReview,
 } from '@/api/reviews'
+import { anonymousReportToken } from '@/reviews/anonymous-token'
 
 export const reviewKeys = {
   establishment: (establishmentId: number, params: ReviewPage) =>
@@ -65,6 +67,15 @@ export const useDeleteReview = () => useReviewWrite((id: number) => deleteReview
 /** A report changes no listing, so it invalidates nothing; it returns a protocol. */
 export const useReportContent = () =>
   useMutation({ retry: false, gcTime: 0, mutationFn: reportContent })
+
+/** The same, without an account, carrying the device's opaque report token. */
+export const useReportAnonymously = () =>
+  useMutation({
+    retry: false,
+    gcTime: 0,
+    mutationFn: (body: Omit<Parameters<typeof reportAnonymously>[0], 'anonymous_token'>) =>
+      reportAnonymously({ ...body, anonymous_token: anonymousReportToken() }),
+  })
 
 export const useAuthorRules = () =>
   useQuery({ queryKey: ['reviews', 'rules'], queryFn: getAuthorRules, staleTime: 5 * 60_000 })

@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import { ReportLink } from '@/reviews/report-link'
+import { ContentActions } from './content-actions'
 import type { PartnerContentKind } from '@/api/partner-content'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -14,6 +15,10 @@ import { usePartnerContent } from './queries'
 interface EstablishmentPartnerContentProps {
   establishmentId: number
   timeZone: string
+  /** What sharing an item needs: the page it lives on, since it has none of its own. */
+  establishmentName: string
+  citySlug: string
+  establishmentSlug: string
 }
 
 const groups: { kind: PartnerContentKind; title: string; eyebrow: string }[] = [
@@ -56,6 +61,9 @@ function formatPrice(cents: number | null): string | null {
 export function EstablishmentPartnerContent({
   establishmentId,
   timeZone,
+  establishmentName,
+  citySlug,
+  establishmentSlug,
 }: EstablishmentPartnerContentProps) {
   const colors = useColors()
   const experiences = usePartnerContent(establishmentId, 'experiences')
@@ -143,6 +151,14 @@ export function EstablishmentPartnerContent({
                       {cover.caption}
                     </Text>
                   ) : null}
+                  <ContentActions
+                    kind={item.kind}
+                    id={item.id}
+                    title={item.title}
+                    establishmentName={establishmentName}
+                    citySlug={citySlug}
+                    establishmentSlug={establishmentSlug}
+                  />
                   <ReportLink type={item.kind} id={item.id} label="Denunciar" />
                 </View>
               )

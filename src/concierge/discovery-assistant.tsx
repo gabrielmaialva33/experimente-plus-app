@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
-import { askConcierge, type ConciergeReply } from '@/api/concierge'
+import { askAssistant, type ConciergeReply } from '@/api/concierge'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -50,7 +50,7 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
     setReply(null)
 
     try {
-      const result = await askConcierge({ question: trimmed, city: citySlug }, controller.signal)
+      const result = await askAssistant({ question: trimmed, city: citySlug }, controller.signal)
       if (!controller.signal.aborted) {
         setReply(result)
       }
@@ -142,6 +142,14 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
                 ? 'Posso ajudar com descoberta local'
                 : 'Sugestões do catálogo'}
           </Text>
+
+          {reply.personalized ? (
+            // Said only when the server applied interests, never inferred from
+            // being signed in: a person without interests gets the plain answer.
+            <Text style={[styles.answerText, { color: colors.mutedForeground }]} testID="concierge-personalized">
+              Considerando seus interesses.
+            </Text>
+          ) : null}
 
           {reply.text ? (
             <Text style={[styles.answerText, { color: colors.foreground }]}>{reply.text}</Text>

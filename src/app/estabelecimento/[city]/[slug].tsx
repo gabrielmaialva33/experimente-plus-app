@@ -182,7 +182,13 @@ function Detail({
         </View>
       ) : null}
 
-      <EstablishmentPartnerContent establishmentId={detail.id} timeZone={detail.city.timezone} />
+      <EstablishmentPartnerContent
+        establishmentId={detail.id}
+        timeZone={detail.city.timezone}
+        establishmentName={detail.name}
+        citySlug={citySlug}
+        establishmentSlug={detail.slug}
+      />
 
       {street ? (
         <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>

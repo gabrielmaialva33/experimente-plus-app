@@ -30,6 +30,8 @@ jest.mock('@/catalog/city-store', () => ({ useSelectedCity: () => 'londrina' }))
 jest.mock('@/catalog/queries', () => ({ useCategories: jest.fn() }))
 jest.mock('@/explorer/queries', () => ({
   useSavedList: jest.fn(),
+  useSavedContent: jest.fn(),
+  useToggleSavedContent: jest.fn(),
   useToggleSaved: jest.fn(),
   useInterests: jest.fn(),
   useReplaceInterests: jest.fn(),
@@ -72,9 +74,11 @@ beforeEach(() => {
     'useReorderItineraryStops',
     'useRemoveItineraryStop',
     'useDeleteItinerary',
+    'useToggleSavedContent',
   ]) {
     queries[hook].mockReturnValue(idle())
   }
+  queries.useSavedContent.mockReturnValue({ isPending: false, data: { data: [], unavailable: 0 } })
 })
 
 describe('favourites', () => {
@@ -108,6 +112,79 @@ describe('favourites', () => {
     await fireEvent.press(view.getByLabelText('Ateliê do Café, Cafés · Londrina'))
 
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
+  })
+})
+
+describe('content favourites', () => {
+  const savedPlaces = () =>
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [], unavailable: 0 },
+    })
+
+  it('lists favourited experiences and events above the places, with unavailable ones counted', async () => {
+    savedPlaces()
+    queries.useSavedContent.mockReturnValue({
+      isPending: false,
+      data: {
+        data: [
+          {
+            id: 4,
+            content: {
+              kind: 'event',
+              id: 21,
+              title: 'Noite de jazz',
+              starts_at: '2026-09-26T23:00:00Z',
+              ends_at: '2026-09-27T02:00:00Z',
+              cover_url: null,
+              establishment: card(7, 'Ateliê do Café'),
+            },
+            created_at: '2026-09-23T12:00:00Z',
+          },
+        ],
+        unavailable: 1,
+      },
+    })
+
+    const view = await render(<FavoritesScreen />)
+
+    expect(view.getByText('Noite de jazz')).toBeTruthy()
+    expect(view.getByTestId('content-unavailable').props.children).toMatch(/^1 item salvo/)
+    await fireEvent.press(view.getByLabelText('Noite de jazz, Ateliê do Café'))
+    expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
+  })
+
+  it('removes a content favourite under its route kind', async () => {
+    savedPlaces()
+    const mutate = jest.fn()
+    queries.useToggleSavedContent.mockReturnValue(idle({ mutate }))
+    queries.useSavedContent.mockReturnValue({
+      isPending: false,
+      data: {
+        data: [
+          {
+            id: 5,
+            content: {
+              kind: 'experience',
+              id: 31,
+              title: 'Degustação guiada',
+              starts_at: null,
+              ends_at: null,
+              cover_url: null,
+              establishment: card(7, 'Ateliê do Café'),
+            },
+            created_at: '2026-09-23T12:00:00Z',
+          },
+        ],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<FavoritesScreen />)
+    await fireEvent.press(view.getByTestId('unsave-content-experience-31'))
+
+    expect(mutate).toHaveBeenCalledWith({ kind: 'experiences', id: 31, save: false })
   })
 })
 

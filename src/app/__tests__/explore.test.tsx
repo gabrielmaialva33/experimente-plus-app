@@ -11,6 +11,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn(() => { throw new Error('Discovery must not require a session') }) }))
+// The assistant decides between the public and the personal route inside the API
+// layer, at the moment of asking; the screen itself never touches the session.
+jest.mock('@/api/concierge', () => ({ askAssistant: jest.fn() }))
 jest.mock('@/api/purchases', () => ({
   listPurchaseEditions: jest.fn(() => { throw new Error('Payments unavailable') }),
   listPurchases: jest.fn(() => { throw new Error('Payments unavailable') }),

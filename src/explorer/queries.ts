@@ -8,14 +8,19 @@ import {
   listInterests,
   listItineraries,
   listSaved,
+  listSavedContent,
   removeItineraryStop,
   reorderItineraryStops,
   replaceInterests,
   savedStatus,
+  saveContent,
   saveEstablishment,
+  unsaveContent,
   unsaveEstablishment,
   updateItinerary,
+  type FavoriteContentPath,
   type ItineraryInput,
+  type SavedContentList,
   type SavedKind,
   type SavedStatus,
 } from '@/api/explorer'
@@ -23,6 +28,7 @@ import {
 export const explorerKeys = {
   all: ['explorer'] as const,
   saved: (kind: SavedKind) => ['explorer', 'saved', kind] as const,
+  savedContent: ['explorer', 'saved', 'content'] as const,
   status: (establishmentId: number) => ['explorer', 'status', establishmentId] as const,
   interests: ['explorer', 'interests'] as const,
   itineraries: ['explorer', 'itineraries'] as const,
@@ -148,6 +154,55 @@ export const useDeleteItinerary = () => {
     onSuccess: (_result, id) => {
       client.removeQueries({ queryKey: explorerKeys.itinerary(id) })
       void client.invalidateQueries({ queryKey: explorerKeys.itineraries, exact: true })
+    },
+  })
+}
+
+/**
+ * Favourited experiences and events. Only asked with a session: a visitor's
+ * heart buttons send them to sign in instead.
+ */
+export const useSavedContent = (signedIn = true) =>
+  useQuery({
+    queryKey: explorerKeys.savedContent,
+    queryFn: listSavedContent,
+    enabled: signedIn,
+  })
+
+/**
+ * Toggling a content favourite.
+ *
+ * Removing is applied to the cached list at once, since the item is already
+ * there to drop. Adding waits for the server, which is the one that knows
+ * whether the item is still public; the refetch then brings its approved title.
+ */
+export const useToggleSavedContent = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    retry: false,
+    mutationFn: ({ kind, id, save }: { kind: FavoriteContentPath; id: number; save: boolean }) =>
+      save ? saveContent(kind, id) : unsaveContent(kind, id),
+    onMutate: async ({ kind, id, save }) => {
+      if (save) return { previous: undefined }
+      await client.cancelQueries({ queryKey: explorerKeys.savedContent })
+      const previous = client.getQueryData<SavedContentList>(explorerKeys.savedContent)
+      if (previous) {
+        const species = kind === 'experiences' ? 'experience' : 'event'
+        client.setQueryData<SavedContentList>(explorerKeys.savedContent, {
+          ...previous,
+          data: previous.data.filter(
+            (entry) => !(entry.content.kind === species && entry.content.id === id)
+          ),
+        })
+      }
+      return { previous }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) client.setQueryData(explorerKeys.savedContent, context.previous)
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: explorerKeys.savedContent })
     },
   })
 }

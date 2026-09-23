@@ -551,7 +551,7 @@ export interface paths {
         put?: never;
         /**
          * Ask the discovery assistant about places published in the catalogue
-         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything.
+         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything. This route never reads credentials; the personal variant is `/api/v1/me/concierge`.
          */
         post: operations["askCatalogConcierge"];
         delete?: never;
@@ -3165,6 +3165,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/favorites/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the experiences and events the caller favourited
+         * @description Showcase items cannot be favourited: favouriting a priced product is a wishlist, the first step of the checkout the contract excludes.
+         */
+        get: operations["listMyContentFavorites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/favorites/content/{kind}/{contentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Favourite an experience or an event
+         * @description Idempotent. Content that is not public now — a draft, archived, an ended event, or content of a withdrawn establishment — answers 404, exactly like content that does not exist.
+         */
+        put: operations["favoriteContent"];
+        post?: never;
+        /**
+         * Remove a content favourite
+         * @description Does not revalidate visibility, so an ended event can still be removed.
+         */
+        delete: operations["unfavoriteContent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/follows": {
         parameters: {
             query?: never;
@@ -3342,6 +3386,26 @@ export interface paths {
         post?: never;
         /** Remove a stop from an itinerary */
         delete: operations["removeMyItineraryStop"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/concierge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the discovery assistant, considering the caller's interests
+         * @description Same answer rules as the public route (Anexo I item 11). The caller's active interests decide which discoverable places enter a prompt that cannot hold them all; they add no place, remove none that would have fit, never reorder search, and are not sent to the model provider.
+         */
+        post: operations["askMyConcierge"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -5754,6 +5818,65 @@ export interface components {
             data: components["schemas"]["ExplorerSavedEstablishment"][];
             unavailable: number;
         };
+        ExplorerSavedContent: {
+            id: number;
+            content: {
+                /** @enum {string} */
+                kind: "experience" | "event";
+                id: number;
+                /** @description From the approved snapshot, never an edit awaiting moderation. */
+                title: string;
+                /** Format: date-time */
+                starts_at: string | null;
+                /** Format: date-time */
+                ends_at: string | null;
+                cover_url: string | null;
+                establishment: components["schemas"]["ExplorerEstablishmentCard"];
+            };
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** @description `unavailable` counts favourites that are not public now — archived, ended events, content of a withdrawn establishment. They are kept, not returned as navigable items. */
+        ExplorerSavedContentList: {
+            data: components["schemas"]["ExplorerSavedContent"][];
+            unavailable: number;
+        };
+        ExplorerContentFavoriteStatus: {
+            favorited: boolean;
+        };
+        ConciergeQuestion: {
+            question: string;
+            /** @description Restricts grounding to one city of the operation */
+            city?: string;
+        };
+        /** @description A catalogue item backing a reply. `ref` is a citation token (`<kind>:<id>`), never an address; the public link is built from `city_slug` and `establishment_slug`. */
+        ConciergeGroundingItem: {
+            ref: string;
+            /** @enum {string} */
+            kind: "establishment" | "experience" | "event";
+            name: string;
+            city_slug: string;
+            establishment_slug: string;
+            establishment_name: string;
+            district: string | null;
+            category: string | null;
+            /** Format: date-time */
+            starts_at: string | null;
+            /** Format: date-time */
+            ends_at: string | null;
+        };
+        ConciergeReply: {
+            /** @enum {string} */
+            outcome: "grounded" | "degraded" | "refused";
+            /** @description Absent on a degraded reply, which carries items only */
+            text: string | null;
+            /** @description Catalogue items backing the reply, in order */
+            items: components["schemas"]["ConciergeGroundingItem"][];
+            /** @description Null when no model was consulted */
+            model: string | null;
+            /** @description True when the caller's interests chose which places entered the prompt. Always false on the public route. Interests are never sent to the model provider. */
+            personalized: boolean;
+        };
         ExplorerSavedStatus: {
             favorited: boolean;
             following: boolean;
@@ -7842,11 +7965,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    question: string;
-                    /** @description Restricts grounding to one city of the operation */
-                    city?: string;
-                };
+                "application/json": components["schemas"]["ConciergeQuestion"];
             };
         };
         responses: {
@@ -7856,24 +7975,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        outcome: "grounded" | "degraded" | "refused";
-                        /** @description Absent on a degraded reply, which carries items only */
-                        text: string | null;
-                        /** @description Catalogue places backing the reply, in order */
-                        items: {
-                            id?: number;
-                            /** @enum {string} */
-                            kind?: "establishment";
-                            name?: string;
-                            city?: string;
-                            district?: string | null;
-                            category?: string | null;
-                        }[];
-                        /** @description Null when no model was consulted */
-                        model: string | null;
-                    };
+                    "application/json": components["schemas"]["ConciergeReply"];
                 };
             };
             /** @description Public operation could not be resolved */
@@ -15095,6 +15197,109 @@ export interface operations {
             };
         };
     };
+    listMyContentFavorites: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public favourites, most recent first, and the count of unavailable ones */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedContentList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    favoriteContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events";
+                contentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The favourite exists */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerContentFavoriteStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Content not found or not public */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unfavoriteContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                kind: "experiences" | "events";
+                contentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The favourite no longer exists */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerContentFavoriteStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listMyFollows: {
         parameters: {
             query?: never;
@@ -15636,6 +15841,47 @@ export interface operations {
             };
             /** @description Itinerary or stop not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    askMyConcierge: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConciergeQuestion"];
+            };
+        };
+        responses: {
+            /** @description The reply, with `personalized` true when interests were applied */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConciergeReply"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Question missing or outside the accepted length */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,12 +1,13 @@
+import { request } from './client'
 import { publicRequest } from './public'
-import type { operations } from './schema'
+import type { components } from './schema'
+import { readCredentials, SessionExpiredError } from './session'
 
-type AskCatalogConcierge = operations['askCatalogConcierge']
+type Schemas = components['schemas']
 
-export type ConciergeQuestion =
-  AskCatalogConcierge['requestBody']['content']['application/json']
-
-export type ConciergeOutcome = 'grounded' | 'degraded' | 'refused'
+export type ConciergeQuestion = Schemas['ConciergeQuestion']
+export type ConciergeReply = Schemas['ConciergeReply']
+export type ConciergeOutcome = ConciergeReply['outcome']
 
 /**
  * One catalogue reference backing a reply.
@@ -15,33 +16,8 @@ export type ConciergeOutcome = 'grounded' | 'degraded' | 'refused'
  * collided between establishments, experiences and events, which let grounding
  * validation accept a citation that pointed at another table's row. Navigation
  * uses the public identity pair, `city_slug` plus `establishment_slug`.
- *
- * Canonical schema pending `pnpm api:types`:
- * `components['schemas']['ConciergeGroundingItem']`, together with the
- * `askCatalogConcierge` 200 payload that carries it.
  */
-export interface ConciergeGroundingItem {
-  ref: string
-  kind: 'establishment' | 'experience' | 'event'
-  name: string
-  city_slug: string
-  establishment_slug: string
-  establishment_name: string
-  district: string | null
-  category: string | null
-  starts_at: string | null
-  ends_at: string | null
-}
-
-export interface ConciergeReply {
-  outcome: ConciergeOutcome
-  /** Absent on a degraded reply, which carries references only. */
-  text: string | null
-  /** Catalogue references backing the reply, in the server's order. */
-  items: ConciergeGroundingItem[]
-  /** Null when no model was consulted. */
-  model: string | null
-}
+export type ConciergeGroundingItem = Schemas['ConciergeGroundingItem']
 
 /**
  * Public, read-only discovery assistant (ADR-0029).
@@ -56,3 +32,47 @@ export const askConcierge = (body: ConciergeQuestion, signal?: AbortSignal) =>
     signal,
     sensitive: true,
   })
+
+/**
+ * The same assistant for a signed-in Explorer, weighing their interests
+ * (Anexo I item 11). The interests stay on the server: they choose which places
+ * enter the prompt and are never sent to the model provider.
+ *
+ * A session that expired is not a reason to leave the person without an
+ * answer: the question falls back to the public route, which is what a visitor
+ * would get, and `personalized` then says honestly that interests were not used.
+ */
+export async function askMyConcierge(
+  body: ConciergeQuestion,
+  signal?: AbortSignal
+): Promise<ConciergeReply> {
+  try {
+    return await request<ConciergeReply>('/api/v1/me/concierge', {
+      method: 'POST',
+      authenticated: true,
+      body,
+      signal,
+      sensitive: true,
+    })
+  } catch (error) {
+    if (error instanceof SessionExpiredError) return askConcierge(body, signal)
+    throw error
+  }
+}
+
+/**
+ * What the discovery screen calls.
+ *
+ * The choice between the public and the personal route is made here, at the
+ * moment of asking, from the stored credentials — not in the screen. Discovery
+ * never reads the session (a visitor must get the full screen, and it must not
+ * wait on a session that is still loading); the assistant just asks, and a
+ * visitor with no credentials takes the public route.
+ */
+export async function askAssistant(
+  body: ConciergeQuestion,
+  signal?: AbortSignal
+): Promise<ConciergeReply> {
+  const credentials = await readCredentials()
+  return credentials ? askMyConcierge(body, signal) : askConcierge(body, signal)
+}

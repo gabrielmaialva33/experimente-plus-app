@@ -22,6 +22,11 @@ export type ItineraryInput = Schemas['ExplorerItineraryRequest']
 
 export type SavedKind = 'favorites' | 'follows'
 
+export type SavedContent = Schemas['ExplorerSavedContent']
+export type SavedContentList = Schemas['ExplorerSavedContentList']
+/** Experiences and events. Showcase items cannot be favourited (ADR-0030). */
+export type FavoriteContentPath = 'experiences' | 'events'
+
 export const listSaved = (kind: SavedKind) =>
   request<SavedList>(`/api/v1/me/${kind}`, { authenticated: true })
 
@@ -90,4 +95,20 @@ export const reorderItineraryStops = (id: number, stopIds: number[]) =>
     method: 'PUT',
     authenticated: true,
     body: { stop_ids: stopIds },
+  })
+
+export const listSavedContent = () =>
+  request<SavedContentList>('/api/v1/me/favorites/content', { authenticated: true })
+
+/** Idempotent; content that is not public now answers 404. */
+export const saveContent = (kind: FavoriteContentPath, contentId: number) =>
+  request<{ favorited: boolean }>(`/api/v1/me/favorites/content/${kind}/${contentId}`, {
+    method: 'PUT',
+    authenticated: true,
+  })
+
+export const unsaveContent = (kind: FavoriteContentPath, contentId: number) =>
+  request<{ favorited: boolean }>(`/api/v1/me/favorites/content/${kind}/${contentId}`, {
+    method: 'DELETE',
+    authenticated: true,
   })

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router'
+import type { ReactElement } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { SavedKind } from '@/api/explorer'
@@ -30,7 +31,7 @@ const COPY: Record<SavedKind, { loading: string; empty: string; remove: string }
  * withdrawn is kept, and without this line the person would believe the app
  * lost it.
  */
-export function SavedListScreen({ kind }: { kind: SavedKind }) {
+export function SavedListScreen({ kind, header }: { kind: SavedKind; header?: ReactElement }) {
   const colors = useColors()
   const query = useSavedList(kind)
   const copy = COPY[kind]
@@ -47,13 +48,16 @@ export function SavedListScreen({ kind }: { kind: SavedKind }) {
       data={items}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
-        unavailable > 0 ? (
+        <>
+          {header ?? null}
+          {unavailable > 0 ? (
           <Text style={[styles.notice, { color: colors.mutedForeground }]} testID="saved-unavailable">
             {unavailable === 1
               ? '1 lugar salvo está indisponível no momento e aparecerá de novo se voltar ao catálogo.'
               : `${unavailable} lugares salvos estão indisponíveis no momento e aparecerão de novo se voltarem ao catálogo.`}
           </Text>
-        ) : null
+          ) : null}
+        </>
       }
       ListEmptyComponent={
         <Text style={[styles.empty, { color: colors.mutedForeground }]}>

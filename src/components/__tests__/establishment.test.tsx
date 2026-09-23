@@ -18,6 +18,10 @@ jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: () => ({ data: { 
 jest.mock('@/catalog/queries', () => ({ useEstablishment: jest.fn() }))
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'anonymous' }) }))
 jest.mock('@/reviews/queries', () => ({ useEstablishmentReviews: () => ({ data: undefined, isError: false }) }))
+jest.mock('@/explorer/queries', () => ({
+  useSavedStatus: () => ({ data: undefined }),
+  useToggleSaved: () => ({ mutate: jest.fn(), isPending: false }),
+}))
 jest.mock('@/partner-content/queries', () => ({
   usePartnerContent: () => ({ data: [], isPending: false, isError: false }),
 }))

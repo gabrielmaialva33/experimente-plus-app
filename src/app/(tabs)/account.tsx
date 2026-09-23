@@ -96,12 +96,24 @@ export default function AccountScreen() {
           </Text>
         </Pressable>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/conta/avaliacoes')}
-          style={styles.signOut}>
-          <Text style={[styles.actionLabel, { color: colors.primary }]}>Minhas avaliações</Text>
-        </Pressable>
+        {/* Anexo I item 10 — the person's own relationship with the catalogue. */}
+        {(
+          [
+            ['/conta/favoritos', 'Favoritos'],
+            ['/conta/seguindo', 'Seguindo'],
+            ['/roteiros', 'Meus roteiros'],
+            ['/conta/interesses', 'Meus interesses'],
+            ['/conta/avaliacoes', 'Minhas avaliações'],
+          ] as const
+        ).map(([href, label]) => (
+          <Pressable
+            key={href}
+            accessibilityRole="button"
+            onPress={() => router.push(href)}
+            style={styles.signOut}>
+            <Text style={[styles.actionLabel, { color: colors.primary }]}>{label}</Text>
+          </Pressable>
+        ))}
 
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.signOut}>
           <Text style={[styles.actionLabel, { color: colors.primary }]}>Sair</Text>

@@ -3067,6 +3067,232 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the establishments the caller favourited
+         * @description A private bookmark. No route lists who favourited an establishment.
+         */
+        get: operations["listMyFavorites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/favorites/{establishmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the establishment as a favorite
+         * @description Idempotent. Saving twice is the same intent, so a retry after a lost response neither creates a second row nor fails. An establishment that is not discoverable answers 404, exactly like one that does not exist.
+         */
+        put: operations["favoriteEstablishment"];
+        post?: never;
+        /**
+         * Remove the favorite
+         * @description Does not revalidate the catalogue: a person must be able to drop a saved place precisely when it stopped being available.
+         */
+        delete: operations["unfavoriteEstablishment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/follows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the establishments the caller follows
+         * @description Distinct from favourites. A follow subscribes to what the establishment publishes and is the relation a future notice would address.
+         */
+        get: operations["listMyFollows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/follows/{establishmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the establishment as a follow
+         * @description Idempotent. Saving twice is the same intent, so a retry after a lost response neither creates a second row nor fails. An establishment that is not discoverable answers 404, exactly like one that does not exist.
+         */
+        put: operations["followEstablishment"];
+        post?: never;
+        /**
+         * Remove the follow
+         * @description Does not revalidate the catalogue: a person must be able to drop a saved place precisely when it stopped being available.
+         */
+        delete: operations["unfollowEstablishment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/saved/{establishmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether the caller favourites and follows an establishment
+         * @description What an establishment page needs to draw its own two buttons.
+         */
+        get: operations["getMySavedStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/interests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the caller's discovery interests
+         * @description Interests are recorded and returned. They do not change the order of any search in this milestone: personalised ranking is its own domain.
+         */
+        get: operations["listMyInterests"];
+        /** Replace the caller's discovery interests */
+        put: operations["replaceMyInterests"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the caller's itineraries
+         * @description Itineraries are private to their author. There is no public itinerary route.
+         */
+        get: operations["listMyItineraries"];
+        put?: never;
+        /** Create an itinerary */
+        post: operations["createMyItinerary"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show an itinerary with its stops
+         * @description An itinerary of another person answers 404, never 403, so the reply does not confirm that an identifier exists.
+         */
+        get: operations["getMyItinerary"];
+        /** Rename an itinerary or change its notes */
+        put: operations["updateMyItinerary"];
+        post?: never;
+        /** Delete an itinerary and its stops */
+        delete: operations["deleteMyItinerary"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries/{id}/stops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a stop at the end of an itinerary
+         * @description The same establishment may appear more than once.
+         */
+        post: operations["addMyItineraryStop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries/{id}/stops/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the order of an itinerary's stops */
+        put: operations["reorderMyItineraryStops"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries/{id}/stops/{stopId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a stop from an itinerary */
+        delete: operations["removeMyItineraryStop"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5083,8 +5309,6 @@ export interface components {
             title: string;
             description?: string | null;
             status: components["schemas"]["PartnerContentStatus"];
-            /** @description Approved media only on public catalogue responses. */
-            media?: components["schemas"]["PartnerContentPublicMedia"][];
             published_snapshot?: components["schemas"]["PartnerContentSnapshot"] | null;
             /** Format: date-time */
             published_at?: string | null;
@@ -5104,8 +5328,6 @@ export interface components {
             title: string;
             description?: string | null;
             status: components["schemas"]["PartnerContentStatus"];
-            /** @description Approved media only on public catalogue responses. */
-            media?: components["schemas"]["PartnerContentPublicMedia"][];
             /**
              * Format: date-time
              * @description Resolved in the city's timezone when it is written, never in the server's or the device's.
@@ -5132,8 +5354,6 @@ export interface components {
             title: string;
             description?: string | null;
             status: components["schemas"]["PartnerContentStatus"];
-            /** @description Approved media only on public catalogue responses. */
-            media?: components["schemas"]["PartnerContentPublicMedia"][];
             /** @description Displayed, never charged. No purchase route accepts a showcase item as a product, and the platform takes on no commercial obligation for it (ADR-0028). */
             informational_price_cents?: number | null;
             published_snapshot?: components["schemas"]["PartnerContentSnapshot"] | null;
@@ -5195,8 +5415,28 @@ export interface components {
             max_media_per_content?: number;
             min_event_notice_minutes?: number;
         };
+        /** @description What a visitor receives. It is built from `published_snapshot`, never from the live row: the administrative schemas above carry `tenant_id`, `created_by`, `archived_by` and the lifecycle, and this response is cached as `public, max-age=300`. Documenting the row here is how those columns reach a public consumer even when the code never sends them. */
+        PartnerContentPublicItem: {
+            id: number;
+            /** @enum {string} */
+            kind: "experience" | "event" | "showcase_item";
+            title: string;
+            description: string | null;
+            /**
+             * Format: date-time
+             * @description Events only, from the approved snapshot.
+             */
+            starts_at: string | null;
+            /** Format: date-time */
+            ends_at: string | null;
+            /** @description Showcase items only. Displayed, never charged. */
+            informational_price_cents: number | null;
+            /** Format: date-time */
+            published_at: string;
+            media: components["schemas"]["PartnerContentPublicMedia"][];
+        };
         PartnerContentListResponse: {
-            data: components["schemas"]["PartnerContent"][];
+            data: components["schemas"]["PartnerContentPublicItem"][];
         };
         PaginatedPartnerContentResponse: {
             data: components["schemas"]["PartnerContent"][];
@@ -5347,6 +5587,92 @@ export interface components {
         PaginatedContentReportsResponse: {
             data: components["schemas"]["ContentReport"][];
             meta: components["schemas"]["AdministrativePaginationMeta"];
+        };
+        /** @description How an establishment appears inside the Explorer's own lists. Built from the discoverable projection, so a withdrawn unit produces no card. The public link is `/cidades/{city_slug}/estabelecimentos/{slug}`; the numeric `id` is an identity for the save endpoints, never an address. */
+        ExplorerEstablishmentCard: {
+            id: number;
+            slug: string;
+            name: string;
+            city_slug: string;
+            city_name: string;
+            cover_url: string | null;
+            category: string | null;
+        };
+        ExplorerSavedEstablishment: {
+            id: number;
+            establishment: components["schemas"]["ExplorerEstablishmentCard"];
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** @description `unavailable` counts saved rows whose establishment is not discoverable right now. They are kept, not returned as navigable items, so the app can say so instead of the save appearing to vanish. */
+        ExplorerSavedList: {
+            data: components["schemas"]["ExplorerSavedEstablishment"][];
+            unavailable: number;
+        };
+        ExplorerSavedStatus: {
+            favorited: boolean;
+            following: boolean;
+        };
+        ExplorerInterest: {
+            id: number;
+            category: {
+                /** @description The identity the public catalogue gives a category. Its numeric id is never published, so it is not used here either. */
+                slug: string;
+                name: string;
+                /** @description A category deactivated after the person chose it stays chosen. It is only no longer offered. */
+                is_active: boolean;
+            };
+            /** Format: date-time */
+            created_at: string;
+        };
+        ExplorerInterestList: {
+            data: components["schemas"]["ExplorerInterest"][];
+        };
+        /** @description The whole set. Choosing interests replaces it rather than toggling one at a time. */
+        ReplaceExplorerInterestsRequest: {
+            category_slugs: string[];
+        };
+        ExplorerItineraryStop: {
+            id: number;
+            position: number;
+            note: string | null;
+            /** @description Null when the stop points at an establishment that left the catalogue. The stop keeps its place: dropping it would rewrite a route its author wrote. */
+            establishment: components["schemas"]["ExplorerEstablishmentCard"] | null;
+        };
+        ExplorerItinerary: {
+            id: number;
+            name: string;
+            notes: string | null;
+            stops: components["schemas"]["ExplorerItineraryStop"][];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ExplorerItinerarySummary: {
+            id: number;
+            name: string;
+            notes: string | null;
+            stops_count: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ExplorerItineraryList: {
+            data: components["schemas"]["ExplorerItinerarySummary"][];
+        };
+        ExplorerItineraryRequest: {
+            name: string;
+            notes?: string | null;
+        };
+        ExplorerItineraryStopRequest: {
+            establishment_id: number;
+            note?: string | null;
+        };
+        /** @description The whole sequence, not a stop and a destination. It must contain exactly the stops of the itinerary, each once. */
+        ReorderExplorerItineraryStopsRequest: {
+            stop_ids: number[];
         };
     };
     responses: {
@@ -14373,6 +14699,655 @@ export interface operations {
             };
             /** @description Validation failed */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyFavorites: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discoverable favorites, most recent first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    favoriteEstablishment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state of both relations for this establishment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Establishment not found or not discoverable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unfavoriteEstablishment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state of both relations for this establishment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyFollows: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discoverable follows, most recent first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    followEstablishment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state of both relations for this establishment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Establishment not found or not discoverable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unfollowEstablishment: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state of both relations for this establishment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMySavedStatus: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                establishmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Both relations for this caller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerSavedStatus"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyInterests: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Chosen categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerInterestList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    replaceMyInterests: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceExplorerInterestsRequest"];
+            };
+        };
+        responses: {
+            /** @description The resulting set */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerInterestList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A category is not part of this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyItineraries: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Itineraries, most recently changed first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItineraryList"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createMyItinerary: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExplorerItineraryRequest"];
+            };
+        };
+        responses: {
+            /** @description Itinerary created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMyItinerary: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The itinerary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateMyItinerary: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExplorerItineraryRequest"];
+            };
+        };
+        responses: {
+            /** @description The itinerary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteMyItinerary: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    addMyItineraryStop: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExplorerItineraryStopRequest"];
+            };
+        };
+        responses: {
+            /** @description The itinerary with the new stop */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary or establishment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reorderMyItineraryStops: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderExplorerItineraryStopsRequest"];
+            };
+        };
+        responses: {
+            /** @description The itinerary in its new order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description The sequence does not contain exactly the itinerary's stops */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeMyItineraryStop: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+                stopId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The itinerary without the stop */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerary"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary or stop not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

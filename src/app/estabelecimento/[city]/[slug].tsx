@@ -14,6 +14,7 @@ import { OperatingStatus } from '@/components/operating-status'
 import { EstablishmentOffers } from '@/purchases/establishment-offers'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
+import { SaveActions } from '@/explorer/save-actions'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -134,6 +135,12 @@ function Detail({
         {detail.is_sponsored ? (
           <Text style={[styles.sponsored, { color: colors.mutedForeground }]}>Patrocinado</Text>
         ) : null}
+        <SaveActions
+          establishmentId={detail.id}
+          name={detail.name}
+          citySlug={citySlug}
+          slug={detail.slug}
+        />
       </View>
 
       {primaryAction ? (

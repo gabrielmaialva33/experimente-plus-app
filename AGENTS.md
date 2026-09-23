@@ -69,7 +69,7 @@ Execute na raiz deste repositório. `mise.toml` define Node 24, pnpm 11, Java Te
 | `pnpm api:types`                 | Regenerar tipos a partir de `../experimente-plus/docs/openapi.yaml`         |
 | `pnpm lint`                      | Script `expo lint`; configuração ESLint ainda não está versionada           |
 
-O app usa módulos nativos e `expo-dev-client`; valide com development build, especialmente câmera, mapas, SecureStore e MMKV. Android é construído localmente; o ADR prevê serviço remoto para iOS/distribuição. Ainda não há `eas.json` versionado nem comando de release configurado.
+O app usa módulos nativos e `expo-dev-client`; valide com development build, especialmente câmera, mapas, SecureStore e MMKV. Android é construído localmente; o ADR prevê serviço remoto para iOS/distribuição. `eas.json` define os perfis `development`, `preview` e `production` e o envio às lojas; `app.config.ts` recusa build de produção sem URL de API e estilo de mapa de produção. O que falta para publicar depende do contratante e está em [`docs/store-submission.md`](docs/store-submission.md).
 
 `android/`, `ios/` e `.expo/` são gerados e ignorados. Mudanças permanentes de configuração nativa devem partir de `app.json` e config plugins. Preserve customizações locais antes de qualquer regeneração limpa.
 

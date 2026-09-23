@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "br.com.experimentemais"
+      "bundleIdentifier": "br.com.experimentemais",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,14 +38,19 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       "expo-localization",
       "expo-image",
       "expo-maps",
       [
         "expo-camera",
         {
-          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado pelo cliente.",
+          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado no estabelecimento e para você fotografar o lugar ao avaliá-lo.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -51,7 +59,8 @@
         "expo-image-picker",
         {
           "photosPermission": "O Experimente+ precisa de acesso às suas fotos para você escolher imagens para a avaliação.",
-          "cameraPermission": "O Experimente+ precisa de acesso à câmera para você tirar fotos para a avaliação."
+          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado no estabelecimento e para você fotografar o lugar ao avaliá-lo.",
+          "microphonePermission": false
         }
       ],
       "@maplibre/maplibre-react-native"

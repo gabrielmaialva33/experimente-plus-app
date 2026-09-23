@@ -4,7 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
-import { useReportContent } from '@/reviews/queries'
+import { useReportAnonymously, useReportContent } from '@/reviews/queries'
+import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -43,6 +44,19 @@ const TITLES: Partial<Record<ReportTargetType, string>> = {
   showcase_item: 'Denunciar item de vitrine',
 }
 
+/** What a failed report tells the person, by what the server answered. */
+export function failureMessage(error: unknown, anonymous: boolean): string {
+  const status = error instanceof ApiError ? error.status : null
+  if (status === 409) {
+    return anonymous
+      ? 'Este conteúdo já foi denunciado a partir desta conexão ou deste aparelho.'
+      : 'Você já denunciou este conteúdo.'
+  }
+  if (status === 429) return 'Muitas denúncias a partir desta conexão. Tente de novo mais tarde.'
+  if (status === 404) return 'Este conteúdo não está mais disponível para denúncia.'
+  return 'Não foi possível enviar a denúncia agora.'
+}
+
 export const reportableTarget = (value: string | undefined): ReportTargetType | null =>
   value && value in TITLES ? (value as ReportTargetType) : null
 
@@ -61,7 +75,15 @@ export default function ReportContentScreen() {
 
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [details, setDetails] = useState('')
-  const report = useReportContent()
+  const { status } = useSession()
+  // Without an account the report is anonymous; with one, it carries the
+  // account. Nothing is decided while the session is still being read, so a
+  // signed-in person never files anonymously by accident.
+  const resolving = status === 'loading'
+  const anonymous = !resolving && status !== 'authenticated'
+  const identified = useReportContent()
+  const withoutAccount = useReportAnonymously()
+  const report = anonymous ? withoutAccount : identified
 
   if (report.isSuccess) {
     return (
@@ -135,18 +157,24 @@ export default function ReportContentScreen() {
         />
       </View>
 
+      <Text
+        style={[styles.note, { color: colors.mutedForeground }]}
+        testID={anonymous ? 'report-anonymous-note' : 'report-identified-note'}>
+        {anonymous
+          ? 'Esta denúncia é anônima: não fica ligada a você nem a uma conta. Guardamos apenas um código que impede repetir a mesma denúncia.'
+          : 'Esta denúncia vai com a sua conta. A moderação sabe quem denunciou; o estabelecimento, não.'}
+      </Text>
+
       {report.isError ? (
         <Text style={[styles.body, { color: colors.destructiveAccent }]}>
-          {report.error instanceof ApiError && report.error.status === 409
-            ? 'Você já denunciou este conteúdo.'
-            : 'Não foi possível enviar a denúncia agora.'}
+          {failureMessage(report.error, anonymous)}
         </Text>
       ) : null}
 
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ disabled: !reason || report.isPending }}
-        disabled={!reason || report.isPending}
+        accessibilityState={{ disabled: !reason || report.isPending || resolving }}
+        disabled={!reason || report.isPending || resolving}
         onPress={() =>
           reason &&
           report.mutate({
@@ -158,7 +186,7 @@ export default function ReportContentScreen() {
         }
         style={[
           styles.action,
-          { backgroundColor: colors.cta, opacity: !reason || report.isPending ? 0.5 : 1 },
+          { backgroundColor: colors.cta, opacity: !reason || report.isPending || resolving ? 0.5 : 1 },
         ]}
         testID="report-submit">
         <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>

@@ -29,7 +29,9 @@ jest.mock('@/reviews/queries', () => ({
   useCreateReviewWithPhotos: jest.fn(),
   useAuthorRules: jest.fn(),
   useReportContent: jest.fn(),
+  useReportAnonymously: jest.fn(),
 }))
+jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 // The real picker opens the system gallery. This one hands back a photo when
 // pressed, which is all the screen needs to be exercised.
 jest.mock('@/components/image-picker', () => {
@@ -53,7 +55,9 @@ const queries = jest.requireMock('@/reviews/queries') as {
   useCreateReviewWithPhotos: jest.Mock
   useAuthorRules: jest.Mock
   useReportContent: jest.Mock
+  useReportAnonymously: jest.Mock
 }
+const session = jest.requireMock('@/session/context') as { useSession: jest.Mock }
 
 const idle = (overrides = {}) => ({
   mutate: jest.fn(),
@@ -70,6 +74,8 @@ beforeEach(() => {
   queries.useCreateReviewWithPhotos.mockReturnValue(idle())
   queries.useAuthorRules.mockReturnValue({ data: { max_photos: 0 } })
   queries.useReportContent.mockReturnValue(idle())
+  queries.useReportAnonymously.mockReturnValue(idle())
+  session.useSession.mockReturnValue({ status: 'authenticated' })
 })
 
 it('will not submit a review without a rating', async () => {
@@ -261,4 +267,63 @@ it('keeps the published review and says which photos did not go', async () => {
   expect(view.getByTestId('review-photos-failed').props.children[0]).toBe(
     '2 fotos não puderam ser enviadas.'
   )
+})
+
+it('lets a visitor report anonymously, and says so', async () => {
+  const anonymous = jest.fn()
+  const identified = jest.fn()
+  session.useSession.mockReturnValue({ status: 'anonymous' })
+  queries.useReportAnonymously.mockReturnValue(idle({ mutate: anonymous }))
+  queries.useReportContent.mockReturnValue(idle({ mutate: identified }))
+  params.useLocalSearchParams.mockReturnValue({ type: 'review', id: '3' })
+
+  const view = await render(<ReportContentScreen />)
+  expect(view.getByTestId('report-anonymous-note')).toBeTruthy()
+
+  await fireEvent.press(view.getByTestId('reason-harassment'))
+  await fireEvent.press(view.getByTestId('report-submit'))
+
+  await waitFor(() =>
+    expect(anonymous).toHaveBeenCalledWith({ target_type: 'review', target_id: 3, reason: 'harassment' })
+  )
+  expect(identified).not.toHaveBeenCalled()
+})
+
+it('reports as the account when signed in, and says so', async () => {
+  const anonymous = jest.fn()
+  const identified = jest.fn()
+  queries.useReportAnonymously.mockReturnValue(idle({ mutate: anonymous }))
+  queries.useReportContent.mockReturnValue(idle({ mutate: identified }))
+  params.useLocalSearchParams.mockReturnValue({ type: 'review', id: '3' })
+
+  const view = await render(<ReportContentScreen />)
+  expect(view.getByTestId('report-identified-note')).toBeTruthy()
+
+  await fireEvent.press(view.getByTestId('reason-spam'))
+  await fireEvent.press(view.getByTestId('report-submit'))
+
+  await waitFor(() => expect(identified).toHaveBeenCalled())
+  expect(anonymous).not.toHaveBeenCalled()
+})
+
+it('does not let anyone submit while the session is still being read', async () => {
+  session.useSession.mockReturnValue({ status: 'loading' })
+  params.useLocalSearchParams.mockReturnValue({ type: 'review', id: '3' })
+
+  const view = await render(<ReportContentScreen />)
+  await fireEvent.press(view.getByTestId('reason-spam'))
+
+  expect(view.getByTestId('report-submit').props.accessibilityState).toMatchObject({ disabled: true })
+})
+
+it('explains a repeat, a limit and a vanished target in the reporter’s terms', () => {
+  const { ApiError: MockApiError } = jest.requireMock('@/api/client') as { ApiError: any }
+  const { failureMessage: message } = jest.requireActual('@/app/denunciar/[type]/[id]') as {
+    failureMessage: (error: unknown, anonymous: boolean) => string
+  }
+
+  expect(message(new MockApiError(409, {}), true)).toMatch(/desta conexão ou deste aparelho/)
+  expect(message(new MockApiError(409, {}), false)).toBe('Você já denunciou este conteúdo.')
+  expect(message(new MockApiError(429, {}), true)).toMatch(/Muitas denúncias/)
+  expect(message(new MockApiError(404, {}), true)).toMatch(/não está mais disponível/)
 })

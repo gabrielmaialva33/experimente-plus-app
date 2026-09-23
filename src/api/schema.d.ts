@@ -3080,6 +3080,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/content-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report content anonymously
+         * @description Public, like the catalogue it reports on: the operation is resolved from the hostname and no session is needed (ADR-0027 scenario 13). Only content the public can currently see is reportable. The reporter is recorded only as keyed hashes of the connection and of the optional token, scoped to the target, so the same origin reporting the same target again is a repeat (scenario 14) while one person's reports cannot be linked to each other. Five per hour per connection.
+         */
+        post: operations["createAnonymousContentReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/content-reports": {
         parameters: {
             query?: never;
@@ -5865,6 +5885,20 @@ export interface components {
             /** @enum {string} */
             reason: "spam" | "offensive" | "inappropriate" | "false_information" | "conflict_of_interest" | "harassment" | "other";
             details?: string | null;
+        };
+        /** @description An identified report's fields plus an optional opaque token the client generates and keeps, so a repeat is recognised across networks (ADR-0027 scenarios 13 and 14). The token grants nothing. */
+        CreateAnonymousReportRequest: {
+            /** @enum {string} */
+            target_type: "review" | "reply" | "establishment" | "experience" | "event" | "showcase_item";
+            target_id: number;
+            /** @enum {string} */
+            reason: "spam" | "offensive" | "inappropriate" | "false_information" | "conflict_of_interest" | "harassment" | "other";
+            details?: string | null;
+            anonymous_token?: string | null;
+        };
+        /** @description The protocol and nothing else. Neither the stored report nor how its origin was recorded is ever returned. */
+        AnonymousReportReceipt: {
+            protocol_number: string;
         };
         ResolveReportRequest: {
             /** @enum {string} */
@@ -15079,6 +15113,58 @@ export interface operations {
             };
             /** @description Validation failed */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createAnonymousContentReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAnonymousReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Report registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnonymousReportReceipt"];
+                };
+            };
+            /** @description Target not found or not publicly visible, or operation not resolvable */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This origin already reported this target */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too many reports from this connection */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

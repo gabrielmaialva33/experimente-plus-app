@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text } from 'react-native'
 
 import type { ReportTargetType } from '@/api/reviews'
-import { useSession } from '@/session/context'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -10,8 +9,8 @@ import { useColors } from '@/theme/use-colors'
  * A quiet way into the report flow — Anexo I item 10, "denunciar conteúdos ou
  * estabelecimentos".
  *
- * A report needs a session, so a visitor is taken to sign in instead of being
- * handed a form whose only possible answer is 401.
+ * Everyone goes to the same form. A visitor reports anonymously and a signed-in
+ * person reports as themselves (ADR-0027 scenario 13); the form says which.
  */
 export function ReportLink({
   type,
@@ -24,15 +23,12 @@ export function ReportLink({
 }) {
   const colors = useColors()
   const router = useRouter()
-  const { status } = useSession()
 
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={label}
-      onPress={() =>
-        router.push(status === 'authenticated' ? `/denunciar/${type}/${id}` : '/(tabs)/sign-in')
-      }
+      onPress={() => router.push(`/denunciar/${type}/${id}`)}
       hitSlop={spacing.sm}
       style={styles.link}
       testID={`report-${type}-${id}`}>

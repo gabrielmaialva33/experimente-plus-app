@@ -123,6 +123,106 @@ export default function ExploreScreen() {
     [router, selectedCity]
   )
 
+  const results = search.data?.organic ?? []
+
+  // Changing city is discovery state only: no tenant request, no token.
+  const citySelector = (
+    <View style={styles.citySelector}>
+      <Text style={[styles.controlLabel, { color: colors.mutedForeground }]}>Cidade</Text>
+      <ChoiceRow label="Cidade" single>
+        {(maxWidth) => cities.data?.map((item) => (
+            <ChoiceControl
+              key={item.slug}
+              shape="tab"
+              compact
+              maxWidth={maxWidth}
+              role="radio"
+              accessibilityLabel={`${item.name}, ${item.state_code}`}
+              label={`${item.name} · ${item.state_code}`}
+              selected={item.slug === selectedCity}
+              onPress={() => selectCity(item.slug)}
+            />
+        ))}
+      </ChoiceRow>
+    </View>
+  )
+
+  // One filter state, shared by the list and the map.
+  const filterControls = (
+    <>
+      <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>Filtros</Text>
+      <ChoiceRow label="Filtros">
+        {(maxWidth) => <>
+          <Chip maxWidth={maxWidth} label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
+          {categories.data?.categories.map((item) => (
+            <Chip
+              key={item.slug}
+              maxWidth={maxWidth}
+              label={item.name}
+              selected={category === item.slug}
+              onPress={() => setCategory(category === item.slug ? undefined : item.slug)}
+            />
+          ))}
+          {/* Facets come from the server, so chips are never hardcoded. */}
+          {filters.data?.attributes.map((item) => (
+            <Chip
+              key={item.key}
+              maxWidth={maxWidth}
+              label={item.name}
+              selected={attributes.includes(item.key)}
+              onPress={() => toggleAttribute(item.key)}
+            />
+          ))}
+        </>}
+      </ChoiceRow>
+
+      <View style={styles.viewToggle}>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Visualização dos resultados" style={styles.viewOptions}>
+          {(['list', 'map'] as const).map((mode) => (
+            <ChoiceControl
+              key={mode}
+              shape="segment"
+              compact
+              fill
+              role="radio"
+              accessibilityLabel={mode === 'list' ? 'Ver em lista' : 'Ver no mapa'}
+              label={mode === 'list' ? 'Lista' : 'Mapa'}
+              selected={view === mode}
+              onPress={() => setView(mode)}
+            />
+          ))}
+        </View>
+      </View>
+    </>
+  )
+
+  const feedback = search.isPending ? (
+    <ContentSkeleton label="Carregando lugares" variant="catalog" />
+  ) : search.isError ? (
+    <View style={styles.feedback}>
+      <Text style={[styles.message, { color: colors.foreground }]}>
+        Não foi possível carregar agora.
+      </Text>
+      {/* Manual retry preserving the filters, per the retry contract. */}
+      <Pressable onPress={() => search.refetch()}>
+        <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
+      </Pressable>
+    </View>
+  ) : !results.length ? (
+    <View testID="catalog-empty" style={styles.feedback}>
+      <Text style={[styles.message, { color: colors.foreground }]}>
+        {hasFilters
+          ? `Nada encontrado em ${city?.name ?? 'sua cidade'} com os filtros: ${activeFilters.join(', ')}.`
+          : `Ainda não há lugares publicados em ${city?.name ?? 'sua cidade'}.`}
+      </Text>
+      {hasFilters ? (
+        <Pressable accessibilityRole="button" onPress={clearFilters}>
+          <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  ) : null
+
   return (
     <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.surfaceBase, flex: 1 }}>
       <View style={[styles.header, { backgroundColor: colors.surfaceBase }]}>
@@ -137,132 +237,64 @@ export default function ExploreScreen() {
         />
       </View>
 
-      <View style={{ backgroundColor: colors.background, flex: 1 }}>
-        {/* Changing city is discovery state only: no tenant request, no token. */}
-        <View style={styles.citySelector}>
-          <Text style={[styles.controlLabel, { color: colors.mutedForeground }]}>Cidade</Text>
-          <ChoiceRow label="Cidade" single>
-            {(maxWidth) => cities.data?.map((item) => (
-                <ChoiceControl
-                  key={item.slug}
-                  shape="tab"
-                  compact
-                  maxWidth={maxWidth}
-                  role="radio"
-                  accessibilityLabel={`${item.name}, ${item.state_code}`}
-                  label={`${item.name} · ${item.state_code}`}
-                  selected={item.slug === selectedCity}
-                  onPress={() => selectCity(item.slug)}
-                />
-            ))}
-          </ChoiceRow>
+      {view === 'map' ? (
+        // The map keeps the whole remaining height: nested in the scrolling feed it
+        // would lose vertical pans to the page on Android, so the feed stays in the list.
+        <View style={{ backgroundColor: colors.background, flex: 1 }}>
+          {citySelector}
+          {filterControls}
+          {feedback ? (
+            <ScrollView contentContainerStyle={styles.mapFeedback} keyboardShouldPersistTaps="handled">
+              {feedback}
+            </ScrollView>
+          ) : (
+            <EstablishmentMap
+              establishments={results}
+              fallbackCenter={
+                city?.coordinates.latitude != null && city.coordinates.longitude != null
+                  ? { latitude: city.coordinates.latitude, longitude: city.coordinates.longitude }
+                  : null
+              }
+              onSelect={openEstablishment}
+            />
+          )}
         </View>
-
-        <DiscoveryAssistant
-          key={selectedCity ?? 'no-city'}
-          citySlug={selectedCity}
-          cityName={city?.name ?? null}
-        />
-
-        {/* Bands already resolved in the city's timezone by the server. */}
-        <CityAgenda citySlug={selectedCity} />
-
-        {/* One filter state, shared by the list and the map. */}
-        <Text style={[styles.filterLabel, { color: colors.mutedForeground }]}>Filtros</Text>
-        <ChoiceRow label="Filtros">
-          {(maxWidth) => <>
-            <Chip maxWidth={maxWidth} label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
-            {categories.data?.categories.map((item) => (
-              <Chip
-                key={item.slug}
-                maxWidth={maxWidth}
-                label={item.name}
-                selected={category === item.slug}
-                onPress={() => setCategory(category === item.slug ? undefined : item.slug)}
+      ) : (
+        // One scroll for the whole feed: the assistant and the agenda sit above the
+        // results, so a fixed header would leave no height for the list on a phone.
+        <FlatList
+          style={{ backgroundColor: colors.background }}
+          data={feedback ? [] : results}
+          keyExtractor={(item) => item.slug}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            <>
+              {citySelector}
+              <DiscoveryAssistant
+                key={selectedCity ?? 'no-city'}
+                citySlug={selectedCity}
+                cityName={city?.name ?? null}
               />
-            ))}
-            {/* Facets come from the server, so chips are never hardcoded. */}
-            {filters.data?.attributes.map((item) => (
-              <Chip
-                key={item.key}
-                maxWidth={maxWidth}
-                label={item.name}
-                selected={attributes.includes(item.key)}
-                onPress={() => toggleAttribute(item.key)}
-              />
-            ))}
-          </>}
-        </ChoiceRow>
-
-        <View style={styles.viewToggle}>
-          <View accessibilityRole="radiogroup" accessibilityLabel="Visualização dos resultados" style={styles.viewOptions}>
-            {(['list', 'map'] as const).map((mode) => (
-              <ChoiceControl
-                key={mode}
-                shape="segment"
-                compact
-                fill
-                role="radio"
-                accessibilityLabel={mode === 'list' ? 'Ver em lista' : 'Ver no mapa'}
-                label={mode === 'list' ? 'Lista' : 'Mapa'}
-                selected={view === mode}
-                onPress={() => setView(mode)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {search.isPending ? (
-          <ContentSkeleton label="Carregando lugares" variant="catalog" />
-        ) : search.isError ? (
-          <View style={styles.feedback}>
-            <Text style={[styles.message, { color: colors.foreground }]}>
-              Não foi possível carregar agora.
-            </Text>
-            {/* Manual retry preserving the filters, per the retry contract. */}
-            <Pressable onPress={() => search.refetch()}>
-              <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
-            </Pressable>
-          </View>
-        ) : !search.data?.organic.length ? (
-          <ScrollView testID="catalog-empty" contentContainerStyle={styles.feedback} keyboardShouldPersistTaps="handled">
-            <Text style={[styles.message, { color: colors.foreground }]}>
-              {hasFilters
-                ? `Nada encontrado em ${city?.name ?? 'sua cidade'} com os filtros: ${activeFilters.join(', ')}.`
-                : `Ainda não há lugares publicados em ${city?.name ?? 'sua cidade'}.`}
-            </Text>
-            {hasFilters ? (
-              <Pressable accessibilityRole="button" onPress={clearFilters}>
-                <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
-              </Pressable>
-            ) : null}
-          </ScrollView>
-        ) : view === 'map' ? (
-          <EstablishmentMap
-            establishments={search.data?.organic ?? []}
-            fallbackCenter={
-              city?.coordinates.latitude != null && city.coordinates.longitude != null
-                ? { latitude: city.coordinates.latitude, longitude: city.coordinates.longitude }
-                : null
-            }
-            onSelect={openEstablishment}
-          />
-        ) : (
-          <FlatList
-            data={search.data?.organic ?? []}
-            keyExtractor={(item) => item.slug}
-            contentContainerStyle={styles.list}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-            renderItem={({ item }) => (
+              {/* Bands already resolved in the city's timezone by the server. */}
+              <CityAgenda citySlug={selectedCity} />
+              {filterControls}
+            </>
+          }
+          ListHeaderComponentStyle={styles.listHeader}
+          ListEmptyComponent={feedback}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
               <EstablishmentCard
                 establishment={item}
                 onPress={() => openEstablishment(item.slug)}
               />
-            )}
-          />
-        )}
-      </View>
+            </View>
+          )}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -285,7 +317,10 @@ const styles = StyleSheet.create({
   },
   viewToggle: { paddingVertical: spacing.xs, paddingHorizontal: spacing.lg, width: '100%', minWidth: 0 },
   viewOptions: { flexDirection: 'row', gap: spacing.sm, width: '100%', minWidth: 0, paddingVertical: spacing.xs },
-  list: { padding: spacing.lg },
+  list: { paddingBottom: spacing.lg },
+  listHeader: { paddingBottom: spacing.lg },
+  item: { paddingHorizontal: spacing.lg },
+  mapFeedback: { flexGrow: 1 },
   feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
   message: { ...typography.body, textAlign: 'center' },
   action: { ...typography.body, fontWeight: '700' },

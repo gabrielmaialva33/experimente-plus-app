@@ -43,6 +43,15 @@ jest.mock('@/components/establishment-map', () => ({
 const queries = jest.requireMock('@/catalog/queries') as { useSearch: jest.Mock }
 const cityStore = jest.requireMock('@/catalog/city-store') as { selectCity: jest.Mock }
 
+type Rendered = ReturnType<Awaited<ReturnType<typeof render>>['getByText']>
+
+/** The nearest page-level scroll around a node; choice rows scroll sideways and do not count. */
+function verticalScrollOf(node: Rendered) {
+  let current: Rendered | null = node
+  while (current && !(current.type === 'RCTScrollView' && !current.props.horizontal)) current = current.parent
+  return current
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   queries.useSearch.mockReturnValue({ data: { organic: [], meta: { total: 0 } } })
@@ -213,9 +222,23 @@ it('keeps long empty feedback scrollable so clear filters remains reachable', as
   for (const mode of ['Ver em lista', 'Ver no mapa']) {
     await fireEvent.press(view.getByRole('radio', { name: mode }))
     const empty = view.getByTestId('catalog-empty')
-    expect(empty.type).toBe('RCTScrollView')
+    const scroll = verticalScrollOf(empty)
     expect(within(empty).getByRole('button', { name: 'Limpar filtros' })).toBeOnTheScreen()
-    expect(empty.props.keyboardShouldPersistTaps).toBe('handled')
-    expect(empty.props.scrollEnabled).not.toBe(false)
+    expect(scroll?.props.keyboardShouldPersistTaps).toBe('handled')
+    expect(scroll?.props.scrollEnabled).not.toBe(false)
   }
+})
+
+
+it('scrolls the assistant, the filters and the results together so the list stays reachable on a phone', async () => {
+  queries.useSearch.mockReturnValue({ data: { organic: [{
+    slug: 'cafe', name: 'Café da Praça', address: { district: 'Centro' },
+    business_status: 'open', is_open_now: true,
+  }], meta: { total: 1 } } })
+  const view = await render(<ExploreScreen />)
+  const feed = verticalScrollOf(view.getByText('Café da Praça'))
+  expect(feed).not.toBeNull()
+  expect(verticalScrollOf(view.getByLabelText('Pergunta para o Concierge'))).toBe(feed)
+  expect(verticalScrollOf(view.getByText('Filtros'))).toBe(feed)
+  expect(verticalScrollOf(view.getByRole('radio', { name: 'Ver no mapa' }))).toBe(feed)
 })

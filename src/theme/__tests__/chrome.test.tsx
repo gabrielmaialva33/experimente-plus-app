@@ -65,6 +65,9 @@ it.each(['light', 'dark'] as const)('gives tabs and pushed routes one titled, op
   const tabScreens = screens(tabs.children).flatMap((screen) => screen.props.name ? [screen] : screens(screen.props.children))
   expect(tabScreens.map((screen) => screen.props.options.title)).toEqual(['Explorar', 'Carteira', 'Validar', 'Conta', 'Entrar'])
   expect(tabScreens.find((screen) => screen.props.name === 'wallet')?.props.options.headerShown).toBe(false)
+  // Explorar draws its own header band instead of the native bar.
+  expect(tabScreens.find((screen) => screen.props.name === 'index')?.props.options.headerShown).toBe(false)
+  expect(tabScreens.filter((screen) => screen.props.options.headerShown === false).map((screen) => screen.props.name)).toEqual(['index', 'wallet'])
 
   await render(<WalletLayout />)
   const wallet = Stack.mock.calls.at(-1)[0]

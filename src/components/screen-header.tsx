@@ -14,12 +14,15 @@ export function ScreenHeader({
   title,
   subtitle,
   eyebrow,
+  insetTop = true,
   children,
 }: {
   title?: string
   subtitle?: string
   /** A small line above the title, such as the wordmark row. */
   eyebrow?: ReactNode
+  /** Off when the screen paints the status bar strip itself and the band scrolls under it. */
+  insetTop?: boolean
   children?: ReactNode
 }) {
   const colors = useColors()
@@ -28,7 +31,7 @@ export function ScreenHeader({
   return (
     <View
       testID="screen-header"
-      style={[styles.band, { backgroundColor: colors.chrome, paddingTop: insets.top + spacing.gutter }]}>
+      style={[styles.band, { backgroundColor: colors.chrome, paddingTop: (insetTop ? insets.top : 0) + spacing.gutter }]}>
       {eyebrow}
       {title ? (
         <Text accessibilityRole="header" style={[styles.title, { color: colors.chromeForeground }]}>

@@ -4,7 +4,7 @@ import { StyleSheet, type ColorValue } from 'react-native'
 
 import { usePartnerAreas, useSession } from '@/session/context'
 import { screenHeaderOptions } from '@/theme/navigation'
-import { elevation } from '@/theme/tokens'
+import { elevation, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -52,11 +52,13 @@ export default function TabsLayout() {
         tabBarActiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarLabelStyle: { ...textWeight('600'), fontSize: 12 },
         tabBarStyle: { ...elevation.raised, backgroundColor: colors.surfaceBase, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Explorar', tabBarIcon: icon('compass-outline') }}
+        // Explorar draws its own header band, which also reserves the status bar.
+        options={{ title: 'Explorar', headerShown: false, tabBarIcon: icon('compass-outline') }}
       />
 
       <Tabs.Protected guard={authenticated}>

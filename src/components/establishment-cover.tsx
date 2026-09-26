@@ -6,6 +6,23 @@ import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
+/**
+ * The cover as an image source, or null when it is below the display floor.
+ * A conservative floor, not a catalog eligibility rule: tiny seed placeholders
+ * must not become full-width photography.
+ */
+export function coverImage(cover?: Media | null): { uri: string; alt: string } | null {
+  const asset = cover?.asset
+  const url = asset?.url
+  const usable = asset &&
+    Number.isFinite(asset.width) &&
+    asset.width >= 320 &&
+    Number.isFinite(asset.height) &&
+    asset.height >= 180
+  if (!usable || !url?.trim() || !cover) return null
+  return { uri: resolveMediaUrl(url), alt: cover.alt_text }
+}
+
 export function EstablishmentCover({
   cover,
   detail = false,
@@ -17,15 +34,7 @@ export function EstablishmentCover({
   height?: number
 }) {
   const colors = useColors()
-  const asset = cover?.asset
-  const url = asset?.url
-  // A conservative display floor, not a catalog eligibility rule. In particular,
-  // tiny seed placeholders must not become full-width photography.
-  const usable = asset &&
-    Number.isFinite(asset.width) &&
-    asset.width >= 320 &&
-    Number.isFinite(asset.height) &&
-    asset.height >= 180
+  const image = coverImage(cover)
 
   const fallback = (
     <View style={[styles.fallback, height != null && { height }, { backgroundColor: colors.contentAbsent }]}>
@@ -35,12 +44,12 @@ export function EstablishmentCover({
     </View>
   )
 
-  if (!usable || !url?.trim() || !cover) return fallback
+  if (!image) return fallback
 
   return (
     <RemoteImage
-      source={{ uri: resolveMediaUrl(url) }}
-      accessibilityLabel={cover.alt_text}
+      source={{ uri: image.uri }}
+      accessibilityLabel={image.alt}
       style={[styles.cover, detail && styles.detail, height != null && { height }]}
       contentFit="cover"
       transition={150}

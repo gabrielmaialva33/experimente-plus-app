@@ -1,13 +1,14 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 
-import { StyleSheet } from 'react-native'
-import { spacing } from '@/theme/tokens'
+import { FlatList, StyleSheet } from 'react-native'
+import { minTouch, spacing } from '@/theme/tokens'
 
 import ExploreScreen from '@/app/(tabs)/index'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 24, right: 0, bottom: 0, left: 0 }),
 }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn(() => { throw new Error('Discovery must not require a session') }) }))
@@ -60,6 +61,16 @@ function verticalScrollOf(node: Rendered) {
   return current
 }
 
+const oneResult = { data: { organic: [{
+  slug: 'cafe', name: 'Café da Praça', address: { district: 'Centro' },
+  business_status: 'open', is_open_now: true,
+}], meta: { total: 1 } } }
+
+/** The city list folds into the button on the header band until someone asks for it. */
+async function openCities(view: Awaited<ReturnType<typeof render>>) {
+  await fireEvent.press(view.getByRole('button', { name: 'Cidade: Londrina. Trocar cidade' }))
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   queries.useSearch.mockReturnValue({ data: { organic: [], meta: { total: 0 } } })
@@ -74,12 +85,14 @@ it('keeps all discovery filters when switching between list and map', async () =
   const expected = { q: 'café', category: 'cafes', openNow: true, attributes: ['wifi'] }
   await waitFor(() => expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected))
 
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
   expect(view.getByText('Nada encontrado para “café” em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi.')).toBeOnTheScreen()
-  expect(view.getByRole('radio', { name: 'Ver no mapa', selected: true })).toBeOnTheScreen()
+  // The map offers the way back from the same place, and nothing else changes.
+  expect(view.queryByRole('button', { name: 'Ver no mapa' })).toBeNull()
+  expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('café')
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected)
 
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver em lista' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ver em lista' }))
   expect(view.queryByText('Mapa de resultados')).toBeNull()
   expect(view.getByRole('button', { name: 'Wi-Fi', selected: true })).toBeOnTheScreen()
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected)
@@ -87,17 +100,21 @@ it('keeps all discovery filters when switching between list and map', async () =
 
 it('keeps city selection separate from attribute and view controls', async () => {
   const view = await render(<ExploreScreen />)
+  expect(view.queryByText('Cidade')).toBeNull()
+  expect(view.getByTestId('choice-row-Filtros')).toBeOnTheScreen()
+  await openCities(view)
   expect(view.getByText('Cidade')).toBeOnTheScreen()
-  expect(view.getByText('Filtros')).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('radio', { name: 'Cambé, PR' }))
   expect(cityStore.selectCity).toHaveBeenCalledWith('cambe')
-  expect(view.getByRole('radio', { name: 'Ver em lista', selected: true })).toBeOnTheScreen()
+  // Choosing folds the list again and leaves the view where it was.
+  expect(view.queryByRole('radio', { name: 'Cambé, PR' })).toBeNull()
+  expect(view.getByRole('button', { name: 'Ver no mapa' })).toBeOnTheScreen()
 })
 
 it('allows discovery without login or purchase checks even when payments are unavailable', async () => {
   const view = await render(<ExploreScreen />)
   expect(view.getByPlaceholderText('Buscar lugares')).toBeOnTheScreen()
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
   expect(view.getByText('Ainda não há lugares publicados em Londrina.')).toBeOnTheScreen()
   expect(view.queryByText(/comprar|pagamento|assinar|entre para explorar/i)).toBeNull()
   expect(jest.requireMock('@/session/context').useSession).not.toHaveBeenCalled()
@@ -105,24 +122,25 @@ it('allows discovery without login or purchase checks even when payments are una
   expect(jest.requireMock('@/api/purchases').listPurchases).not.toHaveBeenCalled()
 })
 
-it('uses the same full choice contour and marker for cities and list/map, without an active underline', async () => {
+it('marks the chosen city with the full choice contour and marker, without an active underline', async () => {
   const view = await render(<ExploreScreen />)
+  const button = view.getByRole('button', { name: 'Cidade: Londrina. Trocar cidade' })
+  expect(button.props.accessibilityState).toMatchObject({ expanded: false })
+  expect(button).toHaveStyle({ minHeight: minTouch })
+  await openCities(view)
+  expect(view.getByRole('button', { name: 'Cidade: Londrina. Trocar cidade' }).props.accessibilityState).toMatchObject({ expanded: true })
   const city = view.getByRole('radio', { name: 'Londrina, PR', checked: true })
-  const mode = view.getByRole('radio', { name: 'Ver em lista', checked: true })
-  for (const target of [city, mode]) {
-    expect(target).toHaveStyle({ borderWidth: 2, minHeight: 40 })
-    expect(target).not.toHaveStyle({ borderBottomWidth: 2 })
-  }
-  expect(view.getAllByText('✓', { includeHiddenElements: true })).toHaveLength(2)
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
-  expect(view.getByRole('radio', { name: 'Ver no mapa', checked: true })).toBeOnTheScreen()
-  expect(view.getByRole('radio', { name: 'Ver em lista', checked: false })).toBeOnTheScreen()
-  expect(view.getAllByText('✓', { includeHiddenElements: true })).toHaveLength(2)
+  expect(city).toHaveStyle({ borderWidth: 2, minHeight: 48 })
+  expect(city).not.toHaveStyle({ borderBottomWidth: 2 })
+  expect(view.getByRole('radio', { name: 'Cambé, PR', checked: false })).toBeOnTheScreen()
+  // One marker: the city. No filter is on, and the view switch is an action, not a choice.
+  expect(view.getAllByText('✓', { includeHiddenElements: true })).toHaveLength(1)
 })
 
 
 it('bounds every scrolling choice to its measured viewport, including after a narrow resize', async () => {
   const view = await render(<ExploreScreen />)
+  await openCities(view)
   for (const width of [768, 320, 240]) {
     for (const label of ['Cidade', 'Filtros']) {
       const row = view.getByTestId(`choice-row-${label}`)
@@ -132,7 +150,8 @@ it('bounds every scrolling choice to its measured viewport, including after a na
       expect(scroll.props.horizontal).toBe(true)
       expect(StyleSheet.flatten(scroll.props.style)).toMatchObject({ width: '100%', maxWidth: '100%', minWidth: 0, flexGrow: 0, flexShrink: 1, overflow: 'hidden' })
       const gutter = StyleSheet.flatten(scroll.props.contentContainerStyle).paddingHorizontal
-      expect(gutter).toBe(spacing.lg)
+      // Filters line up with the screen margin; cities with the panel they open in.
+      expect(gutter).toBe(label === 'Cidade' ? spacing.lg : spacing.gutter)
       // Content must stay wider than the viewport and scroll, never wrap into a form.
       expect(within(row).getByRole(label === 'Cidade' ? 'radio' : 'button', { name: label === 'Cidade' ? 'Londrina, PR' : 'Música ao vivo' }).parent).toHaveStyle({ flexDirection: 'row', paddingVertical: 4 })
       const controls = within(row).getAllByRole(label === 'Cidade' ? 'radio' : 'button')
@@ -152,18 +171,22 @@ it('bounds every scrolling choice to its measured viewport, including after a na
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expect.objectContaining({ attributes: ['live_music'] }))
 })
 
-it('fills both halves of the view selector and aligns it with the scrollable controls', async () => {
+it('offers the other view from the results header, with a 44-unit target', async () => {
   const view = await render(<ExploreScreen />)
-  const group = view.getByRole('radio', { name: 'Ver em lista' }).parent!
-  expect(group).toHaveStyle({ width: '100%', minWidth: 0, flexDirection: 'row', paddingVertical: 4 })
-  expect(group.parent).toHaveStyle({ width: '100%', paddingHorizontal: spacing.lg })
-  for (const name of ['Ver em lista', 'Ver no mapa']) {
-    expect(view.getByRole('radio', { name })).toHaveStyle({ flexBasis: 0, flexGrow: 1, minWidth: 0, maxWidth: '100%' })
-  }
+  expect(view.getByRole('header', { name: 'Lugares em Londrina' })).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: 'Ver no mapa' })).toHaveStyle({ minHeight: minTouch })
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
+  expect(view.getByRole('header', { name: 'Lugares em Londrina' })).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: 'Ver em lista' })).toHaveStyle({ minHeight: minTouch })
 })
 
-it('keeps city identity only in the selector beneath the existing screen chrome', async () => {
+it('names the city once, on the header band, and lists the cities only when asked', async () => {
   const view = await render(<ExploreScreen />)
+  expect(view.getByRole('header', { name: 'O que você quer experimentar hoje?' })).toBeOnTheScreen()
+  expect(view.getByText('Experimente+')).toBeOnTheScreen()
+  expect(view.getAllByText('Londrina')).toHaveLength(1)
+  expect(view.queryByText('Londrina · PR')).toBeNull()
+  await openCities(view)
   expect(view.getAllByText('Londrina · PR')).toHaveLength(1)
   expect(within(view.getByTestId('choice-row-Cidade')).getByRole('radio', { name: 'Londrina, PR', checked: true })).toBeOnTheScreen()
 })
@@ -186,14 +209,14 @@ it.each(['list', 'map'])('explains and clears a text-only empty search in %s wit
     const view = await render(<ExploreScreen />)
     await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'pizzaria')
     await act(async () => { jest.advanceTimersByTime(350) })
-    if (mode === 'map') await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+    if (mode === 'map') await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
     expect(view.getByText('Nada encontrado para “pizzaria” em Londrina.')).toBeOnTheScreen()
     await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
     expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('')
     expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })
     await act(async () => { jest.advanceTimersByTime(350) })
     expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })
-    expect(view.getByRole('radio', { name: mode === 'map' ? 'Ver no mapa' : 'Ver em lista', selected: true })).toBeOnTheScreen()
+    expect(view.getByRole('button', { name: mode === 'map' ? 'Ver em lista' : 'Ver no mapa' })).toBeOnTheScreen()
     expect(cityStore.selectCity).not.toHaveBeenCalled()
   } finally { jest.useRealTimers() }
 })
@@ -220,14 +243,12 @@ it('names active category and attribute filters and clears them together', async
 
 
 it('still renders results in both views when the catalog is not empty', async () => {
-  queries.useSearch.mockReturnValue({ data: { organic: [{
-    slug: 'cafe', name: 'Café da Praça', address: { district: 'Centro' },
-    business_status: 'open', is_open_now: true,
-  }], meta: { total: 1 } } })
+  queries.useSearch.mockReturnValue(oneResult)
   const view = await render(<ExploreScreen />)
   expect(view.getByText('Café da Praça')).toBeOnTheScreen()
+  expect(view.getByText('1 lugar')).toBeOnTheScreen()
   expect(view.queryByText(/Ainda não há|Nada encontrado/)).toBeNull()
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
   expect(view.getByText('Mapa de resultados')).toBeOnTheScreen()
   expect(view.queryByText(/Ainda não há|Nada encontrado/)).toBeNull()
 })
@@ -236,8 +257,8 @@ it('still renders results in both views when the catalog is not empty', async ()
 it('keeps long empty feedback scrollable so clear filters remains reachable', async () => {
   const view = await render(<ExploreScreen />)
   await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))
-  for (const mode of ['Ver em lista', 'Ver no mapa']) {
-    await fireEvent.press(view.getByRole('radio', { name: mode }))
+  for (const mode of ['list', 'map']) {
+    if (mode === 'map') await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
     const empty = view.getByTestId('catalog-empty')
     const scroll = verticalScrollOf(empty)
     expect(within(empty).getByRole('button', { name: 'Limpar filtros' })).toBeOnTheScreen()
@@ -247,24 +268,60 @@ it('keeps long empty feedback scrollable so clear filters remains reachable', as
 })
 
 
-it('scrolls the assistant, the filters and the results together so the list stays reachable on a phone', async () => {
-  queries.useSearch.mockReturnValue({ data: { organic: [{
-    slug: 'cafe', name: 'Café da Praça', address: { district: 'Centro' },
-    business_status: 'open', is_open_now: true,
-  }], meta: { total: 1 } } })
+it('scrolls the band, the filters, the results and the Concierge together so the list stays reachable on a phone', async () => {
+  queries.useSearch.mockReturnValue(oneResult)
   const view = await render(<ExploreScreen />)
   const feed = verticalScrollOf(view.getByText('Café da Praça'))
   expect(feed).not.toBeNull()
+  expect(verticalScrollOf(view.getByPlaceholderText('Buscar lugares'))).toBe(feed)
+  expect(verticalScrollOf(view.getByTestId('choice-row-Filtros'))).toBe(feed)
+  expect(verticalScrollOf(view.getByRole('button', { name: 'Ver no mapa' }))).toBe(feed)
+  // The Concierge waits folded as a card and opens where it is.
+  expect(view.queryByLabelText('Pergunta para o Concierge')).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Perguntar ao Concierge' }))
   expect(verticalScrollOf(view.getByLabelText('Pergunta para o Concierge'))).toBe(feed)
-  expect(verticalScrollOf(view.getByText('Filtros'))).toBe(feed)
-  expect(verticalScrollOf(view.getByRole('radio', { name: 'Ver no mapa' }))).toBe(feed)
 })
 
 
-it('keeps a slot for the personal row between the agenda and the filters, in list mode only', async () => {
+it('keeps a slot for the personal row after the places, in list mode only', async () => {
   const view = await render(<ExploreScreen />)
   expect(view.getByTestId('for-you-slot')).toHaveTextContent('londrina')
 
-  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
   expect(view.queryByTestId('for-you-slot')).toBeNull()
+})
+
+it('answers a search with its count under the controls, alone and from the top', async () => {
+  jest.useFakeTimers()
+  const scrollToOffset = jest.spyOn(FlatList.prototype, 'scrollToOffset')
+  try {
+    queries.useSearch.mockReturnValue(oneResult)
+    const view = await render(<ExploreScreen />)
+    expect(view.getByRole('header', { name: 'Lugares em Londrina' })).toBeOnTheScreen()
+    expect(view.getByTestId('for-you-slot')).toBeOnTheScreen()
+    expect(view.getByRole('button', { name: 'Perguntar ao Concierge' })).toBeOnTheScreen()
+    expect(scrollToOffset).not.toHaveBeenCalled()
+
+    await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'café')
+    await act(async () => { jest.advanceTimersByTime(350) })
+    expect(view.getByRole('header', { name: '1 resultado em Londrina' })).toBeOnTheScreen()
+    expect(view.getByText('“café”')).toBeOnTheScreen()
+    expect(view.queryByTestId('for-you-slot')).toBeNull()
+    expect(view.queryByRole('button', { name: 'Perguntar ao Concierge' })).toBeNull()
+    expect(scrollToOffset).toHaveBeenLastCalledWith({ offset: 0, animated: true })
+
+    await fireEvent.press(view.getByRole('button', { name: 'Aberto agora' }))
+    expect(view.getByText('“café” · Aberto agora')).toBeOnTheScreen()
+    expect(scrollToOffset).toHaveBeenCalledTimes(2)
+
+    // Clearing the field and the chip is the way back to browsing.
+    await fireEvent.press(view.getByRole('button', { name: 'Limpar busca' }))
+    await fireEvent.press(view.getByRole('button', { name: 'Aberto agora' }))
+    await act(async () => { jest.advanceTimersByTime(350) })
+    expect(view.getByRole('header', { name: 'Lugares em Londrina' })).toBeOnTheScreen()
+    expect(view.getByTestId('for-you-slot')).toBeOnTheScreen()
+  } finally {
+    scrollToOffset.mockRestore()
+    jest.useRealTimers()
+  }
 })

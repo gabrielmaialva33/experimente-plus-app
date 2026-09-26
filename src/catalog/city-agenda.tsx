@@ -2,13 +2,16 @@ import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
-import { RemoteImage } from '@/components/remote-image'
+import { CompactCard } from '@/components/compact-card'
+import { DateTile } from '@/components/date-tile'
+import { SectionHeader } from '@/components/section-header'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import {
   formatAgendaPublication,
   formatAgendaWindow,
+  type AgendaEventView,
   type AgendaItemView,
   type CityAgendaView,
 } from './agenda'
@@ -18,46 +21,19 @@ interface CityAgendaProps {
   citySlug: string | null
 }
 
-interface Band {
-  key: string
+interface EventBand {
+  key: 'happening-today' | 'upcoming'
   title: string
-  hint: string | null
-  items: AgendaItemView[]
+  items: AgendaEventView[]
   /** Today's band needs no date; the server already put the item there. */
   withDate: boolean
 }
 
-function bandsOf(agenda: CityAgendaView): Band[] {
+function eventBandsOf(agenda: CityAgendaView): EventBand[] {
   return [
-    {
-      key: 'happening-today',
-      title: 'Acontecendo hoje',
-      hint: null,
-      items: agenda.happeningToday,
-      withDate: false,
-    },
-    {
-      key: 'upcoming',
-      title: 'Em breve',
-      hint: null,
-      items: agenda.upcoming,
-      withDate: true,
-    },
-    {
-      key: 'new-experiences',
-      title: 'Novidades',
-      // The band is chronological. There is no prominence contract to imply.
-      hint: 'Publicados recentemente',
-      items: agenda.newExperiences,
-      withDate: false,
-    },
+    { key: 'happening-today', title: 'Acontecendo hoje', items: agenda.happeningToday, withDate: false },
+    { key: 'upcoming', title: 'Em breve', items: agenda.upcoming, withDate: true },
   ]
-}
-
-function metaOf(item: AgendaItemView, timeZone: string | null, withDate: boolean): string | null {
-  return item.kind === 'event'
-    ? formatAgendaWindow(item, timeZone, withDate)
-    : formatAgendaPublication(item.publishedAt, timeZone)
 }
 
 /**
@@ -67,6 +43,9 @@ function metaOf(item: AgendaItemView, timeZone: string | null, withDate: boolean
  * `starts_at`, `published_at` and `local_date`, and the band an item came in
  * decides its label. Each card opens the establishment by its public identity,
  * `city_slug` plus the establishment slug, never by a numeric id.
+ *
+ * An event is a date first, so its row leads with a date tile instead of a
+ * photo or an empty photo box (audit A38); experiences keep a fixed-size card.
  */
 export function CityAgenda({ citySlug }: CityAgendaProps) {
   const colors = useColors()
@@ -76,7 +55,7 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
 
   if (agenda.isPending && !data) {
     return (
-      <View style={styles.section}>
+      <View style={styles.gutter}>
         <Text style={[styles.status, { color: colors.mutedForeground }]}>
           Carregando a agenda da cidade…
         </Text>
@@ -84,124 +63,116 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
     )
   }
 
-  // A failed agenda must not take discovery down with it; the catalogue below
-  // keeps working and the band simply does not appear.
+  // A failed agenda must not take discovery down with it; the catalogue
+  // keeps working and the section simply does not appear.
   if (!data) return null
 
   const cityName = data.city.name ?? 'sua cidade'
-
-  if (data.isEmpty) {
-    return (
-      <View style={styles.section}>
-        <Text style={[styles.status, { color: colors.mutedForeground }]}>
-          Nenhum evento ou novidade publicada em {cityName} por enquanto.
-        </Text>
-      </View>
-    )
-  }
-
+  const timeZone = data.city.timeZone
   const open = (item: AgendaItemView) =>
     router.push(`/estabelecimento/${item.citySlug}/${item.establishmentSlug}`)
 
   return (
     <View style={styles.section}>
-      {bandsOf(data)
+      <View style={styles.gutter}>
+        <SectionHeader title={`Acontece em ${cityName}`} />
+      </View>
+
+      {data.isEmpty ? (
+        <Text style={[styles.status, styles.gutter, { color: colors.mutedForeground }]}>
+          Nenhum evento ou novidade publicada em {cityName} por enquanto.
+        </Text>
+      ) : null}
+
+      {eventBandsOf(data)
         .filter((band) => band.items.length > 0)
         .map((band) => (
-          <View key={band.key} testID={`agenda-band-${band.key}`} style={styles.band}>
-            <Text style={[styles.bandTitle, { color: colors.foreground }]}>{band.title}</Text>
-            {band.hint ? (
-              <Text style={[styles.bandHint, { color: colors.mutedForeground }]}>{band.hint}</Text>
-            ) : null}
+          <View key={band.key} testID={`agenda-band-${band.key}`} style={[styles.band, styles.gutter]}>
+            <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>{band.title}</Text>
+            {band.items.map((item) => {
+              // The tile carries the day, so the row itself only needs the hours.
+              const hours = formatAgendaWindow(item, timeZone, false)
+              const spoken = formatAgendaWindow(item, timeZone, band.withDate)
+              const meta = [hours, item.establishmentName].filter(Boolean).join(' · ')
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.row}
-            >
-              {band.items.map((item) => {
-                const meta = metaOf(item, data.city.timeZone, band.withDate)
-
-                return (
-                  <Pressable
-                    key={`${item.kind}-${item.id}`}
-                    testID={`agenda-card-${item.kind}-${item.id}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={[item.title, item.establishmentName, meta]
-                      .filter(Boolean)
-                      .join(', ')}
-                    onPress={() => open(item)}
-                    style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  >
-                    {item.cover ? (
-                      <RemoteImage
-                        source={{ uri: resolveMediaUrl(item.cover.url) }}
-                        accessibilityLabel={item.cover.altText}
-                        style={styles.cover}
-                        contentFit="cover"
-                        transition={150}
-                        fallback={<CoverFallback />}
-                      />
-                    ) : (
-                      <CoverFallback />
-                    )}
-
-                    <View style={styles.body}>
-                      <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
-                        {item.title}
+              return (
+                <Pressable
+                  key={`${item.kind}-${item.id}`}
+                  testID={`agenda-card-${item.kind}-${item.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={[item.title, item.establishmentName, spoken].filter(Boolean).join(', ')}
+                  onPress={() => open(item)}
+                  style={({ pressed }) => [
+                    styles.event,
+                    { backgroundColor: colors.card, borderColor: colors.borderSubtle, opacity: pressed ? 0.92 : 1 },
+                  ]}
+                >
+                  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                    <DateTile
+                      iso={item.startsAt}
+                      timeZone={timeZone}
+                      tone={band.key === 'happening-today' ? 'strong' : 'soft'}
+                    />
+                  </View>
+                  <View style={styles.eventCopy}>
+                    <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    {meta ? (
+                      <Text style={[styles.eventMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        {meta}
                       </Text>
-                      {meta ? (
-                        <Text style={[styles.meta, { color: colors.primaryAccent }]} numberOfLines={1}>
-                          {meta}
-                        </Text>
-                      ) : null}
-                      {item.establishmentName ? (
-                        <Text
-                          style={[styles.place, { color: colors.mutedForeground }]}
-                          numberOfLines={1}
-                        >
-                          {item.establishmentName}
-                        </Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                )
-              })}
-            </ScrollView>
+                    ) : null}
+                  </View>
+                </Pressable>
+              )
+            })}
           </View>
         ))}
-    </View>
-  )
-}
 
-/** A card with no picture, or one that failed to load, keeps the same footprint. */
-function CoverFallback() {
-  const colors = useColors()
-  return (
-    <View style={[styles.coverFallback, { backgroundColor: colors.contentAbsent }]}>
-      <Text style={[styles.fallback, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
+      {data.newExperiences.length > 0 ? (
+        <View testID="agenda-band-new-experiences" style={styles.band}>
+          <View style={styles.gutter}>
+            <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>Novidades</Text>
+            {/* The band is chronological. There is no prominence contract to imply. */}
+            <Text style={[styles.bandHint, { color: colors.mutedForeground }]}>Publicados recentemente</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+            {data.newExperiences.map((item) => (
+              <CompactCard
+                key={`${item.kind}-${item.id}`}
+                testID={`agenda-card-${item.kind}-${item.id}`}
+                overline={item.establishmentName || null}
+                title={item.title}
+                meta={formatAgendaPublication(item.publishedAt, timeZone)}
+                image={item.cover ? { uri: resolveMediaUrl(item.cover.url), alt: item.cover.altText } : null}
+                onPress={() => open(item)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.md, paddingTop: spacing.sm },
-  status: { ...typography.caption, paddingHorizontal: spacing.lg },
-  band: { gap: spacing.xs },
-  bandTitle: { ...typography.body, ...textWeight('700'), paddingHorizontal: spacing.lg },
-  bandHint: { ...typography.caption, paddingHorizontal: spacing.lg },
-  row: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
-  card: {
-    borderRadius: radius.surface,
+  section: { gap: spacing.lg },
+  gutter: { paddingHorizontal: spacing.gutter },
+  status: typography.meta,
+  band: { gap: spacing.sm },
+  bandTitle: { ...typography.overline },
+  bandHint: { ...typography.caption, marginTop: 2 },
+  row: { gap: spacing.md, paddingHorizontal: spacing.gutter },
+  event: {
+    alignItems: 'center',
+    borderRadius: radius.card,
     borderWidth: 1,
-    overflow: 'hidden',
-    width: 232,
+    flexDirection: 'row',
+    gap: 14,
+    padding: spacing.md,
   },
-  cover: { height: 96, width: '100%' },
-  coverFallback: { height: 96, justifyContent: 'center', paddingHorizontal: spacing.md, width: '100%' },
-  fallback: typography.caption,
-  body: { gap: spacing.xs, padding: spacing.md },
-  title: { ...typography.body, ...textWeight('600') },
-  meta: { ...typography.caption, ...textWeight('600') },
-  place: typography.caption,
+  eventCopy: { flex: 1, gap: spacing.xs, minWidth: 0 },
+  eventTitle: { ...typography.label, ...textWeight('700'), fontSize: 16, lineHeight: 21 },
+  eventMeta: typography.meta,
 })

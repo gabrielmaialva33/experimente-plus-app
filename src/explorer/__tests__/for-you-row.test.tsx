@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 
 import type { ForYou } from '@/api/explorer'
 import type { EstablishmentSummary } from '@/catalog/types'
+import { COMPACT_CARD } from '@/components/compact-card'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useReplaceInterests } from '@/explorer/queries'
 
@@ -47,7 +48,11 @@ const row = (data: EstablishmentSummary[], hasInterests = true): ForYou => ({
   has_interests: hasInterests,
 })
 
-const newClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
+// No garbage-collection timers: one left behind keeps jest from exiting.
+const newClient = () =>
+  new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { gcTime: Infinity } },
+  })
 
 function wrapper(client: QueryClient) {
   return function QueryWrapper({ children }: { children: ReactNode }) {
@@ -119,6 +124,11 @@ it('shows the chosen places, says how they are ordered, and opens each one', asy
   expect(await view.findByRole('header', { name: 'Para você' })).toBeOnTheScreen()
   expect(view.getByText('Com base nos seus interesses')).toBeOnTheScreen()
   expect(view.getByText('Alfa Café')).toBeOnTheScreen()
+  // Compact cards of one size, whatever the name or the photo (audit A47).
+  for (const slug of ['alfa', 'beta']) {
+    expect(view.getByTestId(`for-you-${slug}`)).toHaveStyle({ width: COMPACT_CARD.width, height: COMPACT_CARD.height })
+  }
+  expect(view.getByTestId('for-you-alfa')).toHaveProp('accessibilityLabel', 'Alfa Café, Centro')
 
   await fireEvent.press(view.getByText('Beta Bar'))
   expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/beta')

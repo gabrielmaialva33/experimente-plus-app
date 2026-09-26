@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
-import { EstablishmentCard } from '@/components/establishment-card'
+import { CompactCard } from '@/components/compact-card'
+import { coverImage } from '@/components/establishment-cover'
+import { SectionHeader } from '@/components/section-header'
 import { useForYou } from '@/explorer/queries'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -13,8 +15,8 @@ import { useColors } from '@/theme/use-colors'
  * The one personal piece of Explorar, and so the one piece that reads the
  * session: the rest of the screen stays session-free and a visitor gets it
  * without waiting. Nothing is drawn while the session or the row is loading, or
- * when the row fails — the catalogue below does not depend on it, and a
- * placeholder that then vanishes would only make the screen jump.
+ * when the row fails — the catalogue does not depend on it, and a placeholder
+ * that then vanishes would only make the screen jump.
  *
  * The row only narrows. Its places come in the order search uses without a
  * term, and search itself never changes because of an interest.
@@ -34,17 +36,17 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
 
   if (!row.has_interests) {
     return (
-      <View testID="for-you" style={styles.section}>
+      <View testID="for-you" style={styles.gutter}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Escolher interesses para ver lugares para você"
           onPress={() => router.push('/conta/interesses')}
-          style={[styles.invite, { borderColor: colors.border, backgroundColor: colors.card }]}
+          style={[styles.invite, { backgroundColor: colors.primarySoft }]}
         >
-          <Text style={[styles.inviteText, { color: colors.mutedForeground }]}>
+          <Text style={[styles.inviteText, { color: colors.foreground }]}>
             Escolha seus interesses e veja aqui lugares para você.
           </Text>
-          <Text style={[styles.inviteAction, { color: colors.primary }]}>Escolher interesses</Text>
+          <Text style={[styles.inviteAction, { color: colors.primaryAccent }]}>Escolher interesses</Text>
         </Pressable>
       </View>
     )
@@ -54,23 +56,20 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
 
   return (
     <View testID="for-you" style={styles.section}>
-      <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
-        Para você
-      </Text>
       {/* Interests choose the places; the hint claims no ranking among them. */}
-      <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-        Com base nos seus interesses
-      </Text>
+      <View style={styles.gutter}>
+        <SectionHeader title="Para você" hint="Com base nos seus interesses" />
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {row.data.map((establishment) => (
-          <View key={establishment.slug} style={styles.card}>
-            <EstablishmentCard
-              establishment={establishment}
-              onPress={() =>
-                router.push(`/estabelecimento/${establishment.city.slug}/${establishment.slug}`)
-              }
-            />
-          </View>
+          <CompactCard
+            key={establishment.slug}
+            testID={`for-you-${establishment.slug}`}
+            title={establishment.name}
+            meta={[establishment.primary_category?.name, establishment.address.district].filter(Boolean).join(' · ')}
+            image={coverImage(establishment.cover)}
+            onPress={() => router.push(`/estabelecimento/${establishment.city.slug}/${establishment.slug}`)}
+          />
         ))}
       </ScrollView>
     </View>
@@ -78,18 +77,10 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.xs, paddingTop: spacing.md },
-  title: { ...typography.body, ...textWeight('700'), paddingHorizontal: spacing.lg },
-  hint: { ...typography.caption, paddingHorizontal: spacing.lg },
-  row: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
-  card: { width: 264 },
-  invite: {
-    borderRadius: radius.surface,
-    borderWidth: 1,
-    gap: spacing.xs,
-    marginHorizontal: spacing.lg,
-    padding: spacing.md,
-  },
-  inviteText: typography.caption,
-  inviteAction: { ...typography.body, ...textWeight('700') },
+  section: { gap: spacing.md },
+  gutter: { paddingHorizontal: spacing.gutter },
+  row: { gap: spacing.md, paddingHorizontal: spacing.gutter },
+  invite: { borderRadius: radius.card, gap: spacing.xs, padding: spacing.lg },
+  inviteText: typography.meta,
+  inviteAction: { ...typography.label, ...textWeight('700') },
 })

@@ -70,7 +70,7 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+        { backgroundColor: colors.card, borderColor: colors.borderSubtle },
       ]}
     >
       <View style={styles.copy}>
@@ -216,20 +216,19 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: radius.surface,
+    borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.sm,
+    marginHorizontal: spacing.gutter,
     padding: spacing.lg,
   },
   copy: { gap: spacing.xs },
-  eyebrow: { ...typography.caption, ...textWeight('700'), textTransform: 'uppercase' },
+  eyebrow: typography.overline,
   title: typography.heading,
   help: typography.caption,
   input: {
     ...typography.body,
-    borderRadius: radius.md,
+    borderRadius: radius.thumb,
     borderWidth: 1,
     minHeight: 72,
     paddingHorizontal: spacing.md,
@@ -238,14 +237,14 @@ const styles = StyleSheet.create({
   },
   button: {
     alignItems: 'center',
-    borderRadius: radius.md,
-    minHeight: 44,
+    borderRadius: radius.pill,
+    minHeight: 48,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  buttonLabel: { ...typography.body, ...textWeight('700') },
-  answer: { borderRadius: radius.md, gap: spacing.sm, padding: spacing.md },
+  buttonLabel: { ...typography.label, ...textWeight('700') },
+  answer: { borderRadius: radius.thumb, gap: spacing.sm, padding: spacing.md },
   answerLabel: { ...typography.caption, ...textWeight('700') },
   answerText: typography.body,
   items: { gap: spacing.sm },

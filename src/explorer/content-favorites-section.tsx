@@ -6,6 +6,7 @@ import type { FavoriteContentPath } from '@/api/explorer'
 import { IconButton } from '@/components/icon-button'
 import { SectionHeader } from '@/components/section-header'
 import { UndoBar } from '@/components/undo-bar'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -44,6 +45,7 @@ export function ContentFavoritesSection() {
     title: string
   } | null>(null)
   const dismiss = useCallback(() => setRemoved(null), [])
+  const lines = useLineCap(1)
 
   const items = query.data?.data ?? []
   const unavailable = query.data?.unavailable ?? 0
@@ -95,14 +97,14 @@ export function ContentFavoritesSection() {
                 )
               }
             >
-              <Text numberOfLines={1} style={[styles.kind, { color: colors.primaryAccent }]}>
+              <Text numberOfLines={lines} style={[styles.kind, { color: colors.primaryAccent }]}>
                 {KIND_LABEL[entry.content.kind]}
                 {when ? ` · ${when}` : ''}
               </Text>
-              <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>
+              <Text numberOfLines={lines} style={[styles.title, { color: colors.foreground }]}>
                 {entry.content.title}
               </Text>
-              <Text numberOfLines={1} style={[styles.meta, { color: colors.mutedForeground }]}>
+              <Text numberOfLines={lines} style={[styles.meta, { color: colors.mutedForeground }]}>
                 {entry.content.establishment.name} · {entry.content.establishment.city_name}
               </Text>
             </Pressable>

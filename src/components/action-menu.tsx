@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { IconButton } from '@/components/icon-button'
+import { useLineCap } from '@/theme/font-scale'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -40,6 +41,7 @@ export function ActionMenu({
 }) {
   const colors = useColors()
   const [open, setOpen] = useState(false)
+  const titleLines = useLineCap(2)
   const close = () => setOpen(false)
 
   const choose = (item: ActionMenuItem) => {
@@ -81,7 +83,10 @@ export function ActionMenu({
             ]}
           >
             {title ? (
-              <Text numberOfLines={2} style={[styles.title, { color: colors.mutedForeground }]}>
+              <Text
+                numberOfLines={titleLines}
+                style={[styles.title, { color: colors.mutedForeground }]}
+              >
                 {title}
               </Text>
             ) : null}

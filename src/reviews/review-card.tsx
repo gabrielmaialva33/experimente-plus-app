@@ -4,6 +4,7 @@ import type { Review } from '@/api/reviews'
 import { ActionMenu } from '@/components/action-menu'
 import { ReviewPhotos } from '@/reviews/review-photos'
 import { Stars } from '@/reviews/stars'
+import { useLineCap } from '@/theme/font-scale'
 import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -43,6 +44,7 @@ export function ReviewCard({
 }) {
   const colors = useColors()
   const author = review.author?.full_name ?? 'Visitante'
+  const authorLines = useLineCap(1)
   const reply = review.reply
 
   return (
@@ -59,7 +61,7 @@ export function ReviewCard({
           <Text style={[styles.initials, { color: colors.primaryAccent }]}>{initials(author)}</Text>
         </View>
         <View style={styles.identity}>
-          <Text style={[styles.author, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.author, { color: colors.foreground }]} numberOfLines={authorLines}>
             {author}
           </Text>
           <View style={styles.meta}>

@@ -5,6 +5,7 @@ import type { EstablishmentSummary } from '@/catalog/types'
 import { Badge } from '@/components/badge'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { OperatingStatus } from '@/components/operating-status'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -28,6 +29,8 @@ export function ratingLabel(reviews: EstablishmentSummary['reviews'] | undefined
  */
 export function EstablishmentCard({ establishment, onPress, accessory }: Props) {
   const colors = useColors()
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
   const meta = [
     establishment.primary_category?.name,
     establishment.address.district,
@@ -63,16 +66,19 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
       </View>
 
       <View style={[styles.body, { borderTopColor: colors.borderSubtle }]}>
-        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={2}>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={twoLines}>
           {establishment.name}
         </Text>
         {meta ? (
-          <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={1}>
+          <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={oneLine}>
             {meta}
           </Text>
         ) : null}
         {establishment.short_description ? (
-          <Text style={[styles.description, { color: colors.mutedForeground }]} numberOfLines={2}>
+          <Text
+            style={[styles.description, { color: colors.mutedForeground }]}
+            numberOfLines={twoLines}
+          >
             {establishment.short_description}
           </Text>
         ) : null}

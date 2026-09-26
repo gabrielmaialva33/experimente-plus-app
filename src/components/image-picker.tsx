@@ -218,9 +218,10 @@ const styles = StyleSheet.create({
     right: 2,
     borderRadius: radius.pill,
   },
+  // A floor: "Adicionar" at large text grows the tile instead of spilling out.
   addButton: {
-    width: 80,
-    height: 80,
+    minWidth: 80,
+    minHeight: 80,
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',

@@ -1,5 +1,5 @@
-import { fireEvent, render } from '@testing-library/react-native'
-import { StyleSheet, Text } from 'react-native'
+import { act, fireEvent, render } from '@testing-library/react-native'
+import { Dimensions, StyleSheet, Text } from 'react-native'
 
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
@@ -19,6 +19,16 @@ jest.mock('react-native-safe-area-context', () => ({
 
 const theme = jest.requireMock('@/theme/use-colors') as { useColors: jest.Mock }
 beforeEach(() => theme.useColors.mockReturnValue(palette.light))
+
+/** The system text size; React Native's Jest setup reports 2 (200%). */
+const setFontScale = (fontScale: number) =>
+  act(() =>
+    Dimensions.set({
+      window: { ...Dimensions.get('window'), fontScale },
+      screen: { ...Dimensions.get('screen'), fontScale },
+    })
+  )
+afterEach(() => setFontScale(2))
 
 describe('Button', () => {
   it.each([
@@ -113,6 +123,7 @@ it('gives a section a header and its action a 44-unit target', async () => {
 })
 
 it('keeps compact cards the same size whether the title wraps or not', async () => {
+  await setFontScale(1)
   const view = await render(
     <>
       <CompactCard title="Café" onPress={jest.fn()} testID="short" />
@@ -127,7 +138,7 @@ it('keeps compact cards the same size whether the title wraps or not', async () 
   for (const id of ['short', 'long']) {
     expect(view.getByTestId(id)).toHaveStyle({
       width: COMPACT_CARD.width,
-      height: COMPACT_CARD.height,
+      minHeight: COMPACT_CARD.height,
     })
   }
   expect(
@@ -135,11 +146,49 @@ it('keeps compact cards the same size whether the title wraps or not', async () 
   ).toBe(2)
 })
 
+// At 200% a two-line cut hides most of a name: the card grows instead (a floor, not a box).
+it('lets a compact card grow instead of cutting its words at large text', async () => {
+  const view = await render(
+    <CompactCard
+      overline="Experiência"
+      title="Uma experiência com um nome longo demais para uma linha só"
+      meta="Centro"
+      onPress={jest.fn()}
+      testID="long"
+    />
+  )
+  for (const text of [
+    'Experiência',
+    'Uma experiência com um nome longo demais para uma linha só',
+    'Centro',
+  ]) {
+    expect(view.getByText(text).props.numberOfLines).toBeUndefined()
+  }
+  expect(StyleSheet.flatten(view.getByTestId('long').props.style).height).toBeUndefined()
+})
+
+it.each([
+  [1, 1],
+  [2, undefined],
+] as const)(
+  'keeps a button label on one line only at the drawn size (scale %s)',
+  async (scale, lines) => {
+    await setFontScale(scale)
+    const view = await render(<Button label="Ir para o pagamento" onPress={jest.fn()} />)
+    expect(view.getByText('Ir para o pagamento').props.numberOfLines).toBe(lines)
+  }
+)
+
 it('reads a date tile in the city time zone and names the whole date', async () => {
   // 02:30 UTC on the 29th is still the 28th in São Paulo.
   const view = await render(<DateTile iso="2026-09-29T02:30:00Z" timeZone="America/Sao_Paulo" />)
   expect(view.getByText('28')).toBeOnTheScreen()
   expect(view.getByTestId('date-tile').props.accessibilityLabel).toMatch(/28 de setembro/)
+  // Its size is a floor, so a larger day and month grow the tile instead of spilling out.
+  const tile = StyleSheet.flatten(view.getByTestId('date-tile').props.style)
+  expect(tile).toMatchObject({ minHeight: 72, minWidth: 64 })
+  expect(tile.height).toBeUndefined()
+  expect(tile.width).toBeUndefined()
 })
 
 it.each(['success', 'warning', 'info', 'neutral', 'benefit'] as const)(

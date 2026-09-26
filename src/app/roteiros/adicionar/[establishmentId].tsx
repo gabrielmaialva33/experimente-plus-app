@@ -10,6 +10,7 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
 import { useAddItineraryStop, useCreateItinerary, useItineraries } from '@/explorer/queries'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -31,6 +32,7 @@ export default function AddToItineraryScreen() {
   const [name, setName] = useState('')
   const [composing, setComposing] = useState(false)
   const [added, setAdded] = useState<{ id: number; name: string } | null>(null)
+  const nameLines = useLineCap(1)
 
   const failure =
     add.error instanceof ApiError && add.error.status === 404
@@ -132,7 +134,7 @@ export default function AddToItineraryScreen() {
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
-            <Text numberOfLines={1} style={[styles.label, { color: colors.foreground }]}>
+            <Text numberOfLines={nameLines} style={[styles.label, { color: colors.foreground }]}>
               {item.name}
             </Text>
             <Text style={[styles.caption, { color: colors.mutedForeground }]}>

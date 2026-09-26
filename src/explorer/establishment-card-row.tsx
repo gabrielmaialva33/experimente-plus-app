@@ -4,13 +4,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { EstablishmentCard } from '@/api/explorer'
 import { resolveMediaUrl } from '@/api/config'
 import { RemoteImage } from '@/components/remote-image'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
  * One establishment in the person's own lists: cover, name, category and city,
  * and an optional action at the end of the line. The name keeps to one line so
- * every row of a list has the same height (audit A56).
+ * every row of a list has the same height (audit A56) — at the drawn text size;
+ * with larger text it wraps rather than lose its end.
  */
 export function EstablishmentCardRow({
   card,
@@ -23,6 +25,7 @@ export function EstablishmentCardRow({
 }) {
   const colors = useColors()
   const meta = [card.category, card.city_name].filter(Boolean).join(' · ')
+  const lines = useLineCap(1)
 
   return (
     <View style={styles.line}>
@@ -45,11 +48,11 @@ export function EstablishmentCardRow({
           <View style={[styles.cover, { backgroundColor: colors.muted }]} />
         )}
         <View style={styles.text}>
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={lines}>
             {card.name}
           </Text>
           {meta ? (
-            <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={1}>
+            <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={lines}>
               {meta}
             </Text>
           ) : null}

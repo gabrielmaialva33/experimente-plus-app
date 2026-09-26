@@ -385,12 +385,13 @@ const styles = StyleSheet.create({
   stop: { borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
   stopHead: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   stopBody: { flex: 1 },
+  // A floor, so a larger digit grows the circle instead of spilling out of it.
   position: {
     alignItems: 'center',
     borderRadius: radius.pill,
-    height: 28,
     justifyContent: 'center',
-    width: 28,
+    minHeight: 28,
+    minWidth: 28,
   },
   positionLabel: { ...typography.meta, ...textWeight('700') },
   stopActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },

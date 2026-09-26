@@ -308,12 +308,13 @@ const styles = StyleSheet.create({
   codeText: { ...typography.meta, fontVariant: ['tabular-nums'] },
   actions: { gap: spacing.md },
   step: { flexDirection: 'row', gap: spacing.md },
+  // A floor, so a larger digit grows the circle instead of spilling out of it.
   stepNumber: {
     alignItems: 'center',
     borderRadius: radius.pill,
-    height: 28,
     justifyContent: 'center',
-    width: 28,
+    minHeight: 28,
+    minWidth: 28,
   },
   stepDigit: { ...typography.label, ...textWeight('700') },
   stepText: { flex: 1, gap: 2 },

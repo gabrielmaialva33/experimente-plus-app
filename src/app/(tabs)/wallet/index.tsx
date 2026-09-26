@@ -18,6 +18,7 @@ import { price, purchaseDay } from '@/purchases/components'
 import { orderState } from '@/purchases/order-state'
 import { usePurchases } from '@/purchases/queries'
 import { useSession } from '@/session/context'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
@@ -300,6 +301,7 @@ function BenefitTicket({
   onPresent: () => void
 }) {
   const colors = useColors()
+  const descriptionLines = useLineCap(2)
   const usable = canPresentBenefit(pass, benefit)
   const blocked = financiallyBlocked(pass.access)
   // A financial hold is explained once, above its tickets; each ticket names any other reason.
@@ -328,7 +330,10 @@ function BenefitTicket({
       }
     >
       {benefit.description ? (
-        <Text numberOfLines={2} style={[styles.meta, { color: colors.mutedForeground }]}>
+        <Text
+          numberOfLines={descriptionLines}
+          style={[styles.meta, { color: colors.mutedForeground }]}
+        >
           {benefit.description}
         </Text>
       ) : null}

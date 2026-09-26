@@ -24,6 +24,7 @@ import { SearchField } from '@/components/search-field'
 import { SectionHeader } from '@/components/section-header'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
+import { useLineCap } from '@/theme/font-scale'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -50,6 +51,7 @@ export default function ExploreScreen() {
   const [choosingCity, setChoosingCity] = useState(false)
   const [asking, setAsking] = useState(false)
   const list = useRef<FlatList<EstablishmentSummary>>(null)
+  const cityLines = useLineCap(1)
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
   useFocusEffect(
@@ -173,7 +175,10 @@ export default function ExploreScreen() {
           ]}
         >
           <Ionicons name="location-outline" size={18} color={colors.chromeForeground} />
-          <Text numberOfLines={1} style={[styles.cityName, { color: colors.chromeForeground }]}>
+          <Text
+            numberOfLines={cityLines}
+            style={[styles.cityName, { color: colors.chromeForeground }]}
+          >
             {city?.name ?? 'Cidade'}
           </Text>
           <Ionicons

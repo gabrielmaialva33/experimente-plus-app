@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -32,6 +33,7 @@ export function ListRow({
 }) {
   const colors = useColors()
   const destructive = tone === 'destructive'
+  const valueLines = useLineCap(1)
   const foreground = destructive ? colors.destructiveAccent : colors.foreground
 
   return (
@@ -60,7 +62,10 @@ export function ListRow({
       <View style={styles.copy}>
         <Text style={[styles.label, { color: foreground }]}>{label}</Text>
         {value ? (
-          <Text numberOfLines={1} style={[styles.value, { color: colors.mutedForeground }]}>
+          <Text
+            numberOfLines={valueLines}
+            style={[styles.value, { color: colors.mutedForeground }]}
+          >
             {value}
           </Text>
         ) : null}

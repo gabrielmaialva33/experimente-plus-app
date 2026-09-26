@@ -89,7 +89,7 @@ it('keeps experiences in fixed-size cards and opens every item by its public ide
 
   expect(view.getByText('Novidades')).toBeOnTheScreen()
   const card = view.getByTestId('agenda-card-experience-3')
-  expect(card).toHaveStyle({ width: COMPACT_CARD.width, height: COMPACT_CARD.height })
+  expect(card).toHaveStyle({ width: COMPACT_CARD.width, minHeight: COMPACT_CARD.height })
   expect(within(card).getByLabelText('Prato do menu de primavera')).toBeOnTheScreen()
 
   await fireEvent.press(card)

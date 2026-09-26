@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { useAnnouncement } from '@/components/announce'
+import { useLineCap } from '@/theme/font-scale'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -27,6 +28,7 @@ export function UndoBar({
   duration?: number
 }) {
   const colors = useColors()
+  const lines = useLineCap(2)
   // Said once when it appears; the button beside it stays reachable.
   useAnnouncement(message)
 
@@ -55,7 +57,7 @@ export function UndoBar({
     <View testID="undo-bar" style={[styles.bar, { backgroundColor: colors.chrome }]}>
       <Text
         accessibilityRole="alert"
-        numberOfLines={2}
+        numberOfLines={lines}
         style={[styles.message, { color: colors.chromeForeground }]}
       >
         {message}

@@ -280,12 +280,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
   },
   qr: { height: 248, width: 248 },
+  // The QR's footprint as a floor: the sentence that stands in for it may need more at large text.
   qrSlot: {
     alignItems: 'center',
     borderRadius: radius.thumb,
     gap: spacing.sm,
-    height: 248,
     justifyContent: 'center',
+    minHeight: 248,
     padding: spacing.lg,
     width: 248,
   },

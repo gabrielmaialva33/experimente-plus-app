@@ -9,6 +9,7 @@ import { Avatar } from '@/components/avatar'
 import { ListGroup, ListRow } from '@/components/list-row'
 import { ScreenHeader } from '@/components/screen-header'
 import { useSession } from '@/session/context'
+import { useLineCap } from '@/theme/font-scale'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -26,6 +27,8 @@ export default function AccountScreen() {
   const { context, capabilities, signOut } = useSession()
   const user = context?.user
   const name = user?.full_name?.trim() || user?.username || 'Sua conta'
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
 
   const citySlug = useSelectedCity()
   const cities = useCities()
@@ -45,18 +48,18 @@ export default function AccountScreen() {
             <View style={styles.who}>
               <Text
                 accessibilityRole="header"
-                numberOfLines={2}
+                numberOfLines={twoLines}
                 style={[styles.name, { color: colors.chromeForeground }]}
               >
                 {name}
               </Text>
               {user?.email ? (
-                <Text numberOfLines={1} style={[styles.email, { color: colors.chromeMuted }]}>
+                <Text numberOfLines={oneLine} style={[styles.email, { color: colors.chromeMuted }]}>
                   {user.email}
                 </Text>
               ) : null}
               {operation ? (
-                <Text numberOfLines={1} style={[styles.email, { color: colors.chromeMuted }]}>
+                <Text numberOfLines={oneLine} style={[styles.email, { color: colors.chromeMuted }]}>
                   Operação ativa: {operation.name}
                 </Text>
               ) : null}

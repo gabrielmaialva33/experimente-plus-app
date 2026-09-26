@@ -5,6 +5,7 @@ import { resolveMediaUrl } from '@/api/config'
 import { CompactCard } from '@/components/compact-card'
 import { DateTile } from '@/components/date-tile'
 import { SectionHeader } from '@/components/section-header'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { placeHref } from '@/place/links'
@@ -58,6 +59,8 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
   const router = useRouter()
   const agenda = useCityAgenda(citySlug)
   const data = agenda.data
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
 
   if (agenda.isPending && !data) {
     return (
@@ -134,14 +137,14 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                   <View style={styles.eventCopy}>
                     <Text
                       style={[styles.eventTitle, { color: colors.foreground }]}
-                      numberOfLines={2}
+                      numberOfLines={twoLines}
                     >
                       {item.title}
                     </Text>
                     {meta ? (
                       <Text
                         style={[styles.eventMeta, { color: colors.mutedForeground }]}
-                        numberOfLines={1}
+                        numberOfLines={oneLine}
                       >
                         {meta}
                       </Text>

@@ -131,7 +131,7 @@ it('shows the chosen places, says how they are ordered, and opens each one', asy
   for (const slug of ['alfa', 'beta']) {
     expect(view.getByTestId(`for-you-${slug}`)).toHaveStyle({
       width: COMPACT_CARD.width,
-      height: COMPACT_CARD.height,
+      minHeight: COMPACT_CARD.height,
     })
   }
   expect(view.getByTestId('for-you-alfa')).toHaveProp('accessibilityLabel', 'Alfa Café, Centro')

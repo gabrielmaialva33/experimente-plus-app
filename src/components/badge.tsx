@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -22,6 +23,7 @@ export function Badge({
   testID?: string
 }) {
   const colors = useColors()
+  const lines = useLineCap(1)
   const appearance = {
     success: { background: colors.successSoft, foreground: colors.successAccent },
     warning: { background: colors.warningSoft, foreground: colors.warningAccent },
@@ -33,7 +35,7 @@ export function Badge({
   return (
     <View testID={testID} style={[styles.badge, { backgroundColor: appearance.background }]}>
       {icon ? <Ionicons name={icon} size={16} color={appearance.foreground} /> : null}
-      <Text numberOfLines={1} style={[styles.label, { color: appearance.foreground }]}>
+      <Text numberOfLines={lines} style={[styles.label, { color: appearance.foreground }]}>
         {label}
       </Text>
     </View>

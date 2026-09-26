@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { TextField } from '@/components/text-field'
 import { useCreateItinerary, useItineraries } from '@/explorer/queries'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -26,6 +27,7 @@ export default function ItinerariesScreen() {
   const router = useRouter()
   const query = useItineraries()
   const [composing, setComposing] = useState(false)
+  const nameLines = useLineCap(1)
   const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
@@ -95,7 +97,7 @@ export default function ItinerariesScreen() {
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
-            <Text numberOfLines={1} style={[styles.name, { color: colors.foreground }]}>
+            <Text numberOfLines={nameLines} style={[styles.name, { color: colors.foreground }]}>
               {item.name}
             </Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>

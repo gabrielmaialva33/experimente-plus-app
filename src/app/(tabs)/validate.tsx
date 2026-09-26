@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { usePartnerAreas } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { extractPresentationToken } from '@/wallet/presentation-token'
 
@@ -153,5 +153,5 @@ const styles = StyleSheet.create({
   },
   message: { ...typography.body, textAlign: 'center' },
   action: { borderRadius: radius.pill, paddingHorizontal: spacing.xxl, paddingVertical: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

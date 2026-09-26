@@ -6,7 +6,7 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { purchaseDate } from '@/purchases/components'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
 import { AVAILABILITY_LABEL, type WalletBenefit, type WalletPass } from '@/wallet/types'
@@ -159,21 +159,21 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm, marginBottom: spacing.xl, padding: spacing.md, borderWidth: 1, borderRadius: radius.surface },
   card: { borderRadius: radius.surface, borderWidth: 1, gap: spacing.xs, padding: spacing.lg },
   heading: typography.heading,
-  title: { ...typography.body, fontWeight: '700' },
+  title: { ...typography.body, ...textWeight('700') },
   meta: typography.caption,
   body: typography.body,
   message: { ...typography.body, textAlign: 'center' },
-  unavailable: { ...typography.caption, fontWeight: '700', padding: spacing.sm, borderRadius: radius.sm },
+  unavailable: { ...typography.caption, ...textWeight('700'), padding: spacing.sm, borderRadius: radius.sm },
   action: {
     alignItems: 'center',
     borderRadius: radius.pill,
     marginTop: spacing.sm,
     paddingVertical: spacing.md,
   },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
   // Keep wrapping navigation in normal flow, clear of top-right floating tools.
   navigation: { flexDirection: 'column', paddingRight: spacing.xxl * 2, marginBottom: spacing.md },
   historyLink: { alignItems: 'flex-start', justifyContent: 'center', minHeight: 48, paddingVertical: spacing.sm },
-  navigationLabel: { ...typography.body, fontWeight: '700', textAlign: 'left', flexShrink: 1 },
+  navigationLabel: { ...typography.body, ...textWeight('700'), textAlign: 'left', flexShrink: 1 },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
 })

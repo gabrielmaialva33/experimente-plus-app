@@ -7,7 +7,7 @@ import { ApiError } from '@/api/client'
 import { ImagePicker, type SelectedImage } from '@/components/image-picker'
 import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
 import { StarsInput } from '@/reviews/stars'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const MAX_LENGTH = 4000
@@ -163,5 +163,5 @@ const styles = StyleSheet.create({
   error: typography.body,
   note: typography.caption,
   action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

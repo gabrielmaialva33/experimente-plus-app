@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { RemoteImage } from '@/components/remote-image'
 import { validateImageAsset, type ValidatedImageAsset } from '@/media/image-validation'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export type SelectedImage = ValidatedImageAsset
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.body,
-    fontWeight: '600',
+    ...textWeight('600'),
   },
   counter: {
     ...typography.caption,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   addText: {
     ...typography.caption,
-    fontWeight: '600',
+    ...textWeight('600'),
   },
   errorText: {
     ...typography.caption,

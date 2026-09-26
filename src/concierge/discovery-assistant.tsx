@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { askAssistant, type ConciergeReply } from '@/api/concierge'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { conciergeReferences, isNavigable, type ConciergeReferenceView } from './references'
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   copy: { gap: spacing.xs },
-  eyebrow: { ...typography.caption, fontWeight: '700', textTransform: 'uppercase' },
+  eyebrow: { ...typography.caption, ...textWeight('700'), textTransform: 'uppercase' },
   title: typography.heading,
   help: typography.caption,
   input: {
@@ -244,13 +244,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  buttonLabel: { ...typography.body, fontWeight: '700' },
+  buttonLabel: { ...typography.body, ...textWeight('700') },
   answer: { borderRadius: radius.md, gap: spacing.sm, padding: spacing.md },
-  answerLabel: { ...typography.caption, fontWeight: '700' },
+  answerLabel: { ...typography.caption, ...textWeight('700') },
   answerText: typography.body,
   items: { gap: spacing.sm },
   item: { gap: 2, minHeight: 44, justifyContent: 'center' },
-  itemKind: { ...typography.caption, fontWeight: '700', textTransform: 'uppercase' },
-  itemName: { ...typography.body, fontWeight: '600' },
+  itemKind: { ...typography.caption, ...textWeight('700'), textTransform: 'uppercase' },
+  itemName: { ...typography.body, ...textWeight('600') },
   itemMeta: typography.caption,
 })

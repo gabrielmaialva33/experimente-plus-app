@@ -5,7 +5,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { ReviewCard } from '@/reviews/review-card'
 import { useEstablishmentReviews } from '@/reviews/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const PER_PAGE = 20
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   page: { flex: 1 },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.sm },
   filter: { borderWidth: 1, borderRadius: radius.pill, justifyContent: 'center', minHeight: 40, paddingHorizontal: spacing.md },
-  filterLabel: { ...typography.caption, fontWeight: '600' },
+  filterLabel: { ...typography.caption, ...textWeight('600') },
   list: { gap: spacing.md, padding: spacing.lg, paddingTop: spacing.sm },
   empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
 })

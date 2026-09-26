@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { useColorScheme } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { useFontsReady } from '@/theme/fonts'
 import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
 import { useColors } from '@/theme/use-colors'
 
@@ -17,20 +18,22 @@ SplashScreen.preventAutoHideAsync()
 const queryClient = createQueryClient()
 
 /**
- * Holds the splash until the session context resolves.
+ * Holds the splash until the session context resolves and the faces are usable.
  *
  * This is what keeps ADR-0023 §2 honest: the tab set is only ever painted once
  * the server has told us which areas the actor has, so a partner tab is never
- * shown and then withdrawn.
+ * shown and then withdrawn. The fonts wait with it, so no screen is drawn in a
+ * system face and then redrawn; `useFontsReady` gives up after a short timeout,
+ * so a font problem never keeps the app behind the splash.
  */
-function SplashGate() {
+function SplashGate({ fontsReady }: { fontsReady: boolean }) {
   const { status } = useSession()
 
   useEffect(() => {
-    if (status !== 'loading') {
+    if (status !== 'loading' && fontsReady) {
       void SplashScreen.hideAsync()
     }
-  }, [status])
+  }, [status, fontsReady])
 
   return null
 }
@@ -115,11 +118,12 @@ export default function RootLayout() {
   // Registering listeners in an effect, not in a render-time initializer: a
   // discarded render would otherwise leave a listener with no cleanup.
   useEffect(() => installQueryEnvironment(), [])
+  const fontsReady = useFontsReady()
 
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <SplashGate />
+        <SplashGate fontsReady={fontsReady} />
         <SessionCacheGuard />
         <Shell />
       </SessionProvider>

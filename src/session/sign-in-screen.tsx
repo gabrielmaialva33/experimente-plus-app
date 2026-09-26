@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { signIn } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function SignInScreen({ purchase = false }: { purchase?: boolean }) {
@@ -120,5 +120,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingVertical: spacing.md,
   },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

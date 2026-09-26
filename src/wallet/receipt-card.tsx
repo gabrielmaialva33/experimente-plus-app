@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { Receipt } from './types'
 
@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: spacing.lg,
   },
-  code: { ...typography.caption, fontWeight: '700', letterSpacing: 1 },
-  title: { ...typography.body, fontWeight: '700' },
+  code: { ...typography.caption, ...textWeight('700'), letterSpacing: 1 },
+  title: { ...typography.body, ...textWeight('700') },
   meta: typography.caption,
   row: { gap: 2, paddingTop: spacing.xs },
   label: { ...typography.caption, textTransform: 'uppercase' },

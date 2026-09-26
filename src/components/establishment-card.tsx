@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { OperatingStatus } from '@/components/operating-status'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 interface Props {
@@ -63,5 +63,5 @@ const styles = StyleSheet.create({
   name: typography.heading,
   description: typography.body,
   meta: typography.caption,
-  sponsored: { ...typography.caption, fontWeight: '600', textTransform: 'uppercase' },
+  sponsored: { ...typography.caption, ...textWeight('600'), textTransform: 'uppercase' },
 })

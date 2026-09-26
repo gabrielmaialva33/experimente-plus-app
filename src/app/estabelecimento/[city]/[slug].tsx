@@ -16,7 +16,7 @@ import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
 import { SaveActions } from '@/explorer/save-actions'
 import { ReportLink } from '@/reviews/report-link'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function EstablishmentScreen() {
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.xs, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
   name: { ...typography.title },
   meta: typography.caption,
-  sponsored: { ...typography.caption, fontWeight: '600', textTransform: 'uppercase' },
+  sponsored: { ...typography.caption, ...textWeight('600'), textTransform: 'uppercase' },
   heading: { ...typography.heading, marginBottom: spacing.xs },
   body: typography.body,
   message: { ...typography.body, textAlign: 'center' },
@@ -262,5 +262,5 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
   },
-  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center', flexShrink: 1 },
+  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center', flexShrink: 1 },
 })

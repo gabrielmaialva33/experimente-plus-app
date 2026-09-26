@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
-import { spacing, typography } from '@/theme/tokens'
+import { spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
 import type { History } from './types'
@@ -65,5 +65,5 @@ const styles = StyleSheet.create({
   list: { padding: spacing.lg },
   center: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
   message: { ...typography.body, textAlign: 'center' },
-  link: { ...typography.body, fontWeight: '700' },
+  link: { ...typography.body, ...textWeight('700') },
 })

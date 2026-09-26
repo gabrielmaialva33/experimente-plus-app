@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native'
 
 import { Chip } from '@/components/chip'
 import { ChoiceControl } from '@/components/choice-control'
-import { palette, radius } from '@/theme/tokens'
+import { palette, radius, fontFamilies } from '@/theme/tokens'
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 
@@ -19,7 +19,7 @@ it.each(['light', 'dark'] as const)('marks selection without relying on color or
   const target = view.getByRole('button', { name: 'Wi-Fi', selected: false })
   expect(target).toHaveStyle({ minWidth: 48, minHeight: 40, borderRadius: radius.pill, flexDirection: 'row',
     borderWidth: StyleSheet.hairlineWidth, borderColor: palette[mode].choiceBorder, backgroundColor: palette[mode].choiceBackground })
-  expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].choiceForeground, fontWeight: '500' })
+  expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].choiceForeground, fontFamily: fontFamilies.text[500] })
   expect(target.props.hitSlop).toEqual({ top: 4, bottom: 4 })
   const initialStyle = StyleSheet.flatten(target.props.style)
   expect(initialStyle.minHeight + target.props.hitSlop.top + target.props.hitSlop.bottom).toBe(48)
@@ -37,7 +37,7 @@ it.each(['light', 'dark'] as const)('marks selection without relying on color or
   })
   const selectedStyle = StyleSheet.flatten(view.getByRole('button', { name: 'Wi-Fi' }).props.style)
   expect(selectedStyle.paddingHorizontal + selectedStyle.borderWidth).toBe(initialInset)
-  expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].choiceSelectedForeground, fontWeight: '700' })
+  expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].choiceSelectedForeground, fontFamily: fontFamilies.text[700] })
   const indicator = view.getByText('✓', { includeHiddenElements: true }).parent!
   expect(StyleSheet.flatten(indicator.props.style)).toEqual(geometry)
   expect(indicator.props.accessibilityElementsHidden).toBe(true)

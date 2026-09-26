@@ -5,7 +5,7 @@ import { useSession } from '@/session/context'
 import { ReviewCard } from '@/reviews/review-card'
 import { useEstablishmentReviews } from '@/reviews/queries'
 import { Stars } from '@/reviews/stars'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const PREVIEW = 3
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
   score: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   heading: typography.heading,
-  average: { ...typography.body, fontWeight: '700' },
+  average: { ...typography.body, ...textWeight('700') },
   caption: typography.caption,
   action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
+  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
 })

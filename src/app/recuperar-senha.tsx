@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { forgotPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function ForgotPasswordScreen() {
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
   field: { gap: spacing.xs },
   input: { ...typography.body, borderRadius: radius.pill, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   action: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, padding: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
   back: { minHeight: 48, justifyContent: 'center' },
 })

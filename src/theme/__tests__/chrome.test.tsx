@@ -9,6 +9,7 @@ import { palette } from '../tokens'
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
+jest.mock('@/theme/fonts', () => ({ useFontsReady: () => true }))
 // Expo Router's root provides the safe area in the app; here the layout renders alone.
 jest.mock('react-native-safe-area-context', () => ({
   ...jest.requireActual('react-native-safe-area-context'),

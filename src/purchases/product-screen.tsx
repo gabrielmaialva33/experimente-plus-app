@@ -10,7 +10,7 @@ import { EditionTerms, PurchaseAction, PurchasePage, PurchaseText, RetryPurchase
 import { productIdentity, productLabel } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const METHOD_LABEL: Record<string, string> = { pix: 'Pix', card: 'Cartão de crédito' }
@@ -165,5 +165,5 @@ const styles = StyleSheet.create({
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5 },
   methodText: { flexShrink: 1, gap: 2 },
-  methodLabel: { ...typography.body, fontWeight: '700' },
+  methodLabel: { ...typography.body, ...textWeight('700') },
 })

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { EstablishmentCard } from '@/api/explorer'
 import { resolveMediaUrl } from '@/api/config'
 import { RemoteImage } from '@/components/remote-image'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** One establishment in the Explorer's own lists: cover, name, category and city. */
@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   cover: { borderRadius: radius.md, height: 56, width: 56 },
   text: { flex: 1, gap: spacing.xs },
-  name: { ...typography.body, fontWeight: '600' },
+  name: { ...typography.body, ...textWeight('600') },
   meta: typography.caption,
 })

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { MapPinGroup } from './types'
 
@@ -62,10 +62,10 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  title: { ...typography.body, fontWeight: '700' },
+  title: { ...typography.body, ...textWeight('700') },
   close: { minHeight: 44, justifyContent: 'center' },
-  closeLabel: { ...typography.body, fontWeight: '700' },
+  closeLabel: { ...typography.body, ...textWeight('700') },
   row: { minHeight: 56, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm },
-  name: { ...typography.body, fontWeight: '600' },
+  name: { ...typography.body, ...textWeight('600') },
   category: typography.caption,
 })

@@ -25,7 +25,7 @@ import { EstablishmentMap } from '@/components/establishment-map'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** The server rejects a longer term with 422; clamping keeps that off-screen. */
@@ -319,10 +319,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   citySelector: { paddingTop: spacing.sm },
-  controlLabel: { ...typography.caption, fontWeight: '600', paddingHorizontal: spacing.lg },
+  controlLabel: { ...typography.caption, ...textWeight('600'), paddingHorizontal: spacing.lg },
   filterLabel: {
     ...typography.caption,
-    fontWeight: '600',
+    ...textWeight('600'),
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
@@ -334,5 +334,5 @@ const styles = StyleSheet.create({
   mapFeedback: { flexGrow: 1 },
   feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
   message: { ...typography.body, textAlign: 'center' },
-  action: { ...typography.body, fontWeight: '700' },
+  action: { ...typography.body, ...textWeight('700') },
 })

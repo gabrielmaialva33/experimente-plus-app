@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { useForYou } from '@/explorer/queries'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -79,7 +79,7 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.xs, paddingTop: spacing.md },
-  title: { ...typography.body, fontWeight: '700', paddingHorizontal: spacing.lg },
+  title: { ...typography.body, ...textWeight('700'), paddingHorizontal: spacing.lg },
   hint: { ...typography.caption, paddingHorizontal: spacing.lg },
   row: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
   card: { width: 264 },
@@ -91,5 +91,5 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   inviteText: typography.caption,
-  inviteAction: { ...typography.body, fontWeight: '700' },
+  inviteAction: { ...typography.body, ...textWeight('700') },
 })

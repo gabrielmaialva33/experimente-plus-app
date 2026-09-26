@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import { RemoteImage } from '@/components/remote-image'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.md, paddingTop: spacing.sm },
   status: { ...typography.caption, paddingHorizontal: spacing.lg },
   band: { gap: spacing.xs },
-  bandTitle: { ...typography.body, fontWeight: '700', paddingHorizontal: spacing.lg },
+  bandTitle: { ...typography.body, ...textWeight('700'), paddingHorizontal: spacing.lg },
   bandHint: { ...typography.caption, paddingHorizontal: spacing.lg },
   row: { gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
   card: {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   coverFallback: { height: 96, justifyContent: 'center', paddingHorizontal: spacing.md, width: '100%' },
   fallback: typography.caption,
   body: { gap: spacing.xs, padding: spacing.md },
-  title: { ...typography.body, fontWeight: '600' },
-  meta: { ...typography.caption, fontWeight: '600' },
+  title: { ...typography.body, ...textWeight('600') },
+  meta: { ...typography.caption, ...textWeight('600') },
   place: typography.caption,
 })

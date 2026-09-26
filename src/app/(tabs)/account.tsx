@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ApiError } from '@/api/client'
 import { updateProfile } from '@/api/me'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function AccountScreen() {
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingVertical: spacing.md,
   },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
   signOut: { alignItems: 'center', paddingVertical: spacing.lg },
   destructive: { alignItems: 'center', paddingVertical: spacing.md },
 })

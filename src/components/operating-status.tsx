@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native'
 
 import { operatingStatus } from '@/catalog/operating-status'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** The shared palette stores hex; keep the canonical border opacity explicit. */
@@ -57,5 +57,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  label: { ...typography.caption, fontWeight: '600', flexShrink: 1 },
+  label: { ...typography.caption, ...textWeight('600'), flexShrink: 1 },
 })

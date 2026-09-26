@@ -86,6 +86,20 @@ function Shell() {
           name="conta/excluir"
           options={{ headerShown: true, title: 'Excluir conta' }}
         />
+        <Stack.Screen name="conta/avaliacoes" options={{ title: 'Minhas avaliações' }} />
+        <Stack.Screen name="conta/favoritos" options={{ title: 'Favoritos' }} />
+        <Stack.Screen name="conta/seguindo" options={{ title: 'Seguindo' }} />
+        <Stack.Screen name="conta/interesses" options={{ title: 'Interesses' }} />
+        <Stack.Screen name="avaliacoes/[establishmentId]" options={{ title: 'Avaliações' }} />
+        <Stack.Screen name="avaliar/[establishmentId]" options={{ title: 'Avaliar' }} />
+        <Stack.Screen name="avaliar/editar/[id]" options={{ title: 'Editar avaliação' }} />
+        <Stack.Screen name="denunciar/[type]/[id]" options={{ title: 'Denunciar' }} />
+        <Stack.Screen name="roteiros/index" options={{ title: 'Roteiros' }} />
+        <Stack.Screen name="roteiros/[id]" options={{ title: 'Roteiro' }} />
+        <Stack.Screen
+          name="roteiros/adicionar/[establishmentId]"
+          options={{ title: 'Adicionar ao roteiro' }}
+        />
       </Stack>
     </ThemeProvider>
   )

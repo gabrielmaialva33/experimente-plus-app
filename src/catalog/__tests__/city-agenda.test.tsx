@@ -71,7 +71,7 @@ it('keeps experiences in fixed-size cards and opens every item by its public ide
   expect(within(card).getByLabelText('Prato do menu de primavera')).toBeOnTheScreen()
 
   await fireEvent.press(card)
-  expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/casa')
+  expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/casa?destaque=experience-3')
   await fireEvent.press(view.getByTestId('agenda-card-event-1'))
-  expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/atelie')
+  expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/atelie?destaque=event-1')
 })

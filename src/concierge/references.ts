@@ -63,3 +63,13 @@ export function conciergeReferences(
 
 export const isNavigable = (view: ConciergeReferenceView): boolean =>
   Boolean(view.citySlug && view.establishmentSlug)
+
+/**
+ * The item a reference names, when it is an experience or an event: the place
+ * page scrolls to it (audit A14). A place itself, or a reference the app does not
+ * recognise, opens the place at the top.
+ */
+export function referenceHighlight(ref: string): { kind: 'experience' | 'event'; id: number } | null {
+  const match = /^(experience|event):(\d+)$/.exec(ref)
+  return match ? { kind: match[1] as 'experience' | 'event', id: Number(match[2]) } : null
+}

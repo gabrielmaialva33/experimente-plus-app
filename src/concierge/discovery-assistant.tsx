@@ -5,8 +5,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { askAssistant, type ConciergeReply } from '@/api/concierge'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { placeHref } from '@/place/links'
 
-import { conciergeReferences, isNavigable, type ConciergeReferenceView } from './references'
+import { conciergeReferences, isNavigable, type ConciergeReferenceView, referenceHighlight } from './references'
 
 interface DiscoveryAssistantProps {
   citySlug: string | null
@@ -30,7 +31,7 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
   const references = conciergeReferences(reply)
 
   const open = (view: ConciergeReferenceView) =>
-    router.push(`/estabelecimento/${view.citySlug}/${view.establishmentSlug}`)
+    router.push(placeHref(`${view.citySlug}`, `${view.establishmentSlug}`, referenceHighlight(view.ref)))
 
   useEffect(
     () => () => {

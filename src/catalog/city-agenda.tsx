@@ -7,6 +7,7 @@ import { DateTile } from '@/components/date-tile'
 import { SectionHeader } from '@/components/section-header'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { placeHref } from '@/place/links'
 
 import {
   formatAgendaPublication,
@@ -69,8 +70,9 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
 
   const cityName = data.city.name ?? 'sua cidade'
   const timeZone = data.city.timeZone
+  // Brought to the item itself, not the top of its place (audit A14).
   const open = (item: AgendaItemView) =>
-    router.push(`/estabelecimento/${item.citySlug}/${item.establishmentSlug}`)
+    router.push(placeHref(item.citySlug, item.establishmentSlug, { kind: item.kind, id: item.id }))
 
   return (
     <View style={styles.section}>

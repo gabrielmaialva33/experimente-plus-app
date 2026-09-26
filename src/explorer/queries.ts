@@ -5,6 +5,7 @@ import {
   createItinerary,
   deleteItinerary,
   getItinerary,
+  listForYou,
   listInterests,
   listItineraries,
   listSaved,
@@ -31,6 +32,14 @@ export const explorerKeys = {
   savedContent: ['explorer', 'saved', 'content'] as const,
   status: (establishmentId: number) => ['explorer', 'status', establishmentId] as const,
   interests: ['explorer', 'interests'] as const,
+  forYouAll: ['explorer', 'for-you'] as const,
+  /**
+   * Keyed by operation and person as well as city. The cache outlives a sign-out,
+   * and a row keyed by city alone would show one account's interests to the next
+   * account that signs in on the same device.
+   */
+  forYou: (operationId: number, userId: number, citySlug: string) =>
+    ['explorer', 'for-you', operationId, userId, citySlug] as const,
   itineraries: ['explorer', 'itineraries'] as const,
   itinerary: (id: number) => ['explorer', 'itineraries', id] as const,
 }
@@ -96,9 +105,26 @@ export const useReplaceInterests = () => {
   return useMutation({
     retry: false,
     mutationFn: (categorySlugs: string[]) => replaceInterests(categorySlugs),
-    onSuccess: (result) => client.setQueryData(explorerKeys.interests, result),
+    onSuccess: (result) => {
+      client.setQueryData(explorerKeys.interests, result)
+      // The "Para você" row is drawn from the interests, in every city.
+      void client.invalidateQueries({ queryKey: explorerKeys.forYouAll })
+    },
   })
 }
+
+/** Who is asking; null until the session has said, and for a visitor. */
+export interface ForYouIdentity {
+  operationId: number
+  userId: number
+}
+
+export const useForYou = (identity: ForYouIdentity | null, citySlug: string | null) =>
+  useQuery({
+    queryKey: explorerKeys.forYou(identity?.operationId ?? 0, identity?.userId ?? 0, citySlug ?? ''),
+    queryFn: () => listForYou(citySlug as string),
+    enabled: Boolean(identity && citySlug),
+  })
 
 export const useItineraries = () =>
   useQuery({ queryKey: explorerKeys.itineraries, queryFn: listItineraries })

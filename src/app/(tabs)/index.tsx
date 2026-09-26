@@ -23,6 +23,7 @@ import { Chip } from '@/components/chip'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
+import { ForYouRow } from '@/explorer/for-you-row'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -278,6 +279,8 @@ export default function ExploreScreen() {
               />
               {/* Bands already resolved in the city's timezone by the server. */}
               <CityAgenda citySlug={selectedCity} />
+              {/* The only personal piece of the feed; it reads the session itself. */}
+              <ForYouRow citySlug={selectedCity} />
               {filterControls}
             </>
           }

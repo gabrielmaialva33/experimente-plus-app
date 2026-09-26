@@ -33,6 +33,14 @@ jest.mock('@/catalog/queries', () => ({
   // way of the filter, city and view assertions.
   useCityAgenda: () => ({ data: undefined, isPending: false }),
 }))
+// The one personal piece of Explorar reads the session itself and has its own
+// suite; standing in for it keeps this suite's guarantee that nothing else here does.
+jest.mock('@/explorer/for-you-row', () => ({
+  ForYouRow: ({ citySlug }: { citySlug: string | null }) => {
+    const { Text } = jest.requireActual('react-native')
+    return <Text testID="for-you-slot">{citySlug}</Text>
+  },
+}))
 jest.mock('@/components/establishment-map', () => ({
   EstablishmentMap: () => {
     const { Text } = jest.requireActual('react-native')
@@ -241,4 +249,13 @@ it('scrolls the assistant, the filters and the results together so the list stay
   expect(verticalScrollOf(view.getByLabelText('Pergunta para o Concierge'))).toBe(feed)
   expect(verticalScrollOf(view.getByText('Filtros'))).toBe(feed)
   expect(verticalScrollOf(view.getByRole('radio', { name: 'Ver no mapa' }))).toBe(feed)
+})
+
+
+it('keeps a slot for the personal row between the agenda and the filters, in list mode only', async () => {
+  const view = await render(<ExploreScreen />)
+  expect(view.getByTestId('for-you-slot')).toHaveTextContent('londrina')
+
+  await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
+  expect(view.queryByTestId('for-you-slot')).toBeNull()
 })

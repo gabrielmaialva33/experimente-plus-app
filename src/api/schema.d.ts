@@ -551,7 +551,7 @@ export interface paths {
         put?: never;
         /**
          * Ask the discovery assistant about places published in the catalogue
-         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything. This route never reads credentials; the personal variant is `/api/v1/me/concierge`.
+         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything. This route never reads credentials; the personal variant is `/api/v1/me/concierge`. How much of the catalogue a question sees, and whether a model is consulted at all, follow the operation's Concierge policy; this route has no person to count and is bounded by its per-address throttle instead of the daily quota.
          */
         post: operations["askCatalogConcierge"];
         delete?: never;
@@ -3205,6 +3205,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/concierge-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the operation's Concierge parameters
+         * @description Requires admin or root role. Created with provisional defaults on first read (ADR-0029, revision of 26/09/2026). Provider, models and key are deployment configuration and are not part of this resource.
+         */
+        get: operations["getConciergePolicy"];
+        /**
+         * Update the operation's Concierge parameters
+         * @description Requires admin or root role. Every field is optional; the ranges are enforced by the validator and by the table.
+         */
+        put: operations["updateConciergePolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/favorites": {
         parameters: {
             query?: never;
@@ -3506,7 +3530,7 @@ export interface paths {
         put?: never;
         /**
          * Ask the discovery assistant, considering the caller's interests
-         * @description Same answer rules as the public route (Anexo I item 11). The caller's active interests decide which discoverable places enter a prompt that cannot hold them all; they add no place, remove none that would have fit, never reorder search, and are not sent to the model provider.
+         * @description Same answer rules as the public route (Anexo I item 11). The caller's active interests decide which discoverable places enter a prompt that cannot hold them all; they add no place, remove none that would have fit, never reorder search, and are not sent to the model provider. Each model call counts against the operation's daily questions per person (civil day in America/Sao_Paulo); past it, and whenever the operation switched the assistant off, the reply is the degraded one — the catalogue, no model. Refusals and replies without a model call do not count.
          */
         post: operations["askMyConcierge"];
         delete?: never;
@@ -5754,6 +5778,26 @@ export interface components {
             blocked_term_mode?: components["schemas"]["AutomaticModerationMode"];
             /** @description Replaces the whole list. Trimmed and de-duplicated on save. */
             blocked_terms?: string[];
+        };
+        /** @description Concierge parameters of one operation (ADR-0029, revision of 26/09/2026; Anexo I items 12 and 15). All values are provisional until the contracting party defines them. */
+        ConciergePolicy: {
+            id: number;
+            tenant_id: number;
+            /** @description False answers like an unconfigured deployment: the catalogue, no model call. */
+            enabled: boolean;
+            /** @description Catalogue items a question may hand to the model. */
+            max_catalog_items: number;
+            /** @description Model calls one signed-in person may cause per civil day in America/Sao_Paulo. The public route is bounded by its throttle instead. */
+            daily_questions_per_person: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        UpdateConciergePolicyRequest: {
+            enabled?: boolean;
+            max_catalog_items?: number;
+            daily_questions_per_person?: number;
         };
         ReviewPolicy: {
             id: number;
@@ -15507,6 +15551,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AutomaticModerationPolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getConciergePolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Concierge parameters */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConciergePolicy"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin or root role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateConciergePolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateConciergePolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description Concierge parameters updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConciergePolicy"];
                 };
             };
             /** @description Authentication required */

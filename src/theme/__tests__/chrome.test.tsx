@@ -80,7 +80,7 @@ it.each(['light', 'dark'] as const)(
     expect(
       rootScreens.find((screen) => screen.props.name === 'estabelecimento/[city]/[slug]')?.props
         .options.title
-    ).toBe('Estabelecimento')
+    ).toBe('Lugar')
 
     await render(<TabsLayout />)
     const tabs = Tabs.mock.calls.at(-1)[0]

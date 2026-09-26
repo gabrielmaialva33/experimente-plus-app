@@ -38,7 +38,7 @@ export default function EstablishmentScreen() {
     }
   }, [page, city, slug])
 
-  // The header names the place or stays empty — never a generic "Estabelecimento"
+  // The header names the place or stays empty — never the generic "Lugar"
   // (audit A40). A place that loads draws its own chrome over the photo.
   if (query.isPending) {
     return (

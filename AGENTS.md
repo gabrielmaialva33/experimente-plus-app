@@ -51,7 +51,7 @@ O root layout mantém o navigator montado e usa a splash para cobrir o carregame
 
 Abas: visitante tem Explorar/Entrar; consumidor tem Explorar/Carteira/Conta; parceiro habilitado acrescenta Validar. Histórico pertence ao fluxo de Validar. Lista e mapa compartilham um único estado de filtro em Explorar, sem criar uma aba de mapa ou duplicar controles.
 
-Use `src/theme/tokens.ts` e `useColors`; os tokens derivam de `../experimente-plus/inertia/css/app.css`. Preserve `primary` para marca/navegação, `cta` para conversão, estados semânticos e suporte claro/escuro. `src/constants/theme.ts` e componentes do template não justificam criar outra paleta.
+Use `src/theme/tokens.ts` e `useColors`; os tokens derivam de `../experimente-plus/inertia/css/app.css`. Preserve `primary` para marca/navegação, `cta` para conversão, estados semânticos e suporte claro/escuro. A paleta e os componentes do template Expo (`src/constants/theme.ts`, `ThemedText`, `ThemedView`) foram removidos; não os recrie nem crie outra paleta.
 
 ## Ambiente e comandos
 

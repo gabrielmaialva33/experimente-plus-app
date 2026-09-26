@@ -15,11 +15,13 @@ const api = jest.requireMock('@/api/explorer') as { listInterests: jest.Mock; re
 const cafes = { category: { slug: 'cafes', name: 'Cafés' } }
 let client: QueryClient
 
+// No garbage-collection timers: one left behind keeps jest from exiting.
 beforeEach(() => {
-  client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } },
+  })
 })
 
-// Also after a failure: a live cache keeps its timers and jest from exiting.
 afterEach(() => client.clear())
 
 it('confirms the save after the screen starts over from the saved set', async () => {

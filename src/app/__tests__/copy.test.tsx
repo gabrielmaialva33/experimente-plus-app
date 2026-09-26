@@ -31,7 +31,8 @@ const catalog = jest.requireMock('@/catalog/queries') as { useCityAgenda: jest.M
 
 it('refuses credentials without saying which of the two was wrong', async () => {
   auth.signIn.mockRejectedValue(new ApiError(400))
-  const client = new QueryClient()
+  // No garbage-collection timer for the mutation: one left behind keeps jest from exiting.
+  const client = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } })
   const view = await render(<QueryClientProvider client={client}><SignInScreen /></QueryClientProvider>)
   await fireEvent.changeText(view.getByPlaceholderText('E-mail ou usuário'), 'ana')
   await fireEvent.changeText(view.getByPlaceholderText('Senha'), 'test-password')

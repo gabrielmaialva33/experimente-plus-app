@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
@@ -128,6 +129,11 @@ export default function ReportContentScreen() {
   const identified = useReportContent()
   const withoutAccount = useReportAnonymously()
   const report = anonymous ? withoutAccount : identified
+  useAnnouncement(
+    report.isSuccess
+      ? `Denúncia registrada. Protocolo ${report.data.protocol_number}.`
+      : report.isError && failureMessage(report.error, anonymous)
+  )
 
   if (report.isSuccess) {
     return (

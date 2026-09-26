@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
@@ -113,6 +114,8 @@ function NewItinerary({ onCancel }: { onCancel: () => void }) {
   const router = useRouter()
   const create = useCreateItinerary()
   const [name, setName] = useState('')
+  const failure = create.isError ? 'Não foi possível criar o roteiro agora.' : null
+  useAnnouncement(failure)
 
   const submit = () => {
     const trimmed = name.trim()
@@ -142,7 +145,7 @@ function NewItinerary({ onCancel }: { onCancel: () => void }) {
         returnKeyType="done"
         autoFocus
         onSubmitEditing={submit}
-        error={create.isError ? 'Não foi possível criar o roteiro agora.' : null}
+        error={failure}
         testID="new-itinerary-name"
       />
       <View style={styles.actions}>

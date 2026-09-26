@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -8,6 +9,11 @@ import { useColors } from '@/theme/use-colors'
  * A short confirmation that something was removed, with the way back (audit
  * A57): removal is one tap, so undoing it must be one tap too. It leaves on its
  * own after a few seconds; the parent places it, usually over the list's foot.
+ *
+ * Those seconds are the person's, not the design's (WCAG 2.2.1): Android's
+ * "time to take action" setting stretches them, and with a screen reader on
+ * the bar stays until it is used or replaced — reaching "Desfazer" by swiping
+ * takes longer than any fixed delay.
  */
 export function UndoBar({
   message,
@@ -21,18 +27,34 @@ export function UndoBar({
   duration?: number
 }) {
   const colors = useColors()
+  // Said once when it appears; the button beside it stays reachable.
+  useAnnouncement(message)
 
   useEffect(() => {
-    const timer = setTimeout(onDismiss, duration)
-    return () => clearTimeout(timer)
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const leave = (after: number) => {
+      if (!cancelled) timer = setTimeout(onDismiss, after)
+    }
+    Promise.all([
+      AccessibilityInfo.isScreenReaderEnabled(),
+      AccessibilityInfo.getRecommendedTimeoutMillis(duration),
+    ])
+      .then(([reading, recommended]) => {
+        if (reading) return
+        leave(typeof recommended === 'number' && recommended > duration ? recommended : duration)
+      })
+      .catch(() => leave(duration))
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
   }, [message, onDismiss, duration])
 
   return (
     <View testID="undo-bar" style={[styles.bar, { backgroundColor: colors.chrome }]}>
-      {/* The message is announced on its own; the button beside it stays reachable. */}
       <Text
         accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
         numberOfLines={2}
         style={[styles.message, { color: colors.chromeForeground }]}
       >

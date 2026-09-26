@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
 
 import InterestsScreen from '@/app/conta/interesses'
 import FavoritesScreen from '@/app/conta/favoritos'
@@ -372,14 +373,20 @@ describe('itinerary', () => {
     expect(view.getByText('voltar à noite')).toBeTruthy()
   })
 
-  it('sends the whole new order when a stop moves', async () => {
+  it('sends the whole new order when a stop moves, and says where it went', async () => {
     const mutate = jest.fn()
     queries.useReorderItineraryStops.mockReturnValue(idle({ mutate }))
 
     const view = await render(<ItineraryScreen />)
     await fireEvent.press(view.getByTestId('stop-13-up'))
 
-    expect(mutate).toHaveBeenCalledWith([11, 13, 12])
+    expect(mutate).toHaveBeenCalledWith([11, 13, 12], expect.any(Object))
+    // The list moved under the person's finger; only a screen reader hears where.
+    expect(AccessibilityInfo.announceForAccessibility).not.toHaveBeenCalled()
+    mutate.mock.calls[0][1].onSuccess()
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Parada movida para a posição 2.'
+    )
   })
 
   it('cannot move the first stop up or the last one down', async () => {
@@ -451,7 +458,11 @@ describe('itinerary', () => {
     await fireEvent.press(
       view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' })
     )
-    expect(mutate).toHaveBeenCalledWith({ id: 5, establishmentId: 9 })
+    expect(mutate).toHaveBeenCalledWith({ id: 5, establishmentId: 9 }, expect.any(Object))
+    mutate.mock.calls[0][1].onSuccess()
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Sorveteria da Praça adicionado ao roteiro.'
+    )
   })
 
   it('says so when the itinerary is not the caller’s or does not exist', async () => {

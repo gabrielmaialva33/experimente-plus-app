@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { askAssistant, type ConciergeReply } from '@/api/concierge'
+import { useAnnouncement } from '@/components/announce'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { placeHref } from '@/place/links'
@@ -20,6 +21,7 @@ interface DiscoveryAssistantProps {
 }
 
 const MAX_QUESTION_LENGTH = 300
+const FAILED = 'Não foi possível consultar agora. Tente novamente em instantes.'
 
 export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantProps) {
   const colors = useColors()
@@ -34,6 +36,21 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
   // Only the grounded references the server returned; never a place read out of
   // the model's prose.
   const references = conciergeReferences(reply)
+  const answerLabel = !reply
+    ? null
+    : reply.outcome === 'grounded'
+      ? 'Sugestão ancorada no catálogo'
+      : reply.outcome === 'refused'
+        ? 'Posso ajudar com descoberta local'
+        : 'Sugestões do catálogo'
+  const answerText =
+    reply?.text ||
+    (reply?.outcome === 'degraded'
+      ? 'O assistente está indisponível agora, então trouxe opções publicadas no catálogo.'
+      : null)
+  // The answer arrives after the question: said once, the label and the reply,
+  // while the suggestions stay below to be read one by one.
+  useAnnouncement(failed ? FAILED : reply && [answerLabel, answerText].filter(Boolean).join('. '))
 
   const open = (view: ConciergeReferenceView) =>
     router.push(
@@ -109,7 +126,7 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
 
       <Pressable
         accessibilityRole="button"
-        accessibilityState={{ disabled: !canAsk }}
+        accessibilityState={{ disabled: !canAsk, busy: loading }}
         disabled={!canAsk}
         onPress={() => void submit()}
         style={[
@@ -129,24 +146,11 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
         </Text>
       </Pressable>
 
-      {failed ? (
-        <Text accessibilityLiveRegion="polite" style={[styles.help, { color: colors.destructive }]}>
-          Não foi possível consultar agora. Tente novamente em instantes.
-        </Text>
-      ) : null}
+      {failed ? <Text style={[styles.help, { color: colors.destructive }]}>{FAILED}</Text> : null}
 
       {reply ? (
-        <View
-          accessibilityLiveRegion="polite"
-          style={[styles.answer, { backgroundColor: colors.primarySoft }]}
-        >
-          <Text style={[styles.answerLabel, { color: colors.primaryAccent }]}>
-            {reply.outcome === 'grounded'
-              ? 'Sugestão ancorada no catálogo'
-              : reply.outcome === 'refused'
-                ? 'Posso ajudar com descoberta local'
-                : 'Sugestões do catálogo'}
-          </Text>
+        <View style={[styles.answer, { backgroundColor: colors.primarySoft }]}>
+          <Text style={[styles.answerLabel, { color: colors.primaryAccent }]}>{answerLabel}</Text>
 
           {reply.personalized ? (
             // Said only when the server applied interests, never inferred from
@@ -159,12 +163,8 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
             </Text>
           ) : null}
 
-          {reply.text ? (
-            <Text style={[styles.answerText, { color: colors.foreground }]}>{reply.text}</Text>
-          ) : reply.outcome === 'degraded' ? (
-            <Text style={[styles.answerText, { color: colors.foreground }]}>
-              O assistente está indisponível agora, então trouxe opções publicadas no catálogo.
-            </Text>
+          {answerText ? (
+            <Text style={[styles.answerText, { color: colors.foreground }]}>{answerText}</Text>
           ) : null}
 
           {references.length > 0 ? (

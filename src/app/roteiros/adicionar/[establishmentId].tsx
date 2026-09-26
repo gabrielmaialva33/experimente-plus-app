@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { SectionHeader } from '@/components/section-header'
@@ -31,6 +32,14 @@ export default function AddToItineraryScreen() {
   const [composing, setComposing] = useState(false)
   const [added, setAdded] = useState<{ id: number; name: string } | null>(null)
 
+  const failure =
+    add.error instanceof ApiError && add.error.status === 404
+      ? 'Este lugar não está disponível para roteiros no momento.'
+      : add.isError || create.isError
+        ? 'Não foi possível adicionar agora.'
+        : null
+  useAnnouncement(added ? `Adicionado a ${added.name}` : failure)
+
   if (itineraries.isPending) {
     return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
   }
@@ -48,13 +57,6 @@ export default function AddToItineraryScreen() {
     if (!trimmed) return
     create.mutate({ name: trimmed }, { onSuccess: (itinerary) => addTo(itinerary) })
   }
-
-  const failure =
-    add.error instanceof ApiError && add.error.status === 404
-      ? 'Este lugar não está disponível para roteiros no momento.'
-      : add.isError || create.isError
-        ? 'Não foi possível adicionar agora.'
-        : null
 
   const busy = add.isPending || create.isPending
   const items = itineraries.data?.data ?? []

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { announce } from '@/components/announce'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -105,7 +106,9 @@ export default function MyReviewsScreen() {
               accessibilityLabel="Excluir"
               accessibilityState={{ disabled: remove.isPending }}
               disabled={remove.isPending}
-              onPress={() => remove.mutate(item.id)}
+              onPress={() =>
+                remove.mutate(item.id, { onSuccess: () => announce('Avaliação excluída.') })
+              }
               style={styles.delete}
               testID={`delete-review-${item.id}`}
             >

@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ReviewSubject, failureMessage } from '@/app/avaliar/[establishmentId]'
@@ -77,6 +78,11 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
   // text edit that has nothing to do with them.
   const remaining = Math.max(0, (rules.data?.max_photos ?? 0) - photos.length)
   const photoBusy = addPhoto.isPending || removePhoto.isPending
+  useAnnouncement(
+    addPhoto.isError || removePhoto.isError
+      ? failureMessage(addPhoto.error ?? removePhoto.error)
+      : update.isError && failureMessage(update.error)
+  )
 
   return (
     <KeyboardForm

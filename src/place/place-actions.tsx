@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
@@ -11,6 +12,8 @@ import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { followExplained, markFollowExplained } from './follow-hint'
+
+const FOLLOW_HINT = 'Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.'
 
 /**
  * The page's main action — "Como chegar", or the first contact when there is
@@ -37,6 +40,7 @@ export function PlaceActions({
   const follow = useToggleSaved('follows', establishmentId)
   const following = saved.data?.following === true
   const [explain, setExplain] = useState(false)
+  useAnnouncement(explain && FOLLOW_HINT)
 
   const requireSession = (action: () => void) => () => {
     if (!signedIn) {
@@ -82,12 +86,8 @@ export function PlaceActions({
         />
       </View>
       {explain ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[styles.hint, { color: colors.mutedForeground }]}
-          testID="follow-hint"
-        >
-          Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.
+        <Text style={[styles.hint, { color: colors.mutedForeground }]} testID="follow-hint">
+          {FOLLOW_HINT}
         </Text>
       ) : null}
     </View>

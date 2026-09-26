@@ -6,6 +6,7 @@ import {
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { RemoteImage } from '@/components/remote-image'
 import { validateImageAsset, type ValidatedImageAsset } from '@/media/image-validation'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -44,6 +45,7 @@ export function ImagePicker({
   const colors = useColors()
   const [localError, setLocalError] = useState<string | null>(null)
   const displayError = error ?? localError
+  useAnnouncement(displayError)
 
   const pickImages = async () => {
     if (disabled || images.length >= maxImages) return

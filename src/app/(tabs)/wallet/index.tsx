@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Purchase } from '@/api/purchases'
+import { useAnnouncement } from '@/components/announce'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -37,6 +38,8 @@ export default function WalletScreen() {
   const wallet = useWallet()
   const orders = usePurchases()
   const refreshControl = usePullToRefresh(wallet.refetch, orders.refetch)
+  // A refresh that failed leaves the old tickets on screen; this says they may be stale.
+  useAnnouncement(wallet.isError && 'Não foi possível atualizar a carteira')
 
   // The band runs under the status bar, so its icons turn light while the tab shows.
   useFocusEffect(

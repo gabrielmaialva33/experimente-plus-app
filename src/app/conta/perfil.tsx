@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { updateProfile } from '@/api/me'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
@@ -53,6 +54,12 @@ function profileServerErrors(body: unknown): ProfileErrors {
   return errors
 }
 
+/** The rule a refused field broke, said once when the save is refused; the field keeps it. */
+const announceFirst = (errors: ProfileErrors) => {
+  const first = errors.full_name ?? errors.username
+  if (first) announce(first)
+}
+
 /**
  * Editing the profile, on its own screen (audit A23). Only name and username
  * are editable by contract (UC-M06); the e-mail is shown so the person knows
@@ -87,8 +94,11 @@ export default function ProfileScreen() {
       void refresh()
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 422)
-        setErrors(profileServerErrors(error.body))
+      if (error instanceof ApiError && error.status === 422) {
+        const refused = profileServerErrors(error.body)
+        setErrors(refused)
+        announceFirst(refused)
+      }
     },
   })
 
@@ -98,6 +108,7 @@ export default function ProfileScreen() {
     const found = profileErrors(changes)
     setErrors(found)
     if (Object.keys(found).length === 0) save.mutate()
+    else announceFirst(found)
   }
 
   const edit = (field: keyof ProfileErrors, setter: (value: string) => void) => (value: string) => {
@@ -114,6 +125,7 @@ export default function ProfileScreen() {
       : save.isSuccess
         ? 'Perfil atualizado.'
         : null
+  useAnnouncement(message)
 
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>

@@ -9,6 +9,7 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
 import { CityAgenda } from '@/catalog/city-agenda'
+import { useAnnouncement } from '@/components/announce'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
 import type { EstablishmentSummary } from '@/catalog/types'
@@ -255,18 +256,20 @@ export default function ExploreScreen() {
   )
 
   // A search answers first with how much it found, then with the places (audit A16).
+  const resultsTitle = !hasFilters
+    ? `Lugares em ${cityName}`
+    : count == null
+      ? `Resultados em ${cityName}`
+      : count === 0
+        ? `Nenhum resultado em ${cityName}`
+        : `${plural(count, 'resultado', 'resultados')} em ${cityName}`
+  // Typing and filtering answer out loud with that count, once the search settles;
+  // browsing the city says nothing, since nothing was asked.
+  useAnnouncement(hasFilters && count != null && !search.isFetching && resultsTitle)
   const resultsHeader = (
     <View style={styles.resultsHeader}>
       <SectionHeader
-        title={
-          !hasFilters
-            ? `Lugares em ${cityName}`
-            : count == null
-              ? `Resultados em ${cityName}`
-              : count === 0
-                ? `Nenhum resultado em ${cityName}`
-                : `${plural(count, 'resultado', 'resultados')} em ${cityName}`
-        }
+        title={resultsTitle}
         hint={
           !hasFilters
             ? count

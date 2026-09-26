@@ -6,6 +6,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { SectionHeader } from '@/components/section-header'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
@@ -32,6 +33,11 @@ const ORDER_TONE: Record<OrderState, BadgeTone> = {
   refunded: 'neutral',
 }
 
+const OPENING_FAILED =
+  'Não foi possível abrir o pagamento. Consulte o pedido antes de tentar novamente.'
+const CANCEL_REQUESTED = 'Cancelamento solicitado. O estado do pedido é atualizado em instantes.'
+const CANCEL_FAILED = 'Não foi possível cancelar agora. Consulte o pedido antes de tentar de novo.'
+
 export default function PurchaseOrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
@@ -41,6 +47,7 @@ export default function PurchaseOrderScreen() {
   const state = order ? orderState(order) : null
   const [openingError, setOpeningError] = useState(false)
   const colors = useColors()
+  useAnnouncement(openingError && OPENING_FAILED)
 
   const hasOrder = Boolean(order)
   const orderStatus = order?.status
@@ -127,11 +134,7 @@ export default function PurchaseOrderScreen() {
             }}
           />
         ) : null}
-        {openingError ? (
-          <PurchaseText>
-            Não foi possível abrir o pagamento. Consulte o pedido antes de tentar novamente.
-          </PurchaseText>
-        ) : null}
+        {openingError ? <PurchaseText>{OPENING_FAILED}</PurchaseText> : null}
         {state === 'confirmed' ? (
           <Button
             label="Consultar carteira"
@@ -223,14 +226,13 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
       onCancelled()
     },
   })
+  useAnnouncement(cancel.isSuccess ? CANCEL_REQUESTED : cancel.isError && CANCEL_FAILED)
 
   if (cancel.isSuccess) {
     return (
       <View style={[styles.notice, { backgroundColor: colors.infoSoft }]}>
         <Ionicons name="checkmark-circle-outline" size={20} color={colors.infoAccent} />
-        <Text style={[styles.noticeText, { color: colors.infoAccent }]}>
-          Cancelamento solicitado. O estado do pedido é atualizado em instantes.
-        </Text>
+        <Text style={[styles.noticeText, { color: colors.infoAccent }]}>{CANCEL_REQUESTED}</Text>
       </View>
     )
   }
@@ -260,9 +262,7 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
         Cancele só se ainda não pagou. Um pagamento já feito é confirmado aqui; nesse caso, aguarde.
       </Text>
       {cancel.isError ? (
-        <Text style={[styles.meta, { color: colors.foreground }]}>
-          Não foi possível cancelar agora. Consulte o pedido antes de tentar de novo.
-        </Text>
+        <Text style={[styles.meta, { color: colors.foreground }]}>{CANCEL_FAILED}</Text>
       ) : null}
       <View style={styles.confirmActions}>
         <Button

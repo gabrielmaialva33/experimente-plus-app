@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
 
 import SignInScreen from '@/session/sign-in-screen'
 import { palette } from '@/theme/tokens'
@@ -53,6 +54,23 @@ it('says what the account is for and keeps labels above the fields', async () =>
 
   await fireEvent.press(view.getByRole('button', { name: 'Entrar' }))
   expect(auth.signIn).toHaveBeenCalledWith('ana', 'test-password')
+})
+
+// The refusal appears under the form while focus is on "Entrar": it is said, once.
+it('says why the sign-in was refused', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport')
+  auth.signIn.mockRejectedValue(new ApiError(400, null))
+  const view = await page()
+  await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
+  await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
+
+  await fireEvent.press(view.getByRole('button', { name: 'Entrar' }))
+
+  expect(await view.findByRole('alert')).toHaveTextContent('Dados de acesso incorretos.')
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledTimes(1)
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+    'Dados de acesso incorretos.'
+  )
 })
 
 it('lets the password be shown before it is sent', async () => {

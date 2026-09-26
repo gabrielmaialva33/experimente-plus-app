@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system'
+
 import { request } from './client'
 import type { components } from './schema'
 
@@ -102,12 +104,10 @@ export interface PhotoUpload {
  */
 export const uploadReviewPhoto = (reviewId: number, photo: PhotoUpload, altText?: string | null) => {
   const form = new FormData()
-  // React Native's FormData takes an object with uri, name and type for a file.
-  form.append('photo', {
-    uri: photo.uri,
-    name: photo.fileName,
-    type: photo.mimeType,
-  } as unknown as Blob)
+  // Expo's runtime installs expo/fetch as the global fetch, and it only sends
+  // Blob parts: React Native's { uri, name, type } object fails on the device
+  // before any request leaves. A File from expo-file-system is the Blob it reads.
+  form.append('photo', new File(photo.uri), photo.fileName)
   if (altText?.trim()) form.append('alt_text', altText.trim())
 
   return request<ReviewPhoto>(`/api/v1/me/reviews/${reviewId}/photos`, {

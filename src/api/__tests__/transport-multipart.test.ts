@@ -16,6 +16,16 @@ jest.mock('expo-secure-store', () => ({
 jest.mock('react-native-mmkv', () => ({
   createMMKV: () => ({ getBoolean: () => true }),
 }))
+// A Blob, like the real File, so the runtime's FormData accepts it with a filename.
+jest.mock('expo-file-system', () => ({
+  File: class MockFile extends Blob {
+    readonly uri: string
+    constructor(mockUri: string) {
+      super([])
+      this.uri = mockUri
+    }
+  },
+}))
 
 describe('Multipart transport & uploadFile', () => {
   beforeEach(() => {
@@ -153,6 +163,10 @@ describe('Multipart transport & uploadFile', () => {
     expect(capturedUrl).toContain('/api/v1/files/upload')
     expect(capturedInit?.method).toBe('POST')
     expect(capturedInit?.body).toBeInstanceOf(FormData)
+    // The runtime's FormData wraps the Blob in its own File, keeping the filename.
+    const part = (capturedInit?.body as FormData).get('file') as Blob & { name: string }
+    expect(part).toBeInstanceOf(Blob)
+    expect(part.name).toBe('photo.jpg')
     expect((capturedInit?.headers as Record<string, string>)?.authorization).toBe('Bearer test-access-token')
     expect(result).toEqual(mockUploadResponse)
   })

@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system'
+
 import { request } from './client'
 import type { components } from './schema'
 
@@ -15,12 +17,9 @@ export interface UploadFileInput {
  */
 export async function uploadFile(file: UploadFileInput): Promise<FileUploadResponse> {
   const formData = new FormData()
-  // React Native FormData accepts an object with uri, name and type for binary fields
-  formData.append('file', {
-    uri: file.uri,
-    name: file.name,
-    type: file.type,
-  } as unknown as Blob)
+  // expo/fetch, installed as the global fetch, sends only Blob parts; see
+  // uploadReviewPhoto for why React Native's { uri, name, type } object fails.
+  formData.append('file', new File(file.uri), file.name)
 
   return request<FileUploadResponse>('/api/v1/files/upload', {
     method: 'POST',

@@ -14,6 +14,16 @@ jest.mock('@/api/config', () => ({
   resolveMediaUrl: (url: string) => (url.startsWith('http') ? url : `https://experimente.test${url}`),
 }))
 jest.mock('@/api/client', () => ({ request: jest.fn(async () => ({ id: 9 })) }))
+// A Blob, like the real File, so the runtime's FormData accepts it with a filename.
+jest.mock('expo-file-system', () => ({
+  File: class MockFile extends Blob {
+    readonly uri: string
+    constructor(mockUri: string) {
+      super([])
+      this.uri = mockUri
+    }
+  },
+}))
 
 const client = jest.requireMock('@/api/client') as { request: jest.Mock }
 
@@ -71,9 +81,9 @@ it('offers removal only where the caller may remove, and says which photo', asyn
   expect(readOnly.queryByTestId('remove-photo-1')).toBeNull()
 })
 
-it('sends a photo as multipart, under the field the server reads', async () => {
-  // The test runtime's FormData stringifies React Native's file object, so what
-  // is asserted is what the helper appends — the shape React Native uploads.
+it('sends a photo as a file part, under the field the server reads', async () => {
+  // expo/fetch replaces the global fetch and sends only Blob parts; React
+  // Native's { uri, name, type } object throws on the device before any request.
   const append = jest.spyOn(FormData.prototype, 'append')
   await uploadReviewPhoto(
     5,
@@ -85,11 +95,10 @@ it('sends a photo as multipart, under the field the server reads', async () => {
   expect(path).toBe('/api/v1/me/reviews/5/photos')
   expect(options).toMatchObject({ method: 'POST', authenticated: true })
   expect(options.body).toBeInstanceOf(FormData)
-  expect(append).toHaveBeenCalledWith('photo', {
-    uri: 'file:///prato.jpg',
-    name: 'prato.jpg',
-    type: 'image/jpeg',
-  })
+  const [, part, filename] = append.mock.calls.find(([field]) => field === 'photo')!
+  expect(part).toBeInstanceOf(jest.requireMock('expo-file-system').File)
+  expect(part).toMatchObject({ uri: 'file:///prato.jpg' })
+  expect(filename).toBe('prato.jpg')
   expect(append).toHaveBeenCalledWith('alt_text', 'Prato')
   append.mockRestore()
 })

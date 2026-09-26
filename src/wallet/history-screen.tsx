@@ -1,12 +1,12 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter, type Href } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { Button } from '@/components/button'
+import { EmptyState } from '@/components/empty-state'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
 import type { History } from './types'
@@ -74,22 +74,17 @@ export function HistoryScreen({
         </Pressable>
       )}
       ListEmptyComponent={
-        <View style={styles.center}>
-          <View style={[styles.mark, { backgroundColor: colors.muted }]}>
-            <Ionicons name="receipt-outline" size={26} color={colors.mutedForeground} />
-          </View>
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{emptyMessage}</Text>
-          {emptyHint ? (
-            <Text style={[styles.message, { color: colors.mutedForeground }]}>{emptyHint}</Text>
-          ) : null}
-          {emptyAction ? (
-            <Button
-              label={emptyAction.label}
-              variant="outline"
-              onPress={() => router.navigate(emptyAction.href)}
-            />
-          ) : null}
-        </View>
+        // The same empty state as every other list of the app (audit A34).
+        <EmptyState
+          icon="receipt-outline"
+          title={emptyMessage}
+          text={emptyHint}
+          action={
+            emptyAction
+              ? { label: emptyAction.label, onPress: () => router.navigate(emptyAction.href) }
+              : undefined
+          }
+        />
       }
     />
   )
@@ -99,13 +94,5 @@ const styles = StyleSheet.create({
   list: { padding: spacing.gutter },
   fill: { flex: 1, justifyContent: 'center' },
   center: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
-  mark: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    height: 56,
-    justifyContent: 'center',
-    width: 56,
-  },
-  emptyTitle: { ...typography.heading, textAlign: 'center' },
   message: { ...typography.body, textAlign: 'center' },
 })

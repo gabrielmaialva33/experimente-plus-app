@@ -8,7 +8,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }))
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
 jest.mock('@/theme/fonts', () => ({ useFontsReady: () => true }))
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.dark }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.dark,
+}))
 jest.mock('@/api/query-client', () => ({
   createQueryClient: () => new (jest.requireActual('@tanstack/react-query').QueryClient)(),
   installQueryEnvironment: () => () => {},
@@ -18,7 +20,10 @@ jest.mock('@/session/context', () => ({
   useSession: () => ({ status: 'anonymous' }),
 }))
 jest.mock('expo-router', () => {
-  const Stack = Object.assign(jest.fn(() => null), { Screen: () => null })
+  const Stack = Object.assign(
+    jest.fn(() => null),
+    { Screen: () => null }
+  )
   return {
     Stack,
     ThemeProvider: ({ children }: { children: ReactNode }) => children,

@@ -11,7 +11,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }))
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
 jest.mock('@/theme/fonts', () => ({ useFontsReady: () => mockFontsReady.current }))
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.light,
+}))
 jest.mock('@/api/query-client', () => ({
   createQueryClient: () => new (jest.requireActual('@tanstack/react-query').QueryClient)(),
   installQueryEnvironment: () => () => {},
@@ -22,7 +24,10 @@ jest.mock('@/session/context', () => ({
   useSession: () => mockSession.current,
 }))
 jest.mock('expo-router', () => ({
-  Stack: Object.assign(jest.fn(() => null), { Screen: () => null }),
+  Stack: Object.assign(
+    jest.fn(() => null),
+    { Screen: () => null }
+  ),
   ThemeProvider: ({ children }: { children: ReactNode }) => children,
   DarkTheme: { colors: {} },
   DefaultTheme: { colors: {} },
@@ -56,11 +61,15 @@ it('mounts each screen only once the faces are usable, inside a navigator that i
 
   mockFontsReady.current = false
   await render(<RootLayout />)
-  const waiting = Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({ children: screen })
+  const waiting = Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({
+    children: screen,
+  })
   expect(waiting).not.toBe(screen)
   expect((await render(waiting)).queryByText('Explorar')).toBeNull()
 
   mockFontsReady.current = true
   await render(<RootLayout />)
-  expect(Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({ children: screen })).toBe(screen)
+  expect(Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({ children: screen })).toBe(
+    screen
+  )
 })

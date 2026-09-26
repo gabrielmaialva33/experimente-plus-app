@@ -18,7 +18,11 @@ export function OperatingStatus({
   const colors = useColors()
   const { label, tone } = operatingStatus(establishment)
   const appearance = {
-    muted: { backgroundColor: colors.statusNeutral, color: colors.statusNeutralForeground, borderColor: colors.statusNeutralBorder },
+    muted: {
+      backgroundColor: colors.statusNeutral,
+      color: colors.statusNeutralForeground,
+      borderColor: colors.statusNeutralBorder,
+    },
     warning: {
       backgroundColor: colors.warningSoft,
       color: colors.warningAccent,
@@ -42,7 +46,8 @@ export function OperatingStatus({
       style={[
         styles.status,
         { backgroundColor: appearance.backgroundColor, borderColor: appearance.borderColor },
-      ]}>
+      ]}
+    >
       <Text style={[styles.label, { color: appearance.color }]}>{label}</Text>
     </View>
   )

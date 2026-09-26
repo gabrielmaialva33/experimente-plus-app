@@ -71,7 +71,14 @@ export default function EstablishmentScreen() {
     )
   }
 
-  return <Detail detail={page} citySlug={city} highlight={params[HIGHLIGHT_PARAM] ?? null} colors={colors} />
+  return (
+    <Detail
+      detail={page}
+      citySlug={city}
+      highlight={params[HIGHLIGHT_PARAM] ?? null}
+      colors={colors}
+    />
+  )
 }
 
 function Detail({
@@ -92,12 +99,19 @@ function Detail({
   // Once the photo scrolls away, a compact bar keeps back and the place's name on screen.
   const header = useCompactHeader(...placeBarRange(detail, insets.top))
   // Offsets inside the scroll content, measured as the sections lay out.
-  const offsets = useRef({ body: null as number | null, reviews: null as number | null, highlight: null as number | null })
+  const offsets = useRef({
+    body: null as number | null,
+    reviews: null as number | null,
+    highlight: null as number | null,
+  })
   const arrived = useRef(false)
 
   const scrollTo = (section: number | null, animated = true) => {
     if (offsets.current.body === null || section === null) return false
-    scroll.current?.scrollTo({ y: Math.max(0, offsets.current.body + section - spacing.lg), animated })
+    scroll.current?.scrollTo({
+      y: Math.max(0, offsets.current.body + section - spacing.lg),
+      animated,
+    })
     return true
   }
   // Once, when both the page body and the item have a place on screen.
@@ -136,24 +150,48 @@ function Detail({
       : null
 
   const actions = [
-    { label: 'Como chegar', icon: 'navigate-outline' as const, onPress: open('route_click', routeUrl) },
     {
-      label: 'WhatsApp', icon: 'logo-whatsapp' as const,
-      onPress: open('whatsapp_click', (() => {
-        const number = brazilianWhatsApp(contacts.whatsapp)
-        return number && `https://wa.me/${number}`
-      })()),
+      label: 'Como chegar',
+      icon: 'navigate-outline' as const,
+      onPress: open('route_click', routeUrl),
     },
     {
-      label: 'Ligar', icon: 'call-outline' as const,
-      onPress: open('phone_click', (() => {
-        const number = dialable(contacts.phone)
-        return number && `tel:${number}`
-      })()),
+      label: 'WhatsApp',
+      icon: 'logo-whatsapp' as const,
+      onPress: open(
+        'whatsapp_click',
+        (() => {
+          const number = brazilianWhatsApp(contacts.whatsapp)
+          return number && `https://wa.me/${number}`
+        })()
+      ),
     },
-    { label: 'Site', icon: 'globe-outline' as const, onPress: open('website_click', contacts.website) },
-    { label: 'E-mail', icon: 'mail-outline' as const, onPress: openUntracked(mailto(contacts.email)) },
-    { label: 'Instagram', icon: 'logo-instagram' as const, onPress: openUntracked(instagramProfile(contacts.instagram)) },
+    {
+      label: 'Ligar',
+      icon: 'call-outline' as const,
+      onPress: open(
+        'phone_click',
+        (() => {
+          const number = dialable(contacts.phone)
+          return number && `tel:${number}`
+        })()
+      ),
+    },
+    {
+      label: 'Site',
+      icon: 'globe-outline' as const,
+      onPress: open('website_click', contacts.website),
+    },
+    {
+      label: 'E-mail',
+      icon: 'mail-outline' as const,
+      onPress: openUntracked(mailto(contacts.email)),
+    },
+    {
+      label: 'Instagram',
+      icon: 'logo-instagram' as const,
+      onPress: openUntracked(instagramProfile(contacts.instagram)),
+    },
   ].filter((action) => action.onPress !== undefined) as ContactAction[]
   // Visiting is the primary discovery conversion. Without coordinates, promote
   // the first available contact rather than offering an unusable route; the
@@ -172,7 +210,8 @@ function Detail({
         testID="place-scroll"
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.page}>
+        contentContainerStyle={styles.page}
+      >
         <PlaceHero detail={detail} />
 
         <View
@@ -181,7 +220,8 @@ function Detail({
           onLayout={(event) => {
             offsets.current.body = event.nativeEvent.layout.y
             bringHighlightIntoView()
-          }}>
+          }}
+        >
           <View style={styles.header}>
             {category || address.district ? (
               <Text style={[styles.meta, { color: colors.mutedForeground }]}>
@@ -198,7 +238,8 @@ function Detail({
                   accessibilityLabel={`Nota ${ratingLabel(average)}, ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
                   onPress={() => scrollTo(offsets.current.reviews)}
                   hitSlop={spacing.sm}
-                  style={styles.rating}>
+                  style={styles.rating}
+                >
                   <Stars rating={average} />
                   <Text style={[styles.ratingLabel, { color: colors.foreground }]}>
                     {`${average.toFixed(1).replace('.', ',')} · ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
@@ -214,7 +255,9 @@ function Detail({
           <PlaceBenefits citySlug={citySlug} slug={detail.slug} timeZone={detail.city.timezone} />
 
           {detail.description ? (
-            <Text style={[styles.description, { color: colors.foreground }]}>{detail.description}</Text>
+            <Text style={[styles.description, { color: colors.foreground }]}>
+              {detail.description}
+            </Text>
           ) : null}
 
           <PracticalInfo detail={detail} contacts={secondaryActions} />
@@ -235,7 +278,8 @@ function Detail({
           <View
             onLayout={(event) => {
               offsets.current.reviews = event.nativeEvent.layout.y
-            }}>
+            }}
+          >
             <EstablishmentReviews
               establishmentId={detail.id}
               establishmentName={detail.name}
@@ -264,7 +308,13 @@ function Detail({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { paddingBottom: spacing.xxl },
-  center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
+  center: {
+    alignItems: 'center',
+    flex: 1,
+    gap: spacing.md,
+    justifyContent: 'center',
+    padding: spacing.xxl,
+  },
   // The content rises over the photo on a sheet with rounded top corners.
   body: {
     borderTopLeftRadius: radius.sheet,

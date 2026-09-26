@@ -10,10 +10,17 @@ const presetResolver = require(require('jest-expo/jest-preset').resolver)
 const worklets = `${path.sep}node_modules${path.sep}react-native-worklets${path.sep}`
 
 module.exports = (request, options) => {
-  const inWorklets = request === 'react-native-worklets' || request.startsWith('react-native-worklets/') ||
+  const inWorklets =
+    request === 'react-native-worklets' ||
+    request.startsWith('react-native-worklets/') ||
     `${options.basedir}${path.sep}`.includes(worklets)
   return presetResolver(
     request,
-    inWorklets ? { ...options, extensions: options.extensions?.filter((extension) => !extension.includes('native')) } : options
+    inWorklets
+      ? {
+          ...options,
+          extensions: options.extensions?.filter((extension) => !extension.includes('native')),
+        }
+      : options
   )
 }

@@ -125,13 +125,17 @@ describe('partner area composition', () => {
   })
 })
 
-
 describe('session events', () => {
   it('removes capabilities immediately on 403, coalesces reloads and applies fresh context', async () => {
     withContext({ partner: { redemptions: { validate: true, read: true } } })
     const view = await renderProbe()
     let finish!: (context: unknown) => void
-    me.getContext.mockImplementation(() => new Promise((resolve) => { finish = resolve }))
+    me.getContext.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
     await act(async () => {
       notifySessionEvent('context-invalidated')
       notifySessionEvent('context-invalidated')
@@ -139,7 +143,12 @@ describe('session events', () => {
     expect(view.getByText('validate:false')).toBeTruthy()
     expect(view.getByText('status:loading')).toBeTruthy()
     expect(me.getContext).toHaveBeenCalledTimes(2)
-    await act(async () => finish({ user: { id: 1 }, capabilities: { partner: { redemptions: { validate: false, read: true } } } }))
+    await act(async () =>
+      finish({
+        user: { id: 1 },
+        capabilities: { partner: { redemptions: { validate: false, read: true } } },
+      })
+    )
     expect(view.getByText('status:authenticated')).toBeTruthy()
     expect(view.getByText('validate:false')).toBeTruthy()
     expect(view.getByText('history:true')).toBeTruthy()
@@ -149,10 +158,17 @@ describe('session events', () => {
   it('cannot restore stale context after a session expires while loading', async () => {
     withContext({})
     let finish!: (context: unknown) => void
-    me.getContext.mockImplementation(() => new Promise((resolve) => { finish = resolve }))
+    me.getContext.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
     const view = await renderProbe()
     await act(async () => notifySessionEvent('expired'))
-    await act(async () => finish({ user: { id: 1 }, capabilities: { partner: { redemptions: { validate: true } } } }))
+    await act(async () =>
+      finish({ user: { id: 1 }, capabilities: { partner: { redemptions: { validate: true } } } })
+    )
     expect(view.getByText('status:anonymous')).toBeTruthy()
     expect(view.getByText('validate:false')).toBeTruthy()
   })

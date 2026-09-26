@@ -2,14 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { setStatusBarStyle } from 'expo-status-bar'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -101,9 +94,13 @@ export default function ExploreScreen() {
   }, [params])
 
   const activeFilters = [
-    category ? categories.data?.categories.find((item) => item.slug === category)?.name ?? category : null,
+    category
+      ? (categories.data?.categories.find((item) => item.slug === category)?.name ?? category)
+      : null,
     openNow ? 'Aberto agora' : null,
-    ...attributes.map((key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key),
+    ...attributes.map(
+      (key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key
+    ),
   ].filter(Boolean)
   const hasFilters = debouncedTerm !== '' || activeFilters.length > 0
   const clearFilters = () => {
@@ -157,7 +154,7 @@ export default function ExploreScreen() {
   )
 
   const results = search.data?.organic ?? []
-  const count = search.data ? total ?? results.length : null
+  const count = search.data ? (total ?? results.length) : null
 
   // Changing city is discovery state only: no tenant request, no token.
   const brand = (
@@ -172,32 +169,39 @@ export default function ExploreScreen() {
           style={({ pressed }) => [
             styles.cityButton,
             { backgroundColor: colors.chromeRaised, opacity: pressed ? 0.85 : 1 },
-          ]}>
+          ]}
+        >
           <Ionicons name="location-outline" size={18} color={colors.chromeForeground} />
           <Text numberOfLines={1} style={[styles.cityName, { color: colors.chromeForeground }]}>
             {city?.name ?? 'Cidade'}
           </Text>
-          <Ionicons name={choosingCity ? 'chevron-up' : 'chevron-down'} size={16} color={colors.chromeForeground} />
+          <Ionicons
+            name={choosingCity ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={colors.chromeForeground}
+          />
         </Pressable>
       </View>
       {choosingCity ? (
         <View style={[styles.cityPanel, { backgroundColor: colors.card }]}>
           <Text style={[styles.panelLabel, { color: colors.mutedForeground }]}>Cidade</Text>
           <ChoiceRow label="Cidade" single>
-            {(maxWidth) => cities.data?.map((item) => (
-              <ChoiceControl
-                key={item.slug}
-                maxWidth={maxWidth}
-                role="radio"
-                accessibilityLabel={`${item.name}, ${item.state_code}`}
-                label={`${item.name} · ${item.state_code}`}
-                selected={item.slug === selectedCity}
-                onPress={() => {
-                  selectCity(item.slug)
-                  setChoosingCity(false)
-                }}
-              />
-            ))}
+            {(maxWidth) =>
+              cities.data?.map((item) => (
+                <ChoiceControl
+                  key={item.slug}
+                  maxWidth={maxWidth}
+                  role="radio"
+                  accessibilityLabel={`${item.name}, ${item.state_code}`}
+                  label={`${item.name} · ${item.state_code}`}
+                  selected={item.slug === selectedCity}
+                  onPress={() => {
+                    selectCity(item.slug)
+                    setChoosingCity(false)
+                  }}
+                />
+              ))
+            }
           </ChoiceRow>
         </View>
       ) : null}
@@ -217,28 +221,35 @@ export default function ExploreScreen() {
   const filterControls = (
     <View style={styles.filters}>
       <ChoiceRow label="Filtros" gutter={spacing.gutter}>
-        {(maxWidth) => <>
-          <Chip maxWidth={maxWidth} label="Aberto agora" selected={openNow} onPress={() => setOpenNow(!openNow)} />
-          {categories.data?.categories.map((item) => (
+        {(maxWidth) => (
+          <>
             <Chip
-              key={item.slug}
               maxWidth={maxWidth}
-              label={item.name}
-              selected={category === item.slug}
-              onPress={() => setCategory(category === item.slug ? undefined : item.slug)}
+              label="Aberto agora"
+              selected={openNow}
+              onPress={() => setOpenNow(!openNow)}
             />
-          ))}
-          {/* Facets come from the server, so chips are never hardcoded. */}
-          {filters.data?.attributes.map((item) => (
-            <Chip
-              key={item.key}
-              maxWidth={maxWidth}
-              label={item.name}
-              selected={attributes.includes(item.key)}
-              onPress={() => toggleAttribute(item.key)}
-            />
-          ))}
-        </>}
+            {categories.data?.categories.map((item) => (
+              <Chip
+                key={item.slug}
+                maxWidth={maxWidth}
+                label={item.name}
+                selected={category === item.slug}
+                onPress={() => setCategory(category === item.slug ? undefined : item.slug)}
+              />
+            ))}
+            {/* Facets come from the server, so chips are never hardcoded. */}
+            {filters.data?.attributes.map((item) => (
+              <Chip
+                key={item.key}
+                maxWidth={maxWidth}
+                label={item.name}
+                selected={attributes.includes(item.key)}
+                onPress={() => toggleAttribute(item.key)}
+              />
+            ))}
+          </>
+        )}
       </ChoiceRow>
     </View>
   )
@@ -258,9 +269,13 @@ export default function ExploreScreen() {
         }
         hint={
           !hasFilters
-            ? count ? plural(count, 'lugar', 'lugares') : null
+            ? count
+              ? plural(count, 'lugar', 'lugares')
+              : null
             : count
-              ? [debouncedTerm ? `“${debouncedTerm}”` : null, ...activeFilters].filter(Boolean).join(' · ')
+              ? [debouncedTerm ? `“${debouncedTerm}”` : null, ...activeFilters]
+                  .filter(Boolean)
+                  .join(' · ')
               : null
         }
         action={
@@ -280,7 +295,11 @@ export default function ExploreScreen() {
         Não foi possível carregar agora.
       </Text>
       {/* Manual retry preserving the filters, per the retry contract. */}
-      <Pressable accessibilityRole="button" onPress={() => search.refetch()} style={styles.feedbackAction}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => search.refetch()}
+        style={styles.feedbackAction}
+      >
         <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
       </Pressable>
     </View>
@@ -293,7 +312,9 @@ export default function ExploreScreen() {
               debouncedTerm ? `para “${debouncedTerm}”` : null,
               `em ${cityName}`,
               activeFilters.length ? `com os filtros: ${activeFilters.join(', ')}` : null,
-            ].filter(Boolean).join(' ') + '.'
+            ]
+              .filter(Boolean)
+              .join(' ') + '.'
           : `Ainda não há lugares publicados em ${cityName}.`}
       </Text>
       {hasFilters ? (
@@ -318,12 +339,18 @@ export default function ExploreScreen() {
         accessibilityLabel="Perguntar ao Concierge"
         accessibilityHint={`Conte o que procura e o Concierge sugere lugares em ${cityName}.`}
         onPress={() => setAsking(true)}
-        style={({ pressed }) => [styles.concierge, { backgroundColor: colors.primarySoft, opacity: pressed ? 0.9 : 1 }]}>
+        style={({ pressed }) => [
+          styles.concierge,
+          { backgroundColor: colors.primarySoft, opacity: pressed ? 0.9 : 1 },
+        ]}
+      >
         <View style={[styles.conciergeIcon, { backgroundColor: colors.primary }]}>
           <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primaryForeground} />
         </View>
         <View style={styles.conciergeCopy}>
-          <Text style={[styles.conciergeTitle, { color: colors.primaryAccent }]}>Não sabe por onde começar?</Text>
+          <Text style={[styles.conciergeTitle, { color: colors.primaryAccent }]}>
+            Não sabe por onde começar?
+          </Text>
           <Text style={[styles.conciergeText, { color: colors.foreground }]}>
             Conte o que procura e o Concierge sugere lugares daqui.
           </Text>
@@ -345,7 +372,10 @@ export default function ExploreScreen() {
           {filterControls}
           {resultsHeader}
           {feedback ? (
-            <ScrollView contentContainerStyle={styles.mapFeedback} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              contentContainerStyle={styles.mapFeedback}
+              keyboardShouldPersistTaps="handled"
+            >
               {feedback}
             </ScrollView>
           ) : (
@@ -379,7 +409,8 @@ export default function ExploreScreen() {
                 <ScreenHeader
                   insetTop={false}
                   eyebrow={brand}
-                  title="O que você quer experimentar hoje?">
+                  title="O que você quer experimentar hoje?"
+                >
                   {searchField}
                 </ScreenHeader>
                 {filterControls}
@@ -419,7 +450,12 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   gutter: { paddingHorizontal: spacing.gutter },
-  brandRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
+  brandRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+  },
   wordmark: { ...typography.heading, ...displayWeight('800'), fontSize: 20, letterSpacing: -0.4 },
   cityButton: {
     alignItems: 'center',
@@ -432,10 +468,19 @@ const styles = StyleSheet.create({
     paddingRight: 14,
   },
   cityName: { ...typography.label, flexShrink: 1 },
-  cityPanel: { borderRadius: radius.card, gap: spacing.xs, paddingTop: spacing.md, paddingBottom: spacing.xs },
+  cityPanel: {
+    borderRadius: radius.card,
+    gap: spacing.xs,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
   panelLabel: { ...typography.overline, paddingHorizontal: spacing.lg },
   filters: { paddingTop: spacing.sm },
-  resultsHeader: { paddingBottom: spacing.sm, paddingHorizontal: spacing.gutter, paddingTop: spacing.xs },
+  resultsHeader: {
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.xs,
+  },
   list: { paddingBottom: spacing.section },
   editorial: { gap: spacing.section, paddingTop: spacing.md },
   mapFeedback: { flexGrow: 1 },
@@ -443,10 +488,28 @@ const styles = StyleSheet.create({
   feedbackAction: { justifyContent: 'center', minHeight: minTouch },
   message: { ...typography.body, textAlign: 'center' },
   action: { ...typography.label, ...textWeight('700') },
-  concierge: { alignItems: 'center', borderRadius: radius.card, flexDirection: 'row', gap: 14, padding: 18 },
-  conciergeIcon: { alignItems: 'center', borderRadius: radius.pill, height: 48, justifyContent: 'center', width: 48 },
+  concierge: {
+    alignItems: 'center',
+    borderRadius: radius.card,
+    flexDirection: 'row',
+    gap: 14,
+    padding: 18,
+  },
+  conciergeIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
   conciergeCopy: { flex: 1, gap: 2, minWidth: 0 },
   conciergeTitle: { ...typography.label, ...textWeight('700'), fontSize: 16, lineHeight: 21 },
   conciergeText: typography.meta,
-  conciergeGo: { alignItems: 'center', borderRadius: radius.pill, height: minTouch, justifyContent: 'center', width: minTouch },
+  conciergeGo: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: minTouch,
+    justifyContent: 'center',
+    width: minTouch,
+  },
 })

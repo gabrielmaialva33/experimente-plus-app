@@ -59,7 +59,13 @@ export function ActionMenu({
         tone={tone}
         testID={testID}
       />
-      <Modal visible={open} transparent animationType="fade" onRequestClose={close} statusBarTranslucent>
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={close}
+        statusBarTranslucent
+      >
         <View style={styles.root}>
           <Pressable
             accessibilityRole="button"
@@ -69,7 +75,11 @@ export function ActionMenu({
           />
           <View
             accessibilityViewIsModal
-            style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+            style={[
+              styles.sheet,
+              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            ]}
+          >
             {title ? (
               <Text numberOfLines={2} style={[styles.title, { color: colors.mutedForeground }]}>
                 {title}
@@ -85,7 +95,8 @@ export function ActionMenu({
                 style={({ pressed }) => [
                   styles.row,
                   { borderBottomColor: colors.borderSubtle, opacity: pressed ? 0.7 : 1 },
-                ]}>
+                ]}
+              >
                 {item.icon ? <Ionicons name={item.icon} size={22} color={colors.primary} /> : null}
                 <Text style={[styles.label, { color: colors.foreground }]}>{item.label}</Text>
               </Pressable>
@@ -120,6 +131,11 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   label: { ...typography.label, fontSize: 16 },
-  cancel: { alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm, minHeight: minTouch },
+  cancel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: minTouch,
+  },
   cancelLabel: { ...typography.label, ...textWeight('700') },
 })

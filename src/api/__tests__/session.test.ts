@@ -52,14 +52,20 @@ describe('credential rotation', () => {
     seedSession()
     const { rotateCredentials } = loadSession()
     const consumed: string[] = []
-    const results = await Promise.all(['1', '2', '3'].map((suffix) =>
-      rotateCredentials(async (token) => {
-        consumed.push(token)
-        return payload(suffix)
-      })
-    ))
+    const results = await Promise.all(
+      ['1', '2', '3'].map((suffix) =>
+        rotateCredentials(async (token) => {
+          consumed.push(token)
+          return payload(suffix)
+        })
+      )
+    )
     expect(consumed).toEqual(['refresh-0', 'refresh-1', 'refresh-2'])
-    expect(results.map((item) => item.refreshToken)).toEqual(['refresh-1', 'refresh-2', 'refresh-3'])
+    expect(results.map((item) => item.refreshToken)).toEqual([
+      'refresh-1',
+      'refresh-2',
+      'refresh-3',
+    ])
   })
 
   it('persists the child pair and allows a later, separate rotation', async () => {
@@ -95,9 +101,9 @@ describe('credential rotation', () => {
     seedSession()
     const { rotateCredentials } = loadSession()
 
-    await expect(rotateCredentials(async () => Promise.reject(new Error('offline')))).rejects.toThrow(
-      'offline'
-    )
+    await expect(
+      rotateCredentials(async () => Promise.reject(new Error('offline')))
+    ).rejects.toThrow('offline')
     expect(mockStore.get('ep.refresh_token')).toBe('refresh-0')
   })
 })

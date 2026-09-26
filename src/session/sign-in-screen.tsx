@@ -69,12 +69,22 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
           {/* A stored credential whose context could not load: discovery still
               works, and this is the escape from a half-loaded session. */}
           {status === 'unavailable' ? (
-            <View style={[styles.notice, { backgroundColor: colors.warningSoft, borderColor: colors.borderSubtle }]}>
+            <View
+              style={[
+                styles.notice,
+                { backgroundColor: colors.warningSoft, borderColor: colors.borderSubtle },
+              ]}
+            >
               <Text style={[styles.body, { color: colors.foreground }]}>
                 Não foi possível carregar sua conta. Explorar continua disponível.
               </Text>
               <View style={styles.noticeActions}>
-                <Button label="Tentar de novo" variant="outline" size={44} onPress={() => void refresh()} />
+                <Button
+                  label="Tentar de novo"
+                  variant="outline"
+                  size={44}
+                  onPress={() => void refresh()}
+                />
                 <Button label="Sair desta conta" variant="ghost" size={44} onPress={signOut} />
               </View>
             </View>
@@ -126,7 +136,10 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
           </View>
 
           {message ? (
-            <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]}>
+            <Text
+              accessibilityRole="alert"
+              style={[styles.body, { color: colors.destructiveAccent }]}
+            >
               {message}
             </Text>
           ) : null}
@@ -142,7 +155,9 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
 
           <View style={styles.divider}>
             <View style={[styles.rule, { backgroundColor: colors.borderSubtle }]} />
-            <Text style={[styles.meta, { color: colors.mutedForeground }]}>Ainda não tem conta?</Text>
+            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+              Ainda não tem conta?
+            </Text>
             <View style={[styles.rule, { backgroundColor: colors.borderSubtle }]} />
           </View>
 
@@ -153,7 +168,9 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
             size={52}
             fill
             disabled={mutation.isPending}
-            onPress={() => (purchase ? router.replace('/cadastro?origin=compra') : router.push('/cadastro'))}
+            onPress={() =>
+              purchase ? router.replace('/cadastro?origin=compra') : router.push('/cadastro')
+            }
           />
         </View>
       </KeyboardForm>

@@ -43,7 +43,12 @@ it('says a review held by a rule is under review, not hidden by a person', async
 
 // Audit A34: an empty list is not a dead end.
 it('offers a way to start when there is no review yet', async () => {
-  queries.useMyReviews.mockReturnValue({ isPending: false, isError: false, data: { data: [] }, refetch: jest.fn() })
+  queries.useMyReviews.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { data: [] },
+    refetch: jest.fn(),
+  })
 
   const view = await render(<MyReviewsScreen />)
 

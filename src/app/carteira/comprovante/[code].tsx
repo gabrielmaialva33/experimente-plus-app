@@ -7,6 +7,9 @@ export default function WalletReceiptScreen() {
   const { code } = useLocalSearchParams<{ code: string }>()
 
   return (
-    <ReceiptScreen queryKey={['wallet', 'receipt', code]} load={() => getMyReceipt(code as string)} />
+    <ReceiptScreen
+      queryKey={['wallet', 'receipt', code]}
+      load={() => getMyReceipt(code as string)}
+    />
   )
 }

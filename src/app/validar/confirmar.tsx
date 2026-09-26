@@ -16,7 +16,8 @@ import type { Receipt } from '@/wallet/types'
 const NEW_PRESENTATION_MESSAGE = 'Este código não vale mais. Peça ao cliente para gerar um novo.'
 // A 400 covers both expired/invalid tokens and domain refusals. Do not claim
 // that a new code can bypass a benefit restriction or expose the raw error.
-const UNAVAILABLE_PRESENTATION_MESSAGE = 'Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.'
+const UNAVAILABLE_PRESENTATION_MESSAGE =
+  'Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.'
 
 /**
  * Preview and confirmation.
@@ -33,16 +34,24 @@ export default function ConfirmRedemptionScreen() {
   const token = useRef<string | undefined>(incomingToken)
   const started = useRef(false)
   const confirmationStarted = useRef(false)
-  const clearToken = () => { token.current = undefined }
+  const clearToken = () => {
+    token.current = undefined
+  }
 
-  const preview = usePrivateOperation(async (_: void, signal) => {
-    if (!token.current) throw new ApiError(422, null)
-    return previewRedemption(token.current, signal)
-  }, { onDispose: clearToken, keepPreviousData: true })
-  const confirm = usePrivateOperation(async (_: void, signal) => {
-    if (!token.current) throw new ApiError(422, null)
-    return confirmRedemption(token.current, signal)
-  }, { onDispose: clearToken })
+  const preview = usePrivateOperation(
+    async (_: void, signal) => {
+      if (!token.current) throw new ApiError(422, null)
+      return previewRedemption(token.current, signal)
+    },
+    { onDispose: clearToken, keepPreviousData: true }
+  )
+  const confirm = usePrivateOperation(
+    async (_: void, signal) => {
+      if (!token.current) throw new ApiError(422, null)
+      return confirmRedemption(token.current, signal)
+    },
+    { onDispose: clearToken }
+  )
 
   useEffect(() => {
     // The route is only a handoff. History must not retain the private token.
@@ -67,7 +76,10 @@ export default function ConfirmRedemptionScreen() {
     }
     const removeFocus = focusManager.subscribe(repeat)
     const removeOnline = onlineManager.subscribe(repeat)
-    return () => { removeFocus(); removeOnline() }
+    return () => {
+      removeFocus()
+      removeOnline()
+    }
   }, [previewReady, mutatePreview])
 
   if (confirm.data) {
@@ -115,22 +127,28 @@ export default function ConfirmRedemptionScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}>
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={[styles.heading, { color: colors.foreground }]}>Confirmar utilização</Text>
+        <Text accessibilityRole="header" style={[styles.heading, { color: colors.foreground }]}>
+          Confirmar utilização
+        </Text>
         <Text style={[styles.hint, { color: colors.mutedForeground }]}>
           Confira o cliente e o benefício. Nada é registrado antes de você confirmar.
         </Text>
       </View>
 
       {/* The benefit as the customer's ticket: the navy stub names it and its place. */}
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      >
         <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
           <Text style={[styles.overline, { color: colors.chromeMuted }]}>Benefício</Text>
-          <Text style={[styles.benefit, { color: colors.chromeForeground }]}>{benefit.offer_title}</Text>
-          <Text style={[styles.place, { color: colors.chromeMuted }]}>{benefit.establishment_name}</Text>
+          <Text style={[styles.benefit, { color: colors.chromeForeground }]}>
+            {benefit.offer_title}
+          </Text>
+          <Text style={[styles.place, { color: colors.chromeMuted }]}>
+            {benefit.establishment_name}
+          </Text>
         </View>
         <View style={styles.fields}>
           <Field label="Cliente" value={holder.full_name} emphasis />
@@ -144,8 +162,8 @@ export default function ConfirmRedemptionScreen() {
         <View style={[styles.notice, { backgroundColor: colors.warningSoft }]}>
           <Ionicons name="alert-circle-outline" size={20} color={colors.warningAccent} />
           <Text style={[styles.noticeText, { color: colors.warningAccent }]}>
-            A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o mesmo
-            comprovante será devolvido.
+            A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o
+            mesmo comprovante será devolvido.
           </Text>
         </View>
       ) : null}
@@ -194,10 +212,21 @@ function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void
         <View style={[styles.mark, { backgroundColor: colors.successSoft }]}>
           <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />
         </View>
-        <Text accessibilityRole="header" style={[styles.heading, styles.centered, { color: colors.successAccent }]}>Utilização registrada</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.heading, styles.centered, { color: colors.successAccent }]}
+        >
+          Utilização registrada
+        </Text>
       </View>
 
-      <View style={[styles.card, styles.fields, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[
+          styles.card,
+          styles.fields,
+          { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+        ]}
+      >
         <Field label="Comprovante" value={receipt.receipt_code} emphasis />
         <Field label="Cliente" value={receipt.holder.full_name} />
         <Field label="Unidade" value={receipt.establishment.name} />
@@ -210,13 +239,23 @@ function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void
   )
 }
 
-function Field({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
+function Field({
+  label,
+  value,
+  emphasis = false,
+}: {
+  label: string
+  value: string
+  emphasis?: boolean
+}) {
   const colors = useColors()
 
   return (
     <View style={styles.field}>
       <Text style={[styles.overline, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[emphasis ? styles.emphasis : styles.value, { color: colors.foreground }]}>{value}</Text>
+      <Text style={[emphasis ? styles.emphasis : styles.value, { color: colors.foreground }]}>
+        {value}
+      </Text>
     </View>
   )
 }
@@ -243,10 +282,22 @@ const styles = StyleSheet.create({
   field: { gap: 2 },
   value: { ...typography.body, ...textWeight('600') },
   emphasis: typography.heading,
-  notice: { alignItems: 'flex-start', borderRadius: radius.surface, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  notice: {
+    alignItems: 'flex-start',
+    borderRadius: radius.surface,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
   noticeText: { ...typography.meta, ...textWeight('600'), flex: 1 },
   actions: { gap: spacing.sm },
   done: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.lg },
-  mark: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
+  mark: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 64,
+    justifyContent: 'center',
+    width: 64,
+  },
   message: { ...typography.body, textAlign: 'center' },
 })

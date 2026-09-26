@@ -12,7 +12,12 @@ export function SectionHeader({
 }: {
   title: string
   hint?: string | null
-  action?: { label: string; onPress: () => void; icon?: keyof typeof Ionicons.glyphMap; accessibilityLabel?: string }
+  action?: {
+    label: string
+    onPress: () => void
+    icon?: keyof typeof Ionicons.glyphMap
+    accessibilityLabel?: string
+  }
 }) {
   const colors = useColors()
 
@@ -29,7 +34,8 @@ export function SectionHeader({
           accessibilityRole="button"
           accessibilityLabel={action.accessibilityLabel ?? action.label}
           onPress={action.onPress}
-          style={styles.action}>
+          style={styles.action}
+        >
           {action.icon ? <Ionicons name={action.icon} size={18} color={colors.primary} /> : null}
           <Text style={[styles.actionLabel, { color: colors.primary }]}>{action.label}</Text>
         </Pressable>
@@ -39,7 +45,12 @@ export function SectionHeader({
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'flex-end', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
+  row: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+  },
   copy: { flexShrink: 1, gap: 2 },
   title: typography.title,
   hint: typography.meta,

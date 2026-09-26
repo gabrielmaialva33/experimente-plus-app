@@ -29,7 +29,8 @@ export function Stars({ rating, size = 16 }: { rating: number; size?: number }) 
       accessibilityRole="image"
       accessibilityLabel={ratingLabel(rating)}
       style={styles.row}
-      testID="review-stars">
+      testID="review-stars"
+    >
       {STARS.map((star) => {
         const name = star <= drawn ? 'star' : star - 0.5 === drawn ? 'star-half' : 'star-outline'
         return (
@@ -80,7 +81,8 @@ export function StarsInput({
             hitSlop={spacing.sm}
             onPress={() => onChange(star)}
             style={styles.target}
-            testID={`star-${star}`}>
+            testID={`star-${star}`}
+          >
             <Ionicons
               name={star <= rating ? 'star' : 'star-outline'}
               size={32}

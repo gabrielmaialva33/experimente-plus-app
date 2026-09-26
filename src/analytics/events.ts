@@ -76,9 +76,7 @@ export function track(
     event_id: randomUUID(),
     event_type: eventType,
     ...payload,
-    ...(payload.search_term
-      ? { search_term: payload.search_term.slice(0, MAX_SEARCH_TERM) }
-      : {}),
+    ...(payload.search_term ? { search_term: payload.search_term.slice(0, MAX_SEARCH_TERM) } : {}),
   })
 
   if (queue.length >= MAX_BATCH) {

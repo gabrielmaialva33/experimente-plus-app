@@ -3,7 +3,9 @@ import { render } from '@testing-library/react-native'
 
 import { SessionCacheGuard } from '@/session/cache-guard'
 
-const mockSession = { current: { status: 'anonymous', context: null } as { status: string; context: unknown } }
+const mockSession = {
+  current: { status: 'anonymous', context: null } as { status: string; context: unknown },
+}
 jest.mock('@/session/context', () => ({ useSession: () => mockSession.current }))
 
 const signedIn = (userId: number, operationId = 1) => ({

@@ -34,14 +34,27 @@ export function ScreenHeader({
   return (
     <View
       testID="screen-header"
-      style={[styles.band, { backgroundColor: colors.chrome, paddingTop: (insetTop ? insets.top : 0) + spacing.gutter }]}>
+      style={[
+        styles.band,
+        {
+          backgroundColor: colors.chrome,
+          paddingTop: (insetTop ? insets.top : 0) + spacing.gutter,
+        },
+      ]}
+    >
       {eyebrow}
       {title ? (
-        <Text accessibilityRole="header" onLayout={onTitleLayout} style={[styles.title, { color: colors.chromeForeground }]}>
+        <Text
+          accessibilityRole="header"
+          onLayout={onTitleLayout}
+          style={[styles.title, { color: colors.chromeForeground }]}
+        >
           {title}
         </Text>
       ) : null}
-      {subtitle ? <Text style={[styles.subtitle, { color: colors.chromeMuted }]}>{subtitle}</Text> : null}
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: colors.chromeMuted }]}>{subtitle}</Text>
+      ) : null}
       {children}
     </View>
   )

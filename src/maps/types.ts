@@ -60,9 +60,12 @@ const metresBetween = (a: MapPin, b: MapPin) => {
 export const groupPins = (pins: MapPin[]): MapPinGroup[] => {
   const groups: MapPinGroup[] = []
   for (const pin of pins) {
-    const group = groups.find((candidate) => metresBetween(candidate.pins[0], pin) <= SAME_SPOT_METRES)
+    const group = groups.find(
+      (candidate) => metresBetween(candidate.pins[0], pin) <= SAME_SPOT_METRES
+    )
     if (group) group.pins.push(pin)
-    else groups.push({ key: pin.slug, latitude: pin.latitude, longitude: pin.longitude, pins: [pin] })
+    else
+      groups.push({ key: pin.slug, latitude: pin.latitude, longitude: pin.longitude, pins: [pin] })
   }
   return groups
 }

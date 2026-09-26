@@ -31,7 +31,8 @@ export function ReviewPhotos({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
-      accessibilityLabel={photos.length === 1 ? '1 foto' : `${photos.length} fotos`}>
+      accessibilityLabel={photos.length === 1 ? '1 foto' : `${photos.length} fotos`}
+    >
       {photos.map((photo, index) => {
         const label = photo.alt_text || `Foto ${index + 1} da avaliação`
         return (
@@ -43,7 +44,13 @@ export function ReviewPhotos({
                 accessible
                 contentFit="cover"
                 style={[styles.image, { backgroundColor: colors.surfaceRaised }]}
-                fallback={<View accessibilityLabel={label} accessible style={[styles.image, { backgroundColor: colors.surfaceRaised }]} />}
+                fallback={
+                  <View
+                    accessibilityLabel={label}
+                    accessible
+                    style={[styles.image, { backgroundColor: colors.surfaceRaised }]}
+                  />
+                }
               />
             ) : null}
             {onRemove ? (
@@ -54,9 +61,18 @@ export function ReviewPhotos({
                 disabled={removing}
                 hitSlop={spacing.sm}
                 onPress={() => onRemove(photo)}
-                style={[styles.remove, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}
-                testID={`remove-photo-${photo.id}`}>
-                <Ionicons name="close" size={16} color={colors.destructiveAccent} accessible={false} />
+                style={[
+                  styles.remove,
+                  { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
+                ]}
+                testID={`remove-photo-${photo.id}`}
+              >
+                <Ionicons
+                  name="close"
+                  size={16}
+                  color={colors.destructiveAccent}
+                  accessible={false}
+                />
               </Pressable>
             ) : null}
           </View>

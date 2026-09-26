@@ -24,7 +24,10 @@ jest.mock('@/api/client', () => ({
   ApiError: jest.requireActual('@/api/transport').ApiError,
 }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
-jest.mock('@/catalog/city-store', () => ({ useSelectedCity: jest.fn(() => 'londrina'), selectCity: jest.fn() }))
+jest.mock('@/catalog/city-store', () => ({
+  useSelectedCity: jest.fn(() => 'londrina'),
+  selectCity: jest.fn(),
+}))
 jest.mock('@/catalog/queries', () => ({
   useCities: () => ({ data: [{ slug: 'londrina', name: 'Londrina', state_code: 'PR' }] }),
 }))
@@ -131,29 +134,37 @@ describe('account hub', () => {
     expect(partner.getByText('Operação ativa: Operação Norte')).toBeOnTheScreen()
   })
 
-  it.each(['light', 'dark'] as const)('keeps sign-out plain and deletion discreet red in %s', async (mode) => {
-    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
-    const { signOut } = mockSession()
-    const view = await renderWithClient(<AccountScreen />)
+  it.each(['light', 'dark'] as const)(
+    'keeps sign-out plain and deletion discreet red in %s',
+    async (mode) => {
+      jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+      const { signOut } = mockSession()
+      const view = await renderWithClient(<AccountScreen />)
 
-    expect(view.getByText('Sair')).toHaveStyle({ color: palette[mode].foreground })
-    expect(view.getByText('Excluir conta')).toHaveStyle({ color: palette[mode].destructiveAccent })
-    await fireEvent.press(view.getByRole('button', { name: 'Sair' }))
-    expect(signOut).toHaveBeenCalledTimes(1)
-  })
+      expect(view.getByText('Sair')).toHaveStyle({ color: palette[mode].foreground })
+      expect(view.getByText('Excluir conta')).toHaveStyle({
+        color: palette[mode].destructiveAccent,
+      })
+      await fireEvent.press(view.getByRole('button', { name: 'Sair' }))
+      expect(signOut).toHaveBeenCalledTimes(1)
+    }
+  )
 })
 
 describe('profile editing', () => {
-  it.each(['', '   '])('clears username with %p without sending the untouched name', async (value) => {
-    const view = await renderProfile()
+  it.each(['', '   '])(
+    'clears username with %p without sending the untouched name',
+    async (value) => {
+      const view = await renderProfile()
 
-    await fireEvent.changeText(view.getByLabelText('Usuário'), value)
-    const save = view.getByRole('button', { name: 'Salvar alterações' })
-    expect(save).toBeEnabled()
-    await fireEvent.press(save)
+      await fireEvent.changeText(view.getByLabelText('Usuário'), value)
+      const save = view.getByRole('button', { name: 'Salvar alterações' })
+      expect(save).toBeEnabled()
+      await fireEvent.press(save)
 
-    await expectProfilePatch({ username: null })
-  })
+      await expectProfilePatch({ username: null })
+    }
+  )
 
   it.each([null, ''])('saves only the name with an untouched %p username', async (username) => {
     const view = await renderProfile(username)
@@ -208,7 +219,9 @@ describe('profile editing', () => {
     await fireEvent.press(view.getByRole('button', { name: 'Salvar alterações' }))
 
     expect(view.getByLabelText('Nome')).toHaveAccessibleName('Nome')
-    expect(view.getByLabelText('Nome').props.accessibilityHint).toBe('Informe seu nome, com até 255 caracteres.')
+    expect(view.getByLabelText('Nome').props.accessibilityHint).toBe(
+      'Informe seu nome, com até 255 caracteres.'
+    )
     expect(view.getByRole('alert')).toHaveTextContent('Informe seu nome, com até 255 caracteres.')
     expect(api.request).not.toHaveBeenCalled()
   })
@@ -226,14 +239,18 @@ describe('profile editing', () => {
   it('puts a taken username on the username field, with the rule', async () => {
     const view = await renderProfile()
     api.request.mockRejectedValueOnce(
-      new ApiError(422, { errors: [{ field: 'username', rule: 'database.unique', message: 'taken' }] })
+      new ApiError(422, {
+        errors: [{ field: 'username', rule: 'database.unique', message: 'taken' }],
+      })
     )
 
     await fireEvent.changeText(view.getByLabelText('Usuário'), 'bia')
     await fireEvent.press(view.getByRole('button', { name: 'Salvar alterações' }))
 
     expect(await view.findByText('Este usuário já está em uso. Escolha outro.')).toBeOnTheScreen()
-    expect(view.getByLabelText('Usuário').props.accessibilityHint).toBe('Este usuário já está em uso. Escolha outro.')
+    expect(view.getByLabelText('Usuário').props.accessibilityHint).toBe(
+      'Este usuário já está em uso. Escolha outro.'
+    )
     expect(view.getByLabelText('Nome').props.accessibilityHint).toBeUndefined()
     // No blanket sentence about both fields.
     expect(view.queryByText(/pode já estar em uso/)).toBeNull()
@@ -249,20 +266,30 @@ describe('profile editing', () => {
     expect(api.request).not.toHaveBeenCalled()
   })
 
-  it.each(['light', 'dark'] as const)('styles saving as a utility action instead of a conversion in %s', async (mode) => {
-    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
-    const view = await renderProfile()
-    await fireEvent.changeText(view.getByLabelText('Nome'), 'Ana Souza')
-    expect(view.getByRole('button', { name: 'Salvar alterações' })).toHaveStyle({ backgroundColor: palette[mode].primary })
-    expect(view.getByText('Salvar alterações')).toHaveStyle({ color: palette[mode].primaryForeground })
-  })
+  it.each(['light', 'dark'] as const)(
+    'styles saving as a utility action instead of a conversion in %s',
+    async (mode) => {
+      jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+      const view = await renderProfile()
+      await fireEvent.changeText(view.getByLabelText('Nome'), 'Ana Souza')
+      expect(view.getByRole('button', { name: 'Salvar alterações' })).toHaveStyle({
+        backgroundColor: palette[mode].primary,
+      })
+      expect(view.getByText('Salvar alterações')).toHaveStyle({
+        color: palette[mode].primaryForeground,
+      })
+    }
+  )
 })
 
 describe('city preference', () => {
   it('writes the chosen city to the discovery state and goes back', async () => {
     const back = jest.fn()
-    jest.spyOn(jest.requireMock('expo-router'), 'useRouter').mockReturnValue({ push: mockPush, back })
-    const CityScreen = (jest.requireActual('@/app/conta/cidade') as { default: () => ReactElement }).default
+    jest
+      .spyOn(jest.requireMock('expo-router'), 'useRouter')
+      .mockReturnValue({ push: mockPush, back })
+    const CityScreen = (jest.requireActual('@/app/conta/cidade') as { default: () => ReactElement })
+      .default
     const view = await renderWithClient(<CityScreen />)
 
     expect(view.getByRole('radio', { name: 'Londrina, PR' })).toBeChecked()

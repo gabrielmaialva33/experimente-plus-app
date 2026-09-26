@@ -6,7 +6,9 @@ import { CityAgenda } from '@/catalog/city-agenda'
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.light,
+}))
 jest.mock('@/api/client', () => ({
   ApiError: class ApiError extends Error {
     status: number
@@ -36,7 +38,11 @@ it('refuses credentials without saying which of the two was wrong', async () => 
   auth.signIn.mockRejectedValue(new ApiError(400))
   // No garbage-collection timer for the mutation: one left behind keeps jest from exiting.
   const client = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } })
-  const view = await render(<QueryClientProvider client={client}><SignInScreen /></QueryClientProvider>)
+  const view = await render(
+    <QueryClientProvider client={client}>
+      <SignInScreen />
+    </QueryClientProvider>
+  )
   await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
   await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
   await fireEvent.press(view.getByRole('button', { name: 'Entrar' }))
@@ -53,11 +59,19 @@ it('describes the new experiences band by recency', async () => {
       localDate: '2026-09-26',
       happeningToday: [],
       upcoming: [],
-      newExperiences: [{
-        kind: 'experience', id: 1, title: 'Menu de primavera', description: null, cover: null,
-        establishmentName: 'Casa de Petiscos', establishmentSlug: 'casa', citySlug: 'londrina',
-        publishedAt: '2026-09-25T15:00:00Z',
-      }],
+      newExperiences: [
+        {
+          kind: 'experience',
+          id: 1,
+          title: 'Menu de primavera',
+          description: null,
+          cover: null,
+          establishmentName: 'Casa de Petiscos',
+          establishmentSlug: 'casa',
+          citySlug: 'londrina',
+          publishedAt: '2026-09-25T15:00:00Z',
+        },
+      ],
       isEmpty: false,
     },
   })

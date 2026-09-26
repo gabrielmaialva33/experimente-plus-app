@@ -35,7 +35,8 @@ export function TicketCard({
   return (
     <View
       testID={testID}
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+    >
       <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
         <Ionicons name="ticket-outline" size={26} color={colors.chromeForeground} />
         <Text numberOfLines={3} style={[styles.stubLabel, { color: colors.chromeForeground }]}>

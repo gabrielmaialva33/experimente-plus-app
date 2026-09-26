@@ -29,7 +29,12 @@ const toggles = { favorites: jest.fn(), follows: jest.fn() }
 
 const renderActions = () =>
   render(
-    <SaveActions establishmentId={7} name="Ateliê do Café" citySlug="londrina" slug="atelie-do-cafe" />
+    <SaveActions
+      establishmentId={7}
+      name="Ateliê do Café"
+      citySlug="londrina"
+      slug="atelie-do-cafe"
+    />
   )
 
 beforeEach(() => {

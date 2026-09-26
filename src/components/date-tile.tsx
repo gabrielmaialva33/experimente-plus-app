@@ -43,7 +43,8 @@ export function DateTile({
       testID="date-tile"
       accessible
       accessibilityLabel={value.full}
-      style={[styles.tile, { backgroundColor: appearance.background }]}>
+      style={[styles.tile, { backgroundColor: appearance.background }]}
+    >
       <Text style={[styles.weekday, { color: appearance.foreground }]}>{value.weekday}</Text>
       <Text style={[styles.day, { color: appearance.foreground }]}>{value.day}</Text>
       <Text style={[styles.month, { color: appearance.foreground }]}>{value.month}</Text>
@@ -52,9 +53,15 @@ export function DateTile({
 }
 
 const styles = StyleSheet.create({
-  tile: { alignItems: 'center', borderRadius: radius.thumb, flexShrink: 0, height: 72, justifyContent: 'center', width: 64 },
+  tile: {
+    alignItems: 'center',
+    borderRadius: radius.thumb,
+    flexShrink: 0,
+    height: 72,
+    justifyContent: 'center',
+    width: 64,
+  },
   weekday: { ...typography.overline, letterSpacing: 0.7 },
   day: { ...typography.title, fontSize: 26, lineHeight: 28 },
   month: { ...typography.caption },
 })
-

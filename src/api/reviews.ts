@@ -102,7 +102,11 @@ export interface PhotoUpload {
  * Sends one photo. The server strips its location and device metadata before
  * storing it, so nothing here has to — and nothing here could guarantee it.
  */
-export const uploadReviewPhoto = (reviewId: number, photo: PhotoUpload, altText?: string | null) => {
+export const uploadReviewPhoto = (
+  reviewId: number,
+  photo: PhotoUpload,
+  altText?: string | null
+) => {
   const form = new FormData()
   // Expo's runtime installs expo/fetch as the global fetch, and it only sends
   // Blob parts: React Native's { uri, name, type } object fails on the device

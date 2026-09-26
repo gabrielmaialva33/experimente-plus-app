@@ -27,12 +27,16 @@ export function ReceiptCard({ receipt, compact = false }: { receipt: Receipt; co
             {receipt.establishment.name}
           </Text>
         </View>
-        {compact ? <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} /> : null}
+        {compact ? (
+          <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+        ) : null}
       </View>
 
       <View style={styles.stamp}>
         <Text style={[styles.overline, { color: colors.mutedForeground }]}>Comprovante</Text>
-        <Text selectable={!compact} style={[styles.code, { color: colors.foreground }]}>{receipt.receipt_code}</Text>
+        <Text selectable={!compact} style={[styles.code, { color: colors.foreground }]}>
+          {receipt.receipt_code}
+        </Text>
         {/* Explicit timezone: the same instant must not read as a different day
             depending on where the device is. */}
         <Text style={[styles.meta, { color: colors.mutedForeground }]}>
@@ -76,13 +80,24 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   head: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
-  mark: { alignItems: 'center', borderRadius: radius.pill, height: 40, justifyContent: 'center', width: 40 },
+  mark: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
   headText: { flex: 1, gap: 2 },
   title: { ...typography.body, ...textWeight('700') },
   meta: typography.meta,
   stamp: { alignItems: 'baseline', columnGap: spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },
   overline: typography.overline,
-  code: { ...typography.label, ...textWeight('700'), fontVariant: ['tabular-nums'], letterSpacing: 1 },
+  code: {
+    ...typography.label,
+    ...textWeight('700'),
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 1,
+  },
   rows: { borderTopWidth: 1, gap: spacing.md, paddingTop: spacing.md },
   row: { gap: 2 },
   value: typography.body,

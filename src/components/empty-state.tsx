@@ -25,7 +25,10 @@ export function EmptyState({
   const colors = useColors()
 
   return (
-    <View testID={testID} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+    <View
+      testID={testID}
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+    >
       <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
         <Ionicons name={icon} size={26} color={colors.primaryAccent} />
       </View>
@@ -33,7 +36,9 @@ export function EmptyState({
         {title}
       </Text>
       {text ? <Text style={[styles.text, { color: colors.mutedForeground }]}>{text}</Text> : null}
-      {action ? <Button label={action.label} variant="outline" align="center" onPress={action.onPress} /> : null}
+      {action ? (
+        <Button label={action.label} variant="outline" align="center" onPress={action.onPress} />
+      ) : null}
     </View>
   )
 }
@@ -47,7 +52,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
   },
-  icon: { alignItems: 'center', borderRadius: radius.pill, height: 56, justifyContent: 'center', width: 56 },
+  icon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
   title: { ...typography.heading, textAlign: 'center' },
   text: { ...typography.body, textAlign: 'center' },
 })

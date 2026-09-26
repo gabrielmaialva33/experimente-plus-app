@@ -50,11 +50,15 @@ describe('Multipart transport & uploadFile', () => {
       return new Response(JSON.stringify({ ok: true }), { status: 200 })
     })
 
-    await send('/api/v1/test-upload', {
-      method: 'POST',
-      body: formData,
-      authenticated: true,
-    }, 'test-access-token')
+    await send(
+      '/api/v1/test-upload',
+      {
+        method: 'POST',
+        body: formData,
+        authenticated: true,
+      },
+      'test-access-token'
+    )
 
     expect(capturedInit).toBeDefined()
     const headers = capturedInit?.headers as Record<string, string>
@@ -167,7 +171,9 @@ describe('Multipart transport & uploadFile', () => {
     const part = (capturedInit?.body as FormData).get('file') as Blob & { name: string }
     expect(part).toBeInstanceOf(Blob)
     expect(part.name).toBe('photo.jpg')
-    expect((capturedInit?.headers as Record<string, string>)?.authorization).toBe('Bearer test-access-token')
+    expect((capturedInit?.headers as Record<string, string>)?.authorization).toBe(
+      'Bearer test-access-token'
+    )
     expect(result).toEqual(mockUploadResponse)
   })
 })

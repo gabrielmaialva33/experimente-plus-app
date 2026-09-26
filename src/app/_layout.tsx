@@ -73,10 +73,7 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="cadastro" options={{ title: 'Criar conta' }} />
         <Stack.Screen name="compra/[id]" options={{ title: 'Comprar benefício' }} />
         <Stack.Screen name="compra/entrar" options={{ title: 'Entrar' }} />
-        <Stack.Screen
-          name="estabelecimento/[city]/[slug]"
-          options={{ title: 'Estabelecimento' }}
-        />
+        <Stack.Screen name="estabelecimento/[city]/[slug]" options={{ title: 'Estabelecimento' }} />
         <Stack.Screen
           name="carteira/apresentar"
           options={{ headerShown: true, title: 'Apresentar benefício' }}

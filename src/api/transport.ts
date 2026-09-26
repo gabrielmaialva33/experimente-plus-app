@@ -28,7 +28,9 @@ function parseRetryAfter(header: string | null): number | undefined {
   if (!header?.trim()) return undefined
   if (/^\d+$/.test(header.trim())) return Number(header)
   const deadline = Date.parse(header)
-  return Number.isFinite(deadline) ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : undefined
+  return Number.isFinite(deadline)
+    ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+    : undefined
 }
 
 /** Transport shared by JSON requests, multipart uploads, and serialized session operations. */
@@ -54,7 +56,8 @@ export async function send(path: string, options: RequestOptions, accessToken?: 
       : JSON.stringify(options.body)
 
   const response = await fetch(apiUrl(path), {
-    method: options.method ?? 'GET', headers,
+    method: options.method ?? 'GET',
+    headers,
     body: body as BodyInit | undefined,
     signal: options.signal,
     ...(privateRequest ? { cache: 'no-store' as const } : {}),
@@ -72,13 +75,21 @@ export async function decode(response: Response): Promise<unknown> {
   if (response.status === 204) return null
   const text = await response.text()
   if (!text) return null
-  try { return JSON.parse(text) } catch { return text }
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
 }
 
 export async function responseError(response: Response, privateRequest = false): Promise<ApiError> {
   // Once headers established a rule error, a broken response body must not
   // turn it into a network error eligible for automatic retry.
-  const body = privateRequest && response.status === 404 ? null : await decode(response).catch(() => null)
-  return new ApiError(response.status, body,
-    response.status === 429 ? parseRetryAfter(response.headers.get('retry-after')) : undefined)
+  const body =
+    privateRequest && response.status === 404 ? null : await decode(response).catch(() => null)
+  return new ApiError(
+    response.status,
+    body,
+    response.status === 429 ? parseRetryAfter(response.headers.get('retry-after')) : undefined
+  )
 }

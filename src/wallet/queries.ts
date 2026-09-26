@@ -19,7 +19,7 @@ export const useWallet = (refetchInterval?: number) => {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
-    refetchInterval: (query) => query.state.error ? false : refetchInterval ?? false,
+    refetchInterval: (query) => (query.state.error ? false : (refetchInterval ?? false)),
   })
 }
 
@@ -32,15 +32,17 @@ export class FinancialRestrictionError extends Error {}
 export function useCreatePresentation() {
   const client = useQueryClient()
 
-  return usePrivateOperation(async ({ accessId, offerId }: { accessId: number; offerId: number }, signal) => {
-    // Recheck eligibility before every explicit presentation, without caching its response.
-    const wallet = await getWallet(signal)
-    if (signal.aborted) return Promise.reject(new Error('Presentation cancelled'))
-    const eligibility = presentationEligibility(wallet, accessId, offerId)
-    if (eligibility.blocked) throw new FinancialRestrictionError(FINANCIAL_RESTRICTION_MESSAGE)
-    if (!eligibility.allowed) throw new Error('Benefit unavailable')
-    const result = await createPresentation(accessId, offerId, signal)
-    if (!signal.aborted) void client.invalidateQueries({ queryKey: walletKeys.wallet })
-    return result
-  })
+  return usePrivateOperation(
+    async ({ accessId, offerId }: { accessId: number; offerId: number }, signal) => {
+      // Recheck eligibility before every explicit presentation, without caching its response.
+      const wallet = await getWallet(signal)
+      if (signal.aborted) return Promise.reject(new Error('Presentation cancelled'))
+      const eligibility = presentationEligibility(wallet, accessId, offerId)
+      if (eligibility.blocked) throw new FinancialRestrictionError(FINANCIAL_RESTRICTION_MESSAGE)
+      if (!eligibility.allowed) throw new Error('Benefit unavailable')
+      const result = await createPresentation(accessId, offerId, signal)
+      if (!signal.aborted) void client.invalidateQueries({ queryKey: walletKeys.wallet })
+      return result
+    }
+  )
 }

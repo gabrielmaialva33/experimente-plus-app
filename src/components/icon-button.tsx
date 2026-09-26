@@ -16,12 +16,23 @@ interface IconButtonProps {
 }
 
 /** A 44-unit circle: the smallest target the app draws. */
-export function IconButton({ icon, accessibilityLabel, onPress, tone = 'surface', selected, testID }: IconButtonProps) {
+export function IconButton({
+  icon,
+  accessibilityLabel,
+  onPress,
+  tone = 'surface',
+  selected,
+  testID,
+}: IconButtonProps) {
   const colors = useColors()
   const appearance = {
     surface: { background: colors.card, border: colors.borderSubtle, foreground: colors.primary },
     image: { background: '#ffffff', border: '#ffffff', foreground: '#13467c' },
-    chrome: { background: colors.chromeRaised, border: colors.chromeRaised, foreground: colors.chromeForeground },
+    chrome: {
+      background: colors.chromeRaised,
+      border: colors.chromeRaised,
+      foreground: colors.chromeForeground,
+    },
     plain: { background: 'transparent', border: 'transparent', foreground: colors.mutedForeground },
   }[tone]
 
@@ -35,8 +46,13 @@ export function IconButton({ icon, accessibilityLabel, onPress, tone = 'surface'
       hitSlop={4}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: appearance.background, borderColor: appearance.border, opacity: pressed ? 0.8 : 1 },
-      ]}>
+        {
+          backgroundColor: appearance.background,
+          borderColor: appearance.border,
+          opacity: pressed ? 0.8 : 1,
+        },
+      ]}
+    >
       <Ionicons name={icon} size={22} color={appearance.foreground} />
     </Pressable>
   )

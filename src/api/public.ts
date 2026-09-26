@@ -1,9 +1,4 @@
-import {
-  decode,
-  responseError,
-  send,
-  type RequestOptions,
-} from './transport'
+import { decode, responseError, send, type RequestOptions } from './transport'
 
 export type PublicRequestOptions = Omit<RequestOptions, 'authenticated'> & {
   authenticated?: never

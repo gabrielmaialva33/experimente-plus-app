@@ -36,7 +36,12 @@ export function GoogleMapRenderer({ pins, center, onSelect }: MapRendererProps) 
 
   return (
     <View style={styles.map}>
-      <MapView style={styles.map} cameraPosition={cameraPosition} markers={markers} onMarkerClick={onMarkerClick} />
+      <MapView
+        style={styles.map}
+        cameraPosition={cameraPosition}
+        markers={markers}
+        onMarkerClick={onMarkerClick}
+      />
       {open ? (
         <PinGroupList
           group={open}

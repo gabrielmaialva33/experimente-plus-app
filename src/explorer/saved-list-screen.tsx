@@ -84,7 +84,10 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
           <View style={styles.header}>
             <SectionHeader title="Lugares" />
             {unavailable > 0 ? (
-              <Text style={[styles.notice, { color: colors.mutedForeground }]} testID="saved-unavailable">
+              <Text
+                style={[styles.notice, { color: colors.mutedForeground }]}
+                testID="saved-unavailable"
+              >
                 {unavailable === 1
                   ? '1 lugar salvo está indisponível no momento e aparecerá de novo se voltar ao catálogo.'
                   : `${unavailable} lugares salvos estão indisponíveis no momento e aparecerão de novo se voltarem ao catálogo.`}
@@ -155,7 +158,8 @@ function SavedRow({
   return (
     <View
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-      testID={`saved-${card.id}`}>
+      testID={`saved-${card.id}`}
+    >
       <EstablishmentCardRow
         card={card}
         onPress={() => router.push(`/estabelecimento/${card.city_slug}/${card.slug}`)}

@@ -91,7 +91,9 @@ describe('favourites', () => {
       isPending: false,
       isError: false,
       data: {
-        data: [{ id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' }],
+        data: [
+          { id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' },
+        ],
         unavailable: 2,
       },
     })
@@ -107,7 +109,9 @@ describe('favourites', () => {
       isPending: false,
       isError: false,
       data: {
-        data: [{ id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' }],
+        data: [
+          { id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' },
+        ],
         unavailable: 0,
       },
     })
@@ -126,13 +130,17 @@ describe('favourites', () => {
       isPending: false,
       isError: false,
       data: {
-        data: [{ id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' }],
+        data: [
+          { id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' },
+        ],
         unavailable: 0,
       },
     })
 
     const view = await render(<FavoritesScreen />)
-    await fireEvent.press(view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' }))
+    await fireEvent.press(
+      view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' })
+    )
     expect(mutate).toHaveBeenLastCalledWith(false)
     expect(view.getByRole('alert')).toHaveTextContent(/Ateliê do Café removido dos favoritos/)
 
@@ -146,7 +154,11 @@ describe('favourites', () => {
     [FavoritesScreen, 'Você ainda não tem lugares favoritos'],
     [FollowingScreen, 'Você ainda não segue nenhum lugar'],
   ] as const)('offers a way to fill an empty list (%#)', async (Screen, title) => {
-    queries.useSavedList.mockReturnValue({ isPending: false, isError: false, data: { data: [], unavailable: 0 } })
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [], unavailable: 0 },
+    })
 
     const view = await render(<Screen />)
     expect(view.getByRole('header', { name: title })).toBeOnTheScreen()
@@ -297,7 +309,11 @@ describe('interests', () => {
 
     const view = await render(<InterestsScreen />)
 
-    expect(view.getByTestId('interest-cafes-box')).toHaveStyle({ width: 24, height: 24, borderWidth: 2 })
+    expect(view.getByTestId('interest-cafes-box')).toHaveStyle({
+      width: 24,
+      height: 24,
+      borderWidth: 2,
+    })
     expect(view.getByRole('checkbox', { name: 'Cafés' })).not.toBeChecked()
   })
 
@@ -369,7 +385,9 @@ describe('itinerary', () => {
   it('cannot move the first stop up or the last one down', async () => {
     const view = await render(<ItineraryScreen />)
 
-    expect(view.getByTestId('stop-11-up').props.accessibilityState).toMatchObject({ disabled: true })
+    expect(view.getByTestId('stop-11-up').props.accessibilityState).toMatchObject({
+      disabled: true,
+    })
     expect(view.getByTestId('stop-13-down').props.accessibilityState).toMatchObject({
       disabled: true,
     })
@@ -415,7 +433,11 @@ describe('itinerary', () => {
       data: {
         data: [
           { id: 1, establishment: card(7, 'Café da Manhã'), created_at: '2026-09-23T12:00:00Z' },
-          { id: 2, establishment: card(9, 'Sorveteria da Praça'), created_at: '2026-09-23T12:00:00Z' },
+          {
+            id: 2,
+            establishment: card(9, 'Sorveteria da Praça'),
+            created_at: '2026-09-23T12:00:00Z',
+          },
         ],
         unavailable: 0,
       },
@@ -426,7 +448,9 @@ describe('itinerary', () => {
     expect(queries.useSavedList).toHaveBeenCalledWith('favorites')
     // Already the first stop, so not offered again.
     expect(view.queryByRole('button', { name: 'Adicionar Café da Manhã ao roteiro' })).toBeNull()
-    await fireEvent.press(view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' }))
+    await fireEvent.press(
+      view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' })
+    )
     expect(mutate).toHaveBeenCalledWith({ id: 5, establishmentId: 9 })
   })
 

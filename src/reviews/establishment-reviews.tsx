@@ -55,14 +55,17 @@ export function EstablishmentReviews({
             ? {
                 label: 'Ver todas',
                 accessibilityLabel: `Ver todas as ${total} avaliações`,
-                onPress: () => router.push(named(`/avaliacoes/${establishmentId}`, establishmentName)),
+                onPress: () =>
+                  router.push(named(`/avaliacoes/${establishmentId}`, establishmentName)),
               }
             : undefined
         }
       />
 
       {total === 0 ? (
-        <Text style={[styles.count, { color: colors.mutedForeground }]}>Ainda não há avaliações deste lugar.</Text>
+        <Text style={[styles.count, { color: colors.mutedForeground }]}>
+          Ainda não há avaliações deste lugar.
+        </Text>
       ) : (
         <View style={styles.score}>
           {summary.average !== null ? (

@@ -47,8 +47,13 @@ export function CompactCard({
       testID={testID}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.card, borderColor: colors.borderSubtle, opacity: pressed ? 0.92 : 1 },
-      ]}>
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.borderSubtle,
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+    >
       {image ? (
         <RemoteImage
           source={{ uri: image.uri }}
@@ -59,7 +64,9 @@ export function CompactCard({
           fallback={fallback}
         />
       ) : media ? (
-        <View style={[styles.image, styles.fallback, { backgroundColor: colors.primarySoft }]}>{media}</View>
+        <View style={[styles.image, styles.fallback, { backgroundColor: colors.primarySoft }]}>
+          {media}
+        </View>
       ) : (
         fallback
       )}
@@ -97,4 +104,3 @@ const styles = StyleSheet.create({
   title: { ...typography.heading, fontSize: 16, lineHeight: 20 },
   meta: typography.caption,
 })
-

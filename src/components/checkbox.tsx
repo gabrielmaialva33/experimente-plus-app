@@ -42,7 +42,8 @@ export function Checkbox({
         disabled={disabled}
         onPress={onPress}
         testID={testID}
-        style={[styles.row, { opacity: disabled ? 0.6 : 1 }]}>
+        style={[styles.row, { opacity: disabled ? 0.6 : 1 }]}
+      >
         <View
           testID={testID ? `${testID}-box` : undefined}
           style={[
@@ -51,12 +52,17 @@ export function Checkbox({
               backgroundColor: checked ? colors.primary : colors.card,
               borderColor: checked ? colors.primary : colors.choiceBorder,
             },
-          ]}>
-          {checked ? <Ionicons name="checkmark" size={18} color={colors.primaryForeground} /> : null}
+          ]}
+        >
+          {checked ? (
+            <Ionicons name="checkmark" size={18} color={colors.primaryForeground} />
+          ) : null}
         </View>
         <View style={styles.copy}>
           <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
-          {hint ? <Text style={[styles.hint, { color: colors.mutedForeground }]}>{hint}</Text> : null}
+          {hint ? (
+            <Text style={[styles.hint, { color: colors.mutedForeground }]}>{hint}</Text>
+          ) : null}
         </View>
       </Pressable>
       {children}
@@ -67,7 +73,14 @@ export function Checkbox({
 const styles = StyleSheet.create({
   wrap: { gap: spacing.xs },
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, minHeight: minTouch },
-  box: { alignItems: 'center', borderRadius: 6, borderWidth: 2, height: 24, justifyContent: 'center', width: 24 },
+  box: {
+    alignItems: 'center',
+    borderRadius: 6,
+    borderWidth: 2,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
   copy: { flex: 1, gap: 2 },
   label: typography.body,
   hint: typography.meta,

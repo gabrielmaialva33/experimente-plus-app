@@ -45,9 +45,10 @@ function reference(item: ConciergeGroundingItem, index: number): ConciergeRefere
       // For an experience or an event the name is the content, so the venue is
       // worth showing; for an establishment it would only repeat the name.
       place: establishmentName && establishmentName !== name ? establishmentName : null,
-      detail: [optionalString(item.category), optionalString(item.district)]
-        .filter(Boolean)
-        .join(' · ') || null,
+      detail:
+        [optionalString(item.category), optionalString(item.district)]
+          .filter(Boolean)
+          .join(' · ') || null,
       citySlug: optionalString(item.city_slug),
       establishmentSlug: optionalString(item.establishment_slug),
     },
@@ -69,7 +70,9 @@ export const isNavigable = (view: ConciergeReferenceView): boolean =>
  * page scrolls to it (audit A14). A place itself, or a reference the app does not
  * recognise, opens the place at the top.
  */
-export function referenceHighlight(ref: string): { kind: 'experience' | 'event'; id: number } | null {
+export function referenceHighlight(
+  ref: string
+): { kind: 'experience' | 'event'; id: number } | null {
   const match = /^(experience|event):(\d+)$/.exec(ref)
   return match ? { kind: match[1] as 'experience' | 'event', id: Number(match[2]) } : null
 }

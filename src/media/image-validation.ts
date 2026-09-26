@@ -34,8 +34,7 @@ export interface ImageAssetCandidate {
 }
 
 export type ImageValidationResult =
-  | { valid: true; sanitizedAsset: ValidatedImageAsset }
-  | { valid: false; reason: string }
+  { valid: true; sanitizedAsset: ValidatedImageAsset } | { valid: false; reason: string }
 
 export interface ValidatedImageAsset {
   uri: string
@@ -91,7 +90,9 @@ export function validateImageAsset(asset: ImageAssetCandidate): ImageValidationR
   }
 
   // Check allowed extensions and mime types
-  const isAllowedExt = ALLOWED_IMAGE_EXTENSIONS.includes(ext as (typeof ALLOWED_IMAGE_EXTENSIONS)[number])
+  const isAllowedExt = ALLOWED_IMAGE_EXTENSIONS.includes(
+    ext as (typeof ALLOWED_IMAGE_EXTENSIONS)[number]
+  )
   const isAllowedMime = mime
     ? ALLOWED_IMAGE_MIME_TYPES.includes(mime as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])
     : false
@@ -112,14 +113,20 @@ export function validateImageAsset(asset: ImageAssetCandidate): ImageValidationR
   }
 
   // Dimension validation
-  if (asset.width != null && (asset.width < MIN_IMAGE_DIMENSION || asset.width > MAX_IMAGE_DIMENSION)) {
+  if (
+    asset.width != null &&
+    (asset.width < MIN_IMAGE_DIMENSION || asset.width > MAX_IMAGE_DIMENSION)
+  ) {
     return {
       valid: false,
       reason: `Largura da imagem deve estar entre ${MIN_IMAGE_DIMENSION}px e ${MAX_IMAGE_DIMENSION}px.`,
     }
   }
 
-  if (asset.height != null && (asset.height < MIN_IMAGE_DIMENSION || asset.height > MAX_IMAGE_DIMENSION)) {
+  if (
+    asset.height != null &&
+    (asset.height < MIN_IMAGE_DIMENSION || asset.height > MAX_IMAGE_DIMENSION)
+  ) {
     return {
       valid: false,
       reason: `Altura da imagem deve estar entre ${MIN_IMAGE_DIMENSION}px e ${MAX_IMAGE_DIMENSION}px.`,
@@ -135,7 +142,8 @@ export function validateImageAsset(asset: ImageAssetCandidate): ImageValidationR
         : '.jpg'
 
   const defaultName = `photo-${Date.now()}${normalizedExt}`
-  const normalizedMime = mime && isAllowedMime ? mime : (inferMimeType(normalizedExt) ?? 'image/jpeg')
+  const normalizedMime =
+    mime && isAllowedMime ? mime : (inferMimeType(normalizedExt) ?? 'image/jpeg')
 
   return {
     valid: true,

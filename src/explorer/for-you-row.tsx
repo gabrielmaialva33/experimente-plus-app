@@ -46,7 +46,9 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
           <Text style={[styles.inviteText, { color: colors.foreground }]}>
             Escolha seus interesses e veja aqui lugares para você.
           </Text>
-          <Text style={[styles.inviteAction, { color: colors.primaryAccent }]}>Escolher interesses</Text>
+          <Text style={[styles.inviteAction, { color: colors.primaryAccent }]}>
+            Escolher interesses
+          </Text>
         </Pressable>
       </View>
     )
@@ -60,15 +62,23 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
       <View style={styles.gutter}>
         <SectionHeader title="Para você" hint="Com base nos seus interesses" />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
         {row.data.map((establishment) => (
           <CompactCard
             key={establishment.slug}
             testID={`for-you-${establishment.slug}`}
             title={establishment.name}
-            meta={[establishment.primary_category?.name, establishment.address.district].filter(Boolean).join(' · ')}
+            meta={[establishment.primary_category?.name, establishment.address.district]
+              .filter(Boolean)
+              .join(' · ')}
             image={coverImage(establishment.cover)}
-            onPress={() => router.push(`/estabelecimento/${establishment.city.slug}/${establishment.slug}`)}
+            onPress={() =>
+              router.push(`/estabelecimento/${establishment.city.slug}/${establishment.slug}`)
+            }
           />
         ))}
       </ScrollView>

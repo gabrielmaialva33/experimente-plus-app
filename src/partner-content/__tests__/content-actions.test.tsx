@@ -74,7 +74,9 @@ it('reads the saved state per species, so the same number is another item', asyn
   const view = await renderActions('event')
 
   // The heart is an icon now; its state is announced, not written out.
-  expect(view.getByTestId('content-favorite-event-31').props.accessibilityState).toEqual({ selected: true })
+  expect(view.getByTestId('content-favorite-event-31').props.accessibilityState).toEqual({
+    selected: true,
+  })
   expect(view.getByRole('button', { name: 'Remover Degustação guiada dos favoritos' })).toBeTruthy()
   await fireEvent.press(view.getByTestId('content-favorite-event-31'))
   expect(mutate).toHaveBeenCalledWith({ kind: 'events', id: 31, save: false })
@@ -105,7 +107,9 @@ it('offers neither favourite nor share on a showcase item, only a report', async
   await fireEvent.press(view.getByRole('button', { name: 'Mais opções: Degustação guiada' }))
   expect(view.queryByTestId('content-share-showcase_item-31')).toBeNull()
   await fireEvent.press(view.getByTestId('report-showcase_item-31'))
-  expect(mockPush).toHaveBeenCalledWith('/denunciar/showcase_item/31?nome=Degusta%C3%A7%C3%A3o%20guiada')
+  expect(mockPush).toHaveBeenCalledWith(
+    '/denunciar/showcase_item/31?nome=Degusta%C3%A7%C3%A3o%20guiada'
+  )
 })
 
 it('keeps one menu per item, holding both share and report (audit A32)', async () => {

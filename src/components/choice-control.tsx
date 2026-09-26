@@ -17,7 +17,18 @@ interface ChoiceControlProps {
 }
 
 /** Selection has a fixed leading slot, so it never depends on color alone. */
-export function ChoiceControl({ label, selected = false, disabled = false, shape = 'pill', accessibilityLabel = label, role = 'button', maxWidth, fill = false, compact = false, onPress }: ChoiceControlProps) {
+export function ChoiceControl({
+  label,
+  selected = false,
+  disabled = false,
+  shape = 'pill',
+  accessibilityLabel = label,
+  role = 'button',
+  maxWidth,
+  fill = false,
+  compact = false,
+  onPress,
+}: ChoiceControlProps) {
   const colors = useColors()
   const borderWidth = selected ? 2 : StyleSheet.hairlineWidth
 
@@ -25,7 +36,11 @@ export function ChoiceControl({ label, selected = false, disabled = false, shape
     <Pressable
       accessibilityRole={role}
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected, disabled, ...(role !== 'button' ? { checked: selected } : {}) }}
+      accessibilityState={{
+        selected,
+        disabled,
+        ...(role !== 'button' ? { checked: selected } : {}),
+      }}
       disabled={disabled}
       // The row reserves this space: 40 visible units, at least 48 for touch.
       hitSlop={compact ? { top: spacing.xs, bottom: spacing.xs } : undefined}
@@ -45,15 +60,26 @@ export function ChoiceControl({ label, selected = false, disabled = false, shape
           backgroundColor: selected ? colors.choiceSelected : colors.choiceBackground,
           borderColor: selected ? colors.choiceSelectedBorder : colors.choiceBorder,
         },
-      ]}>
-      <View style={styles.indicator} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {selected ? <Text style={[styles.label, { color: colors.choiceSelectedForeground }]}>✓</Text> : null}
+      ]}
+    >
+      <View
+        style={styles.indicator}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {selected ? (
+          <Text style={[styles.label, { color: colors.choiceSelectedForeground }]}>✓</Text>
+        ) : null}
       </View>
       <Text
         style={[
           styles.label,
-          { color: selected ? colors.choiceSelectedForeground : colors.choiceForeground, ...textWeight(selected ? '700' : '500') },
-        ]}>
+          {
+            color: selected ? colors.choiceSelectedForeground : colors.choiceForeground,
+            ...textWeight(selected ? '700' : '500'),
+          },
+        ]}
+      >
         {label}
       </Text>
     </Pressable>

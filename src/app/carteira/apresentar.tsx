@@ -10,7 +10,10 @@ import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
 import { FinancialRestrictionError, useCreatePresentation, useWallet } from '@/wallet/queries'
-import { FINANCIAL_RESTRICTION_MESSAGE, presentationEligibility } from '@/wallet/financial-restriction'
+import {
+  FINANCIAL_RESTRICTION_MESSAGE,
+  presentationEligibility,
+} from '@/wallet/financial-restriction'
 
 /** Seconds remaining until `expiresAt`, floored at zero. */
 function useCountdown(expiresAt: string | undefined): number {
@@ -74,11 +77,14 @@ export default function PresentScreen() {
     return <Stopped icon="pause-circle-outline">{FINANCIAL_RESTRICTION_MESSAGE}</Stopped>
   }
 
-  const refused = presentation.error instanceof ApiError && [400, 403, 409, 422].includes(presentation.error.status)
+  const refused =
+    presentation.error instanceof ApiError &&
+    [400, 403, 409, 422].includes(presentation.error.status)
   if (wallet.isError || refused || (eligibility && !eligibility.allowed)) {
     return (
       <Stopped icon="alert-circle-outline">
-        Não é possível apresentar este benefício agora. Volte à carteira para atualizar seus benefícios.
+        Não é possível apresentar este benefício agora. Volte à carteira para atualizar seus
+        benefícios.
       </Stopped>
     )
   }
@@ -89,7 +95,10 @@ export default function PresentScreen() {
 
   if (presentation.isError) {
     return (
-      <Stopped icon="cloud-offline-outline" action={<Button label="Tentar de novo" variant="outline" icon="refresh" onPress={create} />}>
+      <Stopped
+        icon="cloud-offline-outline"
+        action={<Button label="Tentar de novo" variant="outline" icon="refresh" onPress={create} />}
+      >
         Não foi possível gerar o código agora.
       </Stopped>
     )
@@ -100,16 +109,41 @@ export default function PresentScreen() {
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       {/* The benefit as a ticket: the navy stub names it, the code is the part torn off. */}
-      <View style={[styles.ticket, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[styles.ticket, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      >
         <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
           <Text style={[styles.overline, { color: colors.chromeMuted }]}>Benefício</Text>
-          <Text accessibilityRole="header" style={[styles.title, { color: colors.chromeForeground }]}>{data.benefit.offer_title}</Text>
-          <Text style={[styles.place, { color: colors.chromeMuted }]}>{data.benefit.establishment_name}</Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.title, { color: colors.chromeForeground }]}
+          >
+            {data.benefit.offer_title}
+          </Text>
+          <Text style={[styles.place, { color: colors.chromeMuted }]}>
+            {data.benefit.establishment_name}
+          </Text>
         </View>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.perforation}>
-          <View style={[styles.notch, styles.notchStart, { backgroundColor: colors.background, borderColor: colors.borderSubtle }]} />
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.perforation}
+        >
+          <View
+            style={[
+              styles.notch,
+              styles.notchStart,
+              { backgroundColor: colors.background, borderColor: colors.borderSubtle },
+            ]}
+          />
           <View style={[styles.dashes, { borderColor: colors.borderSubtle }]} />
-          <View style={[styles.notch, styles.notchEnd, { backgroundColor: colors.background, borderColor: colors.borderSubtle }]} />
+          <View
+            style={[
+              styles.notch,
+              styles.notchEnd,
+              { backgroundColor: colors.background, borderColor: colors.borderSubtle },
+            ]}
+          />
         </View>
 
         <View style={styles.code}>
@@ -138,10 +172,23 @@ export default function PresentScreen() {
           )}
 
           {/* Server time: the countdown only reads expires_at and never extends it. */}
-          <View style={[styles.timer, { backgroundColor: expired ? colors.warningSoft : colors.primarySoft }]}>
-            <Ionicons name={expired ? 'alert-circle-outline' : 'time-outline'} size={18}
-              color={expired ? colors.warningAccent : colors.primaryAccent} />
-            <Text style={[styles.countdown, { color: expired ? colors.warningAccent : colors.primaryAccent }]}>
+          <View
+            style={[
+              styles.timer,
+              { backgroundColor: expired ? colors.warningSoft : colors.primarySoft },
+            ]}
+          >
+            <Ionicons
+              name={expired ? 'alert-circle-outline' : 'time-outline'}
+              size={18}
+              color={expired ? colors.warningAccent : colors.primaryAccent}
+            />
+            <Text
+              style={[
+                styles.countdown,
+                { color: expired ? colors.warningAccent : colors.primaryAccent },
+              ]}
+            >
               {expired ? 'Expirado' : `Válido por ${clock(remaining)}`}
             </Text>
           </View>
@@ -172,8 +219,14 @@ export default function PresentScreen() {
 }
 
 /** A presentation that cannot happen now: one sentence, and a way back when there is one. */
-function Stopped({ icon, children, action }: {
-  icon: keyof typeof Ionicons.glyphMap; children: ReactNode; action?: ReactNode
+function Stopped({
+  icon,
+  children,
+  action,
+}: {
+  icon: keyof typeof Ionicons.glyphMap
+  children: ReactNode
+  action?: ReactNode
 }) {
   const colors = useColors()
   return (
@@ -191,9 +244,20 @@ const NOTCH = 24
 
 const styles = StyleSheet.create({
   page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
-  center: { alignItems: 'center', flex: 1, gap: spacing.lg, justifyContent: 'center', padding: spacing.xxl },
+  center: {
+    alignItems: 'center',
+    flex: 1,
+    gap: spacing.lg,
+    justifyContent: 'center',
+    padding: spacing.xxl,
+  },
   ticket: { borderRadius: radius.card, borderWidth: 1, overflow: 'hidden' },
-  stub: { gap: spacing.xs, paddingBottom: spacing.xl, paddingHorizontal: spacing.gutter, paddingTop: spacing.gutter },
+  stub: {
+    gap: spacing.xs,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.gutter,
+  },
   overline: typography.overline,
   title: { ...typography.display, fontSize: 26, lineHeight: 30 },
   place: typography.body,
@@ -202,7 +266,12 @@ const styles = StyleSheet.create({
   notchStart: { marginLeft: -NOTCH / 2 },
   notchEnd: { marginRight: -NOTCH / 2 },
   dashes: { borderStyle: 'dashed', borderTopWidth: 1.5, flex: 1, marginHorizontal: spacing.sm },
-  code: { alignItems: 'center', gap: spacing.lg, paddingBottom: spacing.xl, paddingHorizontal: spacing.gutter },
+  code: {
+    alignItems: 'center',
+    gap: spacing.lg,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.gutter,
+  },
   qr: { height: 248, width: 248 },
   qrSlot: {
     alignItems: 'center',
@@ -223,8 +292,19 @@ const styles = StyleSheet.create({
   },
   countdown: { ...typography.label, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   message: { ...typography.body, textAlign: 'center' },
-  stoppedIcon: { alignItems: 'center', borderRadius: radius.pill, height: 56, justifyContent: 'center', width: 56 },
-  hint: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.xs },
+  stoppedIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
+  hint: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
   hintText: { ...typography.meta, flex: 1 },
   terms: { ...typography.caption, paddingHorizontal: spacing.xs },
 })

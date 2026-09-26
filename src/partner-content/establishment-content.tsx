@@ -138,7 +138,8 @@ export function EstablishmentPartnerContent({
       testID="place-content"
       onLayout={(event) => {
         if (marked >= 0) onHighlightLayout?.(event.nativeEvent.layout.y)
-      }}>
+      }}
+    >
       <SectionHeader title="Para viver aqui" />
       {pending && items.length === 0 ? (
         <Text style={[styles.body, { color: colors.mutedForeground }]}>
@@ -153,25 +154,42 @@ export function EstablishmentPartnerContent({
           contentContainerStyle={styles.rowContent}
           onContentSizeChange={() => {
             if (marked > 0) {
-              row.current?.scrollTo({ x: marked * (COMPACT_CARD.width + FRAME * 2 + GAP), animated: false })
+              row.current?.scrollTo({
+                x: marked * (COMPACT_CARD.width + FRAME * 2 + GAP),
+                animated: false,
+              })
             }
-          }}>
+          }}
+        >
           {items.map((item, index) => {
-            const props = { kind: item.kind, id: item.id, title: item.title, ...context, tone: 'image' as const }
+            const props = {
+              kind: item.kind,
+              id: item.id,
+              title: item.title,
+              ...context,
+              tone: 'image' as const,
+            }
             const cover = coverOf(item)
             const date = item.kind === 'event' && item.startsAt ? item.startsAt : null
-            const price = item.kind === 'showcase_item' ? formatPrice(item.informationalPriceCents) : null
+            const price =
+              item.kind === 'showcase_item' ? formatPrice(item.informationalPriceCents) : null
             const time = item.kind === 'event' ? formatEventTime(item, timeZone) : null
             return (
               <View
                 key={`${item.kind}-${item.id}`}
                 testID={`content-${item.kind}-${item.id}`}
-                style={[styles.slot, { borderColor: index === marked ? colors.primary : 'transparent' }]}>
+                style={[
+                  styles.slot,
+                  { borderColor: index === marked ? colors.primary : 'transparent' },
+                ]}
+              >
                 <CompactCard
                   overline={LABELS[item.kind]}
                   title={item.title}
                   meta={price ?? time}
-                  image={date || !cover ? null : { uri: resolveMediaUrl(cover.url), alt: cover.altText }}
+                  image={
+                    date || !cover ? null : { uri: resolveMediaUrl(cover.url), alt: cover.altText }
+                  }
                   media={date ? <DateTile iso={date} timeZone={timeZone} /> : undefined}
                   onPress={() => setOpen(item)}
                 />
@@ -184,7 +202,12 @@ export function EstablishmentPartnerContent({
           })}
         </ScrollView>
       )}
-      <ContentSheet item={open} timeZone={timeZone} context={context} onClose={() => setOpen(null)} />
+      <ContentSheet
+        item={open}
+        timeZone={timeZone}
+        context={context}
+        onClose={() => setOpen(null)}
+      />
     </View>
   )
 }
@@ -221,8 +244,14 @@ function ContentSheet({
           onPress={onClose}
           style={[StyleSheet.absoluteFill, styles.scrim, { backgroundColor: colors.scrim }]}
         />
-        <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: colors.background }]}>
-          <ScrollView contentContainerStyle={styles.sheetContent} testID={`content-sheet-${item.kind}-${item.id}`}>
+        <View
+          accessibilityViewIsModal
+          style={[styles.sheet, { backgroundColor: colors.background }]}
+        >
+          <ScrollView
+            contentContainerStyle={styles.sheetContent}
+            testID={`content-sheet-${item.kind}-${item.id}`}
+          >
             {cover ? (
               <RemoteImage
                 source={{ uri: resolveMediaUrl(cover.url) }}
@@ -233,25 +262,37 @@ function ContentSheet({
               />
             ) : null}
             <View style={styles.copy}>
-              <Text style={[styles.overline, { color: colors.primaryAccent }]}>{LABELS[item.kind]}</Text>
+              <Text style={[styles.overline, { color: colors.primaryAccent }]}>
+                {LABELS[item.kind]}
+              </Text>
               <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
                 {item.title}
               </Text>
               {eventWindow ? (
                 <Text style={[styles.meta, { color: colors.primaryAccent }]}>{eventWindow}</Text>
               ) : null}
-              {price ? <Text style={[styles.price, { color: colors.ctaAccent }]}>{price}</Text> : null}
+              {price ? (
+                <Text style={[styles.price, { color: colors.ctaAccent }]}>{price}</Text>
+              ) : null}
             </View>
             {item.description ? (
               <Text style={[styles.body, { color: colors.foreground }]}>{item.description}</Text>
             ) : null}
             {cover?.caption ? (
-              <Text style={[styles.caption, { color: colors.mutedForeground }]}>{cover.caption}</Text>
+              <Text style={[styles.caption, { color: colors.mutedForeground }]}>
+                {cover.caption}
+              </Text>
             ) : null}
             <View style={styles.actions}>
               <ContentFavorite {...props} testID={`sheet-favorite-${item.kind}-${item.id}`} />
               {item.kind === 'showcase_item' ? null : (
-                <Button label="Compartilhar" icon="share-outline" variant="outline" size={44} onPress={() => void shareContent(props)} />
+                <Button
+                  label="Compartilhar"
+                  icon="share-outline"
+                  variant="outline"
+                  size={44}
+                  onPress={() => void shareContent(props)}
+                />
               )}
               <Button
                 label="Denunciar"
@@ -277,10 +318,20 @@ const styles = StyleSheet.create({
   row: { marginHorizontal: -spacing.gutter },
   rowContent: { gap: GAP, paddingHorizontal: spacing.gutter - FRAME },
   slot: { borderRadius: radius.card + FRAME, borderWidth: 2, padding: FRAME - 2 },
-  overlay: { gap: spacing.sm, position: 'absolute', right: spacing.sm + FRAME, top: spacing.sm + FRAME },
+  overlay: {
+    gap: spacing.sm,
+    position: 'absolute',
+    right: spacing.sm + FRAME,
+    top: spacing.sm + FRAME,
+  },
   root: { flex: 1, justifyContent: 'flex-end' },
   scrim: { opacity: 0.45 },
-  sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, maxHeight: '88%', overflow: 'hidden' },
+  sheet: {
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    maxHeight: '88%',
+    overflow: 'hidden',
+  },
   sheetContent: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   media: { borderRadius: radius.thumb, height: 190, width: '100%' },
   copy: { gap: spacing.xs },

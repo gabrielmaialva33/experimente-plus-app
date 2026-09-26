@@ -9,13 +9,7 @@
 import type { components } from '@/api/schema'
 
 export type Availability =
-  | 'available'
-  | 'upcoming'
-  | 'outside_schedule'
-  | 'paused'
-  | 'expired'
-  | 'revoked'
-  | 'redeemed'
+  'available' | 'upcoming' | 'outside_schedule' | 'paused' | 'expired' | 'revoked' | 'redeemed'
 
 export interface WalletBenefit {
   key: string
@@ -51,7 +45,13 @@ export interface WalletPass {
 }
 
 export interface Wallet {
-  summary: { passes: number; benefits: number; available: number; upcoming: number; redeemed: number }
+  summary: {
+    passes: number
+    benefits: number
+    available: number
+    upcoming: number
+    redeemed: number
+  }
   passes: WalletPass[]
 }
 

@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import {
-  listPublishedPartnerContent,
-  type PartnerContentKind,
-} from '@/api/partner-content'
+import { listPublishedPartnerContent, type PartnerContentKind } from '@/api/partner-content'
 
 export const partnerContentKeys = {
   establishment: (establishmentId: number, kind: PartnerContentKind) =>

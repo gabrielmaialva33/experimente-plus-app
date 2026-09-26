@@ -7,7 +7,12 @@ import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { placeHref } from '@/place/links'
 
-import { conciergeReferences, isNavigable, type ConciergeReferenceView, referenceHighlight } from './references'
+import {
+  conciergeReferences,
+  isNavigable,
+  type ConciergeReferenceView,
+  referenceHighlight,
+} from './references'
 
 interface DiscoveryAssistantProps {
   citySlug: string | null
@@ -31,7 +36,9 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
   const references = conciergeReferences(reply)
 
   const open = (view: ConciergeReferenceView) =>
-    router.push(placeHref(`${view.citySlug}`, `${view.establishmentSlug}`, referenceHighlight(view.ref)))
+    router.push(
+      placeHref(`${view.citySlug}`, `${view.establishmentSlug}`, referenceHighlight(view.ref))
+    )
 
   useEffect(
     () => () => {
@@ -69,10 +76,7 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
 
   return (
     <View
-      style={[
-        styles.container,
-        { backgroundColor: colors.card, borderColor: colors.borderSubtle },
-      ]}
+      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
     >
       <View style={styles.copy}>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>Concierge</Text>
@@ -147,7 +151,10 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
           {reply.personalized ? (
             // Said only when the server applied interests, never inferred from
             // being signed in: a person without interests gets the plain answer.
-            <Text style={[styles.answerText, { color: colors.mutedForeground }]} testID="concierge-personalized">
+            <Text
+              style={[styles.answerText, { color: colors.mutedForeground }]}
+              testID="concierge-personalized"
+            >
               Considerando seus interesses.
             </Text>
           ) : null}

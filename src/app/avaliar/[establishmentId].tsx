@@ -27,7 +27,10 @@ export default function WriteReviewScreen() {
   const colors = useColors()
   const router = useRouter()
   // `nome` is the place, so the form can say what is being reviewed (audit A45).
-  const { establishmentId, nome } = useLocalSearchParams<{ establishmentId: string; nome?: string }>()
+  const { establishmentId, nome } = useLocalSearchParams<{
+    establishmentId: string
+    nome?: string
+  }>()
   const id = Number(establishmentId)
 
   const [rating, setRating] = useState(0)
@@ -56,7 +59,10 @@ export default function WriteReviewScreen() {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
         <Text style={[styles.title, { color: colors.foreground }]}>Avaliação publicada</Text>
-        <Text style={[styles.error, { color: colors.destructiveAccent }]} testID="review-photos-failed">
+        <Text
+          style={[styles.error, { color: colors.destructiveAccent }]}
+          testID="review-photos-failed"
+        >
           {create.data.failed === 1
             ? 'Uma foto não pôde ser enviada.'
             : `${create.data.failed} fotos não puderam ser enviadas.`}{' '}
@@ -68,10 +74,15 @@ export default function WriteReviewScreen() {
   }
 
   return (
-    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.page}
+    >
       {nome ? <ReviewSubject name={nome} /> : null}
 
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
         <StarsInput rating={rating} onChange={setRating} disabled={create.isPending} />
       </View>
@@ -120,9 +131,8 @@ export default function WriteReviewScreen() {
       />
 
       <Text style={[styles.note, { color: colors.mutedForeground }]}>
-        Sua avaliação e as fotos aparecem na hora. Se alguém denunciar, a moderação pode
-        ocultá-las. A localização e os dados do aparelho são removidos das fotos antes de
-        publicar.
+        Sua avaliação e as fotos aparecem na hora. Se alguém denunciar, a moderação pode ocultá-las.
+        A localização e os dados do aparelho são removidos das fotos antes de publicar.
       </Text>
     </KeyboardForm>
   )
@@ -160,10 +170,23 @@ const styles = StyleSheet.create({
   subject: { gap: spacing.xs },
   overline: typography.overline,
   subjectName: { ...typography.heading, ...displayWeight('800') },
-  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
+  card: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: radius.card,
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
   field: { gap: spacing.sm },
   label: { ...typography.label, ...textWeight('700') },
-  input: { borderWidth: 1, borderRadius: radius.thumb, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  input: {
+    borderWidth: 1,
+    borderRadius: radius.thumb,
+    minHeight: 120,
+    padding: spacing.md,
+    textAlignVertical: 'top',
+    ...typography.body,
+  },
   error: typography.body,
   note: typography.meta,
 })

@@ -37,9 +37,14 @@ export function Chip({
           borderColor: selected ? colors.primary : colors.choiceBorder,
           opacity: pressed ? 0.85 : 1,
         },
-      ]}>
+      ]}
+    >
       {selected ? (
-        <View style={styles.indicator} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <View
+          style={styles.indicator}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <Text style={[styles.check, { color: colors.primaryForeground }]}>✓</Text>
         </View>
       ) : null}
@@ -48,7 +53,8 @@ export function Chip({
           styles.label,
           selected ? textWeight('700') : textWeight('500'),
           { color: selected ? colors.primaryForeground : colors.foreground },
-        ]}>
+        ]}
+      >
         {label}
       </Text>
     </Pressable>

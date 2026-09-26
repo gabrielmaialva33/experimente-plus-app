@@ -4,7 +4,10 @@ import { radius, spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** Fixed placeholders: no animation, private data, or speculative actions. */
-export function ContentSkeleton({ label, variant = 'list' }: {
+export function ContentSkeleton({
+  label,
+  variant = 'list',
+}: {
   label: string
   variant?: 'list' | 'catalog' | 'detail' | 'presentation'
 }) {
@@ -18,15 +21,22 @@ export function ContentSkeleton({ label, variant = 'list' }: {
       accessibilityRole="progressbar"
       accessibilityLabel={label}
       accessibilityState={{ busy: true }}
-      style={[styles.page, { backgroundColor: colors.background }]}>
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.content}>
+      style={[styles.page, { backgroundColor: colors.background }]}
+    >
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.content}
+      >
         {Array.from({ length: repeated ? 3 : 1 }, (_, index) => (
           <View key={index} style={[styles.card, { backgroundColor: colors.surfaceRaised }]}>
             {variant === 'catalog' ? <View style={[bone, styles.cover]} /> : null}
             <View style={styles.lines}>
               <View testID="skeleton-title" style={[bone, styles.title]} />
               <View style={[bone, styles.subtitle]} />
-              {variant === 'presentation' ? <View testID="skeleton-qr-slot" style={[bone, styles.qr]} /> : null}
+              {variant === 'presentation' ? (
+                <View testID="skeleton-qr-slot" style={[bone, styles.qr]} />
+              ) : null}
               {Array.from({ length: variant === 'detail' ? 6 : 2 }, (_, line) => (
                 <View key={line} style={[bone, styles.line]} />
               ))}
@@ -47,5 +57,11 @@ const styles = StyleSheet.create({
   title: { height: 24, width: '70%' },
   subtitle: { height: 16, width: '45%' },
   line: { height: 16, width: '100%' },
-  qr: { alignSelf: 'center', width: 240, maxWidth: '100%', aspectRatio: 1, marginVertical: spacing.lg },
+  qr: {
+    alignSelf: 'center',
+    width: 240,
+    maxWidth: '100%',
+    aspectRatio: 1,
+    marginVertical: spacing.lg,
+  },
 })

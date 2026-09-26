@@ -48,9 +48,14 @@ export function ReviewCard({
   return (
     <View
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-      testID={`review-${review.id}`}>
+      testID={`review-${review.id}`}
+    >
       <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: colors.primarySoft }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <View
+          style={[styles.avatar, { backgroundColor: colors.primarySoft }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <Text style={[styles.initials, { color: colors.primaryAccent }]}>{initials(author)}</Text>
         </View>
         <View style={styles.identity}>
@@ -74,14 +79,22 @@ export function ReviewCard({
               {
                 label: 'Denunciar avaliação',
                 icon: 'flag-outline',
-                onPress: () => onReport({ type: 'review', id: review.id, subject: `Avaliação de ${author}` }),
+                onPress: () =>
+                  onReport({ type: 'review', id: review.id, subject: `Avaliação de ${author}` }),
               },
               ...(reply
-                ? [{
-                    label: 'Denunciar resposta',
-                    icon: 'flag-outline' as const,
-                    onPress: () => onReport({ type: 'reply', id: reply.id, subject: `Resposta à avaliação de ${author}` }),
-                  }]
+                ? [
+                    {
+                      label: 'Denunciar resposta',
+                      icon: 'flag-outline' as const,
+                      onPress: () =>
+                        onReport({
+                          type: 'reply',
+                          id: reply.id,
+                          subject: `Resposta à avaliação de ${author}`,
+                        }),
+                    },
+                  ]
                 : []),
             ]}
           />
@@ -116,7 +129,13 @@ export function formatDate(value: string): string {
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.card, gap: 10, padding: spacing.lg },
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
-  avatar: { alignItems: 'center', borderRadius: radius.pill, height: 40, justifyContent: 'center', width: 40 },
+  avatar: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
   initials: { ...typography.label, ...displayWeight('800') },
   identity: { flex: 1, gap: 2 },
   author: { ...typography.label, ...textWeight('700') },

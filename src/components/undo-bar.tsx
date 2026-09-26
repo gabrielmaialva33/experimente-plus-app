@@ -34,7 +34,8 @@ export function UndoBar({
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
         numberOfLines={2}
-        style={[styles.message, { color: colors.chromeForeground }]}>
+        style={[styles.message, { color: colors.chromeForeground }]}
+      >
         {message}
       </Text>
       <Pressable
@@ -42,7 +43,8 @@ export function UndoBar({
         accessibilityLabel="Desfazer"
         onPress={onUndo}
         hitSlop={4}
-        style={styles.action}>
+        style={styles.action}
+      >
         <Text style={[styles.actionLabel, { color: colors.chromeMuted }]}>Desfazer</Text>
       </Pressable>
     </View>

@@ -72,7 +72,8 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       setName(itinerary.name)
       return
     }
-    if (trimmed !== itinerary.name && !rename.isPending) rename.mutate({ name: trimmed, notes: itinerary.notes })
+    if (trimmed !== itinerary.name && !rename.isPending)
+      rename.mutate({ name: trimmed, notes: itinerary.notes })
   }
 
   const move = (index: number, delta: -1 | 1) => {
@@ -89,7 +90,10 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
         : null
 
   return (
-    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.page}
+    >
       <TextField
         label="Nome do roteiro"
         value={name}
@@ -114,7 +118,8 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
 
       {itinerary.stops.length === 0 && !adding ? (
         <Text style={[styles.body, { color: colors.mutedForeground }]}>
-          Nenhuma parada ainda. Adicione lugares dos seus favoritos ou toque em Roteiro na página de um lugar.
+          Nenhuma parada ainda. Adicione lugares dos seus favoritos ou toque em Roteiro na página de
+          um lugar.
         </Text>
       ) : null}
 
@@ -128,10 +133,13 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
         <View
           key={stop.id}
           style={[styles.stop, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-          testID={`stop-${stop.id}`}>
+          testID={`stop-${stop.id}`}
+        >
           <View style={styles.stopHead}>
             <View style={[styles.position, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.positionLabel, { color: colors.primaryForeground }]}>{index + 1}</Text>
+              <Text style={[styles.positionLabel, { color: colors.primaryForeground }]}>
+                {index + 1}
+              </Text>
             </View>
             <View style={styles.stopBody}>
               {stop.establishment ? (
@@ -146,7 +154,10 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
               ) : (
                 // The stop is kept even though the place left the catalogue: removing
                 // it silently would rewrite a route its author wrote.
-                <Text style={[styles.body, { color: colors.mutedForeground }]} testID={`stop-${stop.id}-unavailable`}>
+                <Text
+                  style={[styles.body, { color: colors.mutedForeground }]}
+                  testID={`stop-${stop.id}-unavailable`}
+                >
                   Este lugar não está disponível no catálogo no momento.
                 </Text>
               )}
@@ -188,11 +199,24 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       {adding ? (
         <AddFromFavorites itinerary={itinerary} onClose={() => setAdding(false)} />
       ) : (
-        <Button label="Adicionar lugar" icon="add" variant="outline" size={52} fill onPress={() => setAdding(true)} testID="add-stop" />
+        <Button
+          label="Adicionar lugar"
+          icon="add"
+          variant="outline"
+          size={52}
+          fill
+          onPress={() => setAdding(true)}
+          testID="add-stop"
+        />
       )}
 
       {confirmingDelete ? (
-        <View style={[styles.stop, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}>
+        <View
+          style={[
+            styles.stop,
+            { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
+          ]}
+        >
           <Text style={[styles.body, { color: colors.foreground }]}>
             Excluir este roteiro e todas as paradas? Isso não pode ser desfeito.
           </Text>
@@ -206,8 +230,11 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
                 destroy.mutate(itinerary.id, { onSuccess: () => router.replace('/roteiros') })
               }
               style={[styles.destroy, { backgroundColor: colors.destructive }]}
-              testID="confirm-delete-itinerary">
-              <Text style={[styles.destroyLabel, { color: colors.destructiveForeground }]}>Excluir</Text>
+              testID="confirm-delete-itinerary"
+            >
+              <Text style={[styles.destroyLabel, { color: colors.destructiveForeground }]}>
+                Excluir
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -216,8 +243,11 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
           accessibilityRole="button"
           onPress={() => setConfirmingDelete(true)}
           style={styles.deleteLink}
-          testID="delete-itinerary">
-          <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>Excluir roteiro</Text>
+          testID="delete-itinerary"
+        >
+          <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>
+            Excluir roteiro
+          </Text>
         </Pressable>
       )}
     </KeyboardForm>
@@ -235,13 +265,23 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
   const add = useAddItineraryStop()
 
   const present = new Set(itinerary.stops.map((stop) => stop.establishment?.id).filter(Boolean))
-  const candidates = (favorites.data?.data ?? []).filter((entry) => !present.has(entry.establishment.id))
+  const candidates = (favorites.data?.data ?? []).filter(
+    (entry) => !present.has(entry.establishment.id)
+  )
 
   return (
-    <View style={[styles.stop, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]} testID="add-from-favorites">
-      <SectionHeader title="Adicionar dos favoritos" action={{ label: 'Fechar', onPress: onClose }} />
+    <View
+      style={[styles.stop, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      testID="add-from-favorites"
+    >
+      <SectionHeader
+        title="Adicionar dos favoritos"
+        action={{ label: 'Fechar', onPress: onClose }}
+      />
       {favorites.isPending ? (
-        <Text style={[styles.body, { color: colors.mutedForeground }]}>Carregando seus favoritos…</Text>
+        <Text style={[styles.body, { color: colors.mutedForeground }]}>
+          Carregando seus favoritos…
+        </Text>
       ) : candidates.length === 0 ? (
         <Text style={[styles.body, { color: colors.mutedForeground }]}>
           {favorites.isError
@@ -258,7 +298,8 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
                 icon="add"
                 accessibilityLabel={`Adicionar ${entry.establishment.name} ao roteiro`}
                 onPress={() => {
-                  if (!add.isPending) add.mutate({ id: itinerary.id, establishmentId: entry.establishment.id })
+                  if (!add.isPending)
+                    add.mutate({ id: itinerary.id, establishmentId: entry.establishment.id })
                 }}
                 testID={`add-stop-${entry.establishment.id}`}
               />
@@ -271,7 +312,12 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
           Não foi possível adicionar agora.
         </Text>
       ) : null}
-      <Button label="Procurar em Explorar" icon="compass-outline" variant="ghost" onPress={() => router.navigate('/')} />
+      <Button
+        label="Procurar em Explorar"
+        icon="compass-outline"
+        variant="ghost"
+        onPress={() => router.navigate('/')}
+      />
     </View>
   )
 }
@@ -299,10 +345,8 @@ function StopButton({
       disabled={disabled}
       onPress={onPress}
       testID={testID}
-      style={[
-        styles.stopButton,
-        { borderColor: colors.borderSubtle, opacity: disabled ? 0.4 : 1 },
-      ]}>
+      style={[styles.stopButton, { borderColor: colors.borderSubtle, opacity: disabled ? 0.4 : 1 }]}
+    >
       <Ionicons
         name={icon}
         size={20}
@@ -319,13 +363,32 @@ const styles = StyleSheet.create({
   stop: { borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
   stopHead: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   stopBody: { flex: 1 },
-  position: { alignItems: 'center', borderRadius: radius.pill, height: 28, justifyContent: 'center', width: 28 },
+  position: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
   positionLabel: { ...typography.meta, ...textWeight('700') },
   stopActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   spacer: { flex: 1 },
-  stopButton: { alignItems: 'center', borderRadius: radius.pill, borderWidth: 1, height: minTouch, justifyContent: 'center', width: minTouch },
+  stopButton: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    height: minTouch,
+    justifyContent: 'center',
+    width: minTouch,
+  },
   confirm: { flexDirection: 'row', gap: spacing.sm, justifyContent: 'flex-end' },
-  destroy: { alignItems: 'center', borderRadius: radius.pill, justifyContent: 'center', minHeight: 48, paddingHorizontal: spacing.gutter },
+  destroy: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: spacing.gutter,
+  },
   destroyLabel: { ...typography.label, ...textWeight('700') },
   deleteLink: { alignItems: 'center', minHeight: 48, justifyContent: 'center' },
   deleteLabel: { ...typography.label, ...textWeight('600') },

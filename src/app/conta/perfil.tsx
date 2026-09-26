@@ -15,7 +15,8 @@ import { useColors } from '@/theme/use-colors'
 type ProfileErrors = { full_name?: string; username?: string }
 
 const NAME_RULE = 'Informe seu nome, com até 255 caracteres.'
-const USERNAME_RULE = 'Use de 3 a 80 caracteres: letras, números, ponto, hífen ou sublinhado. Comece com letra ou número.'
+const USERNAME_RULE =
+  'Use de 3 a 80 caracteres: letras, números, ponto, hífen ou sublinhado. Comece com letra ou número.'
 
 /** Mirrors the profile validator; uniqueness and final validation remain server-owned. */
 function profileErrors(changes: { full_name?: string; username?: string | null }): ProfileErrors {
@@ -25,7 +26,10 @@ function profileErrors(changes: { full_name?: string; username?: string | null }
     if (!name || name.length > 255) errors.full_name = NAME_RULE
   }
   const username = changes.username?.trim().toLowerCase()
-  if (username && (username.length < 3 || username.length > 80 || !/^[a-z0-9][a-z0-9._-]*$/.test(username))) {
+  if (
+    username &&
+    (username.length < 3 || username.length > 80 || !/^[a-z0-9][a-z0-9._-]*$/.test(username))
+  ) {
     errors.username = USERNAME_RULE
   }
   return errors
@@ -34,12 +38,16 @@ function profileErrors(changes: { full_name?: string; username?: string | null }
 /** Do not echo arbitrary server messages: they may contain submitted values. */
 function profileServerErrors(body: unknown): ProfileErrors {
   const errors: ProfileErrors = {}
-  if (!body || typeof body !== 'object' || !('errors' in body) || !Array.isArray(body.errors)) return errors
+  if (!body || typeof body !== 'object' || !('errors' in body) || !Array.isArray(body.errors))
+    return errors
   for (const error of body.errors) {
     if (!error || typeof error !== 'object') continue
     if (error.field === 'full_name') errors.full_name = NAME_RULE
     else if (error.field === 'username') {
-      errors.username = error.rule === 'database.unique' ? 'Este usuário já está em uso. Escolha outro.' : USERNAME_RULE
+      errors.username =
+        error.rule === 'database.unique'
+          ? 'Este usuário já está em uso. Escolha outro.'
+          : USERNAME_RULE
     }
   }
   return errors
@@ -79,7 +87,8 @@ export default function ProfileScreen() {
       void refresh()
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 422) setErrors(profileServerErrors(error.body))
+      if (error instanceof ApiError && error.status === 422)
+        setErrors(profileServerErrors(error.body))
     },
   })
 
@@ -140,7 +149,11 @@ export default function ProfileScreen() {
         {message ? (
           <Text
             accessibilityRole={save.isSuccess ? undefined : 'alert'}
-            style={[styles.message, { color: save.isSuccess ? colors.successAccent : colors.destructiveAccent }]}>
+            style={[
+              styles.message,
+              { color: save.isSuccess ? colors.successAccent : colors.destructiveAccent },
+            ]}
+          >
             {message}
           </Text>
         ) : null}

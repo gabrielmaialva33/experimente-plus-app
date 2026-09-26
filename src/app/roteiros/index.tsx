@@ -65,7 +65,15 @@ export default function ItinerariesScreen() {
         composing ? (
           <NewItinerary onCancel={() => setComposing(false)} />
         ) : items.length > 0 ? (
-          <Button label="Novo roteiro" icon="add" variant="outline" size={52} fill onPress={() => setComposing(true)} testID="new-itinerary" />
+          <Button
+            label="Novo roteiro"
+            icon="add"
+            variant="outline"
+            size={52}
+            fill
+            onPress={() => setComposing(true)}
+            testID="new-itinerary"
+          />
         ) : null
       }
       renderItem={({ item }) => (
@@ -75,9 +83,13 @@ export default function ItinerariesScreen() {
           onPress={() => router.push(`/roteiros/${item.id}`)}
           style={({ pressed }) => [
             styles.card,
-            { backgroundColor: pressed ? colors.muted : colors.card, borderColor: colors.borderSubtle },
+            {
+              backgroundColor: pressed ? colors.muted : colors.card,
+              borderColor: colors.borderSubtle,
+            },
           ]}
-          testID={`itinerary-${item.id}`}>
+          testID={`itinerary-${item.id}`}
+        >
           <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
@@ -118,7 +130,9 @@ function NewItinerary({ onCancel }: { onCancel: () => void }) {
   }
 
   return (
-    <View style={[styles.create, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+    <View
+      style={[styles.create, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+    >
       <TextField
         label="Nome do novo roteiro"
         value={name}
@@ -158,7 +172,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
-  icon: { alignItems: 'center', borderRadius: radius.pill, height: 44, justifyContent: 'center', width: 44 },
+  icon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
   copy: { flex: 1, gap: 2 },
   name: { ...typography.body, ...textWeight('700') },
   meta: typography.meta,

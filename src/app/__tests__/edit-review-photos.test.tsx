@@ -21,8 +21,17 @@ jest.mock('@/components/image-picker', () => {
         testID="photo-picker"
         accessibilityLabel={`restam ${maxImages}`}
         onPress={() =>
-          onChange([{ uri: 'file:///novo.jpg', fileName: 'novo.jpg', mimeType: 'image/jpeg', width: 8, height: 6 }])
-        }>
+          onChange([
+            {
+              uri: 'file:///novo.jpg',
+              fileName: 'novo.jpg',
+              mimeType: 'image/jpeg',
+              width: 8,
+              height: 6,
+            },
+          ])
+        }
+      >
         <Text>picker</Text>
       </Pressable>
     ),
@@ -37,9 +46,21 @@ jest.mock('@/reviews/queries', () => ({
 }))
 
 const queries = jest.requireMock('@/reviews/queries') as Record<string, jest.Mock>
-const idle = (overrides = {}) => ({ mutate: jest.fn(), isPending: false, isError: false, error: null, ...overrides })
+const idle = (overrides = {}) => ({
+  mutate: jest.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+  ...overrides,
+})
 
-const photo = (id: number) => ({ id, url: `/uploads/${id}.jpg`, width: 8, height: 6, alt_text: null })
+const photo = (id: number) => ({
+  id,
+  url: `/uploads/${id}.jpg`,
+  width: 8,
+  height: 6,
+  alt_text: null,
+})
 const withPhotos = (photos: ReturnType<typeof photo>[]) => ({
   isPending: false,
   data: {
@@ -87,7 +108,11 @@ it('offers only the photos still allowed, and uploads each as it is chosen', asy
   expect(view.getByLabelText('restam 1')).toBeTruthy()
   await fireEvent.press(view.getByTestId('photo-picker'))
 
-  expect(mutate).toHaveBeenCalledWith({ uri: 'file:///novo.jpg', fileName: 'novo.jpg', mimeType: 'image/jpeg' })
+  expect(mutate).toHaveBeenCalledWith({
+    uri: 'file:///novo.jpg',
+    fileName: 'novo.jpg',
+    mimeType: 'image/jpeg',
+  })
 })
 
 it('offers no picker once the review holds as many photos as the operation allows', async () => {

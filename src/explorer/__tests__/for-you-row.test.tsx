@@ -51,7 +51,10 @@ const row = (data: EstablishmentSummary[], hasInterests = true): ForYou => ({
 // No garbage-collection timers: one left behind keeps jest from exiting.
 const newClient = () =>
   new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { gcTime: Infinity } },
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { gcTime: Infinity },
+    },
   })
 
 function wrapper(client: QueryClient) {
@@ -126,7 +129,10 @@ it('shows the chosen places, says how they are ordered, and opens each one', asy
   expect(view.getByText('Alfa Café')).toBeOnTheScreen()
   // Compact cards of one size, whatever the name or the photo (audit A47).
   for (const slug of ['alfa', 'beta']) {
-    expect(view.getByTestId(`for-you-${slug}`)).toHaveStyle({ width: COMPACT_CARD.width, height: COMPACT_CARD.height })
+    expect(view.getByTestId(`for-you-${slug}`)).toHaveStyle({
+      width: COMPACT_CARD.width,
+      height: COMPACT_CARD.height,
+    })
   }
   expect(view.getByTestId('for-you-alfa')).toHaveProp('accessibilityLabel', 'Alfa Café, Centro')
 

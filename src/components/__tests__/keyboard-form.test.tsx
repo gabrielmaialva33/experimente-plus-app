@@ -40,8 +40,10 @@ it('makes room for the keyboard and brings the focused field into view', async (
     return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>
   })
   jest.spyOn(TextInput.State, 'currentlyFocusedInput').mockReturnValue({
-    measureLayout: (_host: unknown, onSuccess: (x: number, y: number, w: number, h: number) => void) =>
-      onSuccess(0, 900, 320, 48),
+    measureLayout: (
+      _host: unknown,
+      onSuccess: (x: number, y: number, w: number, h: number) => void
+    ) => onSuccess(0, 900, 320, 48),
   } as unknown as ReturnType<typeof TextInput.State.currentlyFocusedInput>)
 
   let controller: KeyboardFormController | undefined
@@ -59,9 +61,12 @@ it('makes room for the keyboard and brings the focused field into view', async (
   controller!.scroll({ scrollTo } as never)
   controller!.content({} as never)
   controller!.container({
-    measureInWindow: (callback: (x: number, y: number, w: number, h: number) => void) => callback(0, 100, 390, 700),
+    measureInWindow: (callback: (x: number, y: number, w: number, h: number) => void) =>
+      callback(0, 100, 390, 700),
   } as never)
-  controller!.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 700 } } } as never)
+  controller!.onLayout({
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 700 } },
+  } as never)
 
   const show = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
   await act(async () => {

@@ -39,12 +39,7 @@ describe('ImagePicker', () => {
   it('renders counter respecting the maxImages parameter and displays thumbnails', async () => {
     const onChange = jest.fn()
     const view = await render(
-      <ImagePicker
-        images={[mockImage1]}
-        onChange={onChange}
-        maxImages={4}
-        label="Fotos do local"
-      />
+      <ImagePicker images={[mockImage1]} onChange={onChange} maxImages={4} label="Fotos do local" />
     )
 
     expect(view.getByText('Fotos do local')).toBeTruthy()
@@ -60,11 +55,7 @@ describe('ImagePicker', () => {
   it('removes an image and triggers onChange with the remaining list', async () => {
     const onChange = jest.fn()
     const view = await render(
-      <ImagePicker
-        images={[mockImage1, mockImage2]}
-        onChange={onChange}
-        maxImages={4}
-      />
+      <ImagePicker images={[mockImage1, mockImage2]} onChange={onChange} maxImages={4} />
     )
 
     expect(view.getByText('2/4')).toBeTruthy()
@@ -76,11 +67,7 @@ describe('ImagePicker', () => {
   it('hides add button when image count reaches maxImages', async () => {
     const onChange = jest.fn()
     const view = await render(
-      <ImagePicker
-        images={[mockImage1, mockImage2]}
-        onChange={onChange}
-        maxImages={2}
-      />
+      <ImagePicker images={[mockImage1, mockImage2]} onChange={onChange} maxImages={2} />
     )
 
     expect(view.getByText('2/2')).toBeTruthy()
@@ -104,11 +91,7 @@ describe('ImagePicker', () => {
     })
 
     const view = await render(
-      <ImagePicker
-        images={[mockImage1]}
-        onChange={onChange}
-        maxImages={3}
-      />
+      <ImagePicker images={[mockImage1]} onChange={onChange} maxImages={3} />
     )
 
     await act(async () => {
@@ -152,12 +135,7 @@ describe('ImagePicker', () => {
     })
 
     const view = await render(
-      <ImagePicker
-        images={[]}
-        onChange={onChange}
-        maxImages={4}
-        onError={onError}
-      />
+      <ImagePicker images={[]} onChange={onChange} maxImages={4} onError={onError} />
     )
 
     await act(async () => {

@@ -194,7 +194,13 @@ export const radius = {
 /** Opaque tonal planes; only overlays get a 2-unit contact edge, never diffuse shadow. */
 export const elevation = {
   raised: { elevation: 0, shadowOpacity: 0, shadowRadius: 0 },
-  overlay: { elevation: 0, shadowOpacity: 0, shadowRadius: 0, borderWidth: 1, borderBottomWidth: 2 },
+  overlay: {
+    elevation: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    borderWidth: 1,
+    borderBottomWidth: 2,
+  },
 } as const
 
 /** Steps of 4, with no improvised intermediate values. */
@@ -255,8 +261,18 @@ export function displayWeight(weight: WeightInput) {
  * face swap never moves the layout.
  */
 export const typography = {
-  display: { fontFamily: fontFamilies.display[800], fontSize: 30, lineHeight: 34, letterSpacing: -0.6 },
-  title: { fontFamily: fontFamilies.display[800], fontSize: 21, lineHeight: 26, letterSpacing: -0.2 },
+  display: {
+    fontFamily: fontFamilies.display[800],
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: -0.6,
+  },
+  title: {
+    fontFamily: fontFamilies.display[800],
+    fontSize: 21,
+    lineHeight: 26,
+    letterSpacing: -0.2,
+  },
   heading: { fontFamily: fontFamilies.display[700], fontSize: 18, lineHeight: 23 },
   body: { fontFamily: fontFamilies.text[400], fontSize: 16, lineHeight: 23 },
   label: { fontFamily: fontFamilies.text[600], fontSize: 15, lineHeight: 20 },

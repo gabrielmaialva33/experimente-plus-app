@@ -7,7 +7,9 @@ import { Stars, StarsInput } from '@/reviews/stars'
 import { palette } from '@/theme/tokens'
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.light,
+}))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
@@ -35,7 +37,11 @@ const review = (overrides: Partial<Review> = {}): Review => ({
 beforeEach(() => {
   mockPush.mockClear()
   session.useSession.mockReturnValue({ status: 'anonymous' })
-  queries.useEstablishmentReviews.mockReturnValue({ data: undefined, isError: false, isPending: false })
+  queries.useEstablishmentReviews.mockReturnValue({
+    data: undefined,
+    isError: false,
+    isPending: false,
+  })
 })
 
 it('reads a rating as a number rather than as five separate images', async () => {
@@ -49,7 +55,9 @@ it('draws an average of 4,5 as four stars and a half, and says so', async () => 
 
   expect(view.getByLabelText('4,5 de 5')).toBeOnTheScreen()
   expect(view.getAllByTestId('star-icon-star', { includeHiddenElements: true })).toHaveLength(4)
-  expect(view.getAllByTestId('star-icon-star-half', { includeHiddenElements: true })).toHaveLength(1)
+  expect(view.getAllByTestId('star-icon-star-half', { includeHiddenElements: true })).toHaveLength(
+    1
+  )
 })
 
 it('keeps the place average whole on the page instead of rounding it to a full star', async () => {
@@ -104,13 +112,25 @@ it('shows the author, the reply and both report entries', async () => {
   // Both entries live behind one "⋯" (audit A32), and each names what it
   // reports so the form can say it (A45).
   expect(view.queryByText('Denunciar resposta')).toBeNull()
-  await fireEvent.press(view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' }))
+  await fireEvent.press(
+    view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' })
+  )
   await fireEvent.press(view.getByText('Denunciar resposta'))
-  expect(report).toHaveBeenCalledWith({ type: 'reply', id: 9, subject: 'Resposta à avaliação de Ana Ribeiro' })
+  expect(report).toHaveBeenCalledWith({
+    type: 'reply',
+    id: 9,
+    subject: 'Resposta à avaliação de Ana Ribeiro',
+  })
 
-  await fireEvent.press(view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' }))
+  await fireEvent.press(
+    view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' })
+  )
   await fireEvent.press(view.getByText('Denunciar avaliação'))
-  expect(report).toHaveBeenCalledWith({ type: 'review', id: 1, subject: 'Avaliação de Ana Ribeiro' })
+  expect(report).toHaveBeenCalledWith({
+    type: 'review',
+    id: 1,
+    subject: 'Avaliação de Ana Ribeiro',
+  })
 })
 
 it('names a review with no author instead of leaving the line blank', async () => {
@@ -168,7 +188,11 @@ it('sends a visitor to sign in and a member to the form', async () => {
 })
 
 it('keeps the section readable when the listing fails', async () => {
-  queries.useEstablishmentReviews.mockReturnValue({ data: undefined, isError: true, isPending: false })
+  queries.useEstablishmentReviews.mockReturnValue({
+    data: undefined,
+    isError: true,
+    isPending: false,
+  })
 
   const view = await render(
     <EstablishmentReviews establishmentId={7} summary={{ count: 3, average: 4 }} />
@@ -215,7 +239,9 @@ it('lets anyone report a review or its reply from the place itself, before any f
   const menu = () => view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' })
   await fireEvent.press(menu())
   await fireEvent.press(view.getByText('Denunciar avaliação'))
-  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/review/1?nome=Avalia%C3%A7%C3%A3o%20de%20Ana%20Ribeiro')
+  expect(mockPush).toHaveBeenLastCalledWith(
+    '/denunciar/review/1?nome=Avalia%C3%A7%C3%A3o%20de%20Ana%20Ribeiro'
+  )
   await fireEvent.press(menu())
   await fireEvent.press(view.getByText('Denunciar resposta'))
   expect(mockPush).toHaveBeenLastCalledWith(
@@ -227,20 +253,32 @@ it('names the place to the review form and the full list, and answers in its nam
   session.useSession.mockReturnValue({ status: 'authenticated' })
   queries.useEstablishmentReviews.mockReturnValue({
     data: {
-      data: [review({
-        reply: {
-          id: 9, tenant_id: 1, review_id: 1, organization_id: 3, user_id: 5,
-          comment: 'Obrigado pela visita!', status: 'published',
-          created_at: '2026-09-02T12:00:00.000Z', updated_at: null,
-        },
-      })],
+      data: [
+        review({
+          reply: {
+            id: 9,
+            tenant_id: 1,
+            review_id: 1,
+            organization_id: 3,
+            user_id: 5,
+            comment: 'Obrigado pela visita!',
+            status: 'published',
+            created_at: '2026-09-02T12:00:00.000Z',
+            updated_at: null,
+          },
+        }),
+      ],
       meta: {},
     },
     isError: false,
     isPending: false,
   })
   const view = await render(
-    <EstablishmentReviews establishmentId={7} establishmentName="Ateliê do Café" summary={{ count: 4, average: 4.5 }} />
+    <EstablishmentReviews
+      establishmentId={7}
+      establishmentName="Ateliê do Café"
+      summary={{ count: 4, average: 4.5 }}
+    />
   )
 
   expect(view.getByText('Resposta de Ateliê do Café')).toBeOnTheScreen()

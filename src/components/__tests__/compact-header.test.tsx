@@ -4,7 +4,15 @@ import Animated from 'react-native-reanimated'
 
 import { hiddenFromAccessibility, useCompactHeader } from '@/components/compact-header'
 
-function Page({ from, to, onRender }: { from: number; to: number; onRender: (compact: boolean) => void }) {
+function Page({
+  from,
+  to,
+  onRender,
+}: {
+  from: number
+  to: number
+  onRender: (compact: boolean) => void
+}) {
   const header = useCompactHeader(from, to)
   onRender(header.compact)
   return (
@@ -16,7 +24,9 @@ function Page({ from, to, onRender }: { from: number; to: number; onRender: (com
 
 const scrollThrough = async (view: Awaited<ReturnType<typeof render>>, offsets: number[]) => {
   for (const y of offsets) {
-    await fireEvent.scroll(view.getByTestId('page'), { nativeEvent: { contentOffset: { x: 0, y } } })
+    await fireEvent.scroll(view.getByTestId('page'), {
+      nativeEvent: { contentOffset: { x: 0, y } },
+    })
   }
 }
 
@@ -24,7 +34,9 @@ const scrollThrough = async (view: Awaited<ReturnType<typeof render>>, offsets: 
 // only when it crosses the middle of the range, once each way.
 it('re-renders the screen only when the offset crosses the middle of the range', async () => {
   const renders: boolean[] = []
-  const view = await render(<Page from={100} to={200} onRender={(compact) => renders.push(compact)} />)
+  const view = await render(
+    <Page from={100} to={200} onRender={(compact) => renders.push(compact)} />
+  )
 
   await scrollThrough(view, [10, 60, 120, 149])
   expect(renders).toEqual([false])
@@ -48,6 +60,12 @@ it('follows a range that moves with layout', async () => {
 })
 
 it('hides a set from screen readers on both platforms, or exposes it plainly', () => {
-  expect(hiddenFromAccessibility(true)).toEqual({ accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' })
-  expect(hiddenFromAccessibility(false)).toEqual({ accessibilityElementsHidden: false, importantForAccessibility: 'auto' })
+  expect(hiddenFromAccessibility(true)).toEqual({
+    accessibilityElementsHidden: true,
+    importantForAccessibility: 'no-hide-descendants',
+  })
+  expect(hiddenFromAccessibility(false)).toEqual({
+    accessibilityElementsHidden: false,
+    importantForAccessibility: 'auto',
+  })
 })

@@ -11,8 +11,10 @@ export function usePrivateOperation<T, A = void>(
   options: { onDispose?: () => void; keepPreviousData?: boolean } = {}
 ) {
   const session = useSession()
-  const owner = session.status === 'authenticated'
-    ? `${session.context?.user.id}:${session.context?.active_operation?.id}` : undefined
+  const owner =
+    session.status === 'authenticated'
+      ? `${session.context?.user.id}:${session.context?.active_operation?.id}`
+      : undefined
   const [initialOwner, setInitialOwner] = useState(owner)
   if (initialOwner === undefined && owner !== undefined) {
     setInitialOwner(owner)
@@ -25,7 +27,8 @@ export function usePrivateOperation<T, A = void>(
   const controller = useRef<AbortController | null>(null)
   const operationRef = useRef<typeof operation | null>(operation)
   const disposeRef = useRef(options.onDispose)
-  const ready = session.status === 'authenticated' && owner !== undefined && owner === initialOwner && !retired
+  const ready =
+    session.status === 'authenticated' && owner !== undefined && owner === initialOwner && !retired
   const readyRef = useRef(ready)
 
   useEffect(() => {
@@ -45,8 +48,12 @@ export function usePrivateOperation<T, A = void>(
     version.current += 1
     controller.current?.abort()
     controller.current = null
-    if (live.current) setState((previous) => previous.data === undefined
-      ? { status: 'idle' } : { status: 'success', data: previous.data })
+    if (live.current)
+      setState((previous) =>
+        previous.data === undefined
+          ? { status: 'idle' }
+          : { status: 'success', data: previous.data }
+      )
   }, [])
 
   const dispose = useCallback(() => {
@@ -71,39 +78,58 @@ export function usePrivateOperation<T, A = void>(
   }, [dispose, reset])
 
   useEffect(() => {
-    if (session.status === 'anonymous' || (owner !== undefined && initialOwner !== undefined && owner !== initialOwner)) {
+    if (
+      session.status === 'anonymous' ||
+      (owner !== undefined && initialOwner !== undefined && owner !== initialOwner)
+    ) {
       dispose()
     }
   }, [session.status, owner, initialOwner, dispose])
 
-  const run = useCallback(async (args: A) => {
-    if (!live.current || revoked.current || !readyRef.current || !operationRef.current) return
-    version.current += 1
-    controller.current?.abort()
-    const current = version.current
-    const abort = new AbortController()
-    controller.current = abort
-    setState((previous) => ({ status: 'pending', data: options.keepPreviousData ? previous.data : undefined }))
-    try {
-      const data = await operationRef.current(args, abort.signal)
-      if (live.current && current === version.current && !abort.signal.aborted) {
-        setState({ status: 'success', data })
+  const run = useCallback(
+    async (args: A) => {
+      if (!live.current || revoked.current || !readyRef.current || !operationRef.current) return
+      version.current += 1
+      controller.current?.abort()
+      const current = version.current
+      const abort = new AbortController()
+      controller.current = abort
+      setState((previous) => ({
+        status: 'pending',
+        data: options.keepPreviousData ? previous.data : undefined,
+      }))
+      try {
+        const data = await operationRef.current(args, abort.signal)
+        if (live.current && current === version.current && !abort.signal.aborted) {
+          setState({ status: 'success', data })
+        }
+      } catch (error) {
+        if (live.current && current === version.current && !abort.signal.aborted) {
+          setState({ status: 'error', error })
+        }
+      } finally {
+        if (controller.current === abort) controller.current = null
       }
-    } catch (error) {
-      if (live.current && current === version.current && !abort.signal.aborted) {
-        setState({ status: 'error', error })
-      }
-    } finally {
-      if (controller.current === abort) controller.current = null
-    }
-  }, [options.keepPreviousData])
+    },
+    [options.keepPreviousData]
+  )
 
-  const mutate = useCallback((args: A) => { void run(args) }, [run])
+  const mutate = useCallback(
+    (args: A) => {
+      void run(args)
+    },
+    [run]
+  )
   return {
     data: ready ? state.data : undefined,
     error: ready ? state.error : undefined,
-    isPending: ready && state.status === 'pending' && (!options.keepPreviousData || state.data === undefined),
+    isPending:
+      ready &&
+      state.status === 'pending' &&
+      (!options.keepPreviousData || state.data === undefined),
     isError: ready && state.status === 'error',
-    ready, mutate, cancel,
+    ready,
+    mutate,
+    cancel,
   }
 }

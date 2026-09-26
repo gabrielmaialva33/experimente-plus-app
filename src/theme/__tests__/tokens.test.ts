@@ -1,5 +1,15 @@
 import { navigationColors, stackSurfaceOptions } from '../navigation'
-import { displayWeight, elevation, fontFamilies, minTouch, palette, radius, spacing, textWeight, typography } from '../tokens'
+import {
+  displayWeight,
+  elevation,
+  fontFamilies,
+  minTouch,
+  palette,
+  radius,
+  spacing,
+  textWeight,
+  typography,
+} from '../tokens'
 
 // Exact canonical CSS OKLCH, 2026-09-08. Portable without the sibling checkout.
 const canonicalOklch = {
@@ -154,8 +164,8 @@ const canonicalOklch = {
 // OKLab -> linear sRGB (D65), matching CSS Color 4 and the canonical web tests.
 function oklchToHex(value: string) {
   const [lightness, chroma, hue] = value.slice(6, -1).split(' ').map(Number)
-  const a = chroma * Math.cos(hue * Math.PI / 180)
-  const b = chroma * Math.sin(hue * Math.PI / 180)
+  const a = chroma * Math.cos((hue * Math.PI) / 180)
+  const b = chroma * Math.sin((hue * Math.PI) / 180)
   const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3
   const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3
   const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3
@@ -164,18 +174,26 @@ function oklchToHex(value: string) {
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ]
-  return '#' + rgb.map((channel) => {
-    // Only floating-point tolerance; do not hide out-of-gamut colors by clipping.
-    expect(channel).toBeGreaterThanOrEqual(-0.000001)
-    expect(channel).toBeLessThanOrEqual(1.000001)
-    const srgb = channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055
-    return Math.round(Math.max(0, Math.min(1, srgb)) * 255).toString(16).padStart(2, '0')
-  }).join('')
+  return (
+    '#' +
+    rgb
+      .map((channel) => {
+        // Only floating-point tolerance; do not hide out-of-gamut colors by clipping.
+        expect(channel).toBeGreaterThanOrEqual(-0.000001)
+        expect(channel).toBeLessThanOrEqual(1.000001)
+        const srgb = channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055
+        return Math.round(Math.max(0, Math.min(1, srgb)) * 255)
+          .toString(16)
+          .padStart(2, '0')
+      })
+      .join('')
+  )
 }
 
 function luminance(hex: string) {
-  const rgb = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16) / 255)
-    .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+  const rgb = [1, 3, 5]
+    .map((start) => parseInt(hex.slice(start, start + 2), 16) / 255)
+    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
   return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
 }
 
@@ -187,8 +205,17 @@ function contrast(a: string, b: string) {
 type Token = keyof typeof palette.light
 const textPairs: [Token, Token][] = []
 for (const surface of ['surfaceBase', 'surfaceRaised', 'surfaceOverlay'] as const) {
-  for (const text of ['foreground', 'mutedForeground', 'primary', 'primaryAccent', 'ctaAccent',
-    'successAccent', 'warningAccent', 'infoAccent', 'destructiveAccent'] as const) {
+  for (const text of [
+    'foreground',
+    'mutedForeground',
+    'primary',
+    'primaryAccent',
+    'ctaAccent',
+    'successAccent',
+    'warningAccent',
+    'infoAccent',
+    'destructiveAccent',
+  ] as const) {
     textPairs.push([text, surface])
   }
 }
@@ -196,11 +223,27 @@ for (const role of ['primary', 'cta', 'success', 'warning', 'info', 'destructive
   textPairs.push([`${role}Foreground`, role], [`${role}Accent`, `${role}Soft`])
   textPairs.push(['foreground', `${role}Soft`], ['mutedForeground', `${role}Soft`])
 }
-textPairs.push(['contextForeground', 'surfaceContext'], ['foreground', 'surfaceContext'], ['mutedForeground', 'surfaceContext'], ['cardForeground', 'card'], ['popoverForeground', 'popover'],
-  ['secondaryForeground', 'secondary'], ['accentForeground', 'accent'], ['mutedForeground', 'muted'],
-  ['primaryForeground', 'primaryHover'], ['destructiveForeground', 'destructiveHover'], ['ctaForeground', 'ctaHover'])
+textPairs.push(
+  ['contextForeground', 'surfaceContext'],
+  ['foreground', 'surfaceContext'],
+  ['mutedForeground', 'surfaceContext'],
+  ['cardForeground', 'card'],
+  ['popoverForeground', 'popover'],
+  ['secondaryForeground', 'secondary'],
+  ['accentForeground', 'accent'],
+  ['mutedForeground', 'muted'],
+  ['primaryForeground', 'primaryHover'],
+  ['destructiveForeground', 'destructiveHover'],
+  ['ctaForeground', 'ctaHover']
+)
 
-for (const role of ['contentAbsent', 'temporalEmphasis', 'statusNeutral', 'choiceSelected', 'actionSecondary'] as const) {
+for (const role of [
+  'contentAbsent',
+  'temporalEmphasis',
+  'statusNeutral',
+  'choiceSelected',
+  'actionSecondary',
+] as const) {
   textPairs.push([`${role}Foreground`, role])
 }
 textPairs.push(['choiceForeground', 'choiceBackground'])
@@ -230,12 +273,20 @@ describe.each(['light', 'dark'] as const)('canonical foundation in %s', (scheme)
     for (const color of Object.values(colors)) expect(color).toMatch(/^#[a-f0-9]{6}$/)
   })
 
-  it.each(textPairs)('%s on %s meets AA for normal text using actual rounded colors', (text, surface) => {
-    expect(contrast(colors[text], colors[surface])).toBeGreaterThanOrEqual(4.5)
-  })
+  it.each(textPairs)(
+    '%s on %s meets AA for normal text using actual rounded colors',
+    (text, surface) => {
+      expect(contrast(colors[text], colors[surface])).toBeGreaterThanOrEqual(4.5)
+    }
+  )
 
   it('keeps interactive boundaries and focus visible on all three planes', () => {
-    for (const surface of [colors.surfaceBase, colors.surfaceRaised, colors.surfaceOverlay, colors.surfaceContext]) {
+    for (const surface of [
+      colors.surfaceBase,
+      colors.surfaceRaised,
+      colors.surfaceOverlay,
+      colors.surfaceContext,
+    ]) {
       expect(contrast(colors.input, surface)).toBeGreaterThanOrEqual(3)
       expect(contrast(colors.ring, surface)).toBeGreaterThanOrEqual(3)
     }
@@ -256,15 +307,26 @@ describe.each(['light', 'dark'] as const)('canonical foundation in %s', (scheme)
 it('has only the canonical logical radii and a hard overlay contact edge', () => {
   expect([radius.sm, radius.md, radius.lg, radius.xl, radius.surface]).toEqual([4, 8, 12, 12, 12])
   expect(elevation.raised).toMatchObject({ elevation: 0, shadowOpacity: 0, shadowRadius: 0 })
-  expect(elevation.overlay).toMatchObject({ elevation: 0, shadowOpacity: 0, shadowRadius: 0, borderBottomWidth: 2 })
+  expect(elevation.overlay).toMatchObject({
+    elevation: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    borderBottomWidth: 2,
+  })
 })
 
 it('preserves the dark planes and warm foreground while keeping the original light brand', () => {
   expect(palette.light.primary).toBe('#13467c')
-  expect([palette.dark.surfaceBase, palette.dark.surfaceRaised, palette.dark.surfaceOverlay]).toEqual(['#11131c', '#1d2134', '#282e4d'])
+  expect([
+    palette.dark.surfaceBase,
+    palette.dark.surfaceRaised,
+    palette.dark.surfaceOverlay,
+  ]).toEqual(['#11131c', '#1d2134', '#282e4d'])
   expect(palette.dark.foreground).toBe('#f7f6f2')
   expect(luminance(palette.dark.surfaceRaised)).toBeGreaterThan(luminance(palette.dark.surfaceBase))
-  expect(luminance(palette.dark.surfaceOverlay)).toBeGreaterThan(luminance(palette.dark.surfaceRaised))
+  expect(luminance(palette.dark.surfaceOverlay)).toBeGreaterThan(
+    luminance(palette.dark.surfaceRaised)
+  )
 })
 
 it('distinguishes light CTA text from its hover fill instead of reusing the dark accent', () => {
@@ -274,11 +336,11 @@ it('distinguishes light CTA text from its hover fill instead of reusing the dark
   expect(contrast(palette.light.ctaForeground, palette.light.ctaAccent)).toBeLessThan(4.5)
 })
 
-
 // Distances use the rounded colors actually rendered, not the unrounded source.
 function hexToOklab(hex: string) {
-  const [r, g, b] = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16) / 255)
-    .map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const [r, g, b] = [1, 3, 5]
+    .map((start) => parseInt(hex.slice(start, start + 2), 16) / 255)
+    .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
@@ -289,27 +351,36 @@ function hexToOklab(hex: string) {
   ]
 }
 
-it.each(['light', 'dark'] as const)('keeps absence, temporal emphasis and neutral status apart perceptually in %s', (mode) => {
-  const colors = palette[mode]
-  const roles = ['contentAbsent', 'temporalEmphasis', 'statusNeutral'] as const
-  for (let i = 0; i < roles.length; i++) {
-    for (let j = i + 1; j < roles.length; j++) {
-      const a = hexToOklab(colors[roles[i]])
-      const b = hexToOklab(colors[roles[j]])
-      // Canonical palette regression floor, not a WCAG perception threshold.
-      expect(Math.hypot(...a.map((channel, k) => channel - b[k]))).toBeGreaterThan(0.04)
+it.each(['light', 'dark'] as const)(
+  'keeps absence, temporal emphasis and neutral status apart perceptually in %s',
+  (mode) => {
+    const colors = palette[mode]
+    const roles = ['contentAbsent', 'temporalEmphasis', 'statusNeutral'] as const
+    for (let i = 0; i < roles.length; i++) {
+      for (let j = i + 1; j < roles.length; j++) {
+        const a = hexToOklab(colors[roles[i]])
+        const b = hexToOklab(colors[roles[j]])
+        // Canonical palette regression floor, not a WCAG perception threshold.
+        expect(Math.hypot(...a.map((channel, k) => channel - b[k]))).toBeGreaterThan(0.04)
+      }
     }
   }
-})
+)
 
-it.each(['light', 'dark'] as const)('keeps new interactive boundaries and the temporal stripe above 3:1 in %s', (mode) => {
-  const colors = palette[mode]
-  for (const [border, fill] of [
-    ['choiceBorder', 'choiceBackground'], ['choiceBorder', 'choiceSelected'],
-    ['choiceSelectedBorder', 'choiceSelected'], ['actionSecondaryBorder', 'actionSecondary'],
-    ['temporalEmphasisBorder', 'temporalEmphasis'],
-  ] as const) expect(contrast(colors[border], colors[fill])).toBeGreaterThanOrEqual(3)
-})
+it.each(['light', 'dark'] as const)(
+  'keeps new interactive boundaries and the temporal stripe above 3:1 in %s',
+  (mode) => {
+    const colors = palette[mode]
+    for (const [border, fill] of [
+      ['choiceBorder', 'choiceBackground'],
+      ['choiceBorder', 'choiceSelected'],
+      ['choiceSelectedBorder', 'choiceSelected'],
+      ['actionSecondaryBorder', 'actionSecondary'],
+      ['temporalEmphasisBorder', 'temporalEmphasis'],
+    ] as const)
+      expect(contrast(colors[border], colors[fill])).toBeGreaterThanOrEqual(3)
+  }
+)
 
 it('gives every role of the direction A scale a loaded face and an explicit line height', () => {
   const display = Object.values(fontFamilies.display) as string[]
@@ -324,8 +395,12 @@ it('gives every role of the direction A scale a loaded face and an explicit line
     expect(style).not.toHaveProperty('fontWeight')
     expect(style.lineHeight).toBeGreaterThanOrEqual(style.fontSize)
   }
-  expect([typography.display.fontSize, typography.title.fontSize, typography.heading.fontSize, typography.body.fontSize])
-    .toEqual([30, 21, 18, 16])
+  expect([
+    typography.display.fontSize,
+    typography.title.fontSize,
+    typography.heading.fontSize,
+    typography.body.fontSize,
+  ]).toEqual([30, 21, 18, 16])
 })
 
 it('turns a weight into its real face and never past the family', () => {
@@ -343,17 +418,23 @@ it('adds the card, thumbnail and sheet radii, the gutter and the section rhythm 
   expect(minTouch).toBe(44)
 })
 
-it.each(['light', 'dark'] as const)('keeps the subtle border decorative: visible on cards, quieter than an interactive boundary, in %s', (mode) => {
-  const colors = palette[mode]
-  for (const surface of [colors.surfaceBase, colors.surfaceRaised]) {
-    expect(contrast(colors.borderSubtle, surface)).toBeGreaterThan(1.1)
-    expect(contrast(colors.borderSubtle, surface)).toBeLessThan(contrast(colors.border, surface))
+it.each(['light', 'dark'] as const)(
+  'keeps the subtle border decorative: visible on cards, quieter than an interactive boundary, in %s',
+  (mode) => {
+    const colors = palette[mode]
+    for (const surface of [colors.surfaceBase, colors.surfaceRaised]) {
+      expect(contrast(colors.borderSubtle, surface)).toBeGreaterThan(1.1)
+      expect(contrast(colors.borderSubtle, surface)).toBeLessThan(contrast(colors.border, surface))
+    }
   }
-})
+)
 
-it.each(['light', 'dark'] as const)('keeps the header band readable: text and chips on it meet AA in %s', (mode) => {
-  const colors = palette[mode]
-  expect(contrast(colors.chromeForeground, colors.chrome)).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(colors.chromeMuted, colors.chrome)).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(colors.chromeForeground, colors.chromeRaised)).toBeGreaterThanOrEqual(4.5)
-})
+it.each(['light', 'dark'] as const)(
+  'keeps the header band readable: text and chips on it meet AA in %s',
+  (mode) => {
+    const colors = palette[mode]
+    expect(contrast(colors.chromeForeground, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(colors.chromeMuted, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(colors.chromeForeground, colors.chromeRaised)).toBeGreaterThanOrEqual(4.5)
+  }
+)

@@ -1,6 +1,7 @@
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 
-export type OrderState = 'pending' | 'confirmed' | 'late_confirmation' | 'failed' | 'blocked' | 'refunded'
+export type OrderState =
+  'pending' | 'confirmed' | 'late_confirmation' | 'failed' | 'blocked' | 'refunded'
 
 /** Presentation of server facts only. Device clock and checkout returns grant nothing. */
 export function orderState(order: Purchase): OrderState {
@@ -15,27 +16,33 @@ export function orderState(order: Purchase): OrderState {
 export const ORDER_COPY: Record<OrderState, { title: string; message: string }> = {
   pending: {
     title: 'Pedido pendente',
-    message: 'Aguardando a confirmação do pagamento. Até lá, o pedido ainda não libera os benefícios.',
+    message:
+      'Aguardando a confirmação do pagamento. Até lá, o pedido ainda não libera os benefícios.',
   },
   confirmed: {
     title: 'Pagamento confirmado',
-    message: 'Seus benefícios estão na carteira, com as datas de uso e a disponibilidade de cada um.',
+    message:
+      'Seus benefícios estão na carteira, com as datas de uso e a disponibilidade de cada um.',
   },
   late_confirmation: {
     title: 'Confirmação em análise',
-    message: 'O pedido está em conferência. Uma confirmação tardia pode exigir análise. Aguarde a atualização; não inicie outro pagamento.',
+    message:
+      'O pedido está em conferência. Uma confirmação tardia pode exigir análise. Aguarde a atualização; não inicie outro pagamento.',
   },
   failed: {
     title: 'Pedido não concluído',
-    message: 'Este pedido não liberou benefícios. Consulte novamente para acompanhar uma eventual confirmação tardia.',
+    message:
+      'Este pedido não liberou benefícios. Consulte novamente para acompanhar uma eventual confirmação tardia.',
   },
   blocked: {
     title: 'Benefícios pausados',
-    message: 'Os benefícios desta compra estão temporariamente indisponíveis para novos usos. Aguarde a atualização ou procure o suporte da operação.',
+    message:
+      'Os benefícios desta compra estão temporariamente indisponíveis para novos usos. Aguarde a atualização ou procure o suporte da operação.',
   },
   refunded: {
     title: 'Pedido reembolsado',
-    message: 'Consulte o estado atual na carteira. Seus comprovantes de utilização permanecem no histórico.',
+    message:
+      'Consulte o estado atual na carteira. Seus comprovantes de utilização permanecem no histórico.',
   },
 }
 

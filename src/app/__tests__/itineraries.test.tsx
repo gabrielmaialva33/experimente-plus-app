@@ -22,7 +22,13 @@ jest.mock('@/explorer/queries', () => ({
 
 const queries = jest.requireMock('@/explorer/queries') as Record<string, jest.Mock>
 
-const idle = (overrides = {}) => ({ mutate: jest.fn(), isPending: false, isError: false, error: null, ...overrides })
+const idle = (overrides = {}) => ({
+  mutate: jest.fn(),
+  isPending: false,
+  isError: false,
+  error: null,
+  ...overrides,
+})
 const summaries = [
   { id: 5, name: 'Sábado no centro', stops_count: 3 },
   { id: 6, name: 'Domingo no lago', stops_count: 1 },
@@ -32,7 +38,12 @@ beforeEach(() => {
   jest.clearAllMocks()
   queries.useCreateItinerary.mockReturnValue(idle())
   queries.useAddItineraryStop.mockReturnValue(idle())
-  queries.useItineraries.mockReturnValue({ isPending: false, isError: false, data: { data: summaries }, refetch: jest.fn() })
+  queries.useItineraries.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { data: summaries },
+    refetch: jest.fn(),
+  })
 })
 
 const order = (view: Awaited<ReturnType<typeof render>>) =>
@@ -43,7 +54,11 @@ describe('itinerary list', () => {
   it('lists the existing itineraries first and "Novo roteiro" last', async () => {
     const view = await render(<ItinerariesScreen />)
 
-    expect(order(view)).toEqual(['Sábado no centro, 3 paradas', 'Domingo no lago, 1 parada', 'Novo roteiro'])
+    expect(order(view)).toEqual([
+      'Sábado no centro, 3 paradas',
+      'Domingo no lago, 1 parada',
+      'Novo roteiro',
+    ])
     expect(view.queryByLabelText('Nome do novo roteiro')).toBeNull()
   })
 
@@ -62,7 +77,12 @@ describe('itinerary list', () => {
 
   // Audit A34: an empty list offers the way to fill it.
   it('offers to create the first itinerary', async () => {
-    queries.useItineraries.mockReturnValue({ isPending: false, isError: false, data: { data: [] }, refetch: jest.fn() })
+    queries.useItineraries.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [] },
+      refetch: jest.fn(),
+    })
     const view = await render(<ItinerariesScreen />)
 
     expect(view.getByRole('header', { name: 'Nenhum roteiro ainda' })).toBeOnTheScreen()
@@ -75,7 +95,11 @@ describe('adding a place to an itinerary', () => {
   it('offers the existing itineraries first and a new one last', async () => {
     const view = await render(<AddToItineraryScreen />)
 
-    expect(order(view)).toEqual(['Adicionar a Sábado no centro', 'Adicionar a Domingo no lago', 'Novo roteiro'])
+    expect(order(view)).toEqual([
+      'Adicionar a Sábado no centro',
+      'Adicionar a Domingo no lago',
+      'Novo roteiro',
+    ])
   })
 
   // Audit A25: the person came from a place and stays with it.

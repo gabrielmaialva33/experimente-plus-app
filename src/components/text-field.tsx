@@ -6,7 +6,10 @@ import { FormTextInput } from '@/components/keyboard-form'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-type FieldInputProps = Omit<TextInputProps, 'value' | 'onChangeText' | 'secureTextEntry' | 'style' | 'accessibilityLabel'>
+type FieldInputProps = Omit<
+  TextInputProps,
+  'value' | 'onChangeText' | 'secureTextEntry' | 'style' | 'accessibilityLabel'
+>
 
 /**
  * A form field of direction A. The label stays above the field while typing
@@ -45,7 +48,8 @@ export function TextField({
             borderColor: error ? colors.destructiveAccent : colors.input,
             borderWidth: error ? 2 : 1,
           },
-        ]}>
+        ]}
+      >
         <FormTextInput
           ref={inputRef}
           {...inputProps}
@@ -62,13 +66,21 @@ export function TextField({
             accessibilityRole="button"
             accessibilityLabel={revealed ? 'Ocultar senha' : 'Mostrar senha'}
             onPress={() => setRevealed(!revealed)}
-            style={styles.toggle}>
-            <Ionicons name={revealed ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.mutedForeground} />
+            style={styles.toggle}
+          >
+            <Ionicons
+              name={revealed ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color={colors.mutedForeground}
+            />
           </Pressable>
         ) : null}
       </View>
       {error ? (
-        <Text accessibilityRole="alert" style={[styles.message, { color: colors.destructiveAccent }]}>
+        <Text
+          accessibilityRole="alert"
+          style={[styles.message, { color: colors.destructiveAccent }]}
+        >
           {error}
         </Text>
       ) : hint ? (
@@ -88,7 +100,19 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingLeft: spacing.lg,
   },
-  input: { ...typography.body, flex: 1, minHeight: 50, paddingRight: spacing.lg, paddingVertical: spacing.md },
-  toggle: { alignItems: 'center', height: minTouch, justifyContent: 'center', marginRight: spacing.xs, width: minTouch },
+  input: {
+    ...typography.body,
+    flex: 1,
+    minHeight: 50,
+    paddingRight: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  toggle: {
+    alignItems: 'center',
+    height: minTouch,
+    justifyContent: 'center',
+    marginRight: spacing.xs,
+    width: minTouch,
+  },
   message: typography.meta,
 })

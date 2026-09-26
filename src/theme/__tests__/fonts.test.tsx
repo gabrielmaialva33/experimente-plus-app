@@ -34,8 +34,12 @@ it('waits for the faces, then gives up after the timeout instead of blocking for
   mockUseFonts.mockReturnValue([false, null])
   const { result } = await renderHook(() => useFontsReady())
   expect(result.current).toBe(false)
-  await act(async () => { jest.advanceTimersByTime(FONT_TIMEOUT_MS - 1) })
+  await act(async () => {
+    jest.advanceTimersByTime(FONT_TIMEOUT_MS - 1)
+  })
   expect(result.current).toBe(false)
-  await act(async () => { jest.advanceTimersByTime(1) })
+  await act(async () => {
+    jest.advanceTimersByTime(1)
+  })
   expect(result.current).toBe(true)
 })

@@ -33,13 +33,22 @@ describe('toPins', () => {
   it('carries the primary category as the pin subtitle', () => {
     const [pin] = toPins([item('bar', -23.3, -51.16)])
 
-    expect(pin).toMatchObject({ name: 'bar', category: 'Bares', latitude: -23.3, longitude: -51.16 })
+    expect(pin).toMatchObject({
+      name: 'bar',
+      category: 'Bares',
+      latitude: -23.3,
+      longitude: -51.16,
+    })
   })
 })
 
 describe('groupPins', () => {
   const pin = (slug: string, latitude: number, longitude: number): MapPin => ({
-    slug, name: slug, category: null, latitude, longitude,
+    slug,
+    name: slug,
+    category: null,
+    latitude,
+    longitude,
   })
 
   it('gives places at the same point one marker that names how many', () => {

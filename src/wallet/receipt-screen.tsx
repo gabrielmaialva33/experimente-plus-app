@@ -42,7 +42,9 @@ export function ReceiptScreen({
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <View style={styles.head}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>Utilização registrada</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Utilização registrada
+        </Text>
         <Text style={[styles.hint, { color: colors.mutedForeground }]}>
           Cliente e parceiro veem este mesmo comprovante.
         </Text>
@@ -57,7 +59,19 @@ const styles = StyleSheet.create({
   head: { gap: spacing.xs },
   title: typography.title,
   hint: typography.meta,
-  center: { alignItems: 'center', flex: 1, gap: spacing.lg, justifyContent: 'center', padding: spacing.xxl },
-  mark: { alignItems: 'center', borderRadius: radius.pill, height: 56, justifyContent: 'center', width: 56 },
+  center: {
+    alignItems: 'center',
+    flex: 1,
+    gap: spacing.lg,
+    justifyContent: 'center',
+    padding: spacing.xxl,
+  },
+  mark: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
   message: { ...typography.body, textAlign: 'center' },
 })

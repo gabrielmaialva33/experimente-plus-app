@@ -112,8 +112,7 @@ export function cityAgendaView(response: CityAgendaResponse): CityAgendaView {
     happeningToday,
     upcoming,
     newExperiences,
-    isEmpty:
-      happeningToday.length === 0 && upcoming.length === 0 && newExperiences.length === 0,
+    isEmpty: happeningToday.length === 0 && upcoming.length === 0 && newExperiences.length === 0,
   }
 }
 
@@ -144,7 +143,11 @@ export function formatAgendaWindow(
   withDate: boolean
 ): string | null {
   const time: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
-  const start = format(item.startsAt, timeZone, withDate ? { ...time, day: '2-digit', month: 'short' } : time)
+  const start = format(
+    item.startsAt,
+    timeZone,
+    withDate ? { ...time, day: '2-digit', month: 'short' } : time
+  )
   if (!start) return null
 
   const end = item.endsAt ? format(item.endsAt, timeZone, time) : null
@@ -152,7 +155,10 @@ export function formatAgendaWindow(
 }
 
 /** Chronological label of a recently published experience. */
-export function formatAgendaPublication(iso: string | null, timeZone: string | null): string | null {
+export function formatAgendaPublication(
+  iso: string | null,
+  timeZone: string | null
+): string | null {
   if (!iso) return null
   const published = format(iso, timeZone, { day: '2-digit', month: 'short' })
   return published ? `Publicado em ${published}` : null

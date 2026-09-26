@@ -3,7 +3,10 @@ import { render } from '@testing-library/react-native'
 
 import ExploreScreen from '@/app/(tabs)/index'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  useFocusEffect: jest.fn(),
+}))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -91,7 +94,9 @@ function textsOf(node: Rendered | string): string[] {
 
 it('adds the personal row after the places and before the agenda, and leaves search as it was', async () => {
   // No garbage-collection timer: one left behind keeps jest from exiting.
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  })
   const view = await render(
     <QueryClientProvider client={client}>
       <ExploreScreen />

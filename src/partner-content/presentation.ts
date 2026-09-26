@@ -50,9 +50,7 @@ function publicMedia(item: PartnerContentPublicItem): PublishedContentMediaView[
  * An item whose title did not survive serialization has nothing to show, which
  * is the only reason to drop one here.
  */
-export function publishedContentView(
-  item: PartnerContentPublicItem
-): PublishedContentView | null {
+export function publishedContentView(item: PartnerContentPublicItem): PublishedContentView | null {
   const title = optionalString(item.title)
   if (!title) return null
 

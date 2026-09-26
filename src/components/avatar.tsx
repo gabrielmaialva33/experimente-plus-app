@@ -16,7 +16,15 @@ export function initialsOf(name: string | null | undefined): string {
  * The person's initials in a circle. There is no photo to show (the product
  * stores none), and an empty silhouette says less than two letters.
  */
-export function Avatar({ name, size = 64, tone = 'surface' }: { name: string | null | undefined; size?: number; tone?: 'surface' | 'chrome' }) {
+export function Avatar({
+  name,
+  size = 64,
+  tone = 'surface',
+}: {
+  name: string | null | undefined
+  size?: number
+  tone?: 'surface' | 'chrome'
+}) {
   const colors = useColors()
   const background = tone === 'chrome' ? colors.chromeRaised : colors.primarySoft
   const foreground = tone === 'chrome' ? colors.chromeForeground : colors.primaryAccent
@@ -27,8 +35,11 @@ export function Avatar({ name, size = 64, tone = 'surface' }: { name: string | n
       accessible={false}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.circle, { backgroundColor: background, height: size, width: size }]}>
-      <Text style={[styles.initials, { color: foreground, fontSize: Math.round(size * 0.36) }]}>{initialsOf(name)}</Text>
+      style={[styles.circle, { backgroundColor: background, height: size, width: size }]}
+    >
+      <Text style={[styles.initials, { color: foreground, fontSize: Math.round(size * 0.36) }]}>
+        {initialsOf(name)}
+      </Text>
     </View>
   )
 }

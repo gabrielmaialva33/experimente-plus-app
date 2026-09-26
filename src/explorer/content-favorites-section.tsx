@@ -38,7 +38,11 @@ export function ContentFavoritesSection() {
   const router = useRouter()
   const query = useSavedContent()
   const toggle = useToggleSavedContent()
-  const [removed, setRemoved] = useState<{ kind: FavoriteContentPath; id: number; title: string } | null>(null)
+  const [removed, setRemoved] = useState<{
+    kind: FavoriteContentPath
+    id: number
+    title: string
+  } | null>(null)
   const dismiss = useCallback(() => setRemoved(null), [])
 
   const items = query.data?.data ?? []
@@ -59,7 +63,10 @@ export function ContentFavoritesSection() {
         />
       ) : null}
       {unavailable > 0 ? (
-        <Text style={[styles.notice, { color: colors.mutedForeground }]} testID="content-unavailable">
+        <Text
+          style={[styles.notice, { color: colors.mutedForeground }]}
+          testID="content-unavailable"
+        >
           {unavailable === 1
             ? '1 item salvo não está disponível agora — pode ter terminado ou saído do catálogo.'
             : `${unavailable} itens salvos não estão disponíveis agora — podem ter terminado ou saído do catálogo.`}
@@ -67,12 +74,17 @@ export function ContentFavoritesSection() {
       ) : null}
       {items.map((entry) => {
         const when = entry.content.kind === 'event' ? formatWindow(entry.content.starts_at) : null
-        const path: FavoriteContentPath = entry.content.kind === 'experience' ? 'experiences' : 'events'
+        const path: FavoriteContentPath =
+          entry.content.kind === 'experience' ? 'experiences' : 'events'
         return (
           <View
             key={entry.id}
-            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-            testID={`saved-content-${entry.content.kind}-${entry.content.id}`}>
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            ]}
+            testID={`saved-content-${entry.content.kind}-${entry.content.id}`}
+          >
             <Pressable
               accessibilityRole="link"
               accessibilityLabel={`${entry.content.title}, ${entry.content.establishment.name}`}
@@ -81,7 +93,8 @@ export function ContentFavoritesSection() {
                 router.push(
                   `/estabelecimento/${entry.content.establishment.city_slug}/${entry.content.establishment.slug}`
                 )
-              }>
+              }
+            >
               <Text numberOfLines={1} style={[styles.kind, { color: colors.primaryAccent }]}>
                 {KIND_LABEL[entry.content.kind]}
                 {when ? ` · ${when}` : ''}

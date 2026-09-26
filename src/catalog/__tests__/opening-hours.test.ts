@@ -1,4 +1,10 @@
-import { cityWeekday, formatTime, groupedSchedule, weekdayName, weeklySchedule } from '../opening-hours'
+import {
+  cityWeekday,
+  formatTime,
+  groupedSchedule,
+  weekdayName,
+  weeklySchedule,
+} from '../opening-hours'
 
 describe('formatTime', () => {
   it('drops the seconds the projection carries', () => {
@@ -43,15 +49,33 @@ describe('habitual weekly schedule', () => {
   it('includes all seven days, leaving absent days explicitly without periods', () => {
     const week = weeklySchedule([])
     expect(week.map((day) => day.name)).toEqual([
-      'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado',
+      'Domingo',
+      'Segunda',
+      'Terça',
+      'Quarta',
+      'Quinta',
+      'Sexta',
+      'Sábado',
     ])
     expect(week.every((day) => day.periods.length === 0)).toBe(true)
   })
 
   it('keeps multiple intervals in order without mutating the projection', () => {
     const hours = [
-      { weekday: 1, opens_at: '18:00:00', closes_at: '22:00:00', spans_next_day: false, sort_order: 1 },
-      { weekday: 1, opens_at: '09:00:00', closes_at: '12:00:00', spans_next_day: false, sort_order: 0 },
+      {
+        weekday: 1,
+        opens_at: '18:00:00',
+        closes_at: '22:00:00',
+        spans_next_day: false,
+        sort_order: 1,
+      },
+      {
+        weekday: 1,
+        opens_at: '09:00:00',
+        closes_at: '12:00:00',
+        spans_next_day: false,
+        sort_order: 0,
+      },
     ]
     expect(weeklySchedule(hours)[1].periods).toEqual(['09:00 às 12:00', '18:00 às 22:00'])
     expect(hours[0].opens_at).toBe('18:00:00')
@@ -59,7 +83,13 @@ describe('habitual weekly schedule', () => {
 
   it('does not label Sunday closed when a Saturday interval continues into it', () => {
     const week = weeklySchedule([
-      { weekday: 6, opens_at: '20:00:00', closes_at: '02:00:00', spans_next_day: true, sort_order: 0 },
+      {
+        weekday: 6,
+        opens_at: '20:00:00',
+        closes_at: '02:00:00',
+        spans_next_day: true,
+        sort_order: 0,
+      },
     ])
     expect(week[6].periods).toEqual(['20:00 às 02:00 (dia seguinte)'])
     expect(week[0].periods).toEqual(['Até 02:00 (da véspera)'])
@@ -68,7 +98,13 @@ describe('habitual weekly schedule', () => {
 
   it('does not carry an interval ending exactly at midnight into the next day', () => {
     const week = weeklySchedule([
-      { weekday: 6, opens_at: '20:00:00', closes_at: '00:00:00', spans_next_day: true, sort_order: 0 },
+      {
+        weekday: 6,
+        opens_at: '20:00:00',
+        closes_at: '00:00:00',
+        spans_next_day: true,
+        sort_order: 0,
+      },
     ])
     expect(week[0].periods).toEqual([])
   })
@@ -88,8 +124,13 @@ describe('weekdayName', () => {
 })
 
 describe('week read as a person says it (audit A9)', () => {
-  const day = (weekday: number, opens = '09:00:00', closes = '18:00:00') =>
-    ({ weekday, opens_at: opens, closes_at: closes, spans_next_day: false, sort_order: 0 })
+  const day = (weekday: number, opens = '09:00:00', closes = '18:00:00') => ({
+    weekday,
+    opens_at: opens,
+    closes_at: closes,
+    spans_next_day: false,
+    sort_order: 0,
+  })
 
   it('collapses seven equal days into "Todos os dias"', () => {
     const every = [0, 1, 2, 3, 4, 5, 6].map((weekday) => day(weekday, '08:00:00', '23:00:00'))
@@ -113,7 +154,10 @@ describe('week read as a person says it (audit A9)', () => {
       'Domingo: Fechado',
     ])
     expect(groupedSchedule([day(1), day(3)]).map((group) => group.label)).toEqual([
-      'Segunda', 'Terça', 'Quarta', 'Quinta a domingo',
+      'Segunda',
+      'Terça',
+      'Quarta',
+      'Quinta a domingo',
     ])
   })
 })

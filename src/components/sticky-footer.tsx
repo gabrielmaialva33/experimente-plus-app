@@ -26,7 +26,8 @@ export function StickyFooter({
   return (
     <View
       testID={testID}
-      style={[styles.bar, { backgroundColor: colors.card, borderTopColor: colors.borderSubtle }]}>
+      style={[styles.bar, { backgroundColor: colors.card, borderTopColor: colors.borderSubtle }]}
+    >
       <View accessible accessibilityLabel={`${caption}: ${value}`} style={styles.amount}>
         <Text style={[styles.caption, { color: colors.mutedForeground }]}>{caption}</Text>
         <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>

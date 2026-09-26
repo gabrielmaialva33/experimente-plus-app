@@ -17,7 +17,14 @@ beforeEach(() => theme.useColors.mockReturnValue(palette.light))
 describe('TextField', () => {
   it('keeps its label while typing and puts the error on the field', async () => {
     const change = jest.fn()
-    const view = await render(<TextField label="E-mail" value="ana@" onChangeText={change} error="Informe um e-mail válido." />)
+    const view = await render(
+      <TextField
+        label="E-mail"
+        value="ana@"
+        onChangeText={change}
+        error="Informe um e-mail válido."
+      />
+    )
     expect(view.getByText('E-mail')).toBeOnTheScreen()
     const input = view.getByLabelText('E-mail')
     expect(input.props.accessibilityHint).toBe('Informe um e-mail válido.')
@@ -27,11 +34,16 @@ describe('TextField', () => {
   })
 
   it('shows and hides a password on request', async () => {
-    const view = await render(<TextField label="Senha" value="segredo123" onChangeText={jest.fn()} secure />)
+    const view = await render(
+      <TextField label="Senha" value="segredo123" onChangeText={jest.fn()} secure />
+    )
     expect(view.getByLabelText('Senha').props.secureTextEntry).toBe(true)
     await fireEvent.press(view.getByRole('button', { name: 'Mostrar senha' }))
     expect(view.getByLabelText('Senha').props.secureTextEntry).toBe(false)
-    expect(view.getByRole('button', { name: 'Ocultar senha' })).toHaveStyle({ width: minTouch, height: minTouch })
+    expect(view.getByRole('button', { name: 'Ocultar senha' })).toHaveStyle({
+      width: minTouch,
+      height: minTouch,
+    })
   })
 })
 
@@ -49,7 +61,9 @@ describe('ListRow and ListGroup', () => {
   })
 
   it('draws the destructive row in red, without the chevron', async () => {
-    const view = await render(<ListRow icon="trash-outline" label="Excluir conta" onPress={jest.fn()} tone="destructive" />)
+    const view = await render(
+      <ListRow icon="trash-outline" label="Excluir conta" onPress={jest.fn()} tone="destructive" />
+    )
     expect(view.getByText('Excluir conta')).toHaveStyle({ color: palette.light.destructiveAccent })
     expect(view.queryByTestId('list-row-chevron', { includeHiddenElements: true })).toBeNull()
   })
@@ -79,9 +93,16 @@ describe('Avatar', () => {
 describe('Checkbox', () => {
   it('always draws its box and reports the checked state', async () => {
     const toggle = jest.fn()
-    const view = await render(<Checkbox label="Aceito os termos" checked={false} onPress={toggle} testID="terms" />)
+    const view = await render(
+      <Checkbox label="Aceito os termos" checked={false} onPress={toggle} testID="terms" />
+    )
     const box = view.getByTestId('terms-box')
-    expect(box).toHaveStyle({ width: 24, height: 24, borderWidth: 2, borderColor: palette.light.choiceBorder })
+    expect(box).toHaveStyle({
+      width: 24,
+      height: 24,
+      borderWidth: 2,
+      borderColor: palette.light.choiceBorder,
+    })
     const checkbox = view.getByRole('checkbox', { name: 'Aceito os termos', checked: false })
     expect(checkbox).toHaveStyle({ minHeight: minTouch })
     await fireEvent.press(checkbox)
@@ -93,7 +114,12 @@ describe('EmptyState', () => {
   it('says what goes here and offers the way to fill it', async () => {
     const go = jest.fn()
     const view = await render(
-      <EmptyState icon="heart-outline" title="Nenhum favorito ainda" text="Toque no coração de um lugar." action={{ label: 'Explorar lugares', onPress: go }} />
+      <EmptyState
+        icon="heart-outline"
+        title="Nenhum favorito ainda"
+        text="Toque no coração de um lugar."
+        action={{ label: 'Explorar lugares', onPress: go }}
+      />
     )
     expect(view.getByRole('header', { name: 'Nenhum favorito ainda' })).toBeOnTheScreen()
     await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
@@ -108,13 +134,17 @@ describe('UndoBar', () => {
     jest.useFakeTimers()
     const undo = jest.fn()
     const dismiss = jest.fn()
-    const view = await render(<UndoBar message="Ateliê removido dos favoritos." onUndo={undo} onDismiss={dismiss} />)
+    const view = await render(
+      <UndoBar message="Ateliê removido dos favoritos." onUndo={undo} onDismiss={dismiss} />
+    )
 
     expect(view.getByRole('alert')).toHaveTextContent('Ateliê removido dos favoritos.')
     await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
     expect(undo).toHaveBeenCalledTimes(1)
     expect(dismiss).not.toHaveBeenCalled()
-    await act(async () => { jest.advanceTimersByTime(8000) })
+    await act(async () => {
+      jest.advanceTimersByTime(8000)
+    })
     expect(dismiss).toHaveBeenCalledTimes(1)
     await view.unmount()
   })

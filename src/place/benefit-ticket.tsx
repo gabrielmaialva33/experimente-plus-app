@@ -18,13 +18,26 @@ const NOTCH = 24
  * conversion colour. Public and optional: a failed or empty catalogue leaves
  * the rest of the page as it was.
  */
-export function PlaceBenefits({ citySlug, slug, timeZone }: { citySlug: string; slug: string; timeZone: string }) {
+export function PlaceBenefits({
+  citySlug,
+  slug,
+  timeZone,
+}: {
+  citySlug: string
+  slug: string
+  timeZone: string
+}) {
   const catalog = usePurchaseEditions()
   const router = useRouter()
-  const products = catalog.isError ? [] : catalog.data?.products.filter((product) =>
-    product.product_type === 'offer' && product.purchasable &&
-    product.city.slug === citySlug && product.establishment?.slug === slug
-  ) ?? []
+  const products = catalog.isError
+    ? []
+    : (catalog.data?.products.filter(
+        (product) =>
+          product.product_type === 'offer' &&
+          product.purchasable &&
+          product.city.slug === citySlug &&
+          product.establishment?.slug === slug
+      ) ?? [])
   if (products.length === 0) return null
 
   return (
@@ -56,19 +69,28 @@ function BenefitTicket({
   const terms = [
     offer?.description,
     product.usage_ends_at ? `Válido até ${purchaseDay(product.usage_ends_at, timeZone)}.` : null,
-  ].filter(Boolean).join(' ')
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <View
       accessibilityLabel="Benefício"
       testID={`benefit-${productKey(product)}`}
-      style={[styles.ticket, { backgroundColor: colors.ctaSoft }]}>
+      style={[styles.ticket, { backgroundColor: colors.ctaSoft }]}
+    >
       <View style={styles.stub}>
         <Text style={[styles.overline, { color: colors.ctaAccent }]}>BENEFÍCIO</Text>
-        <Text style={[styles.title, { color: colors.foreground }]}>{offer?.title || product.name}</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>
+          {offer?.title || product.name}
+        </Text>
         {terms ? <Text style={[styles.terms, { color: colors.ctaAccent }]}>{terms}</Text> : null}
       </View>
-      <View style={styles.perforation} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View
+        style={styles.perforation}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         {Array.from({ length: 9 }, (_, index) => (
           <View key={index} style={[styles.dash, { backgroundColor: colors.ctaAccent }]} />
         ))}
@@ -97,16 +119,35 @@ function BenefitTicket({
 const styles = StyleSheet.create({
   list: { gap: spacing.md },
   ticket: { borderRadius: radius.card, flexDirection: 'row', overflow: 'hidden' },
-  stub: { flex: 1, gap: 6, paddingLeft: spacing.gutter, paddingRight: spacing.lg, paddingVertical: 18 },
+  stub: {
+    flex: 1,
+    gap: 6,
+    paddingLeft: spacing.gutter,
+    paddingRight: spacing.lg,
+    paddingVertical: 18,
+  },
   overline: typography.overline,
   title: { ...typography.title, fontSize: 22, lineHeight: 26 },
   terms: typography.meta,
   perforation: { justifyContent: 'space-between', paddingVertical: spacing.lg, width: 2 },
   dash: { borderRadius: 1, height: 6, opacity: 0.35, width: 2 },
-  side: { alignItems: 'center', gap: 10, justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.lg, width: SIDE },
+  side: {
+    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+    width: SIDE,
+  },
   action: { alignSelf: 'stretch', flexDirection: 'row' },
   price: { ...typography.heading, ...displayWeight('800'), fontSize: 20 },
-  notch: { borderRadius: NOTCH / 2, height: NOTCH, position: 'absolute', right: SIDE - NOTCH / 2 + 1, width: NOTCH },
+  notch: {
+    borderRadius: NOTCH / 2,
+    height: NOTCH,
+    position: 'absolute',
+    right: SIDE - NOTCH / 2 + 1,
+    width: NOTCH,
+  },
   top: { top: -NOTCH / 2 },
   bottom: { bottom: -NOTCH / 2 },
 })

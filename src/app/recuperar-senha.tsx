@@ -74,8 +74,13 @@ export default function ForgotPasswordScreen() {
       return
     }
     submitting.current = true
-    try { await mutation.mutateAsync(normalized) } catch { /* Safe, neutral messages above. */ }
-    finally { submitting.current = false }
+    try {
+      await mutation.mutateAsync(normalized)
+    } catch {
+      /* Safe, neutral messages above. */
+    } finally {
+      submitting.current = false
+    }
   }
 
   const back = () => {
@@ -84,49 +89,84 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.flex, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      edges={['left', 'right', 'bottom']}
+      style={[styles.flex, { backgroundColor: colors.background }]}
+    >
       <Stack.Screen options={{ title: 'Recuperar senha' }} />
       <KeyboardForm contentContainerStyle={styles.page}>
-        {requested ? <>
-          <View style={[styles.receipt, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
-            <View style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}>
-              <Ionicons name="mail-outline" size={26} color={colors.successAccent} />
+        {requested ? (
+          <>
+            <View
+              style={[
+                styles.receipt,
+                { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+              ]}
+            >
+              <View style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}>
+                <Ionicons name="mail-outline" size={26} color={colors.successAccent} />
+              </View>
+              <Text accessibilityRole="alert" style={[styles.body, { color: colors.foreground }]}>
+                Se houver uma conta associada a este e-mail, você receberá um link para recuperar a
+                senha.
+              </Text>
+              <Text style={[styles.body, { color: colors.mutedForeground }]}>
+                Confira também a caixa de spam. O link abre uma página no navegador. Depois de
+                definir sua nova senha, volte ao aplicativo e entre.
+              </Text>
             </View>
-            <Text accessibilityRole="alert" style={[styles.body, { color: colors.foreground }]}>
-              Se houver uma conta associada a este e-mail, você receberá um link para recuperar a senha.
-            </Text>
+          </>
+        ) : (
+          <>
             <Text style={[styles.body, { color: colors.mutedForeground }]}>
-              Confira também a caixa de spam. O link abre uma página no navegador. Depois de definir sua nova senha, volte ao aplicativo e entre.
+              Informe seu e-mail para solicitar a recuperação. O link enviado por e-mail abre no
+              navegador, onde você poderá definir uma nova senha.
             </Text>
-          </View>
-        </> : <>
-          <Text style={[styles.body, { color: colors.mutedForeground }]}>
-            Informe seu e-mail para solicitar a recuperação. O link enviado por e-mail abre no navegador, onde você poderá definir uma nova senha.
-          </Text>
-          <TextField
-            label="E-mail"
-            value={email}
-            editable={!mutation.isPending}
-            onChangeText={(value) => { setEmail(value); setEmailError(null) }}
-            error={emailError}
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            autoComplete="email"
-            autoCapitalize="none"
-            autoCorrect={false}
-            onSubmitEditing={() => void submit()}
-          />
-          {message ? <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]}>{message}</Text> : null}
-          {waiting > 0 ? <Text style={[styles.body, { color: colors.foreground }]}>Tente novamente em {waiting}s.</Text> : null}
-          <Button
-            label={mutation.isPending ? 'Solicitando…' : 'Solicitar link'}
-            size={52}
-            fill
-            disabled={mutation.isPending || waiting > 0}
-            onPress={() => void submit()}
-          />
-        </>}
-        <Button label="Voltar para entrar" variant="ghost" size={48} disabled={mutation.isPending} onPress={back} />
+            <TextField
+              label="E-mail"
+              value={email}
+              editable={!mutation.isPending}
+              onChangeText={(value) => {
+                setEmail(value)
+                setEmailError(null)
+              }}
+              error={emailError}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={() => void submit()}
+            />
+            {message ? (
+              <Text
+                accessibilityRole="alert"
+                style={[styles.body, { color: colors.destructiveAccent }]}
+              >
+                {message}
+              </Text>
+            ) : null}
+            {waiting > 0 ? (
+              <Text style={[styles.body, { color: colors.foreground }]}>
+                Tente novamente em {waiting}s.
+              </Text>
+            ) : null}
+            <Button
+              label={mutation.isPending ? 'Solicitando…' : 'Solicitar link'}
+              size={52}
+              fill
+              disabled={mutation.isPending || waiting > 0}
+              onPress={() => void submit()}
+            />
+          </>
+        )}
+        <Button
+          label="Voltar para entrar"
+          variant="ghost"
+          size={48}
+          disabled={mutation.isPending}
+          onPress={back}
+        />
       </KeyboardForm>
     </SafeAreaView>
   )
@@ -136,6 +176,18 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   page: { gap: spacing.lg, padding: spacing.gutter },
   body: typography.body,
-  receipt: { alignItems: 'flex-start', borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.xl },
-  receiptIcon: { alignItems: 'center', borderRadius: radius.pill, height: 48, justifyContent: 'center', width: 48 },
+  receipt: {
+    alignItems: 'flex-start',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.xl,
+  },
+  receiptIcon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
 })

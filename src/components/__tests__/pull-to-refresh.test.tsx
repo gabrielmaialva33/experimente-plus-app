@@ -11,12 +11,17 @@ import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { SavedListScreen } from '@/explorer/saved-list-screen'
 import { HistoryScreen } from '@/wallet/history-screen'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  useFocusEffect: jest.fn(),
+}))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }))
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.light,
+}))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'authenticated' }) }))
 jest.mock('@/reviews/queries', () => ({
@@ -30,12 +35,21 @@ jest.mock('@/explorer/queries', () => ({
   useToggleSaved: () => ({ mutate: jest.fn(), isPending: false }),
 }))
 jest.mock('@/wallet/queries', () => ({ useWallet: jest.fn() }))
-jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: jest.fn(), usePurchases: jest.fn() }))
+jest.mock('@/purchases/queries', () => ({
+  usePurchaseEditions: jest.fn(),
+  usePurchases: jest.fn(),
+}))
 
 const reviews = jest.requireMock('@/reviews/queries') as { useMyReviews: jest.Mock }
-const explorer = jest.requireMock('@/explorer/queries') as { useItineraries: jest.Mock; useSavedList: jest.Mock }
+const explorer = jest.requireMock('@/explorer/queries') as {
+  useItineraries: jest.Mock
+  useSavedList: jest.Mock
+}
 const wallet = jest.requireMock('@/wallet/queries') as { useWallet: jest.Mock }
-const purchases = jest.requireMock('@/purchases/queries') as { usePurchaseEditions: jest.Mock; usePurchases: jest.Mock }
+const purchases = jest.requireMock('@/purchases/queries') as {
+  usePurchaseEditions: jest.Mock
+  usePurchases: jest.Mock
+}
 
 type Rendered = Awaited<ReturnType<typeof render>>
 
@@ -48,13 +62,27 @@ function refreshAround(view: Rendered, text: string | RegExp) {
   return control.props
 }
 
-const loaded = (data: unknown) => ({ data, isPending: false, isError: false, refetch: jest.fn(() => Promise.resolve()) })
+const loaded = (data: unknown) => ({
+  data,
+  isPending: false,
+  isError: false,
+  refetch: jest.fn(() => Promise.resolve()),
+})
 
 function List() {
-  return <ScrollView refreshControl={usePullToRefresh(results, orders)}><Text>Lista</Text></ScrollView>
+  return (
+    <ScrollView refreshControl={usePullToRefresh(results, orders)}>
+      <Text>Lista</Text>
+    </ScrollView>
+  )
 }
 let settle: () => void = () => {}
-const results = jest.fn(() => new Promise<void>((resolve) => { settle = resolve }))
+const results = jest.fn(
+  () =>
+    new Promise<void>((resolve) => {
+      settle = resolve
+    })
+)
 const orders = jest.fn(() => Promise.reject(new Error('offline')))
 
 it('refetches what the list shows and spins only until those answers arrive', async () => {
@@ -97,7 +125,10 @@ describe('lists the server fills can be pulled to refresh', () => {
   })
 
   it('the wallet, with the orders it announces', async () => {
-    const query = loaded({ passes: [], summary: { passes: 0, benefits: 0, available: 0, upcoming: 0, redeemed: 0 } })
+    const query = loaded({
+      passes: [],
+      summary: { passes: 0, benefits: 0, available: 0, upcoming: 0, redeemed: 0 },
+    })
     const orders = loaded({ purchases: [] })
     wallet.useWallet.mockReturnValue(query)
     purchases.usePurchases.mockReturnValue(orders)
@@ -123,7 +154,12 @@ describe('lists the server fills can be pulled to refresh', () => {
     const load = jest.fn(() => Promise.resolve({ redemptions: [], total: 0 }))
     const view = await render(
       <QueryClientProvider client={client}>
-        <HistoryScreen queryKey={['history']} load={load} emptyMessage="Nenhum uso" receiptHref={() => '/carteira/historico'} />
+        <HistoryScreen
+          queryKey={['history']}
+          load={load}
+          emptyMessage="Nenhum uso"
+          receiptHref={() => '/carteira/historico'}
+        />
       </QueryClientProvider>
     )
     await view.findByText('Nenhum uso')

@@ -42,7 +42,12 @@ describe('mailto', () => {
 
 describe('instagramProfile', () => {
   it('opens the same profile whether the partner typed the handle, the @ or the link', () => {
-    for (const value of ['casadepetiscos', '@casadepetiscos', 'https://www.instagram.com/casadepetiscos/', 'instagram.com/casadepetiscos?hl=pt']) {
+    for (const value of [
+      'casadepetiscos',
+      '@casadepetiscos',
+      'https://www.instagram.com/casadepetiscos/',
+      'instagram.com/casadepetiscos?hl=pt',
+    ]) {
       expect(instagramProfile(value)).toBe('https://instagram.com/casadepetiscos')
     }
   })

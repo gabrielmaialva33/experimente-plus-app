@@ -7,32 +7,69 @@ import { Button } from '@/components/button'
 import { spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-export function PurchasePage({ children, refreshControl }: {
-  children: ReactNode; refreshControl?: ScrollViewProps['refreshControl']
+export function PurchasePage({
+  children,
+  refreshControl,
+}: {
+  children: ReactNode
+  refreshControl?: ScrollViewProps['refreshControl']
 }) {
   const colors = useColors()
-  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page} refreshControl={refreshControl}>{children}</ScrollView>
+  return (
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.page}
+      refreshControl={refreshControl}
+    >
+      {children}
+    </ScrollView>
+  )
 }
 
-export function PurchaseText({ children, heading = false }: { children: ReactNode; heading?: boolean }) {
+export function PurchaseText({
+  children,
+  heading = false,
+}: {
+  children: ReactNode
+  heading?: boolean
+}) {
   const colors = useColors()
-  return <Text style={[heading ? typography.heading : typography.body, { color: colors.foreground }]}>{children}</Text>
+  return (
+    <Text style={[heading ? typography.heading : typography.body, { color: colors.foreground }]}>
+      {children}
+    </Text>
+  )
 }
 
-export function PurchaseAction({ label, onPress, disabled = false, conversion = false }: {
-  label: string; onPress: () => void; disabled?: boolean; conversion?: boolean
+export function PurchaseAction({
+  label,
+  onPress,
+  disabled = false,
+  conversion = false,
+}: {
+  label: string
+  onPress: () => void
+  disabled?: boolean
+  conversion?: boolean
 }) {
   // A row, so the pill fills the column's width and never its height.
   return (
     <View style={styles.actionRow}>
-      <Button label={label} variant={conversion ? 'cta' : 'outline'} disabled={disabled} fill onPress={onPress} />
+      <Button
+        label={label}
+        variant={conversion ? 'cta' : 'outline'}
+        disabled={disabled}
+        fill
+        onPress={onPress}
+      />
     </View>
   )
 }
 
 /** Retry-After governs manual retries too; the status itself is never inferred from time. */
 export function RetryPurchase({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const retrySeconds = error instanceof ApiError && error.status === 429 ? error.retryAfterSeconds ?? 60 : 0
+  const retrySeconds =
+    error instanceof ApiError && error.status === 429 ? (error.retryAfterSeconds ?? 60) : 0
   const [waiting, setWaiting] = useState(retrySeconds)
   const [prevError, setPrevError] = useState(error)
 
@@ -47,12 +84,21 @@ export function RetryPurchase({ error, onRetry }: { error: unknown; onRetry: () 
     return () => clearTimeout(timer)
   }, [waiting])
 
-  return <PurchaseAction label={waiting ? `Aguarde ${waiting}s` : 'Consultar novamente'} disabled={waiting > 0} onPress={onRetry} />
+  return (
+    <PurchaseAction
+      label={waiting ? `Aguarde ${waiting}s` : 'Consultar novamente'}
+      disabled={waiting > 0}
+      onPress={onRetry}
+    />
+  )
 }
 
 export function price(amountCents: number, currency: string) {
-  try { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amountCents / 100) }
-  catch { return `${amountCents / 100} ${currency}` }
+  try {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amountCents / 100)
+  } catch {
+    return `${amountCents / 100} ${currency}`
+  }
 }
 
 /** Every operation of the pilot is in Paraná; the city's own zone wins when it is known. */
@@ -63,20 +109,31 @@ const known = (value: string) => Boolean(value) && Number.isFinite(Date.parse(va
 /** The day a window opens or closes, on the city's clock — never a UTC stamp. */
 export function purchaseDay(value: string, timeZone = DEFAULT_TIME_ZONE) {
   if (!known(value)) return 'data não informada'
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone }).format(new Date(value))
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone,
+  }).format(new Date(value))
 }
 
 /** Day and hour, for the full conditions. */
 export function purchaseDate(value: string, timeZone = DEFAULT_TIME_ZONE) {
   if (!known(value)) return 'data não informada'
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone }).format(new Date(value))
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone,
+  }).format(new Date(value))
 }
 
 const usesPerPerson = (count: number) => `${count} ${count === 1 ? 'uso' : 'usos'} por pessoa`
 
 /** Until when to buy and the use window, on the city's clock; "from" only when use opens after the sale. */
 export function usageWindow(snapshot: PurchaseSnapshot, timeZone = DEFAULT_TIME_ZONE) {
-  const usageStartsLater = known(snapshot.usage_starts_at) && known(snapshot.sales_starts_at) &&
+  const usageStartsLater =
+    known(snapshot.usage_starts_at) &&
+    known(snapshot.sales_starts_at) &&
     Date.parse(snapshot.usage_starts_at) > Date.parse(snapshot.sales_starts_at)
   return {
     buyUntil: purchaseDay(snapshot.sales_ends_at, timeZone),
@@ -86,16 +143,29 @@ export function usageWindow(snapshot: PurchaseSnapshot, timeZone = DEFAULT_TIME_
 }
 
 /** The windows to the minute, each offer's terms and the legal line: the full conditions. */
-export function ConditionsDetail({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snapshot: PurchaseSnapshot; timeZone?: string }) {
+export function ConditionsDetail({
+  snapshot,
+  timeZone = DEFAULT_TIME_ZONE,
+}: {
+  snapshot: PurchaseSnapshot
+  timeZone?: string
+}) {
   const single = snapshot.offers.length === 1 && snapshot.offers[0].title === snapshot.name
   return (
     <View style={styles.terms}>
       <PurchaseText>{`Venda: ${purchaseDate(snapshot.sales_starts_at, timeZone)} a ${purchaseDate(snapshot.sales_ends_at, timeZone)}.`}</PurchaseText>
       <PurchaseText>{`Uso: ${purchaseDate(snapshot.usage_starts_at, timeZone)} a ${purchaseDate(snapshot.usage_ends_at, timeZone)}.`}</PurchaseText>
-      {snapshot.offers.map((offer) => offer.terms
-        ? <PurchaseText key={offer.id}>{single ? offer.terms : `${offer.title}: ${offer.terms}`}</PurchaseText>
-        : null)}
-      <PurchaseText>A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
+      {snapshot.offers.map((offer) =>
+        offer.terms ? (
+          <PurchaseText key={offer.id}>
+            {single ? offer.terms : `${offer.title}: ${offer.terms}`}
+          </PurchaseText>
+        ) : null
+      )}
+      <PurchaseText>
+        A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada
+        benefício.
+      </PurchaseText>
     </View>
   )
 }
@@ -105,13 +175,21 @@ export function ConditionsDetail({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { s
  * how many uses — in one line each. The windows to the minute and the legal
  * text stay one tap away, under "Ver condições".
  */
-export function EditionTerms({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snapshot: PurchaseSnapshot; timeZone?: string }) {
+export function EditionTerms({
+  snapshot,
+  timeZone = DEFAULT_TIME_ZONE,
+}: {
+  snapshot: PurchaseSnapshot
+  timeZone?: string
+}) {
   const colors = useColors()
   const [open, setOpen] = useState(false)
   // A voucher is one offer named like the product: repeating its title reads as a second item.
   const single = snapshot.offers.length === 1 && snapshot.offers[0].title === snapshot.name
   const window = usageWindow(snapshot, timeZone)
-  const use = window.useFrom ? `Use de ${window.useFrom} a ${window.useUntil}` : `Use até ${window.useUntil}`
+  const use = window.useFrom
+    ? `Use de ${window.useFrom} a ${window.useUntil}`
+    : `Use até ${window.useUntil}`
 
   return (
     <View style={styles.terms}>
@@ -123,9 +201,16 @@ export function EditionTerms({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snaps
           <PurchaseText>{`${offer.establishment.public_name} · ${usesPerPerson(offer.max_redemptions_per_access)}`}</PurchaseText>
         </View>
       ))}
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} hitSlop={spacing.sm}
-        onPress={() => setOpen(!open)} style={styles.toggle}>
-        <Text style={[styles.toggleLabel, { color: colors.primary }]}>{open ? 'Ocultar condições' : 'Ver condições'}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        hitSlop={spacing.sm}
+        onPress={() => setOpen(!open)}
+        style={styles.toggle}
+      >
+        <Text style={[styles.toggleLabel, { color: colors.primary }]}>
+          {open ? 'Ocultar condições' : 'Ver condições'}
+        </Text>
       </Pressable>
       {open ? <ConditionsDetail snapshot={snapshot} timeZone={timeZone} /> : null}
     </View>

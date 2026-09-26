@@ -22,7 +22,9 @@ const session = jest.requireMock('@/session/context') as { useSession: jest.Mock
 
 const page = (purchase = false) =>
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } })}
+    >
       <SignInScreen purchase={purchase} />
     </QueryClientProvider>
   )
@@ -30,7 +32,11 @@ const page = (purchase = false) =>
 beforeEach(() => {
   jest.clearAllMocks()
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
-  session.useSession.mockReturnValue({ status: 'anonymous', refresh: jest.fn(), signOut: jest.fn() })
+  session.useSession.mockReturnValue({
+    status: 'anonymous',
+    refresh: jest.fn(),
+    signOut: jest.fn(),
+  })
   auth.signIn.mockResolvedValue(undefined)
 })
 
@@ -60,16 +66,22 @@ it('lets the password be shown before it is sent', async () => {
   expect(view.getByLabelText('Senha')).toHaveProp('secureTextEntry', true)
 })
 
-it.each(['light', 'dark'] as const)('offers account creation as a secondary button in %s', async (mode) => {
-  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
-  const view = await page()
+it.each(['light', 'dark'] as const)(
+  'offers account creation as a secondary button in %s',
+  async (mode) => {
+    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+    const view = await page()
 
-  const create = view.getByRole('button', { name: 'Não tenho conta. Criar conta' })
-  expect(create).toHaveStyle({ borderColor: palette[mode].primary, backgroundColor: 'transparent' })
-  expect(view.getByText('Criar conta')).toBeOnTheScreen()
-  await fireEvent.press(create)
-  expect(mockPush).toHaveBeenCalledWith('/cadastro')
-})
+    const create = view.getByRole('button', { name: 'Não tenho conta. Criar conta' })
+    expect(create).toHaveStyle({
+      borderColor: palette[mode].primary,
+      backgroundColor: 'transparent',
+    })
+    expect(view.getByText('Criar conta')).toBeOnTheScreen()
+    await fireEvent.press(create)
+    expect(mockPush).toHaveBeenCalledWith('/cadastro')
+  }
+)
 
 it('keeps the purchase in the flow when creating an account from checkout', async () => {
   const view = await page(true)

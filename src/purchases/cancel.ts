@@ -9,5 +9,9 @@ import type { CreatePurchaseResponse } from '@/api/purchases'
  */
 export const cancelPurchase = (id: string) =>
   request<CreatePurchaseResponse>(`/api/v1/me/purchases/${encodeURIComponent(id)}/cancel`, {
-    method: 'POST', authenticated: true, sensitive: true, body: {}, idempotencyKey: `cancel_${id}`,
+    method: 'POST',
+    authenticated: true,
+    sensitive: true,
+    body: {},
+    idempotencyKey: `cancel_${id}`,
   })

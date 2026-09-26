@@ -40,12 +40,17 @@ export function ListRow({
       accessibilityLabel={accessibilityLabel ?? (value ? `${label}, ${value}` : label)}
       onPress={onPress}
       testID={testID}
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.muted : 'transparent' }]}>
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
+      ]}
+    >
       <View
         style={[
           styles.icon,
           { backgroundColor: destructive ? colors.destructiveSoft : colors.primarySoft },
-        ]}>
+        ]}
+      >
         <Ionicons
           name={icon}
           size={20}
@@ -60,7 +65,14 @@ export function ListRow({
           </Text>
         ) : null}
       </View>
-      {chevron ? <Ionicons testID="list-row-chevron" name="chevron-forward" size={20} color={colors.mutedForeground} /> : null}
+      {chevron ? (
+        <Ionicons
+          testID="list-row-chevron"
+          name="chevron-forward"
+          size={20}
+          color={colors.mutedForeground}
+        />
+      ) : null}
     </Pressable>
   )
 }
@@ -71,11 +83,16 @@ export function ListGroup({ title, children }: { title?: string; children: React
   return (
     <View style={styles.group}>
       {title ? (
-        <Text accessibilityRole="header" style={[styles.groupTitle, { color: colors.mutedForeground }]}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.groupTitle, { color: colors.mutedForeground }]}
+        >
           {title}
         </Text>
       ) : null}
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      >
         {children}
       </View>
     </View>
@@ -91,11 +108,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  icon: { alignItems: 'center', borderRadius: radius.pill, height: 36, justifyContent: 'center', width: 36 },
+  icon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
   copy: { flex: 1, gap: 2 },
   label: { ...typography.body, ...textWeight('600') },
   value: typography.meta,
   group: { gap: spacing.sm },
   groupTitle: typography.overline,
-  card: { borderRadius: radius.card, borderWidth: 1, overflow: 'hidden', paddingVertical: spacing.xs },
+  card: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    overflow: 'hidden',
+    paddingVertical: spacing.xs,
+  },
 })

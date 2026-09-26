@@ -62,7 +62,10 @@ export default function AddToItineraryScreen() {
   if (added) {
     return (
       <View style={[styles.done, { backgroundColor: colors.background }]}>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]} testID="added">
+        <View
+          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+          testID="added"
+        >
           <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
             <Ionicons name="checkmark" size={26} color={colors.successAccent} />
           </View>
@@ -73,7 +76,12 @@ export default function AddToItineraryScreen() {
             O lugar entrou no fim do roteiro. A ordem se ajusta no próprio roteiro.
           </Text>
           <Button label="Voltar ao lugar" size={52} fill onPress={() => router.back()} />
-          <Button label="Ver roteiro" variant="ghost" fill onPress={() => router.replace(`/roteiros/${added.id}`)} />
+          <Button
+            label="Ver roteiro"
+            variant="ghost"
+            fill
+            onPress={() => router.replace(`/roteiros/${added.id}`)}
+          />
         </View>
       </View>
     )
@@ -89,11 +97,17 @@ export default function AddToItineraryScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           {failure ? (
-            <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]} testID="add-failure">
+            <Text
+              accessibilityRole="alert"
+              style={[styles.body, { color: colors.destructiveAccent }]}
+              testID="add-failure"
+            >
               {failure}
             </Text>
           ) : null}
-          {items.length > 0 ? <SectionHeader title="Seus roteiros" hint="Toque em um para adicionar o lugar." /> : null}
+          {items.length > 0 ? (
+            <SectionHeader title="Seus roteiros" hint="Toque em um para adicionar o lugar." />
+          ) : null}
         </View>
       }
       renderItem={({ item }) => (
@@ -105,14 +119,20 @@ export default function AddToItineraryScreen() {
           onPress={() => addTo(item)}
           style={({ pressed }) => [
             styles.row,
-            { backgroundColor: pressed ? colors.muted : colors.card, borderColor: colors.borderSubtle },
+            {
+              backgroundColor: pressed ? colors.muted : colors.card,
+              borderColor: colors.borderSubtle,
+            },
           ]}
-          testID={`add-to-${item.id}`}>
+          testID={`add-to-${item.id}`}
+        >
           <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
-            <Text numberOfLines={1} style={[styles.label, { color: colors.foreground }]}>{item.name}</Text>
+            <Text numberOfLines={1} style={[styles.label, { color: colors.foreground }]}>
+              {item.name}
+            </Text>
             <Text style={[styles.caption, { color: colors.mutedForeground }]}>
               {item.stops_count} {item.stops_count === 1 ? 'parada' : 'paradas'}
             </Text>
@@ -123,7 +143,12 @@ export default function AddToItineraryScreen() {
       // Audit A37: the existing itineraries first, a new one last.
       ListFooterComponent={
         composing || items.length === 0 ? (
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            ]}
+          >
             <TextField
               label="Nome do novo roteiro"
               value={name}
@@ -143,7 +168,15 @@ export default function AddToItineraryScreen() {
             />
           </View>
         ) : (
-          <Button label="Novo roteiro" icon="add" variant="outline" size={52} fill onPress={() => setComposing(true)} testID="new-itinerary" />
+          <Button
+            label="Novo roteiro"
+            icon="add"
+            variant="outline"
+            size={52}
+            fill
+            onPress={() => setComposing(true)}
+            testID="new-itinerary"
+          />
         )
       }
     />
@@ -154,8 +187,21 @@ const styles = StyleSheet.create({
   list: { gap: spacing.md, padding: spacing.gutter, paddingBottom: spacing.xxl },
   header: { gap: spacing.md },
   done: { flex: 1, padding: spacing.gutter },
-  card: { alignItems: 'stretch', borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
-  badge: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: radius.pill, height: 48, justifyContent: 'center', width: 48 },
+  card: {
+    alignItems: 'stretch',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  badge: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
   row: {
     alignItems: 'center',
     borderRadius: radius.card,
@@ -166,7 +212,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
-  icon: { alignItems: 'center', borderRadius: radius.pill, height: 44, justifyContent: 'center', width: 44 },
+  icon: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
   copy: { flex: 1, gap: 2 },
   title: typography.title,
   body: typography.body,

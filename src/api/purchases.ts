@@ -20,11 +20,18 @@ export const listPurchases = () =>
   request<PurchaseListResponse>('/api/v1/me/purchases', { authenticated: true, sensitive: true })
 
 export const getPurchase = (id: string) =>
-  request<Purchase>(`/api/v1/me/purchases/${encodeURIComponent(id)}`, { authenticated: true, sensitive: true })
+  request<Purchase>(`/api/v1/me/purchases/${encodeURIComponent(id)}`, {
+    authenticated: true,
+    sensitive: true,
+  })
 
 export const createPurchase = (body: CreatePurchaseRequest, idempotencyKey: string) =>
   request<CreatePurchaseResponse>('/api/v1/me/purchases', {
-    method: 'POST', authenticated: true, sensitive: true, body, idempotencyKey,
+    method: 'POST',
+    authenticated: true,
+    sensitive: true,
+    body,
+    idempotencyKey,
   })
 
 /** Provider-specific names stay here; the UI uses neutral copy and server data. */

@@ -76,7 +76,8 @@ export default function MyReviewsScreen() {
       renderItem={({ item }) => (
         <View
           style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-          testID={`my-review-${item.id}`}>
+          testID={`my-review-${item.id}`}
+        >
           <View style={styles.header}>
             <Stars rating={item.rating} />
             <Badge label={statusLabel(item)} tone={statusTone(item)} />
@@ -106,7 +107,8 @@ export default function MyReviewsScreen() {
               disabled={remove.isPending}
               onPress={() => remove.mutate(item.id)}
               style={styles.delete}
-              testID={`delete-review-${item.id}`}>
+              testID={`delete-review-${item.id}`}
+            >
               <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>Excluir</Text>
             </Pressable>
           </View>
@@ -127,10 +129,21 @@ const statusTone = (review: { status: string; awaiting_moderation?: boolean }): 
 const styles = StyleSheet.create({
   list: { gap: spacing.md, padding: spacing.gutter, paddingBottom: spacing.xxl },
   card: { borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
-  header: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
   date: typography.meta,
   body: typography.body,
-  actions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between', paddingTop: spacing.xs },
+  actions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+    paddingTop: spacing.xs,
+  },
   delete: { justifyContent: 'center', minHeight: minTouch, paddingHorizontal: spacing.md },
   deleteLabel: { ...typography.label, ...textWeight('700') },
 })

@@ -59,7 +59,13 @@ export function PlaceActions({
     <View style={styles.block}>
       <View style={styles.row}>
         {primary ? (
-          <Button label={primary.label} icon={primary.icon} size={52} fill onPress={primary.onPress} />
+          <Button
+            label={primary.label}
+            icon={primary.icon}
+            size={52}
+            fill
+            onPress={primary.onPress}
+          />
         ) : null}
         <IconButton
           icon={following ? 'notifications' : 'notifications-outline'}
@@ -76,7 +82,11 @@ export function PlaceActions({
         />
       </View>
       {explain ? (
-        <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.mutedForeground }]} testID="follow-hint">
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[styles.hint, { color: colors.mutedForeground }]}
+          testID="follow-hint"
+        >
           Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.
         </Text>
       ) : null}

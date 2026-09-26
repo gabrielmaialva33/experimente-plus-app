@@ -31,7 +31,8 @@ export function EstablishmentCardRow({
         accessibilityLabel={`${card.name}${meta ? `, ${meta}` : ''}`}
         disabled={!onPress}
         onPress={onPress}
-        style={styles.row}>
+        style={styles.row}
+      >
         {card.cover_url ? (
           <RemoteImage
             source={{ uri: resolveMediaUrl(card.cover_url) }}

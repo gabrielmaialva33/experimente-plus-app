@@ -102,21 +102,41 @@ export default function ValidateScreen() {
           <View style={styles.camera} />
         )}
         {/* A frame to aim with; it draws over the camera and never takes a touch. */}
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.aim}>
-          <View style={[styles.frame, { borderColor: rejected ? colors.warning : colors.chromeForeground }]} />
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.aim}
+        >
+          <View
+            style={[
+              styles.frame,
+              { borderColor: rejected ? colors.warning : colors.chromeForeground },
+            ]}
+          />
         </View>
       </View>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>Leia o código do cliente</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Leia o código do cliente
+        </Text>
         <View
           accessibilityLiveRegion="polite"
-          style={[styles.status, { backgroundColor: rejected ? colors.warningSoft : colors.primarySoft }]}>
+          style={[
+            styles.status,
+            { backgroundColor: rejected ? colors.warningSoft : colors.primarySoft },
+          ]}
+        >
           <Ionicons
             name={rejected ? 'alert-circle-outline' : 'scan-outline'}
             size={20}
             color={rejected ? colors.warningAccent : colors.primaryAccent}
           />
-          <Text style={[styles.statusText, { color: rejected ? colors.warningAccent : colors.primaryAccent }]}>
+          <Text
+            style={[
+              styles.statusText,
+              { color: rejected ? colors.warningAccent : colors.primaryAccent },
+            ]}
+          >
             {rejected
               ? 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
               : 'Aponte para o código que o cliente está mostrando.'}
@@ -142,10 +162,24 @@ function HistoryLink() {
     return null
   }
 
-  return <Button label="Ver utilizações" variant="ghost" size={44} icon="receipt-outline" onPress={() => router.push('/validar/historico')} />
+  return (
+    <Button
+      label="Ver utilizações"
+      variant="ghost"
+      size={44}
+      icon="receipt-outline"
+      onPress={() => router.push('/validar/historico')}
+    />
+  )
 }
 
-function Centered({ icon, children }: { icon?: keyof typeof Ionicons.glyphMap; children?: React.ReactNode }) {
+function Centered({
+  icon,
+  children,
+}: {
+  icon?: keyof typeof Ionicons.glyphMap
+  children?: React.ReactNode
+}) {
   const colors = useColors()
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -164,7 +198,12 @@ const FRAME = 232
 const styles = StyleSheet.create({
   viewfinder: { flex: 1 },
   camera: { flex: 1 },
-  aim: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
+  aim: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  },
   frame: { borderRadius: radius.sheet, borderWidth: 3, height: FRAME, width: FRAME },
   sheet: {
     borderTopLeftRadius: radius.sheet,
@@ -174,7 +213,13 @@ const styles = StyleSheet.create({
     padding: spacing.gutter,
     paddingTop: spacing.xl,
   },
-  status: { alignItems: 'flex-start', borderRadius: radius.surface, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  status: {
+    alignItems: 'flex-start',
+    borderRadius: radius.surface,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
   statusText: { ...typography.meta, ...textWeight('600'), flex: 1 },
   center: {
     alignItems: 'center',
@@ -183,7 +228,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xxl,
   },
-  mark: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
+  mark: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 64,
+    justifyContent: 'center',
+    width: 64,
+  },
   title: { ...typography.heading, textAlign: 'center' },
   message: { ...typography.body, textAlign: 'center' },
 })

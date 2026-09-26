@@ -1,7 +1,10 @@
 // The app ships no Node typings; Jest still runs this file in Node.
 declare const __dirname: string
 const { readdirSync, readFileSync } = jest.requireActual<{
-  readdirSync(path: string, options: { withFileTypes: true }): { name: string; isDirectory(): boolean }[]
+  readdirSync(
+    path: string,
+    options: { withFileTypes: true }
+  ): { name: string; isDirectory(): boolean }[]
   readFileSync(path: string, encoding: 'utf8'): string
 }>('fs')
 const { join, relative } = jest.requireActual<{

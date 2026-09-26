@@ -118,7 +118,8 @@ export function SaveActions({ establishmentId, name, citySlug, slug }: SaveActio
               backgroundColor: action.pressed ? colors.primarySoft : colors.actionSecondary,
               borderColor: action.pressed ? colors.primary : colors.actionSecondaryBorder,
             },
-          ]}>
+          ]}
+        >
           <Ionicons
             name={action.icon}
             size={20}
@@ -129,7 +130,8 @@ export function SaveActions({ establishmentId, name, citySlug, slug }: SaveActio
             style={[
               styles.label,
               { color: action.pressed ? colors.primary : colors.actionSecondaryForeground },
-            ]}>
+            ]}
+          >
             {action.label}
           </Text>
         </Pressable>

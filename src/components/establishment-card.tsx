@@ -32,7 +32,9 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
     establishment.primary_category?.name,
     establishment.address.district,
     ratingLabel(establishment.reviews),
-  ].filter(Boolean).join(' · ')
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <Pressable
@@ -40,15 +42,22 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.card, borderColor: colors.borderSubtle, opacity: pressed ? 0.92 : 1 },
-      ]}>
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.borderSubtle,
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+    >
       <View>
         <EstablishmentCover cover={establishment.cover} height={196} />
         <View style={styles.status} pointerEvents="none">
-          <OperatingStatus establishment={{
-            business_status: establishment.business_status,
-            is_open_now: establishment.is_open_now,
-          }} />
+          <OperatingStatus
+            establishment={{
+              business_status: establishment.business_status,
+              is_open_now: establishment.is_open_now,
+            }}
+          />
         </View>
         {accessory ? <View style={styles.accessory}>{accessory}</View> : null}
       </View>
@@ -84,7 +93,13 @@ const styles = StyleSheet.create({
   status: { left: spacing.md, position: 'absolute', top: spacing.md },
   accessory: { position: 'absolute', right: spacing.sm + 2, top: spacing.sm + 2 },
   // A continuous seam plus an inset keeps any photo edge away from the text.
-  body: { borderTopWidth: 1, gap: spacing.sm, paddingBottom: spacing.lg, paddingHorizontal: spacing.lg, paddingTop: 14 },
+  body: {
+    borderTopWidth: 1,
+    gap: spacing.sm,
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 14,
+  },
   name: { ...typography.heading, fontSize: 19, lineHeight: 24 },
   meta: typography.meta,
   description: typography.meta,

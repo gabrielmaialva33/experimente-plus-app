@@ -42,8 +42,18 @@ interface ContentActionProps {
 }
 
 /** The public link of an item, handed to the system's share sheet. */
-export function shareContent({ title, establishmentName, citySlug, establishmentSlug }: ContentActionProps) {
-  const { url, message } = contentShareMessage({ title, establishmentName, citySlug, establishmentSlug })
+export function shareContent({
+  title,
+  establishmentName,
+  citySlug,
+  establishmentSlug,
+}: ContentActionProps) {
+  const { url, message } = contentShareMessage({
+    title,
+    establishmentName,
+    citySlug,
+    establishmentSlug,
+  })
   return Share.share({ title, message, url })
 }
 
@@ -112,12 +122,14 @@ export function ContentMenu(props: ContentActionProps) {
       items={[
         ...(kind === 'showcase_item'
           ? []
-          : [{
-              label: 'Compartilhar',
-              icon: 'share-outline' as const,
-              onPress: () => shareContent(props),
-              testID: `content-share-${kind}-${id}`,
-            }]),
+          : [
+              {
+                label: 'Compartilhar',
+                icon: 'share-outline' as const,
+                onPress: () => shareContent(props),
+                testID: `content-share-${kind}-${id}`,
+              },
+            ]),
         {
           label: 'Denunciar',
           icon: 'flag-outline' as const,

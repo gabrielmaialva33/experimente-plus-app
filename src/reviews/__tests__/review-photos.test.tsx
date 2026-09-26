@@ -11,7 +11,8 @@ jest.mock('@/theme/use-colors', () => ({
   useColors: () => jest.requireActual('@/theme/tokens').palette.light,
 }))
 jest.mock('@/api/config', () => ({
-  resolveMediaUrl: (url: string) => (url.startsWith('http') ? url : `https://experimente.test${url}`),
+  resolveMediaUrl: (url: string) =>
+    url.startsWith('http') ? url : `https://experimente.test${url}`,
 }))
 jest.mock('@/api/client', () => ({ request: jest.fn(async () => ({ id: 9 })) }))
 // A Blob, like the real File, so the runtime's FormData accepts it with a filename.
@@ -72,7 +73,9 @@ it('shows nothing for a review without photos', async () => {
 
 it('offers removal only where the caller may remove, and says which photo', async () => {
   const onRemove = jest.fn()
-  const view = await render(<ReviewPhotos photos={[photo(1, 'Prato do dia')]} onRemove={onRemove} />)
+  const view = await render(
+    <ReviewPhotos photos={[photo(1, 'Prato do dia')]} onRemove={onRemove} />
+  )
 
   await fireEvent.press(view.getByLabelText('Remover Prato do dia'))
   expect(onRemove).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }))

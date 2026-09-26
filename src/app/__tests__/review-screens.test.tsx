@@ -20,7 +20,9 @@ jest.mock('@/api/client', () => ({
 }))
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
-jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
+jest.mock('@/theme/use-colors', () => ({
+  useColors: () => jest.requireActual('@/theme/tokens').palette.light,
+}))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
   useLocalSearchParams: jest.fn(),
@@ -43,17 +45,30 @@ jest.mock('@/components/image-picker', () => {
         testID="photo-picker"
         accessibilityLabel={`${label} ${maxImages}`}
         onPress={() =>
-          onChange([{ uri: 'file:///prato.jpg', fileName: 'prato.jpg', mimeType: 'image/jpeg', width: 8, height: 6 }])
-        }>
+          onChange([
+            {
+              uri: 'file:///prato.jpg',
+              fileName: 'prato.jpg',
+              mimeType: 'image/jpeg',
+              width: 8,
+              height: 6,
+            },
+          ])
+        }
+      >
         <Text>picker</Text>
       </Pressable>
     ),
   }
 })
 
-const params = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock; Stack: { Screen: jest.Mock } }
+const params = jest.requireMock('expo-router') as {
+  useLocalSearchParams: jest.Mock
+  Stack: { Screen: jest.Mock }
+}
 /** The title the screen gives its header. */
-const headerTitle = () => params.Stack.Screen.mock.calls[params.Stack.Screen.mock.calls.length - 1]?.[0].options.title
+const headerTitle = () =>
+  params.Stack.Screen.mock.calls[params.Stack.Screen.mock.calls.length - 1]?.[0].options.title
 const { palette } = jest.requireActual('@/theme/tokens')
 const queries = jest.requireMock('@/reviews/queries') as {
   useCreateReviewWithPhotos: jest.Mock
@@ -128,8 +143,9 @@ it('trims the comment it does send', async () => {
  * server wrote is repeated instead of being guessed at locally.
  */
 it('repeats the rule the server enforced', () => {
-  expect(failureMessage(new ApiError(400, { message: 'Review text must be at least 20 characters' })))
-    .toBe('Review text must be at least 20 characters')
+  expect(
+    failureMessage(new ApiError(400, { message: 'Review text must be at least 20 characters' }))
+  ).toBe('Review text must be at least 20 characters')
   expect(failureMessage(new ApiError(409, {}))).toContain('já avaliou')
   expect(failureMessage(new ApiError(429, {}))).toContain('Muitas tentativas')
   expect(failureMessage(new Error('offline'))).toBe('Não foi possível enviar sua avaliação agora.')
@@ -209,7 +225,11 @@ it('reports partner content under its own kind', async () => {
   await fireEvent.press(view.getByTestId('report-submit'))
 
   await waitFor(() =>
-    expect(mutate).toHaveBeenCalledWith({ target_type: 'experience', target_id: 31, reason: 'spam' })
+    expect(mutate).toHaveBeenCalledWith({
+      target_type: 'experience',
+      target_id: 31,
+      reason: 'spam',
+    })
   )
 })
 
@@ -293,7 +313,11 @@ it('lets a visitor report anonymously, and says so', async () => {
   await fireEvent.press(view.getByTestId('report-submit'))
 
   await waitFor(() =>
-    expect(anonymous).toHaveBeenCalledWith({ target_type: 'review', target_id: 3, reason: 'harassment' })
+    expect(anonymous).toHaveBeenCalledWith({
+      target_type: 'review',
+      target_id: 3,
+      reason: 'harassment',
+    })
   )
   expect(identified).not.toHaveBeenCalled()
 })
@@ -322,7 +346,9 @@ it('does not let anyone submit while the session is still being read', async () 
   const view = await render(<ReportContentScreen />)
   await fireEvent.press(view.getByTestId('reason-spam'))
 
-  expect(view.getByTestId('report-submit').props.accessibilityState).toMatchObject({ disabled: true })
+  expect(view.getByTestId('report-submit').props.accessibilityState).toMatchObject({
+    disabled: true,
+  })
 })
 
 it('explains a repeat, a limit and a vanished target in the reporter’s terms', () => {
@@ -338,12 +364,18 @@ it('explains a repeat, a limit and a vanished target in the reporter’s terms',
 })
 
 it('names what is reported under a header that says what the form does (A45)', async () => {
-  params.useLocalSearchParams.mockReturnValue({ type: 'establishment', id: '1', nome: 'Ateliê do Café' })
+  params.useLocalSearchParams.mockReturnValue({
+    type: 'establishment',
+    id: '1',
+    nome: 'Ateliê do Café',
+  })
 
   const view = await render(<ReportContentScreen />)
 
   expect(headerTitle()).toBe('Denunciar este lugar')
-  expect(view.getByTestId('report-subject')).toHaveTextContent('Você está denunciandoAteliê do Café')
+  expect(view.getByTestId('report-subject')).toHaveTextContent(
+    'Você está denunciandoAteliê do Café'
+  )
   expect(view.queryByText('Denunciar este lugar')).toBeNull()
 })
 
@@ -364,10 +396,15 @@ it('offers a place only the reasons that fit a place, each with a visible radio 
   expect(view.queryByTestId('reason-harassment')).toBeNull()
   expect(view.queryByTestId('reason-conflict_of_interest')).toBeNull()
   expect(view.getByText('Informação falsa ou desatualizada')).toBeTruthy()
-  expect(view.getByTestId('reason-spam-radio')).toHaveStyle({ borderColor: palette.light.choiceBorder })
+  expect(view.getByTestId('reason-spam-radio')).toHaveStyle({
+    borderColor: palette.light.choiceBorder,
+  })
 
   await fireEvent.press(view.getByTestId('reason-spam'))
-  expect(view.getByTestId('reason-spam').props.accessibilityState).toEqual({ selected: true, checked: true })
+  expect(view.getByTestId('reason-spam').props.accessibilityState).toEqual({
+    selected: true,
+    checked: true,
+  })
   expect(view.getByTestId('reason-spam-radio')).toHaveStyle({ borderColor: palette.light.primary })
 })
 

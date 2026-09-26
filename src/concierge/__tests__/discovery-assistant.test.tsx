@@ -26,7 +26,10 @@ const reply = (personalized: boolean) => ({
 
 async function ask() {
   const view = await render(<DiscoveryAssistant citySlug="londrina" cityName="Londrina" />)
-  await fireEvent.changeText(view.getByLabelText('Pergunta para o Concierge'), 'Onde passar a tarde?')
+  await fireEvent.changeText(
+    view.getByLabelText('Pergunta para o Concierge'),
+    'Onde passar a tarde?'
+  )
   await fireEvent.press(view.getByText('Perguntar'))
   return view
 }

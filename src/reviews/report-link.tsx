@@ -39,7 +39,8 @@ export function ReportLink({
       onPress={() => router.push(`/denunciar/${type}/${id}`)}
       hitSlop={spacing.sm}
       style={styles.link}
-      testID={`report-${type}-${id}`}>
+      testID={`report-${type}-${id}`}
+    >
       <Text style={[styles.label, { color: colors.mutedForeground }]}>{label}</Text>
     </Pressable>
   )

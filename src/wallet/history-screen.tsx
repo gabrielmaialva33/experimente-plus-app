@@ -23,7 +23,14 @@ interface Props {
 }
 
 /** Both histories list the same receipts; only the source and the copy differ. */
-export function HistoryScreen({ queryKey, load, emptyMessage, emptyHint, emptyAction, receiptHref }: Props) {
+export function HistoryScreen({
+  queryKey,
+  load,
+  emptyMessage,
+  emptyHint,
+  emptyAction,
+  receiptHref,
+}: Props) {
   const colors = useColors()
   const router = useRouter()
   const history = useQuery({ queryKey, queryFn: load })
@@ -39,7 +46,12 @@ export function HistoryScreen({ queryKey, load, emptyMessage, emptyHint, emptyAc
         <Text style={[styles.message, { color: colors.foreground }]}>
           Não foi possível carregar o histórico agora.
         </Text>
-        <Button label="Tentar de novo" variant="outline" icon="refresh" onPress={() => void history.refetch()} />
+        <Button
+          label="Tentar de novo"
+          variant="outline"
+          icon="refresh"
+          onPress={() => void history.refetch()}
+        />
       </View>
     )
   }
@@ -56,7 +68,8 @@ export function HistoryScreen({ queryKey, load, emptyMessage, emptyHint, emptyAc
           accessibilityRole="button"
           accessibilityHint="Abre o comprovante"
           onPress={() => router.push(receiptHref(item.receipt_code))}
-          style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>
+          style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+        >
           <ReceiptCard receipt={item} compact />
         </Pressable>
       )}
@@ -66,9 +79,15 @@ export function HistoryScreen({ queryKey, load, emptyMessage, emptyHint, emptyAc
             <Ionicons name="receipt-outline" size={26} color={colors.mutedForeground} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{emptyMessage}</Text>
-          {emptyHint ? <Text style={[styles.message, { color: colors.mutedForeground }]}>{emptyHint}</Text> : null}
+          {emptyHint ? (
+            <Text style={[styles.message, { color: colors.mutedForeground }]}>{emptyHint}</Text>
+          ) : null}
           {emptyAction ? (
-            <Button label={emptyAction.label} variant="outline" onPress={() => router.navigate(emptyAction.href)} />
+            <Button
+              label={emptyAction.label}
+              variant="outline"
+              onPress={() => router.navigate(emptyAction.href)}
+            />
           ) : null}
         </View>
       }
@@ -80,7 +99,13 @@ const styles = StyleSheet.create({
   list: { padding: spacing.gutter },
   fill: { flex: 1, justifyContent: 'center' },
   center: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
-  mark: { alignItems: 'center', borderRadius: radius.pill, height: 56, justifyContent: 'center', width: 56 },
+  mark: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
   emptyTitle: { ...typography.heading, textAlign: 'center' },
   message: { ...typography.body, textAlign: 'center' },
 })

@@ -24,7 +24,12 @@ export function EstablishmentHours({ establishment }: { establishment: Establish
   }, [])
 
   return (
-    <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.section,
+        { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
+      ]}
+    >
       <Text style={[styles.heading, { color: colors.foreground }]}>Horários habituais</Text>
       <Text style={[styles.caption, { color: colors.mutedForeground }]}>
         Horário local de {establishment.city.name}
@@ -35,20 +40,44 @@ export function EstablishmentHours({ establishment }: { establishment: Establish
         weeklySchedule(establishment.opening_hours.weekly).map((day) => (
           <View
             key={day.weekday}
-            style={[styles.day, {
-              borderLeftColor: day.weekday === today ? colors.temporalEmphasisBorder : colors.surfaceRaised,
-            }, day.weekday === today && { backgroundColor: colors.temporalEmphasis }]}>
-            <Text style={[
-              styles.body,
-              { color: day.weekday === today ? colors.temporalEmphasisForeground : colors.foreground },
-              day.weekday === today && styles.today,
-            ]}>
-              {day.name}{day.weekday === today ? ' · Hoje' : ''}
+            style={[
+              styles.day,
+              {
+                borderLeftColor:
+                  day.weekday === today ? colors.temporalEmphasisBorder : colors.surfaceRaised,
+              },
+              day.weekday === today && { backgroundColor: colors.temporalEmphasis },
+            ]}
+          >
+            <Text
+              style={[
+                styles.body,
+                {
+                  color:
+                    day.weekday === today ? colors.temporalEmphasisForeground : colors.foreground,
+                },
+                day.weekday === today && styles.today,
+              ]}
+            >
+              {day.name}
+              {day.weekday === today ? ' · Hoje' : ''}
             </Text>
-            <Text style={[styles.body, { color: day.weekday === today ? colors.temporalEmphasisForeground : colors.mutedForeground }]}>
+            <Text
+              style={[
+                styles.body,
+                {
+                  color:
+                    day.weekday === today
+                      ? colors.temporalEmphasisForeground
+                      : colors.mutedForeground,
+                },
+              ]}
+            >
               {establishment.availability_type === 'always_open'
                 ? '24 horas'
-                : day.periods.length > 0 ? day.periods.join('\n') : 'Fechado'}
+                : day.periods.length > 0
+                  ? day.periods.join('\n')
+                  : 'Fechado'}
             </Text>
           </View>
         ))
@@ -63,7 +92,14 @@ export function EstablishmentHours({ establishment }: { establishment: Establish
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.sm, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
+  section: {
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderRadius: radius.surface,
+  },
   heading: typography.heading,
   caption: typography.caption,
   body: typography.body,

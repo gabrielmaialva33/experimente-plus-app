@@ -51,7 +51,12 @@ export default function DeleteAccountScreen() {
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>
       <KeyboardForm contentContainerStyle={styles.page}>
-        <View style={[styles.warning, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}>
+        <View
+          style={[
+            styles.warning,
+            { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
+          ]}
+        >
           <Ionicons name="warning-outline" size={24} color={colors.destructiveAccent} />
           <Text style={[styles.body, styles.warningText, { color: colors.foreground }]}>
             Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
@@ -77,7 +82,10 @@ export default function DeleteAccountScreen() {
         />
 
         {message ? (
-          <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]}>
+          <Text
+            accessibilityRole="alert"
+            style={[styles.body, { color: colors.destructiveAccent }]}
+          >
             {message}
           </Text>
         ) : null}
@@ -95,12 +103,19 @@ export default function DeleteAccountScreen() {
               backgroundColor: !ready || remove.isPending ? colors.muted : colors.destructive,
               opacity: pressed ? 0.85 : 1,
             },
-          ]}>
+          ]}
+        >
           <Text
             style={[
               styles.actionLabel,
-              { color: !ready || remove.isPending ? colors.mutedForeground : colors.destructiveForeground },
-            ]}>
+              {
+                color:
+                  !ready || remove.isPending
+                    ? colors.mutedForeground
+                    : colors.destructiveForeground,
+              },
+            ]}
+          >
             {remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
           </Text>
         </Pressable>
@@ -113,8 +128,21 @@ export default function DeleteAccountScreen() {
 const styles = StyleSheet.create({
   page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   body: typography.body,
-  warning: { alignItems: 'flex-start', borderRadius: radius.card, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.lg },
+  warning: {
+    alignItems: 'flex-start',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
   warningText: { flex: 1 },
-  action: { alignItems: 'center', borderRadius: radius.pill, justifyContent: 'center', marginTop: spacing.sm, minHeight: 52 },
+  action: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: 52,
+  },
   actionLabel: { ...typography.label, ...textWeight('700'), fontSize: 16 },
 })

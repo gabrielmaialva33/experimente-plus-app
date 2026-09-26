@@ -45,12 +45,15 @@ export function PracticalInfo({
 }) {
   const colors = useColors()
   const { address, city } = detail
-  const street = [address.street, address.without_number ? 's/n' : address.number].filter(Boolean).join(', ')
+  const street = [address.street, address.without_number ? 's/n' : address.number]
+    .filter(Boolean)
+    .join(', ')
 
   return (
     <View
       accessibilityLabel="Informações práticas"
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+    >
       {street ? (
         <Row icon="location-outline">
           <Text style={[styles.title, { color: colors.foreground }]}>{street}</Text>
@@ -71,16 +74,25 @@ export function PracticalInfo({
           style={({ pressed }) => [
             styles.row,
             styles.contact,
-            { backgroundColor: colors.card, borderTopColor: colors.borderSubtle, opacity: pressed ? 0.7 : 1 },
-          ]}>
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.borderSubtle,
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
+        >
           <Ionicons name={contact.icon} size={22} color={colors.primary} />
-          <Text style={[styles.title, styles.grow, { color: colors.foreground }]}>{contact.label}</Text>
+          <Text style={[styles.title, styles.grow, { color: colors.foreground }]}>
+            {contact.label}
+          </Text>
           <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
         </Pressable>
       ))}
       {contacts.length === 0 ? (
         <Row icon="call-outline">
-          <Text style={[styles.meta, { color: colors.mutedForeground }]}>Sem contato cadastrado</Text>
+          <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+            Sem contato cadastrado
+          </Text>
         </Row>
       ) : null}
     </View>
@@ -96,12 +108,17 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
     return (
       <Row icon="time-outline">
         <Text style={[styles.title, { color: colors.foreground }]}>Somente com agendamento</Text>
-        <Text style={[styles.meta, { color: colors.mutedForeground }]}>Combine o horário pelos contatos</Text>
+        <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+          Combine o horário pelos contatos
+        </Text>
       </Row>
     )
   }
 
-  const groups = groupedSchedule(detail.opening_hours.weekly, detail.availability_type === 'always_open')
+  const groups = groupedSchedule(
+    detail.opening_hours.weekly,
+    detail.availability_type === 'always_open'
+  )
   const todays = groups.find((group) => today !== null && group.weekdays.includes(today))
   const inline = (hours: string) => (hours === 'Fechado' ? 'fechado' : hours)
   // One line when the week is uniform; otherwise today's, with the week behind "Semana".
@@ -123,13 +140,17 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
             accessibilityState={{ expanded: week }}
             onPress={() => setWeek((open) => !open)}
             hitSlop={spacing.xs}
-            style={styles.link}>
+            style={styles.link}
+          >
             <Text style={[styles.linkLabel, { color: colors.primary }]}>Semana</Text>
           </Pressable>
         ) : null
-      }>
+      }
+    >
       {summary ? <Text style={[styles.title, { color: colors.foreground }]}>{summary}</Text> : null}
-      <Text style={[styles.meta, { color: colors.mutedForeground }]}>Horário local de {detail.city.name}</Text>
+      <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+        Horário local de {detail.city.name}
+      </Text>
       {week || !summary
         ? groups.map((group) => {
             const current = today !== null && group.weekdays.includes(today)
@@ -139,13 +160,27 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
                 testID={`hours-${group.label}`}
                 style={[
                   styles.day,
-                  current && { backgroundColor: colors.temporalEmphasis, borderColor: colors.temporalEmphasisBorder },
-                ]}>
-                <Text style={[styles.dayLabel, { color: current ? colors.temporalEmphasisForeground : colors.foreground }]}>
+                  current && {
+                    backgroundColor: colors.temporalEmphasis,
+                    borderColor: colors.temporalEmphasisBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dayLabel,
+                    { color: current ? colors.temporalEmphasisForeground : colors.foreground },
+                  ]}
+                >
                   {group.label}
                   {current ? ' · Hoje' : ''}
                 </Text>
-                <Text style={[styles.meta, { color: current ? colors.temporalEmphasisForeground : colors.mutedForeground }]}>
+                <Text
+                  style={[
+                    styles.meta,
+                    { color: current ? colors.temporalEmphasisForeground : colors.mutedForeground },
+                  ]}
+                >
                   {group.hours}
                 </Text>
               </View>

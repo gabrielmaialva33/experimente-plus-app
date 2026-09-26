@@ -9,7 +9,13 @@ jest.mock('expo-image', () => {
   const { useEffect } = jest.requireActual('react')
   const { View } = jest.requireActual('react-native')
   return {
-    Image: ({ onError, source }: { onError?: (event: unknown) => void; source: { uri: string } }) => {
+    Image: ({
+      onError,
+      source,
+    }: {
+      onError?: (event: unknown) => void
+      source: { uri: string }
+    }) => {
       useEffect(() => {
         mockMounts.count += 1
       }, [])
@@ -22,7 +28,11 @@ jest.mock('expo-image', () => {
 let emit: (status: string) => void = () => {}
 // The test renderer mocks AppState.currentState as a function; the app reads a string.
 const setAppState = (status: string) =>
-  Object.defineProperty(AppState, 'currentState', { value: status, configurable: true, writable: true })
+  Object.defineProperty(AppState, 'currentState', {
+    value: status,
+    configurable: true,
+    writable: true,
+  })
 
 beforeEach(() => {
   mockMounts.count = 0
@@ -58,14 +68,20 @@ it('leaves alone an image that only ever rendered in the foreground', async () =
 it('gives way to its fallback when the image fails, and tries again for another address', async () => {
   setAppState('active')
   const view = await render(
-    <RemoteImage source={{ uri: 'https://cdn.test/a.png' }} fallback={<Text>Foto indisponível</Text>} />
+    <RemoteImage
+      source={{ uri: 'https://cdn.test/a.png' }}
+      fallback={<Text>Foto indisponível</Text>}
+    />
   )
   await act(async () => mockErrors[mockErrors.length - 1]())
   expect(view.getByText('Foto indisponível')).toBeOnTheScreen()
   expect(view.queryByTestId('image-https://cdn.test/a.png')).toBeNull()
 
   await view.rerender(
-    <RemoteImage source={{ uri: 'https://cdn.test/b.png' }} fallback={<Text>Foto indisponível</Text>} />
+    <RemoteImage
+      source={{ uri: 'https://cdn.test/b.png' }}
+      fallback={<Text>Foto indisponível</Text>}
+    />
   )
   expect(view.getByTestId('image-https://cdn.test/b.png')).toBeOnTheScreen()
 })

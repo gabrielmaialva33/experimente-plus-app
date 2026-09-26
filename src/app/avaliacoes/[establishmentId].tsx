@@ -21,7 +21,10 @@ export default function EstablishmentReviewsScreen() {
   const colors = useColors()
   const router = useRouter()
   // `nome` is the place: the header says "Avaliações", the page says of what.
-  const { establishmentId, nome } = useLocalSearchParams<{ establishmentId: string; nome?: string }>()
+  const { establishmentId, nome } = useLocalSearchParams<{
+    establishmentId: string
+    nome?: string
+  }>()
   const id = Number(establishmentId)
 
   const [rating, setRating] = useState<number | null>(null)
@@ -44,7 +47,8 @@ export default function EstablishmentReviewsScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filters}
-          contentContainerStyle={styles.filtersContent}>
+          contentContainerStyle={styles.filtersContent}
+        >
           {FILTERS.map((value) => (
             <Chip
               key={value ?? 'all'}

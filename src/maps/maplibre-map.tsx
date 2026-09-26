@@ -34,7 +34,8 @@ export function MapLibreRenderer({ pins, center, onSelect }: MapRendererProps) {
             lngLat={[group.longitude, group.latitude]}
             onPress={() =>
               group.pins.length === 1 ? onSelect(group.pins[0].slug) : setOpen(group)
-            }>
+            }
+          >
             <View
               accessibilityRole="button"
               accessibilityLabel={
@@ -42,7 +43,8 @@ export function MapLibreRenderer({ pins, center, onSelect }: MapRendererProps) {
                   ? group.pins[0].name
                   : `${groupLabel(group)}: ${group.pins.map((pin) => pin.name).join(', ')}`
               }
-              style={[styles.pin, { backgroundColor: colors.primary }]}>
+              style={[styles.pin, { backgroundColor: colors.primary }]}
+            >
               <Text style={[styles.label, { color: colors.primaryForeground }]} numberOfLines={1}>
                 {groupLabel(group)}
               </Text>

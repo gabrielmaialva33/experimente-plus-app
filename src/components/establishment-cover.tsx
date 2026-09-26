@@ -14,7 +14,8 @@ import { useColors } from '@/theme/use-colors'
 export function coverImage(cover?: Media | null): { uri: string; alt: string } | null {
   const asset = cover?.asset
   const url = asset?.url
-  const usable = asset &&
+  const usable =
+    asset &&
     Number.isFinite(asset.width) &&
     asset.width >= 320 &&
     Number.isFinite(asset.height) &&
@@ -37,9 +38,17 @@ export function EstablishmentCover({
   const image = coverImage(cover)
 
   const fallback = (
-    <View style={[styles.fallback, height != null && { height }, { backgroundColor: colors.contentAbsent }]}>
+    <View
+      style={[
+        styles.fallback,
+        height != null && { height },
+        { backgroundColor: colors.contentAbsent },
+      ]}
+    >
       <View style={[styles.identifier, { borderColor: colors.contentAbsentBorder }]}>
-        <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
+        <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>
+          Foto indisponível
+        </Text>
       </View>
     </View>
   )
@@ -62,6 +71,12 @@ const styles = StyleSheet.create({
   cover: { height: 160, width: '100%' },
   detail: { height: 220 },
   fallback: { minHeight: 72, justifyContent: 'center', padding: spacing.lg },
-  identifier: { alignSelf: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.md, padding: spacing.sm },
+  identifier: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+  },
   caption: typography.caption,
 })

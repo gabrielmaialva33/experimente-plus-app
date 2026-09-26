@@ -25,7 +25,15 @@ import { useColors } from '@/theme/use-colors'
  * navigation does on sign-in.
  */
 function icon(name: keyof typeof Ionicons.glyphMap) {
-  return function TabBarIcon({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) {
+  return function TabBarIcon({
+    color,
+    size,
+    focused,
+  }: {
+    color: ColorValue
+    size: number
+    focused: boolean
+  }) {
     return (
       <Ionicons
         name={focused ? (name.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : name}
@@ -53,8 +61,14 @@ export default function TabsLayout() {
         tabBarInactiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: { ...textWeight('600'), fontSize: 12 },
-        tabBarStyle: { ...elevation.raised, backgroundColor: colors.surfaceBase, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-      }}>
+        tabBarStyle: {
+          ...elevation.raised,
+          backgroundColor: colors.surfaceBase,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         // Explorar draws its own header band, which also reserves the status bar.

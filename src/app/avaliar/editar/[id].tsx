@@ -79,11 +79,16 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
   const photoBusy = addPhoto.isPending || removePhoto.isPending
 
   return (
-    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.page}
+    >
       {/* The header already says "Editar avaliação" (audit A45); the page names the place. */}
       {place ? <ReviewSubject name={place} /> : null}
 
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
         <StarsInput rating={rating} onChange={setRating} disabled={update.isPending} />
       </View>
@@ -122,7 +127,10 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
           />
         ) : null}
         {addPhoto.isError || removePhoto.isError ? (
-          <Text style={[styles.body, { color: colors.destructiveAccent }]} testID="edit-photo-error">
+          <Text
+            style={[styles.body, { color: colors.destructiveAccent }]}
+            testID="edit-photo-error"
+          >
             {failureMessage(addPhoto.error ?? removePhoto.error)}
           </Text>
         ) : null}
@@ -153,9 +161,23 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
 
 const styles = StyleSheet.create({
   page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
-  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
+  card: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: radius.card,
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
   label: { ...typography.label, ...textWeight('700') },
-  input: { borderWidth: 1, borderRadius: radius.thumb, marginTop: -spacing.md, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  input: {
+    borderWidth: 1,
+    borderRadius: radius.thumb,
+    marginTop: -spacing.md,
+    minHeight: 120,
+    padding: spacing.md,
+    textAlignVertical: 'top',
+    ...typography.body,
+  },
   body: typography.body,
   photos: { gap: spacing.sm },
 })

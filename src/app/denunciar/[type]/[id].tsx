@@ -35,9 +35,23 @@ const LABELS: Record<ReportReason, string> = {
  * does not have a conflict of interest; a review can have both. Every value is
  * one the server accepts.
  */
-const CONTENT_REASONS: ReportReason[] = ['false_information', 'inappropriate', 'offensive', 'spam', 'other']
+const CONTENT_REASONS: ReportReason[] = [
+  'false_information',
+  'inappropriate',
+  'offensive',
+  'spam',
+  'other',
+]
 const REASONS: Record<ReportableTarget, ReportReason[]> = {
-  review: ['offensive', 'harassment', 'inappropriate', 'false_information', 'spam', 'conflict_of_interest', 'other'],
+  review: [
+    'offensive',
+    'harassment',
+    'inappropriate',
+    'false_information',
+    'spam',
+    'conflict_of_interest',
+    'other',
+  ],
   reply: ['offensive', 'harassment', 'inappropriate', 'false_information', 'spam', 'other'],
   establishment: CONTENT_REASONS,
   experience: CONTENT_REASONS,
@@ -59,7 +73,10 @@ const reasonLabel = (target: ReportableTarget, reason: ReportReason) =>
  * reported the review that happened to share that number — the collision
  * between species that the Concierge had to design its citations around.
  */
-type ReportableTarget = Extract<ReportTargetType, 'review' | 'reply' | 'establishment' | 'experience' | 'event' | 'showcase_item'>
+type ReportableTarget = Extract<
+  ReportTargetType,
+  'review' | 'reply' | 'establishment' | 'experience' | 'event' | 'showcase_item'
+>
 
 const TITLES: Record<ReportableTarget, string> = {
   review: 'Denunciar avaliação',
@@ -126,7 +143,8 @@ export default function ReportContentScreen() {
         <Text
           selectable
           style={[styles.protocol, { color: colors.primaryAccent }]}
-          testID="report-protocol">
+          testID="report-protocol"
+        >
           {report.data.protocol_number}
         </Text>
         <Text style={[styles.note, styles.centered, { color: colors.mutedForeground }]}>
@@ -149,12 +167,17 @@ export default function ReportContentScreen() {
   const busy = !reason || report.isPending || resolving
 
   return (
-    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.page}
+    >
       {/* The header says what the form does; the page names what it acts on. */}
       <Stack.Screen options={{ title: TITLES[target] }} />
       {nome ? (
         <View style={styles.subject} testID="report-subject">
-          <Text style={[styles.overline, { color: colors.mutedForeground }]}>Você está denunciando</Text>
+          <Text style={[styles.overline, { color: colors.mutedForeground }]}>
+            Você está denunciando
+          </Text>
           <Text style={[styles.subjectName, { color: colors.foreground }]}>{nome}</Text>
         </View>
       ) : null}
@@ -176,13 +199,22 @@ export default function ReportContentScreen() {
                   borderColor: selected ? colors.primary : colors.borderSubtle,
                 },
               ]}
-              testID={`reason-${value}`}>
+              testID={`reason-${value}`}
+            >
               <View
-                style={[styles.radio, { borderColor: selected ? colors.primary : colors.choiceBorder }]}
-                testID={`reason-${value}-radio`}>
-                {selected ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
+                style={[
+                  styles.radio,
+                  { borderColor: selected ? colors.primary : colors.choiceBorder },
+                ]}
+                testID={`reason-${value}-radio`}
+              >
+                {selected ? (
+                  <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+                ) : null}
               </View>
-              <Text style={[styles.reasonLabel, { color: colors.foreground }]}>{reasonLabel(target, value)}</Text>
+              <Text style={[styles.reasonLabel, { color: colors.foreground }]}>
+                {reasonLabel(target, value)}
+              </Text>
             </Pressable>
           )
         })}
@@ -207,7 +239,8 @@ export default function ReportContentScreen() {
 
       <Text
         style={[styles.note, { color: colors.mutedForeground }]}
-        testID={anonymous ? 'report-anonymous-note' : 'report-identified-note'}>
+        testID={anonymous ? 'report-anonymous-note' : 'report-identified-note'}
+      >
         {anonymous
           ? 'Esta denúncia é anônima: não fica ligada a você nem a uma conta. Guardamos apenas um código que impede repetir a mesma denúncia.'
           : 'Esta denúncia vai com a sua conta. A moderação sabe quem denunciou; o lugar, não.'}
@@ -243,7 +276,13 @@ const styles = StyleSheet.create({
   page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center' },
   centered: { textAlign: 'center' },
-  done: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
+  done: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: 64,
+    justifyContent: 'center',
+    width: 64,
+  },
   title: typography.title,
   subject: { gap: spacing.xs },
   overline: typography.overline,
@@ -260,12 +299,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  radio: { alignItems: 'center', borderRadius: radius.pill, borderWidth: 2, height: 22, justifyContent: 'center', width: 22 },
+  radio: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    height: 22,
+    justifyContent: 'center',
+    width: 22,
+  },
   dot: { borderRadius: radius.pill, height: 10, width: 10 },
   reasonLabel: { ...typography.body, flexShrink: 1 },
   field: { gap: spacing.sm },
   label: { ...typography.label, ...textWeight('700') },
-  input: { borderWidth: 1, borderRadius: radius.thumb, minHeight: 112, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  input: {
+    borderWidth: 1,
+    borderRadius: radius.thumb,
+    minHeight: 112,
+    padding: spacing.md,
+    textAlignVertical: 'top',
+    ...typography.body,
+  },
   body: typography.body,
   note: typography.meta,
   protocol: { ...typography.title, letterSpacing: 1 },

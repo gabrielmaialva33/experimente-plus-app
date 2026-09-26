@@ -22,10 +22,18 @@ export function PinGroupList({
   return (
     <View
       accessibilityLabel={`${group.pins.length} lugares neste ponto`}
-      style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}
+    >
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.foreground }]}>{`${group.pins.length} lugares aqui`}</Text>
-        <Pressable accessibilityRole="button" onPress={onClose} hitSlop={spacing.sm} style={styles.close}>
+        <Text
+          style={[styles.title, { color: colors.foreground }]}
+        >{`${group.pins.length} lugares aqui`}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onClose}
+          hitSlop={spacing.sm}
+          style={styles.close}
+        >
           <Text style={[styles.closeLabel, { color: colors.primary }]}>Fechar</Text>
         </Pressable>
       </View>
@@ -35,7 +43,8 @@ export function PinGroupList({
           accessibilityRole="button"
           accessibilityLabel={[pin.name, pin.category].filter(Boolean).join(', ')}
           onPress={() => onSelect(pin.slug)}
-          style={[styles.row, { borderTopColor: colors.border }]}>
+          style={[styles.row, { borderTopColor: colors.border }]}
+        >
           <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
             {pin.name}
           </Text>
@@ -61,11 +70,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
   title: { ...typography.body, ...textWeight('700') },
   close: { minHeight: 44, justifyContent: 'center' },
   closeLabel: { ...typography.body, ...textWeight('700') },
-  row: { minHeight: 56, justifyContent: 'center', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm },
+  row: {
+    minHeight: 56,
+    justifyContent: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.sm,
+  },
   name: { ...typography.body, ...textWeight('600') },
   category: typography.caption,
 })

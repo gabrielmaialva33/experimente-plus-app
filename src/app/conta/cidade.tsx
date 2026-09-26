@@ -46,7 +46,11 @@ export default function CityScreen() {
           <View
             accessibilityRole="radiogroup"
             accessibilityLabel="Cidade"
-            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            ]}
+          >
             {(cities.data ?? []).map((city) => {
               const checked = city.slug === selected
               return (
@@ -56,10 +60,16 @@ export default function CityScreen() {
                   accessibilityLabel={`${city.name}, ${city.state_code}`}
                   accessibilityState={{ checked, selected: checked }}
                   onPress={() => choose(city.slug)}
-                  style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.muted : 'transparent' }]}>
+                  style={({ pressed }) => [
+                    styles.row,
+                    { backgroundColor: pressed ? colors.muted : 'transparent' },
+                  ]}
+                >
                   <View style={styles.copy}>
                     <Text style={[styles.name, { color: colors.foreground }]}>{city.name}</Text>
-                    <Text style={[styles.state, { color: colors.mutedForeground }]}>{city.state_code}</Text>
+                    <Text style={[styles.state, { color: colors.mutedForeground }]}>
+                      {city.state_code}
+                    </Text>
                   </View>
                   <Ionicons
                     name={checked ? 'radio-button-on' : 'radio-button-off'}
@@ -79,7 +89,12 @@ export default function CityScreen() {
 const styles = StyleSheet.create({
   page: { gap: spacing.lg, padding: spacing.gutter },
   lead: typography.body,
-  card: { borderRadius: radius.card, borderWidth: 1, overflow: 'hidden', paddingVertical: spacing.xs },
+  card: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    overflow: 'hidden',
+    paddingVertical: spacing.xs,
+  },
   row: {
     alignItems: 'center',
     flexDirection: 'row',

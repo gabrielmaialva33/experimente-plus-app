@@ -181,7 +181,9 @@ export function rotateCredentials(
 async function renewCredentials(): Promise<Credentials> {
   return consumeCredentials(async (refreshToken) => {
     const response = await send('/api/v1/sessions/refresh', {
-      method: 'POST', sensitive: true, body: { refresh_token: refreshToken },
+      method: 'POST',
+      sensitive: true,
+      body: { refresh_token: refreshToken },
     })
     if (response.status === 401) throw new SessionExpiredError()
     if (!response.ok) {
@@ -203,8 +205,12 @@ export function refreshSession(rejectedAccessToken?: string): Promise<Credential
   })
   refreshInFlight = result
   void result.then(
-    () => { refreshInFlight = null },
-    () => { refreshInFlight = null }
+    () => {
+      refreshInFlight = null
+    },
+    () => {
+      refreshInFlight = null
+    }
   )
   return result
 }
@@ -212,10 +218,17 @@ export function refreshSession(rejectedAccessToken?: string): Promise<Credential
 /** Called only inside the queue; a replay rebuilds JSON with the new refresh. */
 async function sendSessionMutation(path: string, body: Record<string, unknown>) {
   let current = await currentCredentials()
-  const sendCurrent = () => send(path, {
-    method: 'POST', authenticated: true, sensitive: true,
-    body: { ...body, refresh_token: current.refreshToken },
-  }, current.accessToken)
+  const sendCurrent = () =>
+    send(
+      path,
+      {
+        method: 'POST',
+        authenticated: true,
+        sensitive: true,
+        body: { ...body, refresh_token: current.refreshToken },
+      },
+      current.accessToken
+    )
   let response = await sendCurrent()
   if (response.status === 401) {
     current = await renewCredentials()
@@ -234,13 +247,14 @@ async function sendSessionMutation(path: string, body: Record<string, unknown>) 
 }
 
 export function rotateSessionRequest<T extends { auth: AuthTokensPayload }>(
-  path: '/api/v1/tenants' | '/api/v1/tenants/switch', body: Record<string, unknown>
+  path: '/api/v1/tenants' | '/api/v1/tenants/switch',
+  body: Record<string, unknown>
 ): Promise<T> {
   return serializeSessionOperation(async () => {
     notifySessionEvent('operation-changing')
     try {
       const response = await sendSessionMutation(path, body)
-      const result = await response.json() as T
+      const result = (await response.json()) as T
       await writeCredentials(credentialsFromPayload(result.auth))
       return result
     } finally {

@@ -97,14 +97,20 @@ function InterestsForm({
       {options.length > 0 ? (
         <View
           accessibilityRole="list"
-          style={[styles.options, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+          style={[
+            styles.options,
+            { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+          ]}
+        >
           {options.map((option) => (
             // Audit A55: the same box as every other checkbox of the app.
             <View key={option.slug} style={styles.option}>
               <Checkbox
                 label={option.name}
                 hint={option.retired ? 'Não oferecida no momento' : null}
-                accessibilityLabel={option.retired ? `${option.name}, não oferecida no momento` : option.name}
+                accessibilityLabel={
+                  option.retired ? `${option.name}, não oferecida no momento` : option.name
+                }
                 checked={selected.has(option.slug)}
                 onPress={() => toggle(option.slug)}
                 testID={`interest-${option.slug}`}
@@ -134,7 +140,12 @@ function InterestsForm({
 
       {/* Saved: the next step is to see what they change, in Para você. */}
       {save.isSuccess && !changed ? (
-        <Button label="Ver sugestões em Explorar" variant="ghost" align="center" onPress={() => router.navigate('/')} />
+        <Button
+          label="Ver sugestões em Explorar"
+          variant="ghost"
+          align="center"
+          onPress={() => router.navigate('/')}
+        />
       ) : null}
     </ScrollView>
   )
@@ -156,6 +167,11 @@ function ChooseCity() {
 const styles = StyleSheet.create({
   page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   lead: typography.body,
-  options: { borderRadius: radius.card, borderWidth: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
+  options: {
+    borderRadius: radius.card,
+    borderWidth: 1,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
   option: { minHeight: 52, justifyContent: 'center' },
 })

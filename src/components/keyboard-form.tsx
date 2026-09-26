@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react'
 import {
   Keyboard,
   Platform,
@@ -36,7 +45,8 @@ export function revealOffset({
 }): number | null {
   const visible = viewportHeight - covered
   if (fieldY - margin < scrollY) return Math.max(0, fieldY - margin)
-  if (fieldY + fieldHeight + margin > scrollY + visible) return fieldY + fieldHeight + margin - visible
+  if (fieldY + fieldHeight + margin > scrollY + visible)
+    return fieldY + fieldHeight + margin - visible
   return null
 }
 
@@ -159,7 +169,8 @@ export function KeyboardForm({
           scrollEventThrottle={16}
           onScroll={onScroll}
           onLayout={onLayout}
-          contentContainerStyle={{ paddingBottom: inset }}>
+          contentContainerStyle={{ paddingBottom: inset }}
+        >
           <View ref={content} collapsable={false} style={contentContainerStyle}>
             {children}
           </View>
@@ -170,7 +181,11 @@ export function KeyboardForm({
 }
 
 /** A `TextInput` that, inside a `KeyboardForm`, scrolls itself into view when focused. */
-export function FormTextInput({ onFocus, ref, ...props }: TextInputProps & { ref?: Ref<TextInput> }) {
+export function FormTextInput({
+  onFocus,
+  ref,
+  ...props
+}: TextInputProps & { ref?: Ref<TextInput> }) {
   const reveal = useContext(RevealContext)
   return (
     <TextInput

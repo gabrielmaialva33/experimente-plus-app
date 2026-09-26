@@ -73,9 +73,7 @@ export const useToggleSaved = (kind: SavedKind, establishmentId: number) => {
   return useMutation({
     retry: false,
     mutationFn: (save: boolean) =>
-      save
-        ? saveEstablishment(kind, establishmentId)
-        : unsaveEstablishment(kind, establishmentId),
+      save ? saveEstablishment(kind, establishmentId) : unsaveEstablishment(kind, establishmentId),
     onMutate: async (save: boolean) => {
       await client.cancelQueries({ queryKey: key })
       const previous = client.getQueryData<SavedStatus>(key)
@@ -121,7 +119,11 @@ export interface ForYouIdentity {
 
 export const useForYou = (identity: ForYouIdentity | null, citySlug: string | null) =>
   useQuery({
-    queryKey: explorerKeys.forYou(identity?.operationId ?? 0, identity?.userId ?? 0, citySlug ?? ''),
+    queryKey: explorerKeys.forYou(
+      identity?.operationId ?? 0,
+      identity?.userId ?? 0,
+      citySlug ?? ''
+    ),
     queryFn: () => listForYou(citySlug as string),
     enabled: Boolean(identity && citySlug),
   })

@@ -11,7 +11,13 @@ it('cancels through the existing endpoint with one idempotency key per order', a
   expect(client.request).toHaveBeenCalledTimes(2)
   for (const [path, options] of client.request.mock.calls) {
     expect(path).toBe(`/api/v1/me/purchases/${id}/cancel`)
-    expect(options).toEqual({ method: 'POST', authenticated: true, sensitive: true, body: {}, idempotencyKey: `cancel_${id}` })
+    expect(options).toEqual({
+      method: 'POST',
+      authenticated: true,
+      sensitive: true,
+      body: {},
+      idempotencyKey: `cancel_${id}`,
+    })
     // The server accepts 16 to 128 characters of [A-Za-z0-9_-].
     expect(options.idempotencyKey).toMatch(/^[A-Za-z0-9_-]{16,128}$/)
   }

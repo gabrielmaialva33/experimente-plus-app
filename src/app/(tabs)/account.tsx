@@ -43,7 +43,11 @@ export default function AccountScreen() {
           <View style={styles.identity}>
             <Avatar name={user?.full_name || user?.username} tone="chrome" />
             <View style={styles.who}>
-              <Text accessibilityRole="header" numberOfLines={2} style={[styles.name, { color: colors.chromeForeground }]}>
+              <Text
+                accessibilityRole="header"
+                numberOfLines={2}
+                style={[styles.name, { color: colors.chromeForeground }]}
+              >
                 {name}
               </Text>
               {user?.email ? (
@@ -65,23 +69,46 @@ export default function AccountScreen() {
             style={({ pressed }) => [
               styles.edit,
               { backgroundColor: colors.chromeRaised, opacity: pressed ? 0.85 : 1 },
-            ]}>
+            ]}
+          >
             <Ionicons name="create-outline" size={18} color={colors.chromeForeground} />
-            <Text style={[styles.editLabel, { color: colors.chromeForeground }]}>Editar perfil</Text>
+            <Text style={[styles.editLabel, { color: colors.chromeForeground }]}>
+              Editar perfil
+            </Text>
           </Pressable>
         </ScreenHeader>
 
         <View style={styles.groups}>
           {/* Anexo I item 10 — the person's own relationship with the catalogue. */}
           <ListGroup title="Minhas coisas">
-            <ListRow icon="heart-outline" label="Favoritos" onPress={() => router.push('/conta/favoritos')} />
-            <ListRow icon="notifications-outline" label="Seguindo" onPress={() => router.push('/conta/seguindo')} />
-            <ListRow icon="trail-sign-outline" label="Roteiros" onPress={() => router.push('/roteiros')} />
-            <ListRow icon="star-outline" label="Avaliações" onPress={() => router.push('/conta/avaliacoes')} />
+            <ListRow
+              icon="heart-outline"
+              label="Favoritos"
+              onPress={() => router.push('/conta/favoritos')}
+            />
+            <ListRow
+              icon="notifications-outline"
+              label="Seguindo"
+              onPress={() => router.push('/conta/seguindo')}
+            />
+            <ListRow
+              icon="trail-sign-outline"
+              label="Roteiros"
+              onPress={() => router.push('/roteiros')}
+            />
+            <ListRow
+              icon="star-outline"
+              label="Avaliações"
+              onPress={() => router.push('/conta/avaliacoes')}
+            />
           </ListGroup>
 
           <ListGroup title="Preferências">
-            <ListRow icon="sparkles-outline" label="Interesses" onPress={() => router.push('/conta/interesses')} />
+            <ListRow
+              icon="sparkles-outline"
+              label="Interesses"
+              onPress={() => router.push('/conta/interesses')}
+            />
             <ListRow
               icon="location-outline"
               label="Cidade"

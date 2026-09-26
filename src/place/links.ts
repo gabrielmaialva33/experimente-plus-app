@@ -22,5 +22,7 @@ export function placeHref(
   highlight?: { kind: PartnerContentItemKind; id: number } | null
 ): Href {
   const path = `/estabelecimento/${citySlug}/${slug}` as const
-  return highlight ? `${path}?${HIGHLIGHT_PARAM}=${highlightKey(highlight.kind, highlight.id)}` : path
+  return highlight
+    ? `${path}?${HIGHLIGHT_PARAM}=${highlightKey(highlight.kind, highlight.id)}`
+    : path
 }

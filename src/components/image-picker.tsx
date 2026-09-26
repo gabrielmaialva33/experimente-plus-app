@@ -58,8 +58,7 @@ export function ImagePicker({
         allowsMultipleSelection: true,
         selectionLimit: remainingSlots,
         quality: 0.85,
-        preferredAssetRepresentationMode:
-          UIImagePickerPreferredAssetRepresentationMode.Compatible,
+        preferredAssetRepresentationMode: UIImagePickerPreferredAssetRepresentationMode.Compatible,
       })
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -122,7 +121,8 @@ export function ImagePicker({
         {images.map((image, index) => (
           <View
             key={`${image.uri}-${index}`}
-            style={[styles.thumbnailWrapper, { borderColor: colors.border }]}>
+            style={[styles.thumbnailWrapper, { borderColor: colors.border }]}
+          >
             <RemoteImage
               source={{ uri: image.uri }}
               style={styles.thumbnail}
@@ -141,7 +141,8 @@ export function ImagePicker({
                 accessibilityRole="button"
                 accessibilityLabel={`Remover foto ${index + 1}`}
                 onPress={() => removeImage(index)}
-                style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}>
+                style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}
+              >
                 <Ionicons name="close-circle" size={22} color={colors.foreground} />
               </Pressable>
             )}
@@ -159,7 +160,8 @@ export function ImagePicker({
                 backgroundColor: colors.surfaceRaised,
                 borderColor: displayError ? colors.warningAccent : colors.border,
               },
-            ]}>
+            ]}
+          >
             <Ionicons name="camera-outline" size={24} color={colors.primary} />
             <Text style={[styles.addText, { color: colors.primary }]}>Adicionar</Text>
           </Pressable>
@@ -167,9 +169,7 @@ export function ImagePicker({
       </View>
 
       {displayError ? (
-        <Text
-          accessibilityRole="alert"
-          style={[styles.errorText, { color: colors.warningAccent }]}>
+        <Text accessibilityRole="alert" style={[styles.errorText, { color: colors.warningAccent }]}>
           {displayError}
         </Text>
       ) : null}

@@ -5,7 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { EstablishmentDetail } from '@/catalog/types'
 import { ActionMenu, type ActionMenuItem } from '@/components/action-menu'
-import { compactTitleText, hiddenFromAccessibility, type CompactHeader } from '@/components/compact-header'
+import {
+  compactTitleText,
+  hiddenFromAccessibility,
+  type CompactHeader,
+} from '@/components/compact-header'
 import { EstablishmentCover, coverImage } from '@/components/establishment-cover'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
@@ -32,7 +36,10 @@ export function placeHeroHeight(detail: EstablishmentDetail, insetTop: number) {
  * when its lower edge meets the photo's, where the page's sheet starts to cover it.
  */
 export function placeBarRange(detail: EstablishmentDetail, insetTop: number): [number, number] {
-  const arrived = Math.max(HANDOVER, placeHeroHeight(detail, insetTop) - radius.sheet - (insetTop + BAR_ROW))
+  const arrived = Math.max(
+    HANDOVER,
+    placeHeroHeight(detail, insetTop) - radius.sheet - (insetTop + BAR_ROW)
+  )
   return [arrived - HANDOVER, arrived]
 }
 
@@ -96,13 +103,20 @@ export function PlaceChrome({
   ]
 
   const back = (tone: Tone) => (
-    <IconButton icon="chevron-back" accessibilityLabel="Voltar" tone={tone} onPress={() => router.back()} />
+    <IconButton
+      icon="chevron-back"
+      accessibilityLabel="Voltar"
+      tone={tone}
+      onPress={() => router.back()}
+    />
   )
   const options = (tone: Tone, testID: string) => (
     <>
       <IconButton
         icon={favorited ? 'heart' : 'heart-outline'}
-        accessibilityLabel={favorited ? `Remover ${detail.name} dos favoritos` : `Favoritar ${detail.name}`}
+        accessibilityLabel={
+          favorited ? `Remover ${detail.name} dos favoritos` : `Favoritar ${detail.name}`
+        }
         selected={favorited}
         tone={tone}
         onPress={toggleFavorite}
@@ -127,11 +141,19 @@ export function PlaceChrome({
         {...hiddenFromAccessibility(!compact)}
         style={[
           styles.bar,
-          { backgroundColor: colors.surfaceBase, borderBottomColor: colors.borderSubtle, paddingTop: insets.top + spacing.sm },
+          {
+            backgroundColor: colors.surfaceBase,
+            borderBottomColor: colors.borderSubtle,
+            paddingTop: insets.top + spacing.sm,
+          },
           header.revealStyle,
-        ]}>
+        ]}
+      >
         {back('surface')}
-        <Animated.Text numberOfLines={1} style={[styles.title, { color: colors.foreground }, header.riseStyle]}>
+        <Animated.Text
+          numberOfLines={1}
+          style={[styles.title, { color: colors.foreground }, header.riseStyle]}
+        >
           {detail.name}
         </Animated.Text>
         <View style={styles.group}>{options('surface', 'place-bar')}</View>
@@ -141,10 +163,16 @@ export function PlaceChrome({
       <Animated.View
         pointerEvents={compact ? 'none' : 'box-none'}
         {...hiddenFromAccessibility(compact)}
-        style={[styles.floating, { top: insets.top + spacing.sm }, header.concealStyle]}>
+        style={[styles.floating, { top: insets.top + spacing.sm }, header.concealStyle]}
+      >
         {back('image')}
         <View style={styles.group}>
-          <IconButton icon="share-outline" accessibilityLabel="Compartilhar" tone="image" onPress={() => void share()} />
+          <IconButton
+            icon="share-outline"
+            accessibilityLabel="Compartilhar"
+            tone="image"
+            onPress={() => void share()}
+          />
           {options('image', 'place')}
         </View>
       </Animated.View>
@@ -164,6 +192,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: { ...compactTitleText, flex: 1 },
-  floating: { flexDirection: 'row', justifyContent: 'space-between', left: spacing.lg, position: 'absolute', right: spacing.lg },
+  floating: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    left: spacing.lg,
+    position: 'absolute',
+    right: spacing.lg,
+  },
   group: { flexDirection: 'row', gap: spacing.sm },
 })

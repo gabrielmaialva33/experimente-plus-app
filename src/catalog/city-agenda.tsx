@@ -32,7 +32,12 @@ interface EventBand {
 
 function eventBandsOf(agenda: CityAgendaView): EventBand[] {
   return [
-    { key: 'happening-today', title: 'Acontecendo hoje', items: agenda.happeningToday, withDate: false },
+    {
+      key: 'happening-today',
+      title: 'Acontecendo hoje',
+      items: agenda.happeningToday,
+      withDate: false,
+    },
     { key: 'upcoming', title: 'Em breve', items: agenda.upcoming, withDate: true },
   ]
 }
@@ -89,7 +94,11 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
       {eventBandsOf(data)
         .filter((band) => band.items.length > 0)
         .map((band) => (
-          <View key={band.key} testID={`agenda-band-${band.key}`} style={[styles.band, styles.gutter]}>
+          <View
+            key={band.key}
+            testID={`agenda-band-${band.key}`}
+            style={[styles.band, styles.gutter]}
+          >
             <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>{band.title}</Text>
             {band.items.map((item) => {
               // The tile carries the day, so the row itself only needs the hours.
@@ -102,11 +111,17 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                   key={`${item.kind}-${item.id}`}
                   testID={`agenda-card-${item.kind}-${item.id}`}
                   accessibilityRole="button"
-                  accessibilityLabel={[item.title, item.establishmentName, spoken].filter(Boolean).join(', ')}
+                  accessibilityLabel={[item.title, item.establishmentName, spoken]
+                    .filter(Boolean)
+                    .join(', ')}
                   onPress={() => open(item)}
                   style={({ pressed }) => [
                     styles.event,
-                    { backgroundColor: colors.card, borderColor: colors.borderSubtle, opacity: pressed ? 0.92 : 1 },
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.borderSubtle,
+                      opacity: pressed ? 0.92 : 1,
+                    },
                   ]}
                 >
                   <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -117,11 +132,17 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                     />
                   </View>
                   <View style={styles.eventCopy}>
-                    <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={2}>
+                    <Text
+                      style={[styles.eventTitle, { color: colors.foreground }]}
+                      numberOfLines={2}
+                    >
                       {item.title}
                     </Text>
                     {meta ? (
-                      <Text style={[styles.eventMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      <Text
+                        style={[styles.eventMeta, { color: colors.mutedForeground }]}
+                        numberOfLines={1}
+                      >
                         {meta}
                       </Text>
                     ) : null}
@@ -137,9 +158,15 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
           <View style={styles.gutter}>
             <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>Novidades</Text>
             {/* The band is chronological. There is no prominence contract to imply. */}
-            <Text style={[styles.bandHint, { color: colors.mutedForeground }]}>Publicados recentemente</Text>
+            <Text style={[styles.bandHint, { color: colors.mutedForeground }]}>
+              Publicados recentemente
+            </Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.row}
+          >
             {data.newExperiences.map((item) => (
               <CompactCard
                 key={`${item.kind}-${item.id}`}
@@ -147,7 +174,11 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                 overline={item.establishmentName || null}
                 title={item.title}
                 meta={formatAgendaPublication(item.publishedAt, timeZone)}
-                image={item.cover ? { uri: resolveMediaUrl(item.cover.url), alt: item.cover.altText } : null}
+                image={
+                  item.cover
+                    ? { uri: resolveMediaUrl(item.cover.url), alt: item.cover.altText }
+                    : null
+                }
                 onPress={() => open(item)}
               />
             ))}

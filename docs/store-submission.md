@@ -71,7 +71,7 @@ receber segredo versionado.
    substitua esses arquivos mantendo nomes e dimensões.
 7. **Textos das lojas e privacidade:** nome, descrições, categoria, e-mail e
    site de suporte, o conteúdo final de Termos e Política de Privacidade
-   (cláusula 10.1), e as respostas do formulário *Data safety* do Google Play e
+   (cláusula 10.1), e as respostas do formulário _Data safety_ do Google Play e
    dos rótulos de privacidade da Apple.
 
 ## Comandos, depois que as contas existirem

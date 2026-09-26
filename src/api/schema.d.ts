@@ -3366,11 +3366,31 @@ export interface paths {
         };
         /**
          * List the caller's discovery interests
-         * @description Interests are recorded and returned. They do not change the order of any search in this milestone: personalised ranking is its own domain.
+         * @description Interests are recorded and returned. They narrow the "Para você" row of `/api/v1/me/for-you` and never change the order of any search: personalised ranking is its own domain.
          */
         get: operations["listMyInterests"];
         /** Replace the caller's discovery interests */
         put: operations["replaceMyInterests"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/for-you": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Places of the caller's interests in one city
+         * @description Discoverable establishments of the city filed under any active interest of the caller or under its active descendant categories, in the order organic search uses without a term (name, then id), at most ten. It never reorders search and gives sponsorship no slot. An unknown, foreign, inactive or malformed city is refused as the public catalogue refuses it.
+         */
+        get: operations["listMyForYou"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -6062,6 +6082,11 @@ export interface components {
         };
         ExplorerInterestList: {
             data: components["schemas"]["ExplorerInterest"][];
+        };
+        /** @description The "Para você" row (ADR-0030, revision of 26/09/2026). `data` carries organic search results, in the order organic search uses without a term; `has_interests` says whether any active interest was chosen at all. */
+        ExplorerForYou: {
+            data: components["schemas"]["CatalogSearchItem"][];
+            has_interests: boolean;
         };
         /** @description The whole set. Choosing interests replaces it rather than toggling one at a time. */
         ReplaceExplorerInterestsRequest: {
@@ -15907,6 +15932,52 @@ export interface operations {
                 content?: never;
             };
             /** @description A category is not part of this operation */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyForYou: {
+        parameters: {
+            query: {
+                city: string;
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The row, possibly empty */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerForYou"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description City not found in this operation */
             404: {
                 headers: {
                     [name: string]: unknown;

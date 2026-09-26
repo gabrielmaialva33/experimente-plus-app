@@ -1,7 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native'
 import { Share } from 'react-native'
 
-import { ContentActions, contentShareMessage } from '@/partner-content/content-actions'
+import {
+  ContentFavorite,
+  ContentMenu,
+  contentShareMessage,
+} from '@/partner-content/content-actions'
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('@/theme/use-colors', () => ({
@@ -21,17 +25,23 @@ const session = jest.requireMock('@/session/context') as { useSession: jest.Mock
 const queries = jest.requireMock('@/explorer/queries') as Record<string, jest.Mock>
 const mutate = jest.fn()
 
-const renderActions = (kind: 'experience' | 'event' | 'showcase_item' = 'experience') =>
-  render(
-    <ContentActions
-      kind={kind}
-      id={31}
-      title="Degustação guiada"
-      establishmentName="Ateliê do Café"
-      citySlug="londrina"
-      establishmentSlug="atelie-do-cafe"
-    />
+// The heart and the "⋯" as a content card shows them, side by side.
+const renderActions = (kind: 'experience' | 'event' | 'showcase_item' = 'experience') => {
+  const props = {
+    kind,
+    id: 31,
+    title: 'Degustação guiada',
+    establishmentName: 'Ateliê do Café',
+    citySlug: 'londrina',
+    establishmentSlug: 'atelie-do-cafe',
+  }
+  return render(
+    <>
+      <ContentFavorite {...props} />
+      <ContentMenu {...props} />
+    </>
   )
+}
 
 beforeEach(() => {
   jest.clearAllMocks()

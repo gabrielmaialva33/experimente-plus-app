@@ -9,6 +9,11 @@ import { palette } from '../tokens'
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
+// Expo Router's root provides the safe area in the app; here the layout renders alone.
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 jest.mock('@/api/query-client', () => ({ createQueryClient: jest.fn(), installQueryEnvironment: jest.fn() }))
 jest.mock('@tanstack/react-query', () => ({ QueryClientProvider: ({ children }: { children: React.ReactNode }) => children }))
 jest.mock('@/session/context', () => ({

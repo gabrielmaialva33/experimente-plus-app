@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect } from 'react'
 import { useColorScheme } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
 import { useColors } from '@/theme/use-colors'
@@ -45,12 +46,16 @@ function SplashGate() {
 function Shell() {
   const colorScheme = useColorScheme()
   const colors = useColors()
+  const insets = useSafeAreaInsets()
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
 
   return (
     <ThemeProvider value={{ ...baseTheme, colors: navigationColors(colors) }}>
-      <Stack screenOptions={stackSurfaceOptions(colors)}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack screenOptions={stackSurfaceOptions(colors, insets.bottom)}>
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false, contentStyle: stackSurfaceOptions(colors).contentStyle }}
+        />
         <Stack.Screen name="cadastro" options={{ title: 'Criar conta' }} />
         <Stack.Screen name="compra/[id]" options={{ title: 'Comprar benefício' }} />
         <Stack.Screen name="compra/entrar" options={{ title: 'Entrar' }} />

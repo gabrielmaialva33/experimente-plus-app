@@ -383,3 +383,19 @@ it('opens the conditions from the consent that names them', async () => {
   expect(view.getByRole('button', { name: 'Ocultar condições' })).toBeOnTheScreen()
   expect(view.getByRole('checkbox', { checked: false })).toBeOnTheScreen()
 })
+
+// A20: each product is a card that says its kind, name, what it includes, until
+// when it is used and its price, instead of one centred line.
+it('lists each product as a card with what it includes and until when it is used', async () => {
+  queries.usePurchaseEditions.mockReturnValue({ data: { products } })
+  const view = await page(<EditionsScreen />)
+  const pack = within(view.getByRole('button', { name: /Pacote da cidade · Londrina · Edição 2026/ }))
+  expect(pack.getByText('Pacote da cidade · Londrina')).toBeOnTheScreen()
+  expect(pack.getByText('Edição 2026')).toBeOnTheScreen()
+  expect(pack.getByText('1 benefício: Café')).toBeOnTheScreen()
+  expect(pack.getByText('Use até 30/12/2026')).toBeOnTheScreen()
+  expect(pack.getByText(/123,00/)).toBeOnTheScreen()
+  const voucherCard = within(view.getByRole('button', { name: /Voucher avulso · Bistrô · Oferta 3/ }))
+  expect(voucherCard.getByText('Oferta publicada')).toBeOnTheScreen()
+  expect(voucherCard.getByText(/14,90/)).toBeOnTheScreen()
+})

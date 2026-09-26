@@ -7,7 +7,7 @@ import PurchaseSignInScreen from '@/app/compra/entrar'
 import { ApiError } from '@/api/client'
 import { palette } from '@/theme/tokens'
 
-jest.mock('expo-router', () => ({ useRouter: jest.fn(), Stack: { Screen: () => null } }))
+jest.mock('expo-router', () => ({ useRouter: jest.fn(), useLocalSearchParams: jest.fn(), Stack: { Screen: () => null } }))
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'anonymous', refresh: jest.fn() }) }))
 jest.mock('@/api/auth', () => ({ forgotPassword: jest.fn(), signIn: jest.fn() }))
@@ -30,6 +30,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   api.forgotPassword.mockResolvedValue({ message: 'arbitrary-server-text' })
   jest.requireMock('expo-router').useRouter.mockReturnValue(router)
+  jest.requireMock('expo-router').useLocalSearchParams.mockReturnValue({})
   router.canGoBack.mockReturnValue(true)
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
 })
@@ -63,7 +64,9 @@ it('places a 422 under the email field without echoing private server content', 
   const view = await page()
   await submit(view)
   const error = await view.findByText('Confira o e-mail informado.')
-  expect(error.parent).toBe(view.getByLabelText('E-mail').parent)
+  // The message belongs to the field: drawn under it and read with it.
+  expect(error).toBeOnTheScreen()
+  expect(view.getByLabelText('E-mail').props.accessibilityHint).toBe('Confira o e-mail informado.')
   expect(view.queryByText('private-address')).toBeNull()
   expect(view.queryByText(/Se houver uma conta/)).toBeNull()
   expect(api.forgotPassword).toHaveBeenCalledTimes(1)
@@ -117,6 +120,28 @@ it.each([SignInScreen, PurchaseSignInScreen])('is reachable from both sign-in en
   expect(view.getByRole('button', { name: 'Não tenho conta. Criar conta' })).toBeOnTheScreen()
 })
 
+// Audit A59: the address typed on sign-in used to be asked for again.
+it('carries an e-mail typed on sign-in into recovery', async () => {
+  const signIn = await page(<SignInScreen />)
+  await fireEvent.changeText(signIn.getByLabelText('E-mail ou usuário'), ' ana@example.com ')
+  await fireEvent.press(signIn.getByRole('button', { name: 'Esqueci minha senha' }))
+  expect(router.push).toHaveBeenCalledWith({ pathname: '/recuperar-senha', params: { email: 'ana@example.com' } })
+  await signIn.unmount()
+
+  jest.requireMock('expo-router').useLocalSearchParams.mockReturnValue({ email: 'ana@example.com' })
+  const view = await page()
+  expect(view.getByLabelText('E-mail')).toHaveDisplayValue('ana@example.com')
+  await fireEvent.press(view.getByRole('button', { name: 'Solicitar link' }))
+  expect(api.forgotPassword).toHaveBeenCalledWith({ email: 'ana@example.com' })
+})
+
+it('does not carry a username into recovery', async () => {
+  const view = await page(<SignInScreen />)
+  await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
+  await fireEvent.press(view.getByRole('button', { name: 'Esqueci minha senha' }))
+  expect(router.push).toHaveBeenCalledWith('/recuperar-senha')
+})
+
 it('falls back to sign-in when opened without a previous route', async () => {
   router.canGoBack.mockReturnValue(false)
   const view = await page()
@@ -127,7 +152,7 @@ it('falls back to sign-in when opened without a previous route', async () => {
 it.each(['light', 'dark'] as const)('uses only existing theme roles in %s', async (mode) => {
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   const view = await page()
-  expect(view.getByLabelText('E-mail')).toHaveStyle({ color: palette[mode].foreground, backgroundColor: palette[mode].card })
+  expect(view.getByLabelText('E-mail')).toHaveStyle({ color: palette[mode].foreground })
   expect(view.getByRole('button', { name: 'Solicitar link' })).toHaveStyle({ backgroundColor: palette[mode].primary })
   expect(view.getByText('Solicitar link')).toHaveStyle({ color: palette[mode].primaryForeground })
   expect(view.getByText('Voltar para entrar')).toHaveStyle({ color: palette[mode].primary })

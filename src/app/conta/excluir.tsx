@@ -1,10 +1,14 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { ACCOUNT_DELETION_LITERAL, deleteAccount } from '@/api/me'
+import { Button } from '@/components/button'
+import { KeyboardForm } from '@/components/keyboard-form'
+import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -45,80 +49,72 @@ export default function DeleteAccountScreen() {
         : null
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.body, { color: colors.foreground }]}>
-        Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
-      </Text>
+    <View style={{ backgroundColor: colors.background, flex: 1 }}>
+      <KeyboardForm contentContainerStyle={styles.page}>
+        <View style={[styles.warning, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}>
+          <Ionicons name="warning-outline" size={24} color={colors.destructiveAccent} />
+          <Text style={[styles.body, styles.warningText, { color: colors.foreground }]}>
+            Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
+          </Text>
+        </View>
 
-      <View style={styles.field}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>Senha atual</Text>
-        <TextInput
-          accessibilityLabel="Senha atual"
+        <TextField
+          label="Senha atual"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secure
           autoCapitalize="none"
-          style={[styles.input, { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground }]}
+          autoCorrect={false}
         />
-      </View>
 
-      <View style={styles.field}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>
-          Digite {ACCOUNT_DELETION_LITERAL}
-        </Text>
-        <TextInput
-          accessibilityLabel={`Digite ${ACCOUNT_DELETION_LITERAL}`}
+        <TextField
+          label={`Digite ${ACCOUNT_DELETION_LITERAL}`}
           value={confirmation}
           onChangeText={setConfirmation}
+          hint={matches ? 'Confirmação correta.' : 'Escreva exatamente como acima, para confirmar.'}
           autoCapitalize="characters"
           autoCorrect={false}
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.card,
-              borderColor: matches ? colors.destructive : colors.input,
-              color: colors.foreground,
-            },
-          ]}
         />
-      </View>
 
-      {message ? <Text style={[styles.error, { color: colors.destructiveAccent }]}>{message}</Text> : null}
+        {message ? (
+          <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]}>
+            {message}
+          </Text>
+        ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        disabled={!ready || remove.isPending}
-        onPress={() => remove.mutate()}
-        style={[
-          styles.action,
-          { backgroundColor: colors.destructive, opacity: !ready || remove.isPending ? 0.4 : 1 },
-        ]}>
-        <Text style={[styles.actionLabel, { color: colors.destructiveForeground }]}>
-          {remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
-        </Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Excluir permanentemente"
+          accessibilityState={{ disabled: !ready || remove.isPending }}
+          disabled={!ready || remove.isPending}
+          onPress={() => remove.mutate()}
+          style={({ pressed }) => [
+            styles.action,
+            {
+              // A disabled button keeps a readable label instead of fading out (audit A51).
+              backgroundColor: !ready || remove.isPending ? colors.muted : colors.destructive,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}>
+          <Text
+            style={[
+              styles.actionLabel,
+              { color: !ready || remove.isPending ? colors.mutedForeground : colors.destructiveForeground },
+            ]}>
+            {remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
+          </Text>
+        </Pressable>
+        <Button label="Manter minha conta" variant="ghost" fill onPress={() => router.back()} />
+      </KeyboardForm>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { gap: spacing.md, padding: spacing.xl },
+  page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   body: typography.body,
-  field: { gap: spacing.xs },
-  label: { ...typography.caption, textTransform: 'uppercase' },
-  input: {
-    ...typography.body,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  error: typography.caption,
-  action: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  actionLabel: { ...typography.body, ...textWeight('700') },
+  warning: { alignItems: 'flex-start', borderRadius: radius.card, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.lg },
+  warningText: { flex: 1 },
+  action: { alignItems: 'center', borderRadius: radius.pill, justifyContent: 'center', marginTop: spacing.sm, minHeight: 52 },
+  actionLabel: { ...typography.label, ...textWeight('700'), fontSize: 16 },
 })

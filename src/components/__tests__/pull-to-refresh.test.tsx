@@ -81,7 +81,7 @@ describe('lists the server fills can be pulled to refresh', () => {
     const query = loaded({ data: [] })
     explorer.useItineraries.mockReturnValue(query)
     const view = await render(<ItinerariesScreen />)
-    await act(async () => refreshAround(view, 'Nenhum roteiro ainda.').onRefresh?.())
+    await act(async () => refreshAround(view, 'Nenhum roteiro ainda').onRefresh?.())
     expect(query.refetch).toHaveBeenCalledTimes(1)
   })
 

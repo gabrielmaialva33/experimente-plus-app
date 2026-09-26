@@ -1,12 +1,15 @@
 import { useRouter } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { Badge, type BadgeTone } from '@/components/badge'
+import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useDeleteReview, useMyReviews } from '@/reviews/queries'
 import { formatDate } from '@/reviews/review-card'
 import { Stars } from '@/reviews/stars'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 // The statuses the server has: `pending_moderation` never existed — the API
@@ -54,21 +57,29 @@ export default function MyReviewsScreen() {
       refreshControl={refreshControl}
       keyExtractor={(review) => String(review.id)}
       ListEmptyComponent={
-        <Text style={[styles.empty, { color: colors.mutedForeground }]}>
-          {query.isError
-            ? 'Não foi possível carregar suas avaliações agora.'
-            : 'Você ainda não avaliou nenhum lugar.'}
-        </Text>
+        query.isError ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Não foi possível carregar suas avaliações agora"
+            action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+          />
+        ) : (
+          // Audit A34: an empty list says what goes here and where to start.
+          <EmptyState
+            icon="star-outline"
+            title="Nenhuma avaliação ainda"
+            text="Você ainda não avaliou nenhum lugar."
+            action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
+          />
+        )
       }
       renderItem={({ item }) => (
         <View
-          style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
+          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
           testID={`my-review-${item.id}`}>
           <View style={styles.header}>
             <Stars rating={item.rating} />
-            <Text style={[styles.status, { color: colors.mutedForeground }]}>
-              {statusLabel(item)}
-            </Text>
+            <Badge label={statusLabel(item)} tone={statusTone(item)} />
           </View>
 
           <Text style={[styles.date, { color: colors.mutedForeground }]}>
@@ -81,24 +92,22 @@ export default function MyReviewsScreen() {
           ) : null}
 
           <View style={styles.actions}>
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              label="Editar"
+              icon="create-outline"
+              variant="outline"
+              size={44}
               onPress={() => router.push(`/avaliar/editar/${item.id}`)}
-              style={[styles.secondary, { borderColor: colors.actionSecondaryBorder, backgroundColor: colors.actionSecondary }]}>
-              <Text style={[styles.secondaryLabel, { color: colors.actionSecondaryForeground }]}>
-                Editar
-              </Text>
-            </Pressable>
+            />
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Excluir"
               accessibilityState={{ disabled: remove.isPending }}
               disabled={remove.isPending}
               onPress={() => remove.mutate(item.id)}
-              style={[styles.secondary, { borderColor: colors.destructive, backgroundColor: colors.destructiveSoft }]}
+              style={styles.delete}
               testID={`delete-review-${item.id}`}>
-              <Text style={[styles.secondaryLabel, { color: colors.destructiveAccent }]}>
-                Excluir
-              </Text>
+              <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>Excluir</Text>
             </Pressable>
           </View>
         </View>
@@ -107,15 +116,21 @@ export default function MyReviewsScreen() {
   )
 }
 
+/** Only a published review is public; one held or hidden is not, and says so in amber. */
+const statusTone = (review: { status: string; awaiting_moderation?: boolean }): BadgeTone =>
+  review.status === 'published' && !review.awaiting_moderation
+    ? 'success'
+    : review.status === 'archived'
+      ? 'neutral'
+      : 'warning'
+
 const styles = StyleSheet.create({
-  list: { gap: spacing.md, padding: spacing.lg },
-  card: { borderWidth: 1, borderRadius: radius.surface, gap: spacing.sm, padding: spacing.lg },
+  list: { gap: spacing.md, padding: spacing.gutter, paddingBottom: spacing.xxl },
+  card: { borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
-  status: { ...typography.caption, ...textWeight('600') },
-  date: typography.caption,
+  date: typography.meta,
   body: typography.body,
-  empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  secondary: { alignItems: 'center', borderWidth: 1, borderRadius: radius.md, flex: 1, justifyContent: 'center', minHeight: 44 },
-  secondaryLabel: { ...typography.body, ...textWeight('600') },
+  actions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between', paddingTop: spacing.xs },
+  delete: { justifyContent: 'center', minHeight: minTouch, paddingHorizontal: spacing.md },
+  deleteLabel: { ...typography.label, ...textWeight('700') },
 })

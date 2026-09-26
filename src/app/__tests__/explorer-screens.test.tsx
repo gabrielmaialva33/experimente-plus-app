@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native'
 
 import InterestsScreen from '@/app/conta/interesses'
 import FavoritesScreen from '@/app/conta/favoritos'
+import FollowingScreen from '@/app/conta/seguindo'
 import ItineraryScreen from '@/app/roteiros/[id]'
 
 jest.mock('@/api/client', () => ({
@@ -22,11 +23,12 @@ jest.mock('@/theme/use-colors', () => ({
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
+const mockNavigate = jest.fn()
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, navigate: mockNavigate }),
   useLocalSearchParams: jest.fn(),
 }))
-jest.mock('@/catalog/city-store', () => ({ useSelectedCity: () => 'londrina' }))
+jest.mock('@/catalog/city-store', () => ({ useSelectedCity: jest.fn(() => 'londrina') }))
 jest.mock('@/catalog/queries', () => ({ useCategories: jest.fn() }))
 jest.mock('@/explorer/queries', () => ({
   useSavedList: jest.fn(),
@@ -40,6 +42,7 @@ jest.mock('@/explorer/queries', () => ({
   useReorderItineraryStops: jest.fn(),
   useRemoveItineraryStop: jest.fn(),
   useDeleteItinerary: jest.fn(),
+  useAddItineraryStop: jest.fn(),
 }))
 
 const router = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
@@ -75,6 +78,7 @@ beforeEach(() => {
     'useRemoveItineraryStop',
     'useDeleteItinerary',
     'useToggleSavedContent',
+    'useAddItineraryStop',
   ]) {
     queries[hook].mockReturnValue(idle())
   }
@@ -113,6 +117,42 @@ describe('favourites', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
   })
+
+  // Audit A57: removal is one tap on the filled heart, and so is taking it back.
+  it('removes a place with its heart and offers to undo it', async () => {
+    const mutate = jest.fn()
+    queries.useToggleSaved.mockReturnValue(idle({ mutate }))
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        data: [{ id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' }],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<FavoritesScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' }))
+    expect(mutate).toHaveBeenLastCalledWith(false)
+    expect(view.getByRole('alert')).toHaveTextContent(/Ateliê do Café removido dos favoritos/)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(mutate).toHaveBeenLastCalledWith(true)
+    expect(view.queryByTestId('undo-bar')).toBeNull()
+  })
+
+  // Audit A34: an empty list is not a dead end.
+  it.each([
+    [FavoritesScreen, 'Você ainda não tem lugares favoritos'],
+    [FollowingScreen, 'Você ainda não segue nenhum lugar'],
+  ] as const)('offers a way to fill an empty list (%#)', async (Screen, title) => {
+    queries.useSavedList.mockReturnValue({ isPending: false, isError: false, data: { data: [], unavailable: 0 } })
+
+    const view = await render(<Screen />)
+    expect(view.getByRole('header', { name: title })).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
+    expect(mockNavigate).toHaveBeenCalledWith('/')
+  })
 })
 
 describe('content favourites', () => {
@@ -123,7 +163,7 @@ describe('content favourites', () => {
       data: { data: [], unavailable: 0 },
     })
 
-  it('lists favourited experiences and events above the places, with unavailable ones counted', async () => {
+  it('lists favourited experiences and events below the places, with unavailable ones counted', async () => {
     savedPlaces()
     queries.useSavedContent.mockReturnValue({
       isPending: false,
@@ -150,6 +190,9 @@ describe('content favourites', () => {
     const view = await render(<FavoritesScreen />)
 
     expect(view.getByText('Noite de jazz')).toBeTruthy()
+    // Audit A56: the places come first.
+    const headers = view.getAllByRole('header').map((header) => header.props.children)
+    expect(headers.indexOf('Lugares')).toBeLessThan(headers.indexOf('Experiências e eventos'))
     expect(view.getByTestId('content-unavailable').props.children).toMatch(/^1 item salvo/)
     await fireEvent.press(view.getByLabelText('Noite de jazz, Ateliê do Café'))
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
@@ -185,6 +228,8 @@ describe('content favourites', () => {
     await fireEvent.press(view.getByTestId('unsave-content-experience-31'))
 
     expect(mutate).toHaveBeenCalledWith({ kind: 'experiences', id: 31, save: false })
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(mutate).toHaveBeenLastCalledWith({ kind: 'experiences', id: 31, save: true })
   })
 })
 
@@ -240,6 +285,34 @@ describe('interests', () => {
     expect(view.getByTestId('interest-museus').props.accessibilityState).toMatchObject({
       checked: true,
     })
+  })
+
+  // Audit A55: the same visible box as every other checkbox of the app.
+  it('draws each interest with the shared checkbox box', async () => {
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({
+      isPending: false,
+      data: { categories: [{ slug: 'cafes', name: 'Cafés' }] },
+    })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.getByTestId('interest-cafes-box')).toHaveStyle({ width: 24, height: 24, borderWidth: 2 })
+    expect(view.getByRole('checkbox', { name: 'Cafés' })).not.toBeChecked()
+  })
+
+  // Audit A34: without a city there is nothing to mark, and the screen says where to choose one.
+  it('leads to choosing a city when there is none', async () => {
+    const cityStore = jest.requireMock('@/catalog/city-store') as { useSelectedCity: jest.Mock }
+    cityStore.useSelectedCity.mockReturnValue(null)
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, data: undefined })
+
+    const view = await render(<InterestsScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Escolher cidade' }))
+
+    expect(mockPush).toHaveBeenCalledWith('/conta/cidade')
+    cityStore.useSelectedCity.mockReturnValue('londrina')
   })
 
   it('does not offer to save when nothing changed', async () => {
@@ -314,11 +387,56 @@ describe('itinerary', () => {
     expect(mutate).toHaveBeenCalledWith(5, expect.any(Object))
   })
 
+  // Audit A26: the name is kept when the field is left; there is no button to find.
+  it('saves the name when the field is left, and restores an emptied one', async () => {
+    const mutate = jest.fn()
+    queries.useUpdateItinerary.mockReturnValue(idle({ mutate }))
+
+    const view = await render(<ItineraryScreen />)
+    expect(view.queryByTestId('rename-itinerary')).toBeNull()
+    await fireEvent.changeText(view.getByLabelText('Nome do roteiro'), ' Domingo no lago ')
+    await fireEvent(view.getByLabelText('Nome do roteiro'), 'blur')
+    expect(mutate).toHaveBeenCalledWith({ name: 'Domingo no lago', notes: null })
+
+    mutate.mockClear()
+    await fireEvent.changeText(view.getByLabelText('Nome do roteiro'), '   ')
+    await fireEvent(view.getByLabelText('Nome do roteiro'), 'blur')
+    expect(mutate).not.toHaveBeenCalled()
+    expect(view.getByLabelText('Nome do roteiro')).toHaveDisplayValue('Sábado no centro')
+  })
+
+  // Audit A25: places are added from inside the itinerary.
+  it('adds a favourite place that is not a stop yet', async () => {
+    const mutate = jest.fn()
+    queries.useAddItineraryStop.mockReturnValue(idle({ mutate }))
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        data: [
+          { id: 1, establishment: card(7, 'Café da Manhã'), created_at: '2026-09-23T12:00:00Z' },
+          { id: 2, establishment: card(9, 'Sorveteria da Praça'), created_at: '2026-09-23T12:00:00Z' },
+        ],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar lugar' }))
+    expect(queries.useSavedList).toHaveBeenCalledWith('favorites')
+    // Already the first stop, so not offered again.
+    expect(view.queryByRole('button', { name: 'Adicionar Café da Manhã ao roteiro' })).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' }))
+    expect(mutate).toHaveBeenCalledWith({ id: 5, establishmentId: 9 })
+  })
+
   it('says so when the itinerary is not the caller’s or does not exist', async () => {
     queries.useItinerary.mockReturnValue({ isPending: false, data: undefined })
 
     const view = await render(<ItineraryScreen />)
 
     expect(view.getByText('Este roteiro não foi encontrado.')).toBeTruthy()
+    await fireEvent.press(view.getByRole('button', { name: 'Ver meus roteiros' }))
+    expect(mockReplace).toHaveBeenCalledWith('/roteiros')
   })
 })

@@ -1,187 +1,125 @@
-import { useMutation } from '@tanstack/react-query'
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { Tabs, useRouter } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { ApiError } from '@/api/client'
-import { updateProfile } from '@/api/me'
+import { useCities } from '@/catalog/queries'
+import { useSelectedCity } from '@/catalog/city-store'
+import { Avatar } from '@/components/avatar'
+import { ListGroup, ListRow } from '@/components/list-row'
+import { ScreenHeader } from '@/components/screen-header'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
+// The band below reserves the status bar, so the tab's native header steps aside.
+const HEADER_OPTIONS = { headerShown: false }
+
+/**
+ * The account hub (audit A23): who is signed in, then the person's own things,
+ * preferences and the account itself, each one row that opens its screen.
+ * Editing the profile has a screen of its own, so a hub is not a form.
+ */
 export default function AccountScreen() {
   const colors = useColors()
   const router = useRouter()
-  const { context, refresh, signOut } = useSession()
+  const { context, capabilities, signOut } = useSession()
   const user = context?.user
+  const name = user?.full_name?.trim() || user?.username || 'Sua conta'
 
-  const [fullName, setFullName] = useState(user?.full_name ?? '')
-  const [username, setUsername] = useState(user?.username ?? '')
+  const citySlug = useSelectedCity()
+  const cities = useCities()
+  const city = cities.data?.find((candidate) => candidate.slug === citySlug)
 
-  const fullNameChanged = fullName !== (user?.full_name ?? '')
-  // An untouched null username is displayed as an empty string, not a clear request.
-  const usernameChanged = username !== (user?.username ?? '')
-
-  const save = useMutation({
-    mutationFn: () =>
-      updateProfile({
-        ...(fullNameChanged ? { full_name: fullName } : {}),
-        ...(usernameChanged ? { username: username.trim() ? username : null } : {}),
-      }),
-    retry: false,
-    onSuccess: (result) => {
-      // The server lowercases username; without resyncing, local state stays
-      // different from the saved value and Save never settles.
-      setFullName(result.user.full_name ?? '')
-      setUsername(result.user.username ?? '')
-      void refresh()
-    },
-  })
-
-  const changed = fullNameChanged || usernameChanged
-  // The server requires a non-empty name whenever the key is sent.
-  const valid = !fullNameChanged || fullName.trim().length > 0
-
-  const message =
-    save.error instanceof ApiError && save.error.status === 422
-      ? 'Nome não pode ficar vazio, e o usuário pode já estar em uso.'
-      : save.isError
-        ? 'Não foi possível salvar agora.'
-        : save.isSuccess
-          ? 'Perfil atualizado.'
-          : null
+  // The operation is a partner's working context; a consumer has nothing to do
+  // with it and would only read an unexplained name (audit A54).
+  const operation = capabilities?.partner?.enabled === true ? context?.active_operation : null
 
   return (
     <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
+      <Tabs.Screen options={HEADER_OPTIONS} />
       <ScrollView contentContainerStyle={styles.page}>
-        <Field label="Nome" value={fullName} onChange={setFullName} />
-        <Field label="Usuário" value={username} onChange={setUsername} autoCapitalize="none" />
-
-        {/* Not editable here, by contract. Shown so the person can see them. */}
-        <View style={styles.readOnly}>
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>E-mail</Text>
-          <Text style={[styles.value, { color: colors.mutedForeground }]}>{user?.email}</Text>
-        </View>
-
-        {context?.active_operation ? (
-          <View style={styles.readOnly}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Operação ativa</Text>
-            <Text style={[styles.value, { color: colors.mutedForeground }]}>
-              {context.active_operation.name}
-            </Text>
+        <ScreenHeader>
+          <View style={styles.identity}>
+            <Avatar name={user?.full_name || user?.username} tone="chrome" />
+            <View style={styles.who}>
+              <Text accessibilityRole="header" numberOfLines={2} style={[styles.name, { color: colors.chromeForeground }]}>
+                {name}
+              </Text>
+              {user?.email ? (
+                <Text numberOfLines={1} style={[styles.email, { color: colors.chromeMuted }]}>
+                  {user.email}
+                </Text>
+              ) : null}
+              {operation ? (
+                <Text numberOfLines={1} style={[styles.email, { color: colors.chromeMuted }]}>
+                  Operação ativa: {operation.name}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        ) : null}
-
-        {message ? (
-          <Text
-            style={[
-              styles.message,
-              { color: save.isSuccess ? colors.successAccent : colors.destructiveAccent },
-            ]}>
-            {message}
-          </Text>
-        ) : null}
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={!changed || !valid || save.isPending}
-          onPress={() => save.mutate()}
-          style={[
-            styles.action,
-            { backgroundColor: colors.primary, opacity: !changed || !valid || save.isPending ? 0.5 : 1 },
-          ]}>
-          <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>
-            {save.isPending ? 'Salvando…' : 'Salvar alterações'}
-          </Text>
-        </Pressable>
-
-        {/* Anexo I item 10 — the person's own relationship with the catalogue. */}
-        {(
-          [
-            ['/conta/favoritos', 'Favoritos'],
-            ['/conta/seguindo', 'Seguindo'],
-            ['/roteiros', 'Meus roteiros'],
-            ['/conta/interesses', 'Meus interesses'],
-            ['/conta/avaliacoes', 'Minhas avaliações'],
-          ] as const
-        ).map(([href, label]) => (
           <Pressable
-            key={href}
             accessibilityRole="button"
-            onPress={() => router.push(href)}
-            style={styles.signOut}>
-            <Text style={[styles.actionLabel, { color: colors.primary }]}>{label}</Text>
+            accessibilityLabel="Editar perfil"
+            onPress={() => router.push('/conta/perfil')}
+            style={({ pressed }) => [
+              styles.edit,
+              { backgroundColor: colors.chromeRaised, opacity: pressed ? 0.85 : 1 },
+            ]}>
+            <Ionicons name="create-outline" size={18} color={colors.chromeForeground} />
+            <Text style={[styles.editLabel, { color: colors.chromeForeground }]}>Editar perfil</Text>
           </Pressable>
-        ))}
+        </ScreenHeader>
 
-        <Pressable accessibilityRole="button" onPress={signOut} style={styles.signOut}>
-          <Text style={[styles.actionLabel, { color: colors.primary }]}>Sair</Text>
-        </Pressable>
+        <View style={styles.groups}>
+          {/* Anexo I item 10 — the person's own relationship with the catalogue. */}
+          <ListGroup title="Minhas coisas">
+            <ListRow icon="heart-outline" label="Favoritos" onPress={() => router.push('/conta/favoritos')} />
+            <ListRow icon="notifications-outline" label="Seguindo" onPress={() => router.push('/conta/seguindo')} />
+            <ListRow icon="map-outline" label="Roteiros" onPress={() => router.push('/roteiros')} />
+            <ListRow icon="star-outline" label="Avaliações" onPress={() => router.push('/conta/avaliacoes')} />
+          </ListGroup>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/conta/excluir')}
-          style={styles.destructive}>
-          <Text style={[styles.message, { color: colors.destructiveAccent }]}>Excluir minha conta</Text>
-        </Pressable>
+          <ListGroup title="Preferências">
+            <ListRow icon="sparkles-outline" label="Interesses" onPress={() => router.push('/conta/interesses')} />
+            <ListRow
+              icon="location-outline"
+              label="Cidade"
+              value={citySlug ? city?.name : 'Nenhuma escolhida'}
+              onPress={() => router.push('/conta/cidade')}
+            />
+          </ListGroup>
+
+          <ListGroup title="Conta">
+            <ListRow icon="log-out-outline" label="Sair" chevron={false} onPress={signOut} />
+            <ListRow
+              icon="trash-outline"
+              label="Excluir conta"
+              tone="destructive"
+              onPress={() => router.push('/conta/excluir')}
+            />
+          </ListGroup>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  autoCapitalize = 'words',
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  autoCapitalize?: 'none' | 'words'
-}) {
-  const colors = useColors()
-
-  return (
-    <View style={styles.field}>
-      <Text style={[styles.label, { color: colors.mutedForeground }]}>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        value={value}
-        onChangeText={onChange}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={false}
-        style={[
-          styles.input,
-          { backgroundColor: colors.card, borderColor: colors.input, color: colors.foreground },
-        ]}
-      />
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
-  page: { gap: spacing.md, padding: spacing.xl },
-  field: { gap: spacing.xs },
-  readOnly: { gap: 2, paddingVertical: spacing.xs },
-  label: { ...typography.caption, textTransform: 'uppercase' },
-  value: typography.body,
-  input: {
-    ...typography.body,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  message: typography.caption,
-  action: {
+  page: { paddingBottom: spacing.xxl },
+  identity: { alignItems: 'center', flexDirection: 'row', gap: spacing.lg },
+  who: { flex: 1, gap: 2 },
+  name: { ...typography.title, fontSize: 24, lineHeight: 28 },
+  email: typography.body,
+  edit: {
     alignItems: 'center',
+    alignSelf: 'flex-start',
     borderRadius: radius.pill,
-    marginTop: spacing.sm,
-    paddingVertical: spacing.md,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    minHeight: minTouch,
+    paddingHorizontal: spacing.gutter,
   },
-  actionLabel: { ...typography.body, ...textWeight('700') },
-  signOut: { alignItems: 'center', paddingVertical: spacing.lg },
-  destructive: { alignItems: 'center', paddingVertical: spacing.md },
+  editLabel: { ...typography.label, ...textWeight('700') },
+  groups: { gap: spacing.section, paddingHorizontal: spacing.gutter, paddingTop: spacing.xl },
 })

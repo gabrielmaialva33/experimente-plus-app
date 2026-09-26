@@ -1,17 +1,20 @@
 import { useMutation } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native'
-import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { signUp } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { apiUrl } from '@/api/config'
-import { ChoiceControl } from '@/components/choice-control'
+import { Button } from '@/components/button'
+import { Checkbox } from '@/components/checkbox'
+import { KeyboardForm } from '@/components/keyboard-form'
+import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
 import { emptyRegistration, registrationErrors, registrationServerErrors, type RegistrationErrors, type RegistrationFields } from '@/session/registration'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const labels: Record<keyof RegistrationFields, string> = {
@@ -35,9 +38,13 @@ export default function SignUpScreen() {
 
   useEffect(() => {
     if (status !== 'authenticated') return
-    if (origin === 'compra' && router.canGoBack()) router.back()
-    else router.replace(origin === 'compra' ? '/wallet/edicoes' : '/')
-  }, [status, origin, router])
+    if (origin === 'compra') {
+      if (router.canGoBack()) router.back()
+      else router.replace('/wallet/edicoes')
+    // A person who just created the account here sees the next step first;
+    // one who arrives already signed in has nothing to do on this screen.
+    } else if (!created) router.replace('/')
+  }, [status, origin, router, created])
 
   useEffect(() => {
     if (!retryUntil) return
@@ -82,8 +89,11 @@ export default function SignUpScreen() {
   })
 
   const submit = async () => {
-    if (submitting.current || !accepted || created || Date.now() < retryUntil) return
-    const validation = registrationErrors(fields)
+    if (submitting.current || created || Date.now() < retryUntil) return
+    const validation: RegistrationErrors = {
+      ...registrationErrors(fields),
+      ...(accepted ? {} : { terms_accepted: 'Leia e aceite os Termos de Uso e a Política de Privacidade.' }),
+    }
     setErrors(validation)
     setMessage(null)
     if (Object.keys(validation).length) return
@@ -106,64 +116,74 @@ export default function SignUpScreen() {
   return (
     <SafeAreaView edges={['left', 'right']} style={[styles.flex, { backgroundColor: colors.background }]}>
       <KeyboardForm contentContainerStyle={styles.page}>
-          {created ? <>
-            <Text style={[typography.heading, { color: colors.foreground }]}>Sua conta foi criada</Text>
-            <Text style={[typography.body, { color: colors.foreground }]}>Estamos carregando sua conta. Se necessário, tente novamente; não precisa repetir o cadastro.</Text>
-            <Pressable accessibilityRole="button" style={styles.link} onPress={() => void refresh()}>
-              <Text style={[styles.actionLabel, { color: colors.primary }]}>Carregar minha conta</Text>
-            </Pressable>
-          </> : <>
+          {created ? (
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+              <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
+                <Ionicons name="checkmark" size={28} color={colors.successAccent} />
+              </View>
+              <Text accessibilityRole="header" style={[typography.title, { color: colors.foreground }]}>Sua conta foi criada</Text>
+              {status === 'authenticated' ? <>
+                {/* Audit A18: the first thing worth doing next, instead of a silent jump to Explorar. */}
+                <Text style={[typography.body, { color: colors.mutedForeground }]}>
+                  Conte do que você gosta e o Para você, em Explorar, passa a sugerir lugares assim.
+                </Text>
+                <Button label="Escolha seus interesses" size={52} fill onPress={() => router.replace('/conta/interesses')} />
+                <Button label="Começar a explorar" variant="ghost" fill onPress={() => router.replace('/')} />
+              </> : <>
+                <Text style={[typography.body, { color: colors.foreground }]}>Estamos carregando sua conta. Se necessário, tente novamente; não precisa repetir o cadastro.</Text>
+                <Button label="Carregar minha conta" variant="outline" fill onPress={() => void refresh()} />
+              </>}
+            </View>
+          ) : <>
             <Text style={[typography.body, { color: colors.mutedForeground }]}>Crie sua conta para guardar e usar benefícios. Explorar lugares continua livre.</Text>
             {(Object.keys(labels) as (keyof RegistrationFields)[]).map((field) => {
               const password = field === 'password' || field === 'password_confirmation'
-              return <View key={field} style={styles.field}>
-                <Text style={[typography.body, { color: colors.foreground }]}>{labels[field]}</Text>
-                <FormTextInput accessibilityLabel={labels[field]} value={fields[field]} editable={!mutation.isPending}
-                  onChangeText={(value) => {
-                    setFields((previous) => ({ ...previous, [field]: value }))
-                    setErrors((previous) => ({ ...previous, [field]: undefined }))
-                  }}
-                  autoCapitalize={field === 'full_name' ? 'words' : 'none'} autoCorrect={false}
-                  keyboardType={field === 'email' ? 'email-address' : 'default'} secureTextEntry={password}
-                  textContentType={password ? 'newPassword' : field === 'email' ? 'emailAddress' : field === 'full_name' ? 'name' : 'username'}
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: errors[field] ? colors.destructiveAccent : colors.input, color: colors.foreground }]} />
-                {errors[field] ? <Text accessibilityRole="alert" style={[typography.caption, { color: colors.destructiveAccent }]}>{errors[field]}</Text> : null}
-              </View>
+              return <TextField key={field} label={labels[field]} value={fields[field]} editable={!mutation.isPending}
+                error={errors[field]} hint={field === 'password' ? 'Use pelo menos 8 caracteres.' : null} secure={password}
+                onChangeText={(value) => {
+                  setFields((previous) => ({ ...previous, [field]: value }))
+                  setErrors((previous) => ({ ...previous, [field]: undefined }))
+                }}
+                autoCapitalize={field === 'full_name' ? 'words' : 'none'} autoCorrect={false}
+                keyboardType={field === 'email' ? 'email-address' : 'default'}
+                textContentType={password ? 'newPassword' : field === 'email' ? 'emailAddress' : field === 'full_name' ? 'name' : 'username'} />
             })}
-            <Text style={[typography.caption, { color: colors.mutedForeground }]}>A senha deve ter pelo menos 8 caracteres.</Text>
-            <Pressable accessibilityRole="link" style={styles.link} onPress={() => void openLegal('/termos')}>
-              <Text style={[styles.actionLabel, { color: colors.primary }]}>Ler Termos de Uso</Text>
-            </Pressable>
-            <Pressable accessibilityRole="link" style={styles.link} onPress={() => void openLegal('/privacidade')}>
-              <Text style={[styles.actionLabel, { color: colors.primary }]}>Ler Política de Privacidade</Text>
-            </Pressable>
-            <ChoiceControl shape="segment" role="checkbox" label="Li e aceito os Termos de Uso e a Política de Privacidade"
-              selected={accepted} disabled={mutation.isPending} onPress={() => {
-                setAccepted(!accepted)
-                setErrors((previous) => ({ ...previous, terms_accepted: undefined }))
-              }} />
-            {errors.terms_accepted ? <Text accessibilityRole="alert" style={[typography.caption, { color: colors.destructiveAccent }]}>{errors.terms_accepted}</Text> : null}
+            {/* Audit A55: a box that is drawn whether or not it is ticked. */}
+            <Checkbox testID="terms" label={consent} checked={accepted} disabled={mutation.isPending} onPress={() => {
+              setAccepted(!accepted)
+              setErrors((previous) => ({ ...previous, terms_accepted: undefined }))
+            }}>
+              <View style={styles.legal}>
+                <Pressable accessibilityRole="link" style={styles.link} onPress={() => void openLegal('/termos')}>
+                  <Text style={[styles.linkLabel, { color: colors.primary }]}>Ler Termos de Uso</Text>
+                </Pressable>
+                <Pressable accessibilityRole="link" style={styles.link} onPress={() => void openLegal('/privacidade')}>
+                  <Text style={[styles.linkLabel, { color: colors.primary }]}>Ler Política de Privacidade</Text>
+                </Pressable>
+              </View>
+            </Checkbox>
+            {errors.terms_accepted ? <Text accessibilityRole="alert" style={[typography.meta, { color: colors.destructiveAccent }]}>{errors.terms_accepted}</Text> : null}
             {message ? <Text accessibilityRole="alert" style={[typography.body, { color: colors.destructiveAccent }]}>{message}</Text> : null}
             {waiting > 0 ? <Text style={[typography.body, { color: colors.foreground }]}>Tente novamente em {waiting}s.</Text> : null}
-            <Pressable accessibilityRole="button" disabled={!accepted || mutation.isPending || waiting > 0}
-              onPress={() => void submit()} style={[styles.action, { backgroundColor: colors.cta, opacity: !accepted || mutation.isPending || waiting > 0 ? 0.5 : 1 }]}>
-              <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>{mutation.isPending ? 'Criando conta…' : 'Criar conta'}</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" disabled={mutation.isPending} style={styles.link} onPress={goToSignIn}>
-              <Text style={[styles.actionLabel, { color: colors.primary }]}>Já tenho conta. Entrar</Text>
-            </Pressable>
+            {/* Audit A17: the button stays available and a press says what is missing,
+                field by field, instead of an unexplained disabled button. */}
+            <Button label={mutation.isPending ? 'Criando conta…' : 'Criar conta'} variant="cta" size={52} fill
+              disabled={mutation.isPending || waiting > 0} onPress={() => void submit()} />
+            <Button label="Já tenho conta. Entrar" variant="ghost" fill disabled={mutation.isPending} onPress={goToSignIn} />
           </>}
       </KeyboardForm>
     </SafeAreaView>
   )
 }
 
+const consent = 'Li e aceito os Termos de Uso e a Política de Privacidade'
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  page: { gap: spacing.md, padding: spacing.xl },
-  field: { gap: spacing.xs },
-  input: { ...typography.body, borderRadius: radius.pill, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  action: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
-  link: { minHeight: 48, justifyContent: 'center' },
+  page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
+  card: { alignItems: 'flex-start', borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.xl },
+  badge: { alignItems: 'center', borderRadius: radius.pill, height: 52, justifyContent: 'center', width: 52 },
+  legal: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, paddingLeft: 24 + spacing.md },
+  link: { minHeight: minTouch, justifyContent: 'center' },
+  linkLabel: { ...typography.label, ...textWeight('700') },
 })

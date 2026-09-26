@@ -9,6 +9,7 @@ import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
 import { useColors } from '@/theme/use-colors'
 
 import { createQueryClient, installQueryEnvironment } from '@/api/query-client'
+import { SessionCacheGuard } from '@/session/cache-guard'
 import { SessionProvider, useSession } from '@/session/context'
 
 SplashScreen.preventAutoHideAsync()
@@ -119,6 +120,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <SplashGate />
+        <SessionCacheGuard />
         <Shell />
       </SessionProvider>
     </QueryClientProvider>

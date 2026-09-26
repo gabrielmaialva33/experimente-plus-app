@@ -16,6 +16,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }))
 jest.mock('@/api/query-client', () => ({ createQueryClient: jest.fn(), installQueryEnvironment: jest.fn() }))
 jest.mock('@tanstack/react-query', () => ({ QueryClientProvider: ({ children }: { children: React.ReactNode }) => children }))
+jest.mock('@/session/cache-guard', () => ({ SessionCacheGuard: () => null }))
 jest.mock('@/session/context', () => ({
   SessionProvider: ({ children }: { children: React.ReactNode }) => children,
   useSession: () => ({ status: 'authenticated' }),

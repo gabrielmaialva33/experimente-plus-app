@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native'
-import { Linking, StyleSheet } from 'react-native'
+import { Linking, ScrollView, StyleSheet } from 'react-native'
 
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
 import type { EstablishmentDetail, EstablishmentSummary } from '@/catalog/types'
@@ -9,26 +9,39 @@ import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
 import { palette, fontFamilies } from '@/theme/tokens'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => ({ city: 'londrina', slug: 'cafe' }) }))
+const mockRouter = { push: jest.fn(), back: jest.fn() }
+jest.mock('expo-router', () => ({
+  useRouter: () => mockRouter,
+  useLocalSearchParams: jest.fn(),
+  Stack: { Screen: jest.fn(() => null) },
+}))
+jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 24, right: 0, bottom: 0, left: 0 }) }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
-jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: () => ({ data: { products: [] } }) }))
+jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: jest.fn() }))
 jest.mock('@/catalog/queries', () => ({ useEstablishment: jest.fn() }))
-jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'anonymous' }) }))
+jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 jest.mock('@/reviews/queries', () => ({ useEstablishmentReviews: () => ({ data: undefined, isError: false }) }))
+const mockToggle = jest.fn()
 jest.mock('@/explorer/queries', () => ({
   useSavedStatus: () => ({ data: undefined }),
-  useToggleSaved: () => ({ mutate: jest.fn(), isPending: false }),
+  useToggleSaved: () => ({ mutate: mockToggle, isPending: false }),
+  useSavedContent: () => ({ data: undefined }),
+  useToggleSavedContent: () => ({ mutate: jest.fn(), isPending: false }),
 }))
-jest.mock('@/partner-content/queries', () => ({
-  usePartnerContent: () => ({ data: [], isPending: false, isError: false }),
-}))
+jest.mock('@/partner-content/queries', () => ({ usePartnerContent: jest.fn() }))
+jest.mock('@/place/follow-hint', () => ({ followExplained: jest.fn(), markFollowExplained: jest.fn() }))
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 
 const queries = jest.requireMock('@/catalog/queries') as { useEstablishment: jest.Mock }
 const theme = jest.requireMock('@/theme/use-colors') as { useColors: jest.Mock }
+const router = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock; Stack: { Screen: jest.Mock } }
+const session = jest.requireMock('@/session/context') as { useSession: jest.Mock }
+const purchases = jest.requireMock('@/purchases/queries') as { usePurchaseEditions: jest.Mock }
+const content = jest.requireMock('@/partner-content/queries') as { usePartnerContent: jest.Mock }
+const hint = jest.requireMock('@/place/follow-hint') as { followExplained: jest.Mock; markFollowExplained: jest.Mock }
 
 const detail: EstablishmentDetail = {
   id: 1, slug: 'cafe', name: 'Café da Praça', short_description: null, description: null,
@@ -62,6 +75,11 @@ beforeEach(() => {
   jest.clearAllMocks()
   theme.useColors.mockReturnValue(palette.light)
   queries.useEstablishment.mockReturnValue({ data: detail, isPending: false, isError: false })
+  router.useLocalSearchParams.mockReturnValue({ city: 'londrina', slug: 'cafe' })
+  session.useSession.mockReturnValue({ status: 'anonymous' })
+  purchases.usePurchaseEditions.mockReturnValue({ data: { products: [] } })
+  content.usePartnerContent.mockReturnValue({ data: [], isPending: false, isError: false })
+  hint.followExplained.mockReturnValue(false)
 })
 
 afterEach(() => {
@@ -70,16 +88,18 @@ afterEach(() => {
 })
 
 describe('establishment presentation', () => {
-  it.each(['light', 'dark'] as const)('gives directions the only CTA and keeps contacts secondary in %s', async (mode) => {
+  // Direction A (audit A11): orange is kept for the benefit, so the route is the
+  // page's navy main action, and contacts are rows of the practical block.
+  it.each(['light', 'dark'] as const)('gives directions the navy main action and lists contacts as rows in %s', async (mode) => {
     theme.useColors.mockReturnValue(palette[mode])
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     const view = await render(<EstablishmentScreen />)
 
     const route = view.getByRole('button', { name: 'Como chegar' })
-    expect(route).toHaveStyle({ backgroundColor: palette[mode].cta })
+    expect(route).toHaveStyle({ backgroundColor: palette[mode].primary })
     for (const label of ['WhatsApp', 'Ligar', 'Site']) {
-      expect(view.getByRole('button', { name: label })).toHaveStyle({ backgroundColor: palette[mode].actionSecondary, borderRadius: 8, minHeight: 48 })
-      expect(view.getByText(label)).toHaveStyle({ color: palette[mode].actionSecondaryForeground })
+      expect(view.getByRole('button', { name: label })).toHaveStyle({ backgroundColor: palette[mode].card, minHeight: 56 })
+      expect(view.getByText(label)).toHaveStyle({ color: palette[mode].foreground })
     }
     await fireEvent.press(route)
     expect(openURL).toHaveBeenCalledWith('https://www.google.com/maps/dir/?api=1&destination=-23.31,-51.16')
@@ -108,7 +128,8 @@ describe('establishment presentation', () => {
     } })
     const view = await render(<EstablishmentScreen />)
     expect(view.queryByRole('button', { name: 'Como chegar' })).toBeNull()
-    expect(view.getByRole('button', { name: 'WhatsApp' })).toHaveStyle({ backgroundColor: palette.light.cta })
+    expect(view.getAllByRole('button', { name: 'WhatsApp' })).toHaveLength(1)
+    expect(view.getByRole('button', { name: 'WhatsApp' })).toHaveStyle({ backgroundColor: palette.light.primary })
   })
 
   it('offers the e-mail and the Instagram a place publishes', async () => {
@@ -312,4 +333,116 @@ it('reserves an initial detail skeleton until the establishment resolves', async
   await view.rerender(<EstablishmentScreen />)
   expect(view.queryByRole('progressbar')).toBeNull()
   expect(view.getByRole('button', { name: 'Como chegar' })).toBeOnTheScreen()
+})
+
+describe('place page in direction A', () => {
+  const offer = {
+    id: 9, edition_id: 5, offer_id: 9, product_type: 'offer', purchasable: true, name: 'Item em dobro',
+    amount_cents: 1490, currency: 'BRL', usage_ends_at: '2027-05-09T15:00:00Z',
+    city: { slug: 'londrina' }, establishment: { slug: 'cafe' },
+    snapshot: { offers: [{ title: 'Item em dobro', description: 'Peça um e ganhe outro igual.' }] },
+  }
+  const event = (id: number) => ({
+    id, kind: 'event', title: `Degustação ${id}`, description: 'Cafés especiais.',
+    starts_at: '2026-09-28T19:00:00Z', ends_at: '2026-09-28T21:00:00Z', media: [],
+  })
+  const week = (weekdays: number[], opens: string, closes: string) => weekdays.map((weekday) => ({
+    weekday, opens_at: opens, closes_at: closes, spans_next_day: false, sort_order: 0,
+  }))
+
+  it('sells the place’s benefit as a ticket with the page’s one orange action (A11)', async () => {
+    purchases.usePurchaseEditions.mockReturnValue({ data: { products: [offer] } })
+    const view = await render(<EstablishmentScreen />)
+
+    const cta = view.getByRole('button', { name: /^Ver oferta · Item em dobro · R\$\s14,90$/ })
+    expect(cta).toHaveStyle({ backgroundColor: palette.light.cta })
+    expect(view.getByText('BENEFÍCIO')).toBeOnTheScreen()
+    expect(view.getByText('Peça um e ganhe outro igual. Válido até 09/05/2027.')).toBeOnTheScreen()
+    expect(view.getByRole('button', { name: 'Como chegar' })).not.toHaveStyle({ backgroundColor: palette.light.cta })
+    await fireEvent.press(cta)
+    expect(mockRouter.push).toHaveBeenCalledWith('/compra/5?offerId=9')
+  })
+
+  it('reads a uniform week as one line (A9)', async () => {
+    queries.useEstablishment.mockReturnValue({ data: {
+      ...detail, opening_hours: { weekly: week([0, 1, 2, 3, 4, 5, 6], '08:00:00', '23:00:00'), special_days: [] },
+    } })
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByText('Todos os dias, 08:00 às 23:00')).toBeOnTheScreen()
+    expect(view.queryByRole('button', { name: 'Ver horários da semana' })).toBeNull()
+    expect(view.queryByText('Domingo')).toBeNull()
+  })
+
+  it('shows today and keeps the grouped week one tap away (A9)', async () => {
+    jest.useFakeTimers({ now: new Date('2026-09-07T16:00:00Z') })
+    queries.useEstablishment.mockReturnValue({ data: {
+      ...detail, opening_hours: { weekly: week([1, 2, 3, 4, 5], '09:00:00', '18:00:00'), special_days: [] },
+    } })
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByText('Hoje, segunda: 09:00 às 18:00')).toBeOnTheScreen()
+    expect(view.queryByText('Sábado e domingo')).toBeNull()
+
+    await fireEvent.press(view.getByRole('button', { name: 'Ver horários da semana' }))
+    expect(view.getByText('Segunda a sexta · Hoje')).toBeOnTheScreen()
+    expect(view.getByText('Sábado e domingo')).toBeOnTheScreen()
+    expect(view.getByTestId('hours-Segunda a sexta')).toHaveStyle({ backgroundColor: palette.light.temporalEmphasis })
+    await view.unmount()
+  })
+
+  it('names the header after the place and keeps its report in the "⋯" (A32, A40, A43)', async () => {
+    const view = await render(<EstablishmentScreen />)
+    const calls = router.Stack.Screen.mock.calls
+    expect(calls[calls.length - 1][0].options).toEqual({ headerShown: false, title: 'Café da Praça' })
+
+    expect(view.queryByText('Denunciar este lugar')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Mais opções de Café da Praça' }))
+    await fireEvent.press(view.getByText('Denunciar este lugar'))
+    expect(mockRouter.push).toHaveBeenCalledWith('/denunciar/establishment/1?nome=Caf%C3%A9%20da%20Pra%C3%A7a')
+  })
+
+  it('shows its experiences and events under one title, in cards of one size (A41, A42)', async () => {
+    content.usePartnerContent.mockImplementation((_id: number, kind: string) => ({
+      data: kind === 'events' ? [event(11)] : [], isPending: false, isError: false,
+    }))
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByText('Para viver aqui')).toBeOnTheScreen()
+    expect(view.queryByText('Descubra mais neste lugar')).toBeNull()
+    expect(view.queryByText('Eventos')).toBeNull()
+    expect(view.getByTestId('date-tile')).toBeOnTheScreen()
+
+    await fireEvent.press(view.getByRole('button', { name: /^Evento, Degustação 11/ }))
+    expect(view.getByText('Cafés especiais.')).toBeOnTheScreen()
+  })
+
+  it('opens on the event a link names: marks it and scrolls to it (A14)', async () => {
+    router.useLocalSearchParams.mockReturnValue({ city: 'londrina', slug: 'cafe', destaque: 'event-12' })
+    content.usePartnerContent.mockImplementation((_id: number, kind: string) => ({
+      data: kind === 'events' ? [event(11), event(12)] : [], isPending: false, isError: false,
+    }))
+    const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+    const view = await render(<EstablishmentScreen />)
+
+    expect(view.getByTestId('content-event-12')).toHaveStyle({ borderColor: palette.light.primary })
+    expect(view.getByTestId('content-event-11')).toHaveStyle({ borderColor: 'transparent' })
+    await fireEvent(view.getByTestId('place-body'), 'layout', { nativeEvent: { layout: { y: 272 } } })
+    await fireEvent(view.getByTestId('place-content'), 'layout', { nativeEvent: { layout: { y: 900 } } })
+    expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 900 - 16, animated: true })
+  })
+
+  it('says once what following gives (A27)', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    const view = await render(<EstablishmentScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Seguir Café da Praça' }))
+    expect(mockToggle).toHaveBeenCalledWith(true)
+    expect(view.getByText('Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.')).toBeOnTheScreen()
+    expect(hint.markFollowExplained).toHaveBeenCalled()
+
+    // Another place, another visit: already said, so not said again.
+    await view.unmount()
+    hint.followExplained.mockReturnValue(true)
+    const again = await render(<EstablishmentScreen />)
+    await fireEvent.press(again.getByRole('button', { name: 'Seguir Café da Praça' }))
+    expect(mockToggle).toHaveBeenCalledTimes(2)
+    expect(again.queryByText('Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.')).toBeNull()
+  })
 })

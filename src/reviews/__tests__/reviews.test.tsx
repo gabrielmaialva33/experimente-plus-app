@@ -101,11 +101,16 @@ it('shows the author, the reply and both report entries', async () => {
   expect(view.getByText('Ana Ribeiro')).toBeOnTheScreen()
   expect(view.getByText('Obrigado pela visita!')).toBeOnTheScreen()
 
+  // Both entries live behind one "⋯" (audit A32), and each names what it
+  // reports so the form can say it (A45).
+  expect(view.queryByText('Denunciar resposta')).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' }))
   await fireEvent.press(view.getByText('Denunciar resposta'))
-  expect(report).toHaveBeenCalledWith({ type: 'reply', id: 9 })
+  expect(report).toHaveBeenCalledWith({ type: 'reply', id: 9, subject: 'Resposta à avaliação de Ana Ribeiro' })
 
+  await fireEvent.press(view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' }))
   await fireEvent.press(view.getByText('Denunciar avaliação'))
-  expect(report).toHaveBeenCalledWith({ type: 'review', id: 1 })
+  expect(report).toHaveBeenCalledWith({ type: 'review', id: 1, subject: 'Avaliação de Ana Ribeiro' })
 })
 
 it('names a review with no author instead of leaving the line blank', async () => {
@@ -118,6 +123,7 @@ it('offers no report entry when the screen cannot take one', async () => {
   const view = await render(<ReviewCard review={review()} />)
 
   expect(view.queryByText('Denunciar avaliação')).toBeNull()
+  expect(view.queryByRole('button', { name: /Mais opções/ })).toBeNull()
 })
 
 /**
@@ -206,8 +212,40 @@ it('lets anyone report a review or its reply from the place itself, before any f
   )
 
   expect(view.queryByText(/Ver todas/)).toBeNull()
+  const menu = () => view.getByRole('button', { name: 'Mais opções da avaliação de Ana Ribeiro' })
+  await fireEvent.press(menu())
   await fireEvent.press(view.getByText('Denunciar avaliação'))
-  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/review/1')
+  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/review/1?nome=Avalia%C3%A7%C3%A3o%20de%20Ana%20Ribeiro')
+  await fireEvent.press(menu())
   await fireEvent.press(view.getByText('Denunciar resposta'))
-  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/reply/9')
+  expect(mockPush).toHaveBeenLastCalledWith(
+    '/denunciar/reply/9?nome=Resposta%20%C3%A0%20avalia%C3%A7%C3%A3o%20de%20Ana%20Ribeiro'
+  )
+})
+
+it('names the place to the review form and the full list, and answers in its name', async () => {
+  session.useSession.mockReturnValue({ status: 'authenticated' })
+  queries.useEstablishmentReviews.mockReturnValue({
+    data: {
+      data: [review({
+        reply: {
+          id: 9, tenant_id: 1, review_id: 1, organization_id: 3, user_id: 5,
+          comment: 'Obrigado pela visita!', status: 'published',
+          created_at: '2026-09-02T12:00:00.000Z', updated_at: null,
+        },
+      })],
+      meta: {},
+    },
+    isError: false,
+    isPending: false,
+  })
+  const view = await render(
+    <EstablishmentReviews establishmentId={7} establishmentName="Ateliê do Café" summary={{ count: 4, average: 4.5 }} />
+  )
+
+  expect(view.getByText('Resposta de Ateliê do Café')).toBeOnTheScreen()
+  await fireEvent.press(view.getByRole('button', { name: 'Ver todas as 4 avaliações' }))
+  expect(mockPush).toHaveBeenLastCalledWith('/avaliacoes/7?nome=Ateli%C3%AA%20do%20Caf%C3%A9')
+  await fireEvent.press(view.getByRole('button', { name: 'Avaliar este lugar' }))
+  expect(mockPush).toHaveBeenLastCalledWith('/avaliar/7?nome=Ateli%C3%AA%20do%20Caf%C3%A9')
 })

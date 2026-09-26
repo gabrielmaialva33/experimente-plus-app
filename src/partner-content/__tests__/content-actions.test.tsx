@@ -73,7 +73,9 @@ it('reads the saved state per species, so the same number is another item', asyn
 
   const view = await renderActions('event')
 
-  expect(view.getByText('Favoritado')).toBeTruthy()
+  // The heart is an icon now; its state is announced, not written out.
+  expect(view.getByTestId('content-favorite-event-31').props.accessibilityState).toEqual({ selected: true })
+  expect(view.getByRole('button', { name: 'Remover Degustação guiada dos favoritos' })).toBeTruthy()
   await fireEvent.press(view.getByTestId('content-favorite-event-31'))
   expect(mutate).toHaveBeenCalledWith({ kind: 'events', id: 31, save: false })
 })
@@ -87,6 +89,8 @@ it('takes a visitor to sign in to favourite, but lets them share', async () => {
   expect(mutate).not.toHaveBeenCalled()
   expect(mockPush).toHaveBeenCalledWith('/(tabs)/sign-in')
 
+  // Sharing sits in the item's "⋯" (audit A32).
+  await fireEvent.press(view.getByRole('button', { name: 'Mais opções: Degustação guiada' }))
   await fireEvent.press(view.getByTestId('content-share-experience-31'))
   expect(share).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -95,8 +99,23 @@ it('takes a visitor to sign in to favourite, but lets them share', async () => {
   )
 })
 
-it('offers nothing on a showcase item', async () => {
+it('offers neither favourite nor share on a showcase item, only a report', async () => {
   const view = await renderActions('showcase_item')
   expect(view.queryByTestId('content-favorite-showcase_item-31')).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Mais opções: Degustação guiada' }))
   expect(view.queryByTestId('content-share-showcase_item-31')).toBeNull()
+  await fireEvent.press(view.getByTestId('report-showcase_item-31'))
+  expect(mockPush).toHaveBeenCalledWith('/denunciar/showcase_item/31?nome=Degusta%C3%A7%C3%A3o%20guiada')
+})
+
+it('keeps one menu per item, holding both share and report (audit A32)', async () => {
+  const view = await renderActions('event')
+  expect(view.getAllByRole('button', { name: /Mais opções/ })).toHaveLength(1)
+  expect(view.queryByText('Denunciar')).toBeNull()
+  expect(view.getByTestId('content-favorite-event-31')).toBeOnTheScreen()
+
+  await fireEvent.press(view.getByRole('button', { name: 'Mais opções: Degustação guiada' }))
+  expect(view.getByText('Compartilhar')).toBeOnTheScreen()
+  await fireEvent.press(view.getByText('Denunciar'))
+  expect(mockPush).toHaveBeenCalledWith('/denunciar/event/31?nome=Degusta%C3%A7%C3%A3o%20guiada')
 })

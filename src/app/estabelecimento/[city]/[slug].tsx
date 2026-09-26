@@ -1,6 +1,5 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
-import { useLocalSearchParams } from 'expo-router'
-import { useEffect } from 'react'
+import { Stack, useLocalSearchParams } from 'expo-router'
+import { useEffect, useRef } from 'react'
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -8,20 +7,24 @@ import { track } from '@/analytics/events'
 import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '@/catalog/contact-links'
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
-import { EstablishmentCover } from '@/components/establishment-cover'
-import { EstablishmentHours } from '@/components/establishment-hours'
+import { Badge } from '@/components/badge'
 import { OperatingStatus } from '@/components/operating-status'
-import { EstablishmentOffers } from '@/purchases/establishment-offers'
-import { EstablishmentReviews } from '@/reviews/establishment-reviews'
+import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
-import { SaveActions } from '@/explorer/save-actions'
-import { ReportLink } from '@/reviews/report-link'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { PlaceBenefits } from '@/place/benefit-ticket'
+import { HIGHLIGHT_PARAM } from '@/place/links'
+import { PlaceActions } from '@/place/place-actions'
+import { PlaceHero } from '@/place/place-hero'
+import { PracticalInfo, type ContactAction } from '@/place/practical-info'
+import { EstablishmentReviews } from '@/reviews/establishment-reviews'
+import { Stars, ratingLabel } from '@/reviews/stars'
+import { displayWeight, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function EstablishmentScreen() {
   const colors = useColors()
-  const { city, slug } = useLocalSearchParams<{ city: string; slug: string }>()
+  const params = useLocalSearchParams<{ city: string; slug: string; [HIGHLIGHT_PARAM]?: string }>()
+  const { city, slug } = params
   const query = useEstablishment(city ?? null, slug ?? null)
   const page = query.data
 
@@ -32,13 +35,21 @@ export default function EstablishmentScreen() {
     }
   }, [page, city, slug])
 
+  // The header names the place or stays empty — never a generic "Estabelecimento"
+  // (audit A40). A place that loads draws its own chrome over the photo.
   if (query.isPending) {
-    return <ContentSkeleton label="Carregando lugar" variant="catalog" />
+    return (
+      <>
+        <Stack.Screen options={{ title: '' }} />
+        <ContentSkeleton label="Carregando lugar" variant="catalog" />
+      </>
+    )
   }
 
   if (query.isError || !page) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ title: '' }} />
         <Text style={[styles.message, { color: colors.foreground }]}>
           Este lugar não está disponível.
         </Text>
@@ -49,6 +60,7 @@ export default function EstablishmentScreen() {
   if (isHistorical(page)) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ title: page.name }} />
         <Text style={[styles.name, { color: colors.foreground }]}>{page.name}</Text>
         <OperatingStatus establishment={{ ...page, is_open_now: false }} />
         <Text style={[styles.message, { color: colors.mutedForeground }]}>{page.message}</Text>
@@ -56,19 +68,36 @@ export default function EstablishmentScreen() {
     )
   }
 
-  return <Detail detail={page} citySlug={city} colors={colors} />
+  return <Detail detail={page} citySlug={city} highlight={params[HIGHLIGHT_PARAM] ?? null} colors={colors} />
 }
 
 function Detail({
   detail,
   citySlug,
+  highlight,
   colors,
 }: {
   detail: EstablishmentDetail
   citySlug: string
+  /** An experience or event the link asked to bring into view (audit A14). */
+  highlight: string | null
   colors: ReturnType<typeof useColors>
 }) {
   const { contacts, address } = detail
+  const scroll = useRef<ScrollView>(null)
+  // Offsets inside the scroll content, measured as the sections lay out.
+  const offsets = useRef({ body: null as number | null, reviews: null as number | null, highlight: null as number | null })
+  const arrived = useRef(false)
+
+  const scrollTo = (section: number | null, animated = true) => {
+    if (offsets.current.body === null || section === null) return false
+    scroll.current?.scrollTo({ y: Math.max(0, offsets.current.body + section - spacing.lg), animated })
+    return true
+  }
+  // Once, when both the page body and the item have a place on screen.
+  const bringHighlightIntoView = () => {
+    if (!arrived.current && scrollTo(offsets.current.highlight)) arrived.current = true
+  }
 
   /**
    * Conversion actions.
@@ -119,148 +148,125 @@ function Detail({
     { label: 'Site', icon: 'globe-outline' as const, onPress: open('website_click', contacts.website) },
     { label: 'E-mail', icon: 'mail-outline' as const, onPress: openUntracked(mailto(contacts.email)) },
     { label: 'Instagram', icon: 'logo-instagram' as const, onPress: openUntracked(instagramProfile(contacts.instagram)) },
-  ].filter((action) => action.onPress)
-  // Everything after the route is a way to get in touch.
-  const hasContact = actions.some((action) => action.label !== 'Como chegar')
+  ].filter((action) => action.onPress !== undefined) as ContactAction[]
   // Visiting is the primary discovery conversion. Without coordinates, promote
-  // the first available contact rather than offering an unusable route.
+  // the first available contact rather than offering an unusable route; the
+  // rest are rows of the practical block.
   const [primaryAction, ...secondaryActions] = actions
 
-  const street = [address.street, address.without_number ? 's/n' : address.number]
-    .filter(Boolean)
-    .join(', ')
+  const category = detail.categories.find((item) => item.is_primary)?.name
+  const average = detail.reviews.average
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <EstablishmentCover cover={detail.cover} detail />
+    <ScrollView ref={scroll} style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+      <Stack.Screen options={{ headerShown: false, title: detail.name }} />
+      <PlaceHero detail={detail} citySlug={citySlug} />
 
-      <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-        <Text style={[styles.name, { color: colors.foreground }]}>{detail.name}</Text>
-        <Text style={[styles.meta, { color: colors.mutedForeground }]}>
-          {[detail.categories.find((item) => item.is_primary)?.name, address.district]
-            .filter(Boolean)
-            .join(' · ')}
-        </Text>
-        <OperatingStatus establishment={detail} />
-        {detail.is_sponsored ? (
-          <Text style={[styles.sponsored, { color: colors.mutedForeground }]}>Patrocinado</Text>
-        ) : null}
-        <SaveActions
-          establishmentId={detail.id}
-          name={detail.name}
-          citySlug={citySlug}
-          slug={detail.slug}
-        />
-      </View>
-
-      {primaryAction ? (
-        <View style={[styles.actions, { backgroundColor: colors.surfaceBase }]}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={primaryAction.onPress}
-            style={[styles.action, { backgroundColor: colors.cta }]}>
-            <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-              {primaryAction.label}
+      <View
+        style={[styles.body, { backgroundColor: colors.background }]}
+        testID="place-body"
+        onLayout={(event) => {
+          offsets.current.body = event.nativeEvent.layout.y
+          bringHighlightIntoView()
+        }}>
+        <View style={styles.header}>
+          {category || address.district ? (
+            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+              {[category, address.district].filter(Boolean).join(' · ')}
             </Text>
-          </Pressable>
-          <View style={styles.secondaryActions}>
-            {secondaryActions.map((action) => (
+          ) : null}
+          <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
+            {detail.name}
+          </Text>
+          <View style={styles.signals}>
+            {average !== null && detail.reviews.count > 0 ? (
               <Pressable
-                key={action.label}
-                accessibilityRole="button"
-                onPress={action.onPress}
-                style={[
-                  styles.secondaryAction,
-                  { backgroundColor: colors.actionSecondary, borderColor: colors.actionSecondaryBorder },
-                ]}>
-                <Ionicons name={action.icon} size={18} color={colors.actionSecondaryForeground} accessible={false} />
-                <Text style={[styles.actionLabel, { color: colors.actionSecondaryForeground }]}>
-                  {action.label}
+                accessibilityRole="link"
+                accessibilityLabel={`Nota ${ratingLabel(average)}, ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
+                onPress={() => scrollTo(offsets.current.reviews)}
+                hitSlop={spacing.sm}
+                style={styles.rating}>
+                <Stars rating={average} />
+                <Text style={[styles.ratingLabel, { color: colors.foreground }]}>
+                  {`${average.toFixed(1).replace('.', ',')} · ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
                 </Text>
               </Pressable>
-            ))}
+            ) : null}
+            <OperatingStatus establishment={detail} />
+            {detail.is_sponsored ? <Badge label="Patrocinado" /> : null}
           </View>
+          <PlaceActions establishmentId={detail.id} name={detail.name} primary={primaryAction} />
         </View>
-      ) : null}
-      {!hasContact ? (
-        <Text style={[styles.noContact, { color: colors.mutedForeground }]}>Sem contato cadastrado</Text>
-      ) : null}
 
-      <EstablishmentOffers citySlug={citySlug} slug={detail.slug} />
+        <PlaceBenefits citySlug={citySlug} slug={detail.slug} timeZone={detail.city.timezone} />
 
-      {detail.description ? (
-        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-          <Text style={[styles.body, { color: colors.foreground }]}>{detail.description}</Text>
+        {detail.description ? (
+          <Text style={[styles.description, { color: colors.foreground }]}>{detail.description}</Text>
+        ) : null}
+
+        <PracticalInfo detail={detail} contacts={secondaryActions} />
+
+        {detail.attributes.some((attribute) => attribute.value === true) ? (
+          <View style={styles.section}>
+            <SectionHeader title="Este lugar oferece" />
+            <View style={styles.attributes}>
+              {detail.attributes
+                .filter((attribute) => attribute.value === true)
+                .map((attribute) => (
+                  <Badge key={attribute.name} label={attribute.name} />
+                ))}
+            </View>
+          </View>
+        ) : null}
+
+        <View
+          onLayout={(event) => {
+            offsets.current.reviews = event.nativeEvent.layout.y
+          }}>
+          <EstablishmentReviews
+            establishmentId={detail.id}
+            establishmentName={detail.name}
+            summary={detail.reviews}
+          />
         </View>
-      ) : null}
 
-      <EstablishmentPartnerContent
-        establishmentId={detail.id}
-        timeZone={detail.city.timezone}
-        establishmentName={detail.name}
-        citySlug={citySlug}
-        establishmentSlug={detail.slug}
-      />
-
-      {street ? (
-        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-          <Text style={[styles.heading, { color: colors.foreground }]}>Endereço</Text>
-          <Text style={[styles.body, { color: colors.mutedForeground }]}>
-            {[street, address.district, `${detail.city.name} · ${detail.city.state_code}`]
-              .filter(Boolean)
-              .join('\n')}
-          </Text>
-        </View>
-      ) : null}
-
-      <EstablishmentHours establishment={detail} />
-
-      <EstablishmentReviews establishmentId={detail.id} summary={detail.reviews} />
-
-      {detail.attributes.length > 0 ? (
-        <View style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
-          <Text style={[styles.heading, { color: colors.foreground }]}>Este lugar oferece</Text>
-          <Text style={[styles.body, { color: colors.mutedForeground }]}>
-            {detail.attributes
-              .filter((attribute) => attribute.value === true)
-              .map((attribute) => attribute.name)
-              .join(' · ')}
-          </Text>
-        </View>
-      ) : null}
-
-      <ReportLink type="establishment" id={detail.id} label="Denunciar este lugar" />
+        <EstablishmentPartnerContent
+          establishmentId={detail.id}
+          timeZone={detail.city.timezone}
+          establishmentName={detail.name}
+          citySlug={citySlug}
+          establishmentSlug={detail.slug}
+          highlight={highlight}
+          onHighlightLayout={(y) => {
+            offsets.current.highlight = y
+            bringHighlightIntoView()
+          }}
+        />
+      </View>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  noContact: { ...typography.caption, paddingHorizontal: spacing.lg },
   page: { paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
-  section: { gap: spacing.xs, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
-  name: { ...typography.title },
-  meta: typography.caption,
-  sponsored: { ...typography.caption, ...textWeight('600'), textTransform: 'uppercase' },
-  heading: { ...typography.heading, marginBottom: spacing.xs },
-  body: typography.body,
-  message: { ...typography.body, textAlign: 'center' },
-  actions: { gap: spacing.sm, padding: spacing.lg },
-  action: { borderRadius: radius.surface, padding: spacing.md, minHeight: 48 },
-  // Up to five contacts: three to a row, so a label never shrinks past reading.
-  secondaryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  secondaryAction: {
-    flex: 1,
-    minWidth: '30%',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md,
-    minHeight: 48,
-    justifyContent: 'center',
+  // The content rises over the photo on a sheet with rounded top corners.
+  body: {
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    gap: spacing.section,
+    marginTop: -radius.sheet,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: 22,
   },
-  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center', flexShrink: 1 },
+  header: { gap: 10 },
+  meta: { ...typography.meta, ...textWeight('600') },
+  name: { ...typography.display, ...displayWeight('800') },
+  signals: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  rating: { alignItems: 'center', flexDirection: 'row', gap: 6, minHeight: 32 },
+  ratingLabel: typography.label,
+  description: typography.body,
+  section: { gap: spacing.md },
+  attributes: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  message: { ...typography.body, textAlign: 'center' },
 })

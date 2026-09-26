@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-const STUB_WIDTH = 104
+const STUB_WIDTH = 112
 const NOTCH = 24
 
 /**
@@ -39,7 +39,14 @@ export function TicketCard({
     >
       <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
         <Ionicons name="ticket-outline" size={26} color={colors.chromeForeground} />
-        <Text numberOfLines={3} style={[styles.stubLabel, { color: colors.chromeForeground }]}>
+        {/* A long name shrinks a little before it is cut: the stub is narrow on purpose. */}
+        <Text
+          numberOfLines={4}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          android_hyphenationFrequency="normal"
+          style={[styles.stubLabel, { color: colors.chromeForeground }]}
+        >
           {stubLabel}
         </Text>
       </View>
@@ -76,7 +83,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     justifyContent: 'center',
-    padding: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
     width: STUB_WIDTH,
   },
   stubLabel: { ...displayWeight('800'), fontSize: 15, lineHeight: 18, textAlign: 'center' },

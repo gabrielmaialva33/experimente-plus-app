@@ -45,7 +45,7 @@ Stack declarada: Expo SDK 57, React Native 0.86, React 19, Expo Router, TypeScri
 | `src/**/__tests__/`   | Testes próximos aos domínios                                      |
 | `app.json`, `assets/` | Configuração Expo, plugins e assets                               |
 
-Use `@/*` para `src/*` e `@/assets/*` para `assets/*`, conforme `tsconfig.json`. Preserve nomes kebab-case, convenções especiais de rotas (`_layout.tsx`, `[param]`, grupos entre parênteses), componentes PascalCase e variáveis/funções camelCase. Siga a formatação do arquivo vizinho; não há configuração de Prettier versionada.
+Use `@/*` para `src/*` e `@/assets/*` para `assets/*`, conforme `tsconfig.json`. Preserve nomes kebab-case, convenções especiais de rotas (`_layout.tsx`, `[param]`, grupos entre parênteses), componentes PascalCase e variáveis/funções camelCase. A formatação é do Prettier (`.prettierrc.json`, os mesmos valores do backend: sem ponto e vírgula, aspas simples, 100 colunas); rode `pnpm format` antes de commitar. Reformatações mecânicas entram em `.git-blame-ignore-revs`.
 
 O root layout mantém o navigator montado e usa a splash para cobrir o carregamento da sessão. Preserve esse comportamento e o cleanup dos listeners de foco/rede. Os estados `loading`, `anonymous`, `authenticated` e `unavailable` são distintos.
 
@@ -67,13 +67,14 @@ Execute na raiz deste repositório. `mise.toml` define Node 24, pnpm 11, Java Te
 | `pnpm typecheck`                 | TypeScript sem emissão                                                      |
 | `pnpm test --runInBand`          | Jest em execução serial, com preset `jest-expo`                             |
 | `pnpm api:types`                 | Regenerar tipos a partir de `../experimente-plus/docs/openapi.yaml`         |
-| `pnpm lint`                      | Script `expo lint`; configuração ESLint ainda não está versionada           |
+| `pnpm lint`                      | `expo lint` com `eslint-config-expo` e a regra do Prettier; roda na CI      |
+| `pnpm format`                    | Formatar com Prettier (`pnpm format:check` só confere)                      |
 
 O app usa módulos nativos e `expo-dev-client`; valide com development build, especialmente câmera, mapas, SecureStore e MMKV. Android é construído localmente; o ADR prevê serviço remoto para iOS/distribuição. `eas.json` define os perfis `development`, `preview` e `production` e o envio às lojas; `app.config.ts` recusa build de produção sem URL de API e estilo de mapa de produção. O que falta para publicar depende do contratante e está em [`docs/store-submission.md`](docs/store-submission.md).
 
 `android/`, `ios/` e `.expo/` são gerados e ignorados. Mudanças permanentes de configuração nativa devem partir de `app.json` e config plugins. Preserve customizações locais antes de qualquer regeneração limpa.
 
-Não use `pnpm reset-project` como limpeza: o script do template move ou remove `src/` e `scripts/`, apagando a estrutura implementada. O script `expo lint` pode iniciar configuração/instalação de ESLint; não o descreva como gate já pronto sem conferir e revisar seus efeitos. `pnpm-workspace.yaml` também mantém a decisão de build do MSW como placeholder; não habilite scripts de dependências indiscriminadamente.
+Não use `pnpm reset-project` como limpeza: o script do template move ou remove `src/` e `scripts/`, apagando a estrutura implementada. `pnpm-workspace.yaml` também mantém a decisão de build do MSW como placeholder; não habilite scripts de dependências indiscriminadamente.
 
 ## Configuração da API e mapas
 

@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
@@ -20,6 +21,7 @@ export function HistoryScreen({ queryKey, load, emptyMessage, receiptHref }: Pro
   const colors = useColors()
   const router = useRouter()
   const history = useQuery({ queryKey, queryFn: load })
+  const refreshControl = usePullToRefresh(history.refetch)
 
   if (history.isPending) {
     return <ContentSkeleton label="Carregando histórico" variant="list" />
@@ -43,6 +45,7 @@ export function HistoryScreen({ queryKey, load, emptyMessage, receiptHref }: Pro
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
       data={history.data?.redemptions ?? []}
+      refreshControl={refreshControl}
       keyExtractor={(item) => item.receipt_code}
       renderItem={({ item }) => (
         <Pressable onPress={() => router.push(receiptHref(item.receipt_code))}>

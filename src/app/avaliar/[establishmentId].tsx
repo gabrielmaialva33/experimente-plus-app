@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import { ImagePicker, type SelectedImage } from '@/components/image-picker'
 import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
@@ -70,7 +71,7 @@ export default function WriteReviewScreen() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <Text style={[styles.title, { color: colors.foreground }]}>Sua avaliação</Text>
 
       <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
@@ -81,7 +82,7 @@ export default function WriteReviewScreen() {
         <Text style={[styles.label, { color: colors.mutedForeground }]}>
           Conte como foi (opcional)
         </Text>
-        <TextInput
+        <FormTextInput
           value={comment}
           onChangeText={setComment}
           multiline
@@ -133,7 +134,7 @@ export default function WriteReviewScreen() {
         ocultá-las. A localização e os dados do aparelho são removidos das fotos antes de
         publicar.
       </Text>
-    </ScrollView>
+    </KeyboardForm>
   )
 }
 

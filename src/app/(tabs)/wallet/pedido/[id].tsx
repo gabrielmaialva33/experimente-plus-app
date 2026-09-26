@@ -27,7 +27,10 @@ export default function PurchaseOrderScreen() {
   const financiallyBlocked = order?.financially_blocked
 
   useEffect(() => {
-    if (hasOrder) void client.invalidateQueries({ queryKey: walletKeys.wallet })
+    if (!hasOrder) return
+    void client.invalidateQueries({ queryKey: walletKeys.wallet })
+    // The orders list shows the same status and may still be mounted underneath.
+    void client.invalidateQueries({ queryKey: ['purchases'] })
   }, [client, hasOrder, orderStatus, accessId, financiallyBlocked])
 
   if (query.isPending) return <PurchasePage><PurchaseText>Consultando pedido…</PurchaseText></PurchasePage>
@@ -56,6 +59,7 @@ export default function PurchaseOrderScreen() {
       {openingError ? <PurchaseText>Não foi possível abrir o pagamento. Consulte o pedido antes de tentar novamente.</PurchaseText> : null}
       <RetryPurchase error={null} onRetry={() => void query.refetch()} />
       {state === 'confirmed' ? <PurchaseAction label="Consultar carteira" onPress={() => router.navigate('/wallet')} /> : null}
+      <PurchaseText heading>{order.snapshot.name}</PurchaseText>
       <EditionTerms snapshot={order.snapshot} />
     </PurchasePage>
   )

@@ -1,14 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import type { PurchaseSnapshot } from '@/api/purchases'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-export function PurchasePage({ children }: { children: ReactNode }) {
+export function PurchasePage({ children, refreshControl }: {
+  children: ReactNode; refreshControl?: ScrollViewProps['refreshControl']
+}) {
   const colors = useColors()
-  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>{children}</ScrollView>
+  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page} refreshControl={refreshControl}>{children}</ScrollView>
 }
 
 export function PurchaseText({ children, heading = false }: { children: ReactNode; heading?: boolean }) {
@@ -55,27 +57,65 @@ export function price(amountCents: number, currency: string) {
   catch { return `${amountCents / 100} ${currency}` }
 }
 
-export function purchaseDate(value: string) {
-  if (!value || !Number.isFinite(Date.parse(value))) return 'Não informado'
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value)) + ' UTC'
+/** Every operation of the pilot is in Paraná; the city's own zone wins when it is known. */
+const DEFAULT_TIME_ZONE = 'America/Sao_Paulo'
+
+const known = (value: string) => Boolean(value) && Number.isFinite(Date.parse(value))
+
+/** The day a window opens or closes, on the city's clock — never a UTC stamp. */
+export function purchaseDay(value: string, timeZone = DEFAULT_TIME_ZONE) {
+  if (!known(value)) return 'data não informada'
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone }).format(new Date(value))
 }
 
-export function EditionTerms({ snapshot }: { snapshot: PurchaseSnapshot }) {
+/** Day and hour, for the full conditions. */
+export function purchaseDate(value: string, timeZone = DEFAULT_TIME_ZONE) {
+  if (!known(value)) return 'data não informada'
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone }).format(new Date(value))
+}
+
+const usesPerPerson = (count: number) => `${count} ${count === 1 ? 'uso' : 'usos'} por pessoa`
+
+/**
+ * What a person needs before paying — until when to buy, until when to use,
+ * how many uses — in one line each. The windows to the minute and the legal
+ * text stay one tap away, under "Ver condições".
+ */
+export function EditionTerms({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snapshot: PurchaseSnapshot; timeZone?: string }) {
+  const colors = useColors()
+  const [open, setOpen] = useState(false)
+  // A voucher is one offer named like the product: repeating its title reads as a second item.
+  const single = snapshot.offers.length === 1 && snapshot.offers[0].title === snapshot.name
+  const usageStartsLater = known(snapshot.usage_starts_at) && known(snapshot.sales_starts_at) &&
+    Date.parse(snapshot.usage_starts_at) > Date.parse(snapshot.sales_starts_at)
+  const use = usageStartsLater
+    ? `Use de ${purchaseDay(snapshot.usage_starts_at, timeZone)} a ${purchaseDay(snapshot.usage_ends_at, timeZone)}`
+    : `Use até ${purchaseDay(snapshot.usage_ends_at, timeZone)}`
+
   return (
     <View style={styles.terms}>
-      <PurchaseText heading>{snapshot.name}</PurchaseText>
       {snapshot.description ? <PurchaseText>{snapshot.description}</PurchaseText> : null}
-      <PurchaseText>Venda: {purchaseDate(snapshot.sales_starts_at)} até {purchaseDate(snapshot.sales_ends_at)}</PurchaseText>
-      <PurchaseText>Uso: {purchaseDate(snapshot.usage_starts_at)} até {purchaseDate(snapshot.usage_ends_at)}</PurchaseText>
-      <PurchaseText>{snapshot.product_type === 'offer' ? 'A compra é de um voucher desta loja.' : 'A compra é do pacote da cidade.'} A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
+      <PurchaseText>{`Compre até ${purchaseDay(snapshot.sales_ends_at, timeZone)} · ${use}`}</PurchaseText>
       {snapshot.offers.map((offer) => (
-        <View key={offer.id} style={styles.terms}>
-          <PurchaseText heading>{offer.title}</PurchaseText>
-          <PurchaseText>{offer.establishment.public_name}</PurchaseText>
-          {offer.terms ? <PurchaseText>{offer.terms}</PurchaseText> : null}
-          <PurchaseText>Limite por acesso: {offer.max_redemptions_per_access}</PurchaseText>
+        <View key={offer.id} style={styles.offer}>
+          {single ? null : <PurchaseText heading>{offer.title}</PurchaseText>}
+          <PurchaseText>{`${offer.establishment.public_name} · ${usesPerPerson(offer.max_redemptions_per_access)}`}</PurchaseText>
         </View>
       ))}
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} hitSlop={spacing.sm}
+        onPress={() => setOpen(!open)} style={styles.toggle}>
+        <Text style={[styles.toggleLabel, { color: colors.primary }]}>{open ? 'Ocultar condições' : 'Ver condições'}</Text>
+      </Pressable>
+      {open ? (
+        <View style={styles.terms}>
+          <PurchaseText>{`Venda: ${purchaseDate(snapshot.sales_starts_at, timeZone)} a ${purchaseDate(snapshot.sales_ends_at, timeZone)}.`}</PurchaseText>
+          <PurchaseText>{`Uso: ${purchaseDate(snapshot.usage_starts_at, timeZone)} a ${purchaseDate(snapshot.usage_ends_at, timeZone)}.`}</PurchaseText>
+          {snapshot.offers.map((offer) => offer.terms
+            ? <PurchaseText key={offer.id}>{single ? offer.terms : `${offer.title}: ${offer.terms}`}</PurchaseText>
+            : null)}
+          <PurchaseText>A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
+        </View>
+      ) : null}
     </View>
   )
 }
@@ -83,6 +123,9 @@ export function EditionTerms({ snapshot }: { snapshot: PurchaseSnapshot }) {
 const styles = StyleSheet.create({
   page: { padding: spacing.lg, gap: spacing.lg },
   terms: { gap: spacing.sm },
+  offer: { gap: spacing.xs },
+  toggle: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  toggleLabel: { ...typography.body, fontWeight: '700' },
   action: { borderRadius: radius.md, padding: spacing.md, minHeight: 48, justifyContent: 'center' },
   actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
 })

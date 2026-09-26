@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useDeleteReview, useMyReviews } from '@/reviews/queries'
 import { formatDate } from '@/reviews/review-card'
 import { Stars } from '@/reviews/stars'
@@ -37,6 +38,7 @@ export default function MyReviewsScreen() {
   const router = useRouter()
   const query = useMyReviews({ perPage: 20 })
   const remove = useDeleteReview()
+  const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) {
     return <ContentSkeleton label="Carregando suas avaliações" variant="catalog" />
@@ -49,6 +51,7 @@ export default function MyReviewsScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
       data={reviews}
+      refreshControl={refreshControl}
       keyExtractor={(review) => String(review.id)}
       ListEmptyComponent={
         <Text style={[styles.empty, { color: colors.mutedForeground }]}>

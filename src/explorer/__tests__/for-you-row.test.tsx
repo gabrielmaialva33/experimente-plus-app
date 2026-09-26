@@ -117,7 +117,7 @@ it('shows the chosen places, says how they are ordered, and opens each one', asy
   const view = await renderRow()
 
   expect(await view.findByRole('header', { name: 'Para você' })).toBeOnTheScreen()
-  expect(view.getByText('Pelos seus interesses, em ordem alfabética')).toBeOnTheScreen()
+  expect(view.getByText('Com base nos seus interesses')).toBeOnTheScreen()
   expect(view.getByText('Alfa Café')).toBeOnTheScreen()
 
   await fireEvent.press(view.getByText('Beta Bar'))

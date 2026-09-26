@@ -1,8 +1,8 @@
-import { Image } from 'expo-image'
 
 import { StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
+import { RemoteImage } from '@/components/remote-image'
 import { ReportLink } from '@/reviews/report-link'
 import { ContentActions } from './content-actions'
 import type { PartnerContentKind } from '@/api/partner-content'
@@ -120,7 +120,7 @@ export function EstablishmentPartnerContent({
                   style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   {cover ? (
-                    <Image
+                    <RemoteImage
                       source={{ uri: resolveMediaUrl(cover.url) }}
                       accessibilityLabel={cover.altText}
                       style={styles.media}

@@ -1,9 +1,9 @@
-import { Image } from 'expo-image'
 import { useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
@@ -120,7 +120,20 @@ export default function PresentScreen() {
           </Text>
         </View>
       ) : (
-        <Image cachePolicy="none" accessibilityLabel="Código temporário do benefício" source={{ uri: data.qr_data_url }} style={styles.qr} contentFit="contain" />
+        <RemoteImage
+          cachePolicy="none"
+          accessibilityLabel="Código temporário do benefício"
+          source={{ uri: data.qr_data_url }}
+          style={styles.qr}
+          contentFit="contain"
+          fallback={
+            <View style={[styles.qrSlot, { borderColor: colors.border }]}>
+              <Text style={[styles.message, { color: colors.mutedForeground }]}>
+                Não foi possível mostrar o código. Gere outro código abaixo.
+              </Text>
+            </View>
+          }
+        />
       )}
 
       <Text style={[styles.countdown, { color: expired ? colors.warningAccent : colors.foreground }]}>

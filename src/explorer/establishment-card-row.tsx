@@ -1,8 +1,8 @@
-import { Image } from 'expo-image'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { EstablishmentCard } from '@/api/explorer'
 import { resolveMediaUrl } from '@/api/config'
+import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -25,11 +25,12 @@ export function EstablishmentCardRow({
       onPress={onPress}
       style={styles.row}>
       {card.cover_url ? (
-        <Image
+        <RemoteImage
           source={{ uri: resolveMediaUrl(card.cover_url) }}
           style={[styles.cover, { backgroundColor: colors.surfaceBase }]}
           contentFit="cover"
           accessible={false}
+          fallback={<View style={[styles.cover, { backgroundColor: colors.surfaceBase }]} />}
         />
       ) : (
         <View style={[styles.cover, { backgroundColor: colors.surfaceBase }]} />

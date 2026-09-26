@@ -111,6 +111,31 @@ describe('establishment presentation', () => {
     expect(view.getByRole('button', { name: 'WhatsApp' })).toHaveStyle({ backgroundColor: palette.light.cta })
   })
 
+  it('offers the e-mail and the Instagram a place publishes', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
+    queries.useEstablishment.mockReturnValue({ data: {
+      ...detail, contacts: { ...detail.contacts, email: 'contato@cafe.com.br', instagram: '@cafedapraca' },
+    } })
+    const view = await render(<EstablishmentScreen />)
+
+    await fireEvent.press(view.getByRole('button', { name: 'E-mail' }))
+    expect(openURL).toHaveBeenLastCalledWith('mailto:contato@cafe.com.br')
+    await fireEvent.press(view.getByRole('button', { name: 'Instagram' }))
+    expect(openURL).toHaveBeenLastCalledWith('https://instagram.com/cafedapraca')
+    expect(view.queryByText('Sem contato cadastrado')).toBeNull()
+  })
+
+  it('says so when a place has no way to be reached, instead of leaving the space empty', async () => {
+    queries.useEstablishment.mockReturnValue({ data: {
+      ...detail,
+      contacts: { phone: null, whatsapp: null, email: null, website: null, instagram: null, booking_url: null },
+    } })
+    const view = await render(<EstablishmentScreen />)
+
+    expect(view.getByRole('button', { name: 'Como chegar' })).toBeOnTheScreen()
+    expect(view.getByText('Sem contato cadastrado')).toBeOnTheScreen()
+  })
+
   it('shows a temporary closure in both the detail and list card', async () => {
     const closed = { ...detail, business_status: 'temporarily_closed' as const }
     queries.useEstablishment.mockReturnValue({ data: closed })

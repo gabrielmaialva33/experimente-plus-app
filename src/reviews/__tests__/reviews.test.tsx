@@ -44,6 +44,28 @@ it('reads a rating as a number rather than as five separate images', async () =>
   expect(view.getByLabelText('4 de 5')).toBeOnTheScreen()
 })
 
+it('draws an average of 4,5 as four stars and a half, and says so', async () => {
+  const view = await render(<Stars rating={4.5} />)
+
+  expect(view.getByLabelText('4,5 de 5')).toBeOnTheScreen()
+  expect(view.getAllByTestId('star-icon-star', { includeHiddenElements: true })).toHaveLength(4)
+  expect(view.getAllByTestId('star-icon-star-half', { includeHiddenElements: true })).toHaveLength(1)
+})
+
+it('keeps the place average whole on the page instead of rounding it to a full star', async () => {
+  queries.useEstablishmentReviews.mockReturnValue({
+    data: { data: [review({ rating: 5 }), review({ id: 2, rating: 4 })], meta: {} },
+    isError: false,
+    isPending: false,
+  })
+
+  const view = await render(
+    <EstablishmentReviews establishmentId={7} summary={{ count: 2, average: 4.5 }} />
+  )
+
+  expect(view.getByLabelText('4,5 de 5')).toBeOnTheScreen()
+})
+
 it('gives every star its own touch target and names the score it sets', async () => {
   const changed = jest.fn()
   const view = await render(<StarsInput rating={0} onChange={changed} />)

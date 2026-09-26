@@ -83,6 +83,8 @@ it('will not submit a review without a rating', async () => {
   queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
 
   const view = await render(<WriteReviewScreen />)
+  // The comment sits low on the form: it must stay above the keyboard.
+  expect(view.getByTestId('keyboard-form')).toBeOnTheScreen()
   await fireEvent.press(view.getByTestId('review-submit'))
 
   expect(mutate).not.toHaveBeenCalled()
@@ -144,6 +146,7 @@ it('requires a reason before sending a report', async () => {
   queries.useReportContent.mockReturnValue(idle({ mutate }))
 
   const view = await render(<ReportContentScreen />)
+  expect(view.getByTestId('keyboard-form')).toBeOnTheScreen()
   await fireEvent.press(view.getByTestId('report-submit'))
   expect(mutate).not.toHaveBeenCalled()
 

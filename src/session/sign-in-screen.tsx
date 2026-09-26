@@ -27,7 +27,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
 
   const message =
     mutation.error instanceof ApiError && mutation.error.status === 400
-      ? 'E-mail ou senha incorretos.'
+      ? 'Dados de acesso incorretos.'
       : mutation.isError
         ? 'Não foi possível entrar agora.'
         : null

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useCreateItinerary, useItineraries } from '@/explorer/queries'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -19,6 +20,7 @@ export default function ItinerariesScreen() {
   const query = useItineraries()
   const create = useCreateItinerary()
   const [name, setName] = useState('')
+  const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
 
@@ -41,6 +43,7 @@ export default function ItinerariesScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
       data={query.data?.data ?? []}
+      refreshControl={refreshControl}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View style={[styles.create, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>

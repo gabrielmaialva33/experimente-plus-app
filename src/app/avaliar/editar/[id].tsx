@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { failureMessage } from '@/app/avaliar/[establishmentId]'
 import type { Review } from '@/api/reviews'
 import { ImagePicker } from '@/components/image-picker'
@@ -77,14 +78,14 @@ function EditForm({ review }: { review: Review }) {
   const photoBusy = addPhoto.isPending || removePhoto.isPending
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <Text style={[styles.title, { color: colors.foreground }]}>Editar avaliação</Text>
 
       <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
         <StarsInput rating={rating} onChange={setRating} disabled={update.isPending} />
       </View>
 
-      <TextInput
+      <FormTextInput
         value={comment}
         onChangeText={setComment}
         multiline
@@ -145,7 +146,7 @@ function EditForm({ review }: { review: Review }) {
           {update.isPending ? 'Salvando…' : 'Salvar alterações'}
         </Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardForm>
   )
 }
 

@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Image } from 'expo-image'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import type { ReviewPhoto } from '@/api/reviews'
 import { resolveMediaUrl } from '@/api/config'
+import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -37,12 +37,13 @@ export function ReviewPhotos({
         return (
           <View key={photo.id} style={styles.item} testID={`review-photo-${photo.id}`}>
             {photo.url ? (
-              <Image
+              <RemoteImage
                 source={{ uri: resolveMediaUrl(photo.url) }}
                 accessibilityLabel={label}
                 accessible
                 contentFit="cover"
                 style={[styles.image, { backgroundColor: colors.surfaceRaised }]}
+                fallback={<View accessibilityLabel={label} accessible style={[styles.image, { backgroundColor: colors.surfaceRaised }]} />}
               />
             ) : null}
             {onRemove ? (

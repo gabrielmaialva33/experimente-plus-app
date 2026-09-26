@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useRef, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ChoiceControl } from '@/components/choice-control'
 import { createPurchase } from '@/api/purchases'
@@ -10,6 +10,13 @@ import { EditionTerms, PurchaseAction, PurchasePage, PurchaseText, RetryPurchase
 import { productIdentity, productLabel } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
+import { radius, spacing, typography } from '@/theme/tokens'
+import { useColors } from '@/theme/use-colors'
+
+const METHOD_LABEL: Record<string, string> = { pix: 'Pix', card: 'Cartão de crédito' }
+// The server needs a tokenized card and this client has no tokenization flow,
+// so the card is shown — the person learns it exists — but cannot be chosen.
+const STARTABLE_METHODS = new Set(['pix'])
 
 export default function PurchaseProductScreen() {
   const { id, offerId } = useLocalSearchParams<{ id: string; offerId?: string }>()
@@ -21,6 +28,7 @@ export default function PurchaseProductScreen() {
 
 function Product({ editionId, offerId }: { editionId: number; offerId: number | null }) {
   const router = useRouter()
+  const client = useQueryClient()
   const { userId } = usePurchaseScope()
   const catalog = usePurchaseEditions()
   const orders = usePurchases()
@@ -54,7 +62,11 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       clearIntent(userId, intent.body.edition_id, intent.body.offer_id)
       return result
     },
-    onSuccess: (order) => router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`),
+    onSuccess: (order) => {
+      // A list of orders still mounted underneath would otherwise say there are none.
+      void client.invalidateQueries({ queryKey: ['purchases'] })
+      router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`)
+    },
   })
 
   const submit = async () => {
@@ -73,8 +85,9 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   return (
     <PurchasePage>
       {product ? <>
-        <PurchaseText heading>{productLabel(product)}</PurchaseText>
-        <EditionTerms snapshot={product.snapshot} />
+        <PurchaseText>{productLabel(product)}</PurchaseText>
+        <PurchaseText heading>{product.snapshot.name}</PurchaseText>
+        <EditionTerms snapshot={product.snapshot} timeZone={product.city?.timezone ?? undefined} />
         <PurchaseText heading>{price(product.amount_cents, product.currency)}</PurchaseText>
       </> : <PurchaseText>Este produto não está disponível para novas compras.</PurchaseText>}
       {!userId ? <>
@@ -95,9 +108,9 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       </> : product ? <>
         {!product.purchasable ? <PurchaseText>Compra indisponível no momento.</PurchaseText> : null}
         {!product.payment_methods.length ? <PurchaseText>Os meios de pagamento ainda não estão disponíveis. Consulte novamente mais tarde.</PurchaseText> : null}
-        <View accessibilityRole="radiogroup" accessibilityLabel="Meio de pagamento">
-          {product.payment_methods.map((option) => <ChoiceControl key={option} shape="segment" role="radio" selected={method === option}
-            label={option}
+        {product.payment_methods.length ? <PurchaseText heading>Forma de pagamento</PurchaseText> : null}
+        <View accessibilityRole="radiogroup" accessibilityLabel="Forma de pagamento" style={styles.methods}>
+          {product.payment_methods.map((option) => <PaymentOption key={option} method={option} selected={method === option}
             disabled={start.isPending} onPress={() => setMethod(option)} />)}
         </View>
         {needsCardToken ? <PurchaseText>Este meio de pagamento ainda não pode ser iniciado pelo aplicativo.</PurchaseText> : null}
@@ -110,3 +123,47 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
     </PurchasePage>
   )
 }
+
+/** A radio with its state drawn, not implied; an unavailable method says why before any tap. */
+function PaymentOption({ method, selected, disabled, onPress }: {
+  method: PaymentMethod; selected: boolean; disabled: boolean; onPress: () => void
+}) {
+  const colors = useColors()
+  const startable = STARTABLE_METHODS.has(method)
+  const unavailable = disabled || !startable
+  const label = METHOD_LABEL[method] ?? method
+
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityLabel={startable ? label : `${label}, em breve pelo aplicativo`}
+      accessibilityState={{ checked: selected, selected, disabled: unavailable }}
+      disabled={unavailable}
+      onPress={onPress}
+      style={[styles.method, {
+        borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
+        borderColor: selected ? colors.choiceSelectedBorder : colors.choiceBorder,
+        backgroundColor: selected ? colors.choiceSelected : colors.choiceBackground,
+      }]}>
+      <View style={[styles.radio, { borderColor: unavailable ? colors.mutedForeground : colors.primary }]}>
+        {selected ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
+      </View>
+      <View style={styles.methodText}>
+        <Text style={[styles.methodLabel, { color: unavailable ? colors.mutedForeground : colors.foreground }]}>{label}</Text>
+        {startable ? null : <Text style={[typography.caption, { color: colors.mutedForeground }]}>Em breve pelo aplicativo</Text>}
+      </View>
+    </Pressable>
+  )
+}
+
+const styles = StyleSheet.create({
+  methods: { gap: spacing.sm },
+  method: {
+    minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    paddingHorizontal: spacing.md, borderRadius: radius.md,
+  },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  methodText: { flexShrink: 1, gap: 2 },
+  methodLabel: { ...typography.body, fontWeight: '700' },
+})

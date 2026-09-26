@@ -181,8 +181,10 @@ it('distinguishes a multi-offer package from one store voucher and uses the effe
   expect(voucher.getAllByText('Bistrô').length).toBeGreaterThan(0)
   expect(voucher.queryByText('Café')).toBeNull()
   expect(voucher.getAllByRole('button', { name: 'Usar benefício' })).toHaveLength(1)
-  expect(voucher.getByText(/Uso:.*01\/11\/2026.*30\/11\/2026/)).toBeOnTheScreen()
-  expect(pack.getByText(/Uso:.*01\/10\/2026.*31\/12\/2026/)).toBeOnTheScreen()
+  // The access windows are instants at midnight UTC, read on Londrina's clock.
+  expect(voucher.getByText(/Uso:.*31\/10\/2026.*29\/11\/2026/)).toBeOnTheScreen()
+  expect(pack.getByText(/Uso:.*30\/09\/2026.*30\/12\/2026/)).toBeOnTheScreen()
+  expect(view.queryByText(/UTC/)).toBeNull()
 })
 
 it('uses the server product type rather than counting remaining benefits and preserves voucher financial blocking', async () => {

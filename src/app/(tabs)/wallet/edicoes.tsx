@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router'
 
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { PurchaseAction, PurchasePage, PurchaseText, RetryPurchase, price } from '@/purchases/components'
 import { productKey, productLabel, productRoute } from '@/purchases/products'
 import { ORDER_COPY, orderState } from '@/purchases/order-state'
@@ -9,9 +10,10 @@ export default function PurchaseEditionsScreen() {
   const router = useRouter()
   const editions = usePurchaseEditions()
   const orders = usePurchases()
+  const refreshControl = usePullToRefresh(editions.refetch, orders.refetch)
 
   return (
-    <PurchasePage>
+    <PurchasePage refreshControl={refreshControl}>
       <PurchaseText heading>Pacotes e vouchers</PurchaseText>
       <PurchaseText>Explorar lugares é livre. Comprar um pacote ou voucher é opcional.</PurchaseText>
       {editions.isPending ? <PurchaseText>Carregando produtos…</PurchaseText> : null}

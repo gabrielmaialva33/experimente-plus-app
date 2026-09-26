@@ -1,8 +1,8 @@
-import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
+import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -47,7 +47,7 @@ function bandsOf(agenda: CityAgendaView): Band[] {
       key: 'new-experiences',
       title: 'Novidades',
       // The band is chronological. There is no prominence contract to imply.
-      hint: 'Em ordem de publicação',
+      hint: 'Publicados recentemente',
       items: agenda.newExperiences,
       withDate: false,
     },
@@ -134,19 +134,16 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                     style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
                   >
                     {item.cover ? (
-                      <Image
+                      <RemoteImage
                         source={{ uri: resolveMediaUrl(item.cover.url) }}
                         accessibilityLabel={item.cover.altText}
                         style={styles.cover}
                         contentFit="cover"
                         transition={150}
+                        fallback={<CoverFallback />}
                       />
                     ) : (
-                      <View style={[styles.coverFallback, { backgroundColor: colors.contentAbsent }]}>
-                        <Text style={[styles.fallback, { color: colors.contentAbsentForeground }]}>
-                          Foto indisponível
-                        </Text>
-                      </View>
+                      <CoverFallback />
                     )}
 
                     <View style={styles.body}>
@@ -173,6 +170,16 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
             </ScrollView>
           </View>
         ))}
+    </View>
+  )
+}
+
+/** A card with no picture, or one that failed to load, keeps the same footprint. */
+function CoverFallback() {
+  const colors = useColors()
+  return (
+    <View style={[styles.coverFallback, { backgroundColor: colors.contentAbsent }]}>
+      <Text style={[styles.fallback, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
     </View>
   )
 }

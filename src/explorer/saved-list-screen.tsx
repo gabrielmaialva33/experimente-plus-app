@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { SavedKind } from '@/api/explorer'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -35,6 +36,7 @@ export function SavedListScreen({ kind, header }: { kind: SavedKind; header?: Re
   const colors = useColors()
   const query = useSavedList(kind)
   const copy = COPY[kind]
+  const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) return <ContentSkeleton label={copy.loading} variant="catalog" />
 
@@ -46,6 +48,7 @@ export function SavedListScreen({ kind, header }: { kind: SavedKind; header?: Re
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.list}
       data={items}
+      refreshControl={refreshControl}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <>

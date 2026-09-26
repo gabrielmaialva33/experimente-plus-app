@@ -71,6 +71,7 @@ it('requires explicit consent, links both actual legal pages, normalizes optiona
 
 it('shows local field errors without making a request', async () => {
   const view = await page()
+  expect(view.getByTestId('keyboard-form')).toBeOnTheScreen()
   await fill(view, { full_name: ' ', email: 'bad', username: '!!', password: 'short', password_confirmation: 'different' })
   await fireEvent.press(view.getByRole('checkbox', { name: consent }))
   await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))

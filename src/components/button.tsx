@@ -40,7 +40,9 @@ export function Button({
 }: ButtonProps) {
   const colors = useColors()
   const tone = disabled
-    ? { background: colors.muted, border: colors.muted, foreground: colors.mutedForeground }
+    ? variant === 'ghost'
+      ? { background: 'transparent', border: 'transparent', foreground: colors.mutedForeground }
+      : { background: colors.muted, border: colors.muted, foreground: colors.mutedForeground }
     : {
         primary: { background: colors.primary, border: colors.primary, foreground: colors.primaryForeground },
         cta: { background: colors.cta, border: colors.cta, foreground: colors.ctaForeground },
@@ -62,7 +64,8 @@ export function Button({
         centered && styles.centered,
         {
           minHeight: size,
-          paddingHorizontal: size === 52 ? spacing.xl : size === 44 ? spacing.lg : spacing.gutter,
+          // A ghost has no surface to pad: its label lines up with the column it sits in.
+          paddingHorizontal: variant === 'ghost' ? spacing.xs : size === 52 ? spacing.xl : size === 44 ? spacing.lg : spacing.gutter,
           backgroundColor: tone.background,
           borderColor: tone.border,
           opacity: pressed ? 0.85 : 1,

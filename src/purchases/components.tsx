@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } f
 
 import { ApiError } from '@/api/client'
 import type { PurchaseSnapshot } from '@/api/purchases'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { Button } from '@/components/button'
+import { spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export function PurchasePage({ children, refreshControl }: {
@@ -21,14 +22,11 @@ export function PurchaseText({ children, heading = false }: { children: ReactNod
 export function PurchaseAction({ label, onPress, disabled = false, conversion = false }: {
   label: string; onPress: () => void; disabled?: boolean; conversion?: boolean
 }) {
-  const colors = useColors()
+  // A row, so the pill fills the column's width and never its height.
   return (
-    <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={[
-      styles.action,
-      { backgroundColor: conversion ? colors.cta : colors.surfaceRaised, opacity: disabled ? 0.5 : 1 },
-    ]}>
-      <Text style={[styles.actionLabel, { color: conversion ? colors.ctaForeground : colors.primary }]}>{label}</Text>
-    </Pressable>
+    <View style={styles.actionRow}>
+      <Button label={label} variant={conversion ? 'cta' : 'outline'} disabled={disabled} fill onPress={onPress} />
+    </View>
   )
 }
 
@@ -140,6 +138,5 @@ const styles = StyleSheet.create({
   offer: { gap: spacing.xs },
   toggle: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   toggleLabel: { ...typography.body, ...textWeight('700') },
-  action: { borderRadius: radius.md, padding: spacing.md, minHeight: 48, justifyContent: 'center' },
-  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
+  actionRow: { flexDirection: 'row' },
 })

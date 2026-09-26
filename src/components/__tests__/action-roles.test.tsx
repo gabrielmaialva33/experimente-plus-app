@@ -25,8 +25,8 @@ describe.each(['light', 'dark'] as const)('action roles in %s', (mode) => {
       <PurchaseAction label="Consultar carteira" onPress={jest.fn()} />
       <PurchaseAction label="Iniciar compra" conversion onPress={jest.fn()} />
     </PurchasePage>)
-    // E1 >= E0 in both themes; muted would sink below E0 in light mode.
-    expect(view.getByRole('button', { name: 'Consultar carteira' })).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
+    // The neutral action is the outlined pill of direction A; only conversion is filled.
+    expect(view.getByRole('button', { name: 'Consultar carteira' })).toHaveStyle({ backgroundColor: 'transparent', borderColor: palette[mode].primary })
     expect(view.getByText('Consultar carteira')).toHaveStyle({ color: palette[mode].primary })
     expect(view.getByRole('button', { name: 'Iniciar compra' })).toHaveStyle({ backgroundColor: palette[mode].cta })
     expect(view.getByText('Iniciar compra')).toHaveStyle({ color: palette[mode].ctaForeground })

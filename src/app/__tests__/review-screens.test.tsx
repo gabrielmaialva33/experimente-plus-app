@@ -24,6 +24,7 @@ jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
   useLocalSearchParams: jest.fn(),
+  Stack: { Screen: jest.fn(() => null) },
 }))
 jest.mock('@/reviews/queries', () => ({
   useCreateReviewWithPhotos: jest.fn(),
@@ -50,7 +51,10 @@ jest.mock('@/components/image-picker', () => {
   }
 })
 
-const params = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
+const params = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock; Stack: { Screen: jest.Mock } }
+/** The title the screen gives its header. */
+const headerTitle = () => params.Stack.Screen.mock.calls[params.Stack.Screen.mock.calls.length - 1]?.[0].options.title
+const { palette } = jest.requireActual('@/theme/tokens')
 const queries = jest.requireMock('@/reviews/queries') as {
   useCreateReviewWithPhotos: jest.Mock
   useAuthorRules: jest.Mock
@@ -198,7 +202,9 @@ it('reports partner content under its own kind', async () => {
   queries.useReportContent.mockReturnValue(idle({ mutate }))
 
   const view = await render(<ReportContentScreen />)
-  expect(view.getByText('Denunciar experiência')).toBeTruthy()
+  // The title moved to the header; the page no longer repeats it (audit A45).
+  expect(headerTitle()).toBe('Denunciar experiência')
+  expect(view.queryByText('Denunciar experiência')).toBeNull()
   await fireEvent.press(view.getByTestId('reason-spam'))
   await fireEvent.press(view.getByTestId('report-submit'))
 
@@ -329,4 +335,45 @@ it('explains a repeat, a limit and a vanished target in the reporter’s terms',
   expect(message(new MockApiError(409, {}), false)).toBe('Você já denunciou este conteúdo.')
   expect(message(new MockApiError(429, {}), true)).toMatch(/Muitas denúncias/)
   expect(message(new MockApiError(404, {}), true)).toMatch(/não está mais disponível/)
+})
+
+it('names what is reported under a header that says what the form does (A45)', async () => {
+  params.useLocalSearchParams.mockReturnValue({ type: 'establishment', id: '1', nome: 'Ateliê do Café' })
+
+  const view = await render(<ReportContentScreen />)
+
+  expect(headerTitle()).toBe('Denunciar este lugar')
+  expect(view.getByTestId('report-subject')).toHaveTextContent('Você está denunciandoAteliê do Café')
+  expect(view.queryByText('Denunciar este lugar')).toBeNull()
+})
+
+it('names the place a review is for, instead of a second "Avaliar" (A45)', async () => {
+  params.useLocalSearchParams.mockReturnValue({ establishmentId: '7', nome: 'Ateliê do Café' })
+
+  const view = await render(<WriteReviewScreen />)
+
+  expect(view.getByTestId('review-subject')).toHaveTextContent('Sua avaliação deAteliê do Café')
+  expect(view.queryByText('Sua avaliação')).toBeNull()
+})
+
+it('offers a place only the reasons that fit a place, each with a visible radio (A46)', async () => {
+  params.useLocalSearchParams.mockReturnValue({ type: 'establishment', id: '1' })
+
+  const view = await render(<ReportContentScreen />)
+
+  expect(view.queryByTestId('reason-harassment')).toBeNull()
+  expect(view.queryByTestId('reason-conflict_of_interest')).toBeNull()
+  expect(view.getByText('Informação falsa ou desatualizada')).toBeTruthy()
+  expect(view.getByTestId('reason-spam-radio')).toHaveStyle({ borderColor: palette.light.choiceBorder })
+
+  await fireEvent.press(view.getByTestId('reason-spam'))
+  expect(view.getByTestId('reason-spam').props.accessibilityState).toEqual({ selected: true, checked: true })
+  expect(view.getByTestId('reason-spam-radio')).toHaveStyle({ borderColor: palette.light.primary })
+})
+
+it('keeps the reasons a review can have, conflict of interest included', async () => {
+  params.useLocalSearchParams.mockReturnValue({ type: 'reply', id: '9' })
+  const reply = await render(<ReportContentScreen />)
+  expect(reply.getByTestId('reason-harassment')).toBeTruthy()
+  expect(reply.queryByTestId('reason-conflict_of_interest')).toBeNull()
 })

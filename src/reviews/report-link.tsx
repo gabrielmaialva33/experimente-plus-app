@@ -6,6 +6,14 @@ import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
+ * The report form for one target. `subject` names what is reported — the
+ * place, "Avaliação de Ana" — so the form can say it (audit A45); the form
+ * works without it.
+ */
+export const reportHref = (type: ReportTargetType, id: number, subject?: string | null) =>
+  `/denunciar/${type}/${id}${subject ? `?nome=${encodeURIComponent(subject)}` : ''}` as const
+
+/**
  * A quiet way into the report flow — Anexo I item 10, "denunciar conteúdos ou
  * estabelecimentos".
  *

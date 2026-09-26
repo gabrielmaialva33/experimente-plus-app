@@ -1,13 +1,15 @@
-import { useLocalSearchParams } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { Stack, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportAnonymously, useReportContent } from '@/reviews/queries'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -18,15 +20,36 @@ import { useColors } from '@/theme/use-colors'
  * typed from the generated contract, so a reason the server does not know no
  * longer compiles.
  */
-const REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'offensive', label: 'Ofensivo ou discriminatório' },
-  { value: 'harassment', label: 'Assédio' },
-  { value: 'inappropriate', label: 'Conteúdo inadequado' },
-  { value: 'false_information', label: 'Informação falsa' },
-  { value: 'spam', label: 'Spam ou propaganda' },
-  { value: 'conflict_of_interest', label: 'Conflito de interesse' },
-  { value: 'other', label: 'Outro motivo' },
-]
+const LABELS: Record<ReportReason, string> = {
+  offensive: 'Ofensivo ou discriminatório',
+  harassment: 'Assédio',
+  inappropriate: 'Conteúdo inadequado',
+  false_information: 'Informação falsa',
+  spam: 'Spam ou propaganda',
+  conflict_of_interest: 'Conflito de interesse',
+  other: 'Outro motivo',
+}
+
+/**
+ * The reasons that fit each target (audit A46). A place is not harassed and
+ * does not have a conflict of interest; a review can have both. Every value is
+ * one the server accepts.
+ */
+const CONTENT_REASONS: ReportReason[] = ['false_information', 'inappropriate', 'offensive', 'spam', 'other']
+const REASONS: Record<ReportableTarget, ReportReason[]> = {
+  review: ['offensive', 'harassment', 'inappropriate', 'false_information', 'spam', 'conflict_of_interest', 'other'],
+  reply: ['offensive', 'harassment', 'inappropriate', 'false_information', 'spam', 'other'],
+  establishment: CONTENT_REASONS,
+  experience: CONTENT_REASONS,
+  event: CONTENT_REASONS,
+  showcase_item: CONTENT_REASONS,
+}
+
+/** A place's false information is usually stale information; say so. */
+const reasonLabel = (target: ReportableTarget, reason: ReportReason) =>
+  target === 'establishment' && reason === 'false_information'
+    ? 'Informação falsa ou desatualizada'
+    : LABELS[reason]
 
 /**
  * What can be reported from the app, and what the screen calls it.
@@ -36,7 +59,9 @@ const REASONS: { value: ReportReason; label: string }[] = [
  * reported the review that happened to share that number — the collision
  * between species that the Concierge had to design its citations around.
  */
-const TITLES: Partial<Record<ReportTargetType, string>> = {
+type ReportableTarget = Extract<ReportTargetType, 'review' | 'reply' | 'establishment' | 'experience' | 'event' | 'showcase_item'>
+
+const TITLES: Record<ReportableTarget, string> = {
   review: 'Denunciar avaliação',
   reply: 'Denunciar resposta',
   establishment: 'Denunciar este lugar',
@@ -58,8 +83,8 @@ export function failureMessage(error: unknown, anonymous: boolean): string {
   return 'Não foi possível enviar a denúncia agora.'
 }
 
-export const reportableTarget = (value: string | undefined): ReportTargetType | null =>
-  value && value in TITLES ? (value as ReportTargetType) : null
+export const reportableTarget = (value: string | undefined): ReportableTarget | null =>
+  value && Object.prototype.hasOwnProperty.call(TITLES, value) ? (value as ReportableTarget) : null
 
 /**
  * Reporting a review, a reply, a place or partner content.
@@ -70,7 +95,8 @@ export const reportableTarget = (value: string | undefined): ReportTargetType | 
  */
 export default function ReportContentScreen() {
   const colors = useColors()
-  const { type, id } = useLocalSearchParams<{ type: string; id: string }>()
+  // `nome` names what is reported, so the form can say it (audit A45).
+  const { type, id, nome } = useLocalSearchParams<{ type: string; id: string; nome?: string }>()
   const target = reportableTarget(type)
   const targetId = Number(id)
 
@@ -89,8 +115,12 @@ export default function ReportContentScreen() {
   if (report.isSuccess) {
     return (
       <View style={[styles.page, styles.center, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ title: 'Denúncia registrada' }} />
+        <View style={[styles.done, { backgroundColor: colors.successSoft }]}>
+          <Ionicons name="checkmark" size={32} color={colors.successAccent} />
+        </View>
         <Text style={[styles.title, { color: colors.foreground }]}>Denúncia registrada</Text>
-        <Text style={[styles.body, { color: colors.foreground }]}>
+        <Text style={[styles.body, styles.centered, { color: colors.foreground }]}>
           Guarde o protocolo para acompanhar o caso:
         </Text>
         <Text
@@ -99,7 +129,7 @@ export default function ReportContentScreen() {
           testID="report-protocol">
           {report.data.protocol_number}
         </Text>
-        <Text style={[styles.note, { color: colors.mutedForeground }]}>
+        <Text style={[styles.note, styles.centered, { color: colors.mutedForeground }]}>
           A moderação analisa e responde dentro do prazo definido por esta operação.
         </Text>
       </View>
@@ -116,33 +146,50 @@ export default function ReportContentScreen() {
     )
   }
 
+  const busy = !reason || report.isPending || resolving
+
   return (
     <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.title, { color: colors.foreground }]}>{TITLES[target]}</Text>
+      {/* The header says what the form does; the page names what it acts on. */}
+      <Stack.Screen options={{ title: TITLES[target] }} />
+      {nome ? (
+        <View style={styles.subject} testID="report-subject">
+          <Text style={[styles.overline, { color: colors.mutedForeground }]}>Você está denunciando</Text>
+          <Text style={[styles.subjectName, { color: colors.foreground }]}>{nome}</Text>
+        </View>
+      ) : null}
 
-      <View style={styles.reasons}>
-        {REASONS.map((option) => (
-          <Pressable
-            key={option.value}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: reason === option.value }}
-            onPress={() => setReason(option.value)}
-            style={[
-              styles.reason,
-              {
-                backgroundColor:
-                  reason === option.value ? colors.choiceSelected : colors.choiceBackground,
-                borderColor: reason === option.value ? colors.primary : colors.border,
-              },
-            ]}
-            testID={`reason-${option.value}`}>
-            <Text style={[styles.body, { color: colors.foreground }]}>{option.label}</Text>
-          </Pressable>
-        ))}
+      <View accessibilityRole="radiogroup" accessibilityLabel="Motivo" style={styles.reasons}>
+        <Text style={[styles.heading, { color: colors.foreground }]}>Qual é o problema?</Text>
+        {REASONS[target].map((value) => {
+          const selected = reason === value
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, checked: selected }}
+              onPress={() => setReason(value)}
+              style={[
+                styles.reason,
+                {
+                  backgroundColor: selected ? colors.choiceSelected : colors.card,
+                  borderColor: selected ? colors.primary : colors.borderSubtle,
+                },
+              ]}
+              testID={`reason-${value}`}>
+              <View
+                style={[styles.radio, { borderColor: selected ? colors.primary : colors.choiceBorder }]}
+                testID={`reason-${value}-radio`}>
+                {selected ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
+              </View>
+              <Text style={[styles.reasonLabel, { color: colors.foreground }]}>{reasonLabel(target, value)}</Text>
+            </Pressable>
+          )
+        })}
       </View>
 
       <View style={styles.field}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>
+        <Text style={[styles.label, { color: colors.foreground }]}>
           Quer explicar melhor? (opcional)
         </Text>
         <FormTextInput
@@ -163,7 +210,7 @@ export default function ReportContentScreen() {
         testID={anonymous ? 'report-anonymous-note' : 'report-identified-note'}>
         {anonymous
           ? 'Esta denúncia é anônima: não fica ligada a você nem a uma conta. Guardamos apenas um código que impede repetir a mesma denúncia.'
-          : 'Esta denúncia vai com a sua conta. A moderação sabe quem denunciou; o estabelecimento, não.'}
+          : 'Esta denúncia vai com a sua conta. A moderação sabe quem denunciou; o lugar, não.'}
       </Text>
 
       {report.isError ? (
@@ -172,10 +219,12 @@ export default function ReportContentScreen() {
         </Text>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !reason || report.isPending || resolving }}
-        disabled={!reason || report.isPending || resolving}
+      <Button
+        label={report.isPending ? 'Enviando…' : 'Enviar denúncia'}
+        size={52}
+        fill
+        disabled={busy}
+        testID="report-submit"
         onPress={() =>
           reason &&
           report.mutate({
@@ -185,31 +234,39 @@ export default function ReportContentScreen() {
             ...(details.trim() ? { details: details.trim() } : {}),
           })
         }
-        style={[
-          styles.action,
-          { backgroundColor: colors.cta, opacity: !reason || report.isPending || resolving ? 0.5 : 1 },
-        ]}
-        testID="report-submit">
-        <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-          {report.isPending ? 'Enviando…' : 'Enviar denúncia'}
-        </Text>
-      </Pressable>
+      />
     </KeyboardForm>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
-  center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
+  page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
+  center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center' },
+  centered: { textAlign: 'center' },
+  done: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
   title: typography.title,
+  subject: { gap: spacing.xs },
+  overline: typography.overline,
+  subjectName: { ...typography.heading, ...displayWeight('800') },
+  heading: { ...typography.label, ...textWeight('700') },
   reasons: { gap: spacing.sm },
-  reason: { borderWidth: 1, borderRadius: radius.md, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  field: { gap: spacing.xs },
-  label: typography.caption,
-  input: { borderWidth: 1, borderRadius: radius.md, minHeight: 100, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  reason: {
+    alignItems: 'center',
+    borderRadius: radius.thumb,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  radio: { alignItems: 'center', borderRadius: radius.pill, borderWidth: 2, height: 22, justifyContent: 'center', width: 22 },
+  dot: { borderRadius: radius.pill, height: 10, width: 10 },
+  reasonLabel: { ...typography.body, flexShrink: 1 },
+  field: { gap: spacing.sm },
+  label: { ...typography.label, ...textWeight('700') },
+  input: { borderWidth: 1, borderRadius: radius.thumb, minHeight: 112, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
   body: typography.body,
-  note: { ...typography.caption, textAlign: 'center' },
+  note: typography.meta,
   protocol: { ...typography.title, letterSpacing: 1 },
-  action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
 })

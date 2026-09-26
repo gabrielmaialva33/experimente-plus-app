@@ -1,13 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
+import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import { ImagePicker, type SelectedImage } from '@/components/image-picker'
 import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
 import { StarsInput } from '@/reviews/stars'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const MAX_LENGTH = 4000
@@ -25,7 +26,8 @@ const MAX_LENGTH = 4000
 export default function WriteReviewScreen() {
   const colors = useColors()
   const router = useRouter()
-  const { establishmentId } = useLocalSearchParams<{ establishmentId: string }>()
+  // `nome` is the place, so the form can say what is being reviewed (audit A45).
+  const { establishmentId, nome } = useLocalSearchParams<{ establishmentId: string; nome?: string }>()
   const id = Number(establishmentId)
 
   const [rating, setRating] = useState(0)
@@ -60,28 +62,22 @@ export default function WriteReviewScreen() {
             : `${create.data.failed} fotos não puderam ser enviadas.`}{' '}
           Você pode tentar de novo editando a avaliação.
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.back()}
-          style={[styles.action, { backgroundColor: colors.cta }]}>
-          <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>Voltar</Text>
-        </Pressable>
+        <Button label="Voltar" size={52} fill onPress={() => router.back()} />
       </View>
     )
   }
 
   return (
     <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Sua avaliação</Text>
+      {nome ? <ReviewSubject name={nome} /> : null}
 
-      <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+        <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
         <StarsInput rating={rating} onChange={setRating} disabled={create.isPending} />
       </View>
 
       <View style={styles.field}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>
-          Conte como foi (opcional)
-        </Text>
+        <Text style={[styles.label, { color: colors.foreground }]}>Conte como foi (opcional)</Text>
         <FormTextInput
           value={comment}
           onChangeText={setComment}
@@ -114,20 +110,14 @@ export default function WriteReviewScreen() {
         </Text>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: rating < 1 || create.isPending }}
+      <Button
+        label={create.isPending ? 'Enviando…' : 'Publicar avaliação'}
+        size={52}
+        fill
         disabled={rating < 1 || create.isPending}
         onPress={submit}
-        style={[
-          styles.action,
-          { backgroundColor: colors.cta, opacity: rating < 1 || create.isPending ? 0.5 : 1 },
-        ]}
-        testID="review-submit">
-        <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-          {create.isPending ? 'Enviando…' : 'Publicar avaliação'}
-        </Text>
-      </Pressable>
+        testID="review-submit"
+      />
 
       <Text style={[styles.note, { color: colors.mutedForeground }]}>
         Sua avaliação e as fotos aparecem na hora. Se alguém denunciar, a moderação pode
@@ -135,6 +125,17 @@ export default function WriteReviewScreen() {
         publicar.
       </Text>
     </KeyboardForm>
+  )
+}
+
+/** What is being reviewed, under a header that already says "Avaliar". */
+export function ReviewSubject({ name }: { name: string }) {
+  const colors = useColors()
+  return (
+    <View style={styles.subject} testID="review-subject">
+      <Text style={[styles.overline, { color: colors.mutedForeground }]}>Sua avaliação de</Text>
+      <Text style={[styles.subjectName, { color: colors.foreground }]}>{name}</Text>
+    </View>
   )
 }
 
@@ -154,14 +155,15 @@ export function failureMessage(error: unknown): string {
 }
 
 const styles = StyleSheet.create({
-  page: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
+  page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
   title: typography.title,
-  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.surface, padding: spacing.lg },
-  field: { gap: spacing.xs },
-  label: typography.caption,
-  input: { borderWidth: 1, borderRadius: radius.md, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  subject: { gap: spacing.xs },
+  overline: typography.overline,
+  subjectName: { ...typography.heading, ...displayWeight('800') },
+  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
+  field: { gap: spacing.sm },
+  label: { ...typography.label, ...textWeight('700') },
+  input: { borderWidth: 1, borderRadius: radius.thumb, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
   error: typography.body,
-  note: typography.caption,
-  action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
+  note: typography.meta,
 })

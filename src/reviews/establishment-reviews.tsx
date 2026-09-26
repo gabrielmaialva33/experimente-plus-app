@@ -1,14 +1,20 @@
 import { useRouter } from 'expo-router'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
+import { Button } from '@/components/button'
+import { SectionHeader } from '@/components/section-header'
 import { useSession } from '@/session/context'
 import { ReviewCard } from '@/reviews/review-card'
+import { reportHref } from '@/reviews/report-link'
 import { useEstablishmentReviews } from '@/reviews/queries'
 import { Stars } from '@/reviews/stars'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const PREVIEW = 3
+
+/** A route that carries the place's name, so the next screen can say it (audit A45). */
+const named = (path: string, name?: string) => (name ? `${path}?nome=${encodeURIComponent(name)}` : path)
 
 /**
  * Public reviews of a place (ADR-0027).
@@ -23,9 +29,11 @@ const PREVIEW = 3
  */
 export function EstablishmentReviews({
   establishmentId,
+  establishmentName,
   summary,
 }: {
   establishmentId: number
+  establishmentName?: string
   summary: { count: number; average: number | null }
 }) {
   const colors = useColors()
@@ -35,33 +43,43 @@ export function EstablishmentReviews({
 
   const reviews = query.data?.data ?? []
   const total = summary.count
+  const more = total > reviews.length && reviews.length > 0
 
   return (
-    <View
-      style={[styles.section, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}
-      testID="establishment-reviews">
-      <View style={styles.header}>
-        <Text style={[styles.heading, { color: colors.foreground }]}>Avaliações</Text>
-        {summary.average !== null ? (
-          <View style={styles.score}>
-            <Stars rating={summary.average} />
-            <Text style={[styles.average, { color: colors.foreground }]}>
-              {summary.average.toFixed(1).replace('.', ',')}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+    <View style={styles.section} testID="establishment-reviews">
+      <SectionHeader
+        title="Avaliações"
+        action={
+          more
+            ? {
+                label: 'Ver todas',
+                accessibilityLabel: `Ver todas as ${total} avaliações`,
+                onPress: () => router.push(named(`/avaliacoes/${establishmentId}`, establishmentName)),
+              }
+            : undefined
+        }
+      />
 
-      <Text style={[styles.caption, { color: colors.mutedForeground }]}>
-        {total === 0
-          ? 'Ainda não há avaliações deste lugar.'
-          : total === 1
-            ? '1 avaliação publicada'
-            : `${total} avaliações publicadas`}
-      </Text>
+      {total === 0 ? (
+        <Text style={[styles.count, { color: colors.mutedForeground }]}>Ainda não há avaliações deste lugar.</Text>
+      ) : (
+        <View style={styles.score}>
+          {summary.average !== null ? (
+            <>
+              <Stars rating={summary.average} />
+              <Text style={[styles.average, { color: colors.foreground }]}>
+                {summary.average.toFixed(1).replace('.', ',')}
+              </Text>
+            </>
+          ) : null}
+          <Text style={[styles.count, { color: colors.mutedForeground }]}>
+            {total === 1 ? '1 avaliação publicada' : `${total} avaliações publicadas`}
+          </Text>
+        </View>
+      )}
 
       {query.isError ? (
-        <Text style={[styles.caption, { color: colors.mutedForeground }]}>
+        <Text style={[styles.count, { color: colors.mutedForeground }]}>
           Não foi possível carregar as avaliações agora.
         </Text>
       ) : null}
@@ -72,23 +90,20 @@ export function EstablishmentReviews({
         <ReviewCard
           key={review.id}
           review={review}
-          onReport={(target) => router.push(`/denunciar/${target.type}/${target.id}`)}
+          establishmentName={establishmentName}
+          onReport={(target) => router.push(reportHref(target.type, target.id, target.subject))}
         />
       ))}
 
-      {total > reviews.length && reviews.length > 0 ? (
-        <Action
-          label={`Ver todas as ${total} avaliações`}
-          onPress={() => router.push(`/avaliacoes/${establishmentId}`)}
-          secondary
-        />
-      ) : null}
-
-      <Action
+      <Button
         label={status === 'authenticated' ? 'Avaliar este lugar' : 'Entrar para avaliar'}
+        variant="outline"
+        fill
         onPress={() =>
           router.push(
-            status === 'authenticated' ? `/avaliar/${establishmentId}` : '/(tabs)/sign-in'
+            status === 'authenticated'
+              ? named(`/avaliar/${establishmentId}`, establishmentName)
+              : '/(tabs)/sign-in'
           )
         }
       />
@@ -96,45 +111,9 @@ export function EstablishmentReviews({
   )
 }
 
-function Action({
-  label,
-  onPress,
-  secondary = false,
-}: {
-  label: string
-  onPress: () => void
-  secondary?: boolean
-}) {
-  const colors = useColors()
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[
-        styles.action,
-        secondary
-          ? { backgroundColor: colors.actionSecondary, borderColor: colors.actionSecondaryBorder, borderWidth: 1 }
-          : { backgroundColor: colors.cta },
-      ]}>
-      <Text
-        style={[
-          styles.actionLabel,
-          { color: secondary ? colors.actionSecondaryForeground : colors.ctaForeground },
-        ]}>
-        {label}
-      </Text>
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
-  section: { gap: spacing.sm, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
-  header: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
-  score: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
-  heading: typography.heading,
-  average: { ...typography.body, ...textWeight('700') },
-  caption: typography.caption,
-  action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
+  section: { gap: spacing.md },
+  score: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  average: { ...typography.label, ...textWeight('700') },
+  count: typography.meta,
 })

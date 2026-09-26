@@ -1,4 +1,4 @@
-import { cityWeekday, formatTime, weekdayName, weeklySchedule } from '../opening-hours'
+import { cityWeekday, formatTime, groupedSchedule, weekdayName, weeklySchedule } from '../opening-hours'
 
 describe('formatTime', () => {
   it('drops the seconds the projection carries', () => {
@@ -84,5 +84,36 @@ describe('weekdayName', () => {
   it('returns empty for an out-of-range day instead of undefined', () => {
     expect(weekdayName(7)).toBe('')
     expect(weekdayName(-1)).toBe('')
+  })
+})
+
+describe('week read as a person says it (audit A9)', () => {
+  const day = (weekday: number, opens = '09:00:00', closes = '18:00:00') =>
+    ({ weekday, opens_at: opens, closes_at: closes, spans_next_day: false, sort_order: 0 })
+
+  it('collapses seven equal days into "Todos os dias"', () => {
+    const every = [0, 1, 2, 3, 4, 5, 6].map((weekday) => day(weekday, '08:00:00', '23:00:00'))
+    expect(groupedSchedule(every)).toEqual([
+      { weekdays: [1, 2, 3, 4, 5, 6, 0], label: 'Todos os dias', hours: '08:00 às 23:00' },
+    ])
+    expect(groupedSchedule([], true)).toEqual([
+      { weekdays: [1, 2, 3, 4, 5, 6, 0], label: 'Todos os dias', hours: '24 horas' },
+    ])
+  })
+
+  it('joins only adjacent days, Monday first, and keeps split shifts on one line', () => {
+    const hours = [
+      ...[1, 2, 3, 4, 5].map((weekday) => day(weekday)),
+      day(6, '11:00:00', '15:00:00'),
+      { ...day(6, '18:00:00', '23:00:00'), sort_order: 1 },
+    ]
+    expect(groupedSchedule(hours).map(({ label, hours: text }) => `${label}: ${text}`)).toEqual([
+      'Segunda a sexta: 09:00 às 18:00',
+      'Sábado: 11:00 às 15:00 e 18:00 às 23:00',
+      'Domingo: Fechado',
+    ])
+    expect(groupedSchedule([day(1), day(3)]).map((group) => group.label)).toEqual([
+      'Segunda', 'Terça', 'Quarta', 'Quinta a domingo',
+    ])
   })
 })

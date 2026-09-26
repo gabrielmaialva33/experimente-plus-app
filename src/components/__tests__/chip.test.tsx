@@ -8,7 +8,7 @@ import { palette, radius, fontFamilies } from '@/theme/tokens'
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 
-it.each(['light', 'dark'] as const)('marks selection without relying on color or moving the label in %s', async (mode) => {
+it.each(['light', 'dark'] as const)('marks selection without relying on color, and pads evenly while off, in %s', async (mode) => {
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   const changed = jest.fn()
   function Filter() {
@@ -22,23 +22,24 @@ it.each(['light', 'dark'] as const)('marks selection without relying on color or
     borderWidth: 1.5, borderColor: palette[mode].choiceBorder, backgroundColor: palette[mode].card })
   expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].foreground, fontFamily: fontFamilies.text[500] })
   expect(target.props.hitSlop).toBeUndefined()
+  // Off: no empty check slot, so the label sits in the middle of the pill.
   const initialStyle = StyleSheet.flatten(target.props.style)
-  const slot = target.children[0] as Exclude<typeof target.children[number], string>
-  expect(slot).toHaveStyle({ width: 16 })
-  const geometry = StyleSheet.flatten(slot.props.style)
+  expect(initialStyle.paddingLeft ?? initialStyle.paddingHorizontal).toBe(initialStyle.paddingRight ?? initialStyle.paddingHorizontal)
+  expect(target.children).toHaveLength(1)
   expect(view.queryByText('✓', { includeHiddenElements: true })).toBeNull()
 
   await fireEvent.press(target)
   expect(view.getByRole('button', { name: 'Wi-Fi', selected: true })).toBeOnTheScreen()
-  // On: the brand fills the pill; the border width stays, so nothing moves.
+  // On: the brand fills the pill and the border keeps its width.
   expect(view.getByRole('button', { name: 'Wi-Fi' })).toHaveStyle({
     borderWidth: 1.5, borderColor: palette[mode].primary, backgroundColor: palette[mode].primary,
   })
+  // The check takes the room of the start padding (Material 3 filter chip).
   const selectedStyle = StyleSheet.flatten(view.getByRole('button', { name: 'Wi-Fi' }).props.style)
-  expect([selectedStyle.paddingLeft, selectedStyle.paddingRight]).toEqual([initialStyle.paddingLeft, initialStyle.paddingRight])
+  expect(selectedStyle.paddingLeft).toBeLessThan(initialStyle.paddingHorizontal as number)
   expect(view.getByText('Wi-Fi')).toHaveStyle({ color: palette[mode].primaryForeground, fontFamily: fontFamilies.text[700] })
   const indicator = view.getByText('✓', { includeHiddenElements: true }).parent!
-  expect(StyleSheet.flatten(indicator.props.style)).toEqual(geometry)
+  expect(indicator).toHaveStyle({ width: 16 })
   expect(indicator.props.accessibilityElementsHidden).toBe(true)
   expect(indicator.props.importantForAccessibility).toBe('no-hide-descendants')
   expect(changed).toHaveBeenCalledTimes(1)

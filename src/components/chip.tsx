@@ -5,8 +5,9 @@ import { useColors } from '@/theme/use-colors'
 
 /**
  * A filter of direction A: a 44-unit pill that fills with the brand when on.
- * Selection keeps its fixed leading slot, so it never depends on color alone,
- * and the border width never changes, so the label never moves.
+ * A selected chip also shows a check, so selection never depends on color
+ * alone. The check takes the room of the start padding only while it is
+ * there: an unselected chip keeps even padding instead of an empty slot.
  */
 export function Chip({
   label,
@@ -29,6 +30,7 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
+        selected && styles.chipSelected,
         maxWidth != null && { maxWidth },
         {
           backgroundColor: selected ? colors.primary : colors.card,
@@ -36,9 +38,11 @@ export function Chip({
           opacity: pressed ? 0.85 : 1,
         },
       ]}>
-      <View style={styles.indicator} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {selected ? <Text style={[styles.check, { color: colors.primaryForeground }]}>✓</Text> : null}
-      </View>
+      {selected ? (
+        <View style={styles.indicator} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={[styles.check, { color: colors.primaryForeground }]}>✓</Text>
+        </View>
+      ) : null}
       <Text
         style={[
           styles.label,
@@ -62,9 +66,9 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minHeight: minTouch,
     minWidth: minTouch,
-    paddingLeft: spacing.sm + 2,
-    paddingRight: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
+  chipSelected: { paddingLeft: spacing.sm + 2 },
   indicator: { alignItems: 'center', flexShrink: 0, justifyContent: 'center', width: 16 },
   check: { ...typography.label, ...textWeight('700') },
   label: { ...typography.label, flexShrink: 1, minWidth: 0 },

@@ -13,7 +13,7 @@ import { compactTitleText, hiddenFromAccessibility, useCompactHeader, type Compa
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
 import { ConditionsDetail, PurchaseAction, RetryPurchase, price, usageWindow } from '@/purchases/components'
-import { productIdentity, productLabel } from '@/purchases/products'
+import { productIdentity, productKind } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
@@ -237,7 +237,8 @@ function ProductHeader({ product, onTitleLayout }: {
       insetTop={false}
       eyebrow={
         <View style={[styles.kind, { backgroundColor: colors.chromeRaised }]}>
-          <Text style={[styles.kindLabel, { color: colors.chromeForeground }]}>{productLabel(product)}</Text>
+          {/* The subtitle names the place or the city; the pill says only the kind, on one line. */}
+          <Text numberOfLines={1} style={[styles.kindLabel, { color: colors.chromeForeground }]}>{productKind(product)}</Text>
         </View>
       }
       title={product.snapshot.name}
@@ -361,7 +362,8 @@ function PaymentOption({ method, selected, disabled, onPress }: {
         borderWidth: selected ? 2 : 1.5,
         borderColor: selected ? colors.choiceSelectedBorder : colors.border,
         backgroundColor: selected ? colors.choiceSelected : colors.choiceBackground,
-      }]}>
+      // An unavailable method is drawn as a placeholder, so it never reads as a choice.
+      }, unavailable && !selected && styles.methodUnavailable]}>
       <View style={[styles.radio, { borderColor: unavailable ? colors.mutedForeground : colors.primary }]}>
         {selected ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
       </View>
@@ -434,6 +436,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderRadius: 18, flexDirection: 'row', gap: 14,
     minHeight: 64, paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
   },
+  methodUnavailable: { backgroundColor: 'transparent', borderStyle: 'dashed' },
   radio: { alignItems: 'center', borderRadius: 11, borderWidth: 2, height: 22, justifyContent: 'center', width: 22 },
   dot: { borderRadius: 5, height: 10, width: 10 },
   methodText: { flexShrink: 1, gap: 2 },

@@ -54,7 +54,7 @@ export default function ItinerariesScreen() {
         ) : composing ? null : (
           // Audit A34: an empty list offers the way to fill it.
           <EmptyState
-            icon="map-outline"
+            icon="trail-sign-outline"
             title="Nenhum roteiro ainda"
             text="Crie um e adicione lugares a partir dos seus favoritos ou da página de cada lugar."
             action={{ label: 'Criar roteiro', onPress: () => setComposing(true) }}
@@ -79,7 +79,7 @@ export default function ItinerariesScreen() {
           ]}
           testID={`itinerary-${item.id}`}>
           <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
-            <Ionicons name="map-outline" size={22} color={colors.primaryAccent} />
+            <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
             <Text numberOfLines={1} style={[styles.name, { color: colors.foreground }]}>

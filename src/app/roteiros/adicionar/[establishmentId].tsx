@@ -109,7 +109,7 @@ export default function AddToItineraryScreen() {
           ]}
           testID={`add-to-${item.id}`}>
           <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
-            <Ionicons name="map-outline" size={22} color={colors.primaryAccent} />
+            <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
             <Text numberOfLines={1} style={[styles.label, { color: colors.foreground }]}>{item.name}</Text>

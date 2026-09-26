@@ -76,7 +76,7 @@ export default function AccountScreen() {
           <ListGroup title="Minhas coisas">
             <ListRow icon="heart-outline" label="Favoritos" onPress={() => router.push('/conta/favoritos')} />
             <ListRow icon="notifications-outline" label="Seguindo" onPress={() => router.push('/conta/seguindo')} />
-            <ListRow icon="map-outline" label="Roteiros" onPress={() => router.push('/roteiros')} />
+            <ListRow icon="trail-sign-outline" label="Roteiros" onPress={() => router.push('/roteiros')} />
             <ListRow icon="star-outline" label="Avaliações" onPress={() => router.push('/conta/avaliacoes')} />
           </ListGroup>
 

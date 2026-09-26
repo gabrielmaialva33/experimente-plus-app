@@ -1,5 +1,9 @@
 import type { PurchaseProduct } from '@/api/purchases'
 
+/** The kind alone, for a header whose subtitle already names the place or the city. */
+export const productKind = (product: PurchaseProduct) =>
+  product.product_type === 'offer' ? 'Voucher avulso' : 'Pacote da cidade'
+
 export function productLabel(product: PurchaseProduct) {
   return product.product_type === 'offer'
     ? `Voucher avulso · ${product.establishment.public_name}`

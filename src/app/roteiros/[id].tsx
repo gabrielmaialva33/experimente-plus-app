@@ -38,7 +38,7 @@ export default function ItineraryScreen() {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
         <EmptyState
-          icon="map-outline"
+          icon="trail-sign-outline"
           title="Este roteiro não foi encontrado."
           action={{ label: 'Ver meus roteiros', onPress: () => router.replace('/roteiros') }}
         />

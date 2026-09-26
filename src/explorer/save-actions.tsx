@@ -81,7 +81,7 @@ export function SaveActions({ establishmentId, name, citySlug, slug }: SaveActio
     {
       key: 'itinerary',
       label: 'Roteiro',
-      icon: 'map-outline',
+      icon: 'trail-sign-outline',
       pressed: undefined,
       busy: false,
       onPress: requireSession(() => router.push(`/roteiros/adicionar/${establishmentId}`)),

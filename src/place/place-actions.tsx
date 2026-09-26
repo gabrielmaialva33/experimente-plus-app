@@ -69,7 +69,7 @@ export function PlaceActions({
           testID="place-follow"
         />
         <IconButton
-          icon="map-outline"
+          icon="trail-sign-outline"
           accessibilityLabel="Adicionar a um roteiro"
           onPress={requireSession(() => router.push(`/roteiros/adicionar/${establishmentId}`))}
           testID="place-itinerary"

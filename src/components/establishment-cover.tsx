@@ -1,9 +1,8 @@
-import { Image } from 'expo-image'
-import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import type { Media } from '@/catalog/types'
+import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -15,7 +14,6 @@ export function EstablishmentCover({
   detail?: boolean
 }) {
   const colors = useColors()
-  const [failedUrl, setFailedUrl] = useState<string | null>(null)
   const asset = cover?.asset
   const url = asset?.url
   // A conservative display floor, not a catalog eligibility rule. In particular,
@@ -26,24 +24,24 @@ export function EstablishmentCover({
     Number.isFinite(asset.height) &&
     asset.height >= 180
 
-  if (!usable || !url?.trim() || !cover || failedUrl === url) {
-    return (
-      <View style={[styles.fallback, { backgroundColor: colors.contentAbsent }]}>
-        <View style={[styles.identifier, { borderColor: colors.contentAbsentBorder }]}>
-          <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
-        </View>
+  const fallback = (
+    <View style={[styles.fallback, { backgroundColor: colors.contentAbsent }]}>
+      <View style={[styles.identifier, { borderColor: colors.contentAbsentBorder }]}>
+        <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
       </View>
-    )
-  }
+    </View>
+  )
+
+  if (!usable || !url?.trim() || !cover) return fallback
 
   return (
-    <Image
+    <RemoteImage
       source={{ uri: resolveMediaUrl(url) }}
       accessibilityLabel={cover.alt_text}
       style={[styles.cover, detail && styles.detail]}
       contentFit="cover"
       transition={150}
-      onError={() => setFailedUrl(url)}
+      fallback={fallback}
     />
   )
 }

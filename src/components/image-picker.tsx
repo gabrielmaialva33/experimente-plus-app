@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Image } from 'expo-image'
 import {
   launchImageLibraryAsync,
   UIImagePickerPreferredAssetRepresentationMode,
@@ -7,6 +6,7 @@ import {
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { RemoteImage } from '@/components/remote-image'
 import { validateImageAsset, type ValidatedImageAsset } from '@/media/image-validation'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -123,11 +123,18 @@ export function ImagePicker({
           <View
             key={`${image.uri}-${index}`}
             style={[styles.thumbnailWrapper, { borderColor: colors.border }]}>
-            <Image
+            <RemoteImage
               source={{ uri: image.uri }}
               style={styles.thumbnail}
               contentFit="cover"
               accessibilityLabel={`Foto ${index + 1} de ${images.length}`}
+              fallback={
+                <View
+                  accessible
+                  accessibilityLabel={`Foto ${index + 1} de ${images.length}`}
+                  style={[styles.thumbnail, { backgroundColor: colors.contentAbsent }]}
+                />
+              }
             />
             {!disabled && (
               <Pressable

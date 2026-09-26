@@ -175,6 +175,8 @@ export function EstablishmentPartnerContent({
             const price =
               item.kind === 'showcase_item' ? formatPrice(item.informationalPriceCents) : null
             const time = item.kind === 'event' ? formatEventTime(item, timeZone) : null
+            // The date tile is drawn, not read: the label says the whole day and hours.
+            const when = item.kind === 'event' ? formatEventWindow(item, timeZone) : null
             return (
               <View
                 key={`${item.kind}-${item.id}`}
@@ -188,6 +190,9 @@ export function EstablishmentPartnerContent({
                   overline={LABELS[item.kind]}
                   title={item.title}
                   meta={price ?? time}
+                  accessibilityLabel={[LABELS[item.kind], item.title, when ?? price ?? time]
+                    .filter(Boolean)
+                    .join(', ')}
                   image={
                     date || !cover ? null : { uri: resolveMediaUrl(cover.url), alt: cover.altText }
                   }
@@ -268,6 +273,7 @@ function ContentSheet({
             {cover ? (
               <RemoteImage
                 source={{ uri: resolveMediaUrl(cover.url) }}
+                accessible={Boolean(cover.altText)}
                 accessibilityLabel={cover.altText}
                 style={styles.media}
                 contentFit="cover"

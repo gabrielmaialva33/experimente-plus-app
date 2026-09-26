@@ -12,7 +12,7 @@ import EditionScreen from '@/app/(tabs)/wallet/edicao/[id]'
 import EditionsScreen from '@/app/(tabs)/wallet/edicoes'
 import OrderScreen from '@/app/(tabs)/wallet/pedido/[id]'
 import PublicProductScreen from '@/app/compra/[id]'
-import { EstablishmentOffers } from '@/purchases/establishment-offers'
+import { PlaceBenefits } from '@/place/benefit-ticket'
 import { palette } from '@/theme/tokens'
 
 jest.mock('expo-router', () => ({
@@ -478,11 +478,15 @@ it('keeps the product and conditions public and requires login only to buy', asy
   expect(api.createPurchase).not.toHaveBeenCalled()
 })
 
+const placeBenefits = () => (
+  <PlaceBenefits citySlug="londrina" slug="loja-3" timeZone="America/Sao_Paulo" />
+)
+
 it('opens only a voucher sold by this establishment and leaves its entry as navigation', async () => {
   queries.usePurchaseEditions.mockReturnValue({ data: { products } })
-  const view = await page(<EstablishmentOffers citySlug="londrina" slug="loja-3" />)
+  const view = await page(placeBenefits())
   expect(view.getAllByRole('button')).toHaveLength(1)
-  expect(view.getByText('Vouchers deste lugar')).toBeOnTheScreen()
+  expect(view.getAllByText('BENEFÍCIO')).toHaveLength(1)
   await fireEvent.press(view.getByRole('button', { name: /Ver oferta · Oferta 3/ }))
   expect(router.push).toHaveBeenCalledWith('/compra/2?offerId=3')
   expect(view.queryByText(/Oferta 2/)).toBeNull()
@@ -505,8 +509,8 @@ it.each([
   'does not obstruct discovery when no matching on-sale voucher is available (%#)',
   async (catalog) => {
     queries.usePurchaseEditions.mockReturnValue(catalog)
-    const view = await page(<EstablishmentOffers citySlug="londrina" slug="loja-3" />)
-    expect(view.queryByText('Vouchers deste lugar')).toBeNull()
+    const view = await page(placeBenefits())
+    expect(view.queryByText('BENEFÍCIO')).toBeNull()
     expect(view.queryByRole('button')).toBeNull()
   }
 )
@@ -700,11 +704,11 @@ it('offers neither next steps nor cancellation once the payment is confirmed', a
   expect(view.getByRole('button', { name: 'Consultar carteira' })).toBeOnTheScreen()
 })
 
-// A28: the place sells vouchers "deste lugar"; the interface never says "loja".
-it('names the vouchers of a place without calling it a store', async () => {
+// A28: a place's benefit is never introduced as something sold by a "loja".
+it('names the benefit of a place without calling it a store', async () => {
   queries.usePurchaseEditions.mockReturnValue({ data: { products } })
-  const view = await page(<EstablishmentOffers citySlug="londrina" slug="loja-3" />)
-  expect(view.getByText('Vouchers deste lugar')).toBeOnTheScreen()
+  const view = await page(placeBenefits())
+  expect(view.getByText('BENEFÍCIO')).toBeOnTheScreen()
   expect(view.queryByText(/\bloja\b/i)).toBeNull()
   expect(view.getByRole('button', { name: /^Ver oferta/ })).toHaveStyle({
     backgroundColor: palette.light.cta,

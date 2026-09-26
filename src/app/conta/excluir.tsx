@@ -6,7 +6,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { ACCOUNT_DELETION_LITERAL, deleteAccount } from '@/api/me'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
@@ -47,6 +49,7 @@ export default function DeleteAccountScreen() {
       : remove.isError
         ? 'Não foi possível excluir a conta agora.'
         : null
+  useAnnouncement(message)
 
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>
@@ -57,7 +60,12 @@ export default function DeleteAccountScreen() {
             { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
           ]}
         >
-          <Ionicons name="warning-outline" size={24} color={colors.destructiveAccent} />
+          <Ionicons
+            name="warning-outline"
+            size={24}
+            color={colors.destructiveAccent}
+            {...decorative}
+          />
           <Text style={[styles.body, styles.warningText, { color: colors.foreground }]}>
             Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
           </Text>

@@ -1,14 +1,13 @@
 import { useRouter } from 'expo-router'
-import { Share, StyleSheet, View } from 'react-native'
+import { Share } from 'react-native'
 
 import type { PartnerContentItemKind } from '@/api/partner-content'
 import { ActionMenu } from '@/components/action-menu'
 import { IconButton } from '@/components/icon-button'
-import { publicEstablishmentUrl } from '@/explorer/save-actions'
 import { useSavedContent, useToggleSavedContent } from '@/explorer/queries'
+import { publicEstablishmentUrl } from '@/place/links'
 import { reportHref } from '@/reviews/report-link'
 import { useSession } from '@/session/context'
-import { spacing } from '@/theme/tokens'
 
 const PATH = { experience: 'experiences', event: 'events' } as const
 
@@ -140,17 +139,3 @@ export function ContentMenu(props: ContentActionProps) {
     />
   )
 }
-
-/** Heart and "⋯" together, as a card shows them. */
-export function ContentActions(props: ContentActionProps) {
-  return (
-    <View style={styles.row}>
-      <ContentFavorite {...props} />
-      <ContentMenu {...props} />
-    </View>
-  )
-}
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: spacing.sm },
-})

@@ -4,11 +4,14 @@ import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { decorative } from '@/components/decorative'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
 import { useAddItineraryStop, useCreateItinerary, useItineraries } from '@/explorer/queries'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -30,6 +33,15 @@ export default function AddToItineraryScreen() {
   const [name, setName] = useState('')
   const [composing, setComposing] = useState(false)
   const [added, setAdded] = useState<{ id: number; name: string } | null>(null)
+  const nameLines = useLineCap(1)
+
+  const failure =
+    add.error instanceof ApiError && add.error.status === 404
+      ? 'Este lugar não está disponível para roteiros no momento.'
+      : add.isError || create.isError
+        ? 'Não foi possível adicionar agora.'
+        : null
+  useAnnouncement(added ? `Adicionado a ${added.name}` : failure)
 
   if (itineraries.isPending) {
     return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
@@ -49,13 +61,6 @@ export default function AddToItineraryScreen() {
     create.mutate({ name: trimmed }, { onSuccess: (itinerary) => addTo(itinerary) })
   }
 
-  const failure =
-    add.error instanceof ApiError && add.error.status === 404
-      ? 'Este lugar não está disponível para roteiros no momento.'
-      : add.isError || create.isError
-        ? 'Não foi possível adicionar agora.'
-        : null
-
   const busy = add.isPending || create.isPending
   const items = itineraries.data?.data ?? []
 
@@ -66,7 +71,7 @@ export default function AddToItineraryScreen() {
           style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
           testID="added"
         >
-          <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
+          <View style={[styles.badge, { backgroundColor: colors.successSoft }]} {...decorative}>
             <Ionicons name="checkmark" size={26} color={colors.successAccent} />
           </View>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
@@ -130,7 +135,7 @@ export default function AddToItineraryScreen() {
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
-            <Text numberOfLines={1} style={[styles.label, { color: colors.foreground }]}>
+            <Text numberOfLines={nameLines} style={[styles.label, { color: colors.foreground }]}>
               {item.name}
             </Text>
             <Text style={[styles.caption, { color: colors.mutedForeground }]}>

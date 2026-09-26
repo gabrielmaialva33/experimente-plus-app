@@ -56,26 +56,37 @@ const RATING_LABELS: Record<number, string> = {
   5: 'Ótimo',
 }
 
-/** The same row, answering touch. Each star is its own 48pt target. */
+/**
+ * The same row, answering touch. Each star is its own 48pt target, and the
+ * row is one choice of five: a radio group whose chosen star is announced as
+ * checked, like every other single choice in the app.
+ */
 export function StarsInput({
   rating,
   onChange,
   disabled,
+  label = 'Nota',
 }: {
   rating: number
   onChange: (rating: number) => void
   disabled?: boolean
+  /** Names the group, e.g. "Sua nota". */
+  label?: string
 }) {
   const colors = useColors()
 
   return (
     <View style={styles.input}>
-      <View style={styles.row}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.row}>
         {STARS.map((star) => (
           <Pressable
             key={star}
             accessibilityRole="radio"
-            accessibilityState={{ selected: star === rating, disabled: Boolean(disabled) }}
+            accessibilityState={{
+              checked: star === rating,
+              selected: star === rating,
+              disabled: Boolean(disabled),
+            }}
             accessibilityLabel={`${star} de 5, ${RATING_LABELS[star]}`}
             disabled={disabled}
             hitSlop={spacing.sm}

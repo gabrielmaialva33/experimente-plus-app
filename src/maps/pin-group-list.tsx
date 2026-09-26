@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { MapPinGroup } from './types'
@@ -18,18 +20,20 @@ export function PinGroupList({
   onClose: () => void
 }) {
   const colors = useColors()
+  const title = `${group.pins.length} lugares aqui`
+  const lines = useLineCap(1)
+  // Opened by a tap on the map: the list is new, and says what it holds.
+  useAnnouncement(`${group.pins.length} lugares neste ponto`)
 
   return (
-    <View
-      accessibilityLabel={`${group.pins.length} lugares neste ponto`}
-      style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}
-    >
+    <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.header}>
-        <Text
-          style={[styles.title, { color: colors.foreground }]}
-        >{`${group.pins.length} lugares aqui`}</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          {title}
+        </Text>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Fechar lista de lugares"
           onPress={onClose}
           hitSlop={spacing.sm}
           style={styles.close}
@@ -45,11 +49,14 @@ export function PinGroupList({
           onPress={() => onSelect(pin.slug)}
           style={[styles.row, { borderTopColor: colors.border }]}
         >
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={lines}>
             {pin.name}
           </Text>
           {pin.category ? (
-            <Text style={[styles.category, { color: colors.mutedForeground }]} numberOfLines={1}>
+            <Text
+              style={[styles.category, { color: colors.mutedForeground }]}
+              numberOfLines={lines}
+            >
               {pin.category}
             </Text>
           ) : null}

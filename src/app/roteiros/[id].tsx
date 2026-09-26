@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { Itinerary } from '@/api/explorer'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
@@ -76,9 +77,13 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       rename.mutate({ name: trimmed, notes: itinerary.notes })
   }
 
+  // Moving and removing change a list the person may not be looking at: each says what it did.
   const move = (index: number, delta: -1 | 1) => {
     const next = moveStop(stopIds, index, delta)
-    if (next !== stopIds) reorder.mutate(next)
+    if (next !== stopIds)
+      reorder.mutate(next, {
+        onSuccess: () => announce(`Parada movida para a posição ${index + delta + 1}.`),
+      })
   }
 
   const nameStatus = rename.isPending
@@ -88,6 +93,13 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       : rename.isSuccess && name.trim() === itinerary.name
         ? 'Nome salvo.'
         : null
+  useAnnouncement(
+    rename.isError
+      ? 'Não foi possível salvar o nome agora.'
+      : reorder.isError || remove.isError
+        ? 'Não foi possível alterar o roteiro agora.'
+        : nameStatus === 'Nome salvo.' && nameStatus
+  )
 
   return (
     <KeyboardForm
@@ -188,7 +200,9 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
               label={`Remover parada ${index + 1}`}
               icon="trash-outline"
               disabled={busy}
-              onPress={() => remove.mutate(stop.id)}
+              onPress={() =>
+                remove.mutate(stop.id, { onSuccess: () => announce('Parada removida.') })
+              }
               testID={`stop-${stop.id}-remove`}
             />
           </View>
@@ -224,6 +238,7 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
             <Button label="Cancelar" variant="ghost" onPress={() => setConfirmingDelete(false)} />
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Excluir roteiro"
               accessibilityState={{ disabled: destroy.isPending }}
               disabled={destroy.isPending}
               onPress={() =>
@@ -264,6 +279,8 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
   const favorites = useSavedList('favorites')
   const add = useAddItineraryStop()
 
+  useAnnouncement(add.isError && 'Não foi possível adicionar agora.')
+
   const present = new Set(itinerary.stops.map((stop) => stop.establishment?.id).filter(Boolean))
   const candidates = (favorites.data?.data ?? []).filter(
     (entry) => !present.has(entry.establishment.id)
@@ -299,7 +316,13 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
                 accessibilityLabel={`Adicionar ${entry.establishment.name} ao roteiro`}
                 onPress={() => {
                   if (!add.isPending)
-                    add.mutate({ id: itinerary.id, establishmentId: entry.establishment.id })
+                    add.mutate(
+                      { id: itinerary.id, establishmentId: entry.establishment.id },
+                      {
+                        onSuccess: () =>
+                          announce(`${entry.establishment.name} adicionado ao roteiro.`),
+                      }
+                    )
                 }}
                 testID={`add-stop-${entry.establishment.id}`}
               />
@@ -363,12 +386,13 @@ const styles = StyleSheet.create({
   stop: { borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
   stopHead: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   stopBody: { flex: 1 },
+  // A floor, so a larger digit grows the circle instead of spilling out of it.
   position: {
     alignItems: 'center',
     borderRadius: radius.pill,
-    height: 28,
     justifyContent: 'center',
-    width: 28,
+    minHeight: 28,
+    minWidth: 28,
   },
   positionLabel: { ...typography.meta, ...textWeight('700') },
   stopActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },

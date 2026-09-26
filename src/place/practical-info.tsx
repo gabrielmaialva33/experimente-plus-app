@@ -4,6 +4,7 @@ import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { cityWeekday, groupedSchedule, weekdayName } from '@/catalog/opening-hours'
 import type { EstablishmentDetail } from '@/catalog/types'
+import { decorative } from '@/components/decorative'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -208,7 +209,7 @@ function Row({
   const colors = useColors()
   return (
     <View style={[styles.row, { borderTopColor: colors.borderSubtle }]}>
-      <Ionicons name={icon} size={22} color={colors.primary} style={styles.icon} />
+      <Ionicons name={icon} size={22} color={colors.primary} style={styles.icon} {...decorative} />
       <View style={[styles.grow, styles.copy]}>{children}</View>
       {action}
     </View>

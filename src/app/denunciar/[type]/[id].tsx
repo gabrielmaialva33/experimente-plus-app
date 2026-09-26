@@ -3,7 +3,9 @@ import { Stack, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
@@ -128,15 +130,22 @@ export default function ReportContentScreen() {
   const identified = useReportContent()
   const withoutAccount = useReportAnonymously()
   const report = anonymous ? withoutAccount : identified
+  useAnnouncement(
+    report.isSuccess
+      ? `Denúncia registrada. Protocolo ${report.data.protocol_number}.`
+      : report.isError && failureMessage(report.error, anonymous)
+  )
 
   if (report.isSuccess) {
     return (
       <View style={[styles.page, styles.center, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: 'Denúncia registrada' }} />
-        <View style={[styles.done, { backgroundColor: colors.successSoft }]}>
+        <View style={[styles.done, { backgroundColor: colors.successSoft }]} {...decorative}>
           <Ionicons name="checkmark" size={32} color={colors.successAccent} />
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>Denúncia registrada</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Denúncia registrada
+        </Text>
         <Text style={[styles.body, styles.centered, { color: colors.foreground }]}>
           Guarde o protocolo para acompanhar o caso:
         </Text>
@@ -183,7 +192,9 @@ export default function ReportContentScreen() {
       ) : null}
 
       <View accessibilityRole="radiogroup" accessibilityLabel="Motivo" style={styles.reasons}>
-        <Text style={[styles.heading, { color: colors.foreground }]}>Qual é o problema?</Text>
+        <Text accessibilityRole="header" style={[styles.heading, { color: colors.foreground }]}>
+          Qual é o problema?
+        </Text>
         {REASONS[target].map((value) => {
           const selected = reason === value
           return (
@@ -225,6 +236,7 @@ export default function ReportContentScreen() {
           Quer explicar melhor? (opcional)
         </Text>
         <FormTextInput
+          accessibilityLabel="Quer explicar melhor? (opcional)"
           value={details}
           onChangeText={setDetails}
           multiline

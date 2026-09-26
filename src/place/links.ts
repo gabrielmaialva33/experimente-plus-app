@@ -1,5 +1,6 @@
 import type { Href } from 'expo-router'
 
+import { apiUrl } from '@/api/config'
 import type { PartnerContentItemKind } from '@/api/partner-content'
 
 /** The search parameter that names the item a place page opens on (audit A14). */
@@ -26,3 +27,13 @@ export function placeHref(
     ? `${path}?${HIGHLIGHT_PARAM}=${highlightKey(highlight.kind, highlight.id)}`
     : path
 }
+
+/**
+ * The public address of an establishment, as someone else would open it.
+ *
+ * Built from the city and establishment slugs because that pair is the public
+ * identity (ADR-0016 §6) and the only one that resolves from a URL — sharing
+ * the numeric id would hand out an address nobody can open.
+ */
+export const publicEstablishmentUrl = (citySlug: string, slug: string) =>
+  apiUrl(`/cidades/${encodeURIComponent(citySlug)}/estabelecimentos/${encodeURIComponent(slug)}`)

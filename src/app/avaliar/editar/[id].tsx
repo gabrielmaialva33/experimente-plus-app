@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ReviewSubject, failureMessage } from '@/app/avaliar/[establishmentId]'
@@ -77,6 +78,11 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
   // text edit that has nothing to do with them.
   const remaining = Math.max(0, (rules.data?.max_photos ?? 0) - photos.length)
   const photoBusy = addPhoto.isPending || removePhoto.isPending
+  useAnnouncement(
+    addPhoto.isError || removePhoto.isError
+      ? failureMessage(addPhoto.error ?? removePhoto.error)
+      : update.isError && failureMessage(update.error)
+  )
 
   return (
     <KeyboardForm
@@ -90,11 +96,17 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
-        <StarsInput rating={rating} onChange={setRating} disabled={update.isPending} />
+        <StarsInput
+          label="Sua nota"
+          rating={rating}
+          onChange={setRating}
+          disabled={update.isPending}
+        />
       </View>
 
       <Text style={[styles.label, { color: colors.foreground }]}>Seu comentário</Text>
       <FormTextInput
+        accessibilityLabel="Seu comentário"
         value={comment}
         onChangeText={setComment}
         multiline

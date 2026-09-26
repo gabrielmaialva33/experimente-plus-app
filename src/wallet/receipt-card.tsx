@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { Receipt } from './types'
@@ -18,7 +19,7 @@ export function ReceiptCard({ receipt, compact = false }: { receipt: Receipt; co
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
       <View style={styles.head}>
-        <View style={[styles.mark, { backgroundColor: colors.successSoft }]}>
+        <View style={[styles.mark, { backgroundColor: colors.successSoft }]} {...decorative}>
           <Ionicons name="checkmark-done" size={20} color={colors.successAccent} />
         </View>
         <View style={styles.headText}>

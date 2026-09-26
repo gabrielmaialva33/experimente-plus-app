@@ -41,6 +41,20 @@ it('says a review held by a rule is under review, not hidden by a person', async
   expect(view.getByTestId('my-review-3')).toHaveTextContent(/Publicada/)
 })
 
+// Every card has "Editar" and "Excluir": each says which review it acts on.
+it('names the review each action acts on', async () => {
+  queries.useMyReviews.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { data: [review(1, 'published', false)] },
+  })
+
+  const view = await render(<MyReviewsScreen />)
+
+  expect(view.getByRole('button', { name: /^Editar avaliação de 23/ })).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: /^Excluir avaliação de 23/ })).toBeOnTheScreen()
+})
+
 // Audit A34: an empty list is not a dead end.
 it('offers a way to start when there is no review yet', async () => {
   queries.useMyReviews.mockReturnValue({

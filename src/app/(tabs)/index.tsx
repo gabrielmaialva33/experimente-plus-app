@@ -12,6 +12,7 @@ import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
 import type { EstablishmentSummary } from '@/catalog/types'
+import { useAnnouncement } from '@/components/announce'
 import { ChoiceRow } from '@/components/choice-row'
 import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
@@ -23,6 +24,7 @@ import { SearchField } from '@/components/search-field'
 import { SectionHeader } from '@/components/section-header'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
+import { useLineCap } from '@/theme/font-scale'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -49,6 +51,7 @@ export default function ExploreScreen() {
   const [choosingCity, setChoosingCity] = useState(false)
   const [asking, setAsking] = useState(false)
   const list = useRef<FlatList<EstablishmentSummary>>(null)
+  const cityLines = useLineCap(1)
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
   useFocusEffect(
@@ -172,7 +175,10 @@ export default function ExploreScreen() {
           ]}
         >
           <Ionicons name="location-outline" size={18} color={colors.chromeForeground} />
-          <Text numberOfLines={1} style={[styles.cityName, { color: colors.chromeForeground }]}>
+          <Text
+            numberOfLines={cityLines}
+            style={[styles.cityName, { color: colors.chromeForeground }]}
+          >
             {city?.name ?? 'Cidade'}
           </Text>
           <Ionicons
@@ -255,18 +261,20 @@ export default function ExploreScreen() {
   )
 
   // A search answers first with how much it found, then with the places (audit A16).
+  const resultsTitle = !hasFilters
+    ? `Lugares em ${cityName}`
+    : count == null
+      ? `Resultados em ${cityName}`
+      : count === 0
+        ? `Nenhum resultado em ${cityName}`
+        : `${plural(count, 'resultado', 'resultados')} em ${cityName}`
+  // Typing and filtering answer out loud with that count, once the search settles;
+  // browsing the city says nothing, since nothing was asked.
+  useAnnouncement(hasFilters && count != null && !search.isFetching && resultsTitle)
   const resultsHeader = (
     <View style={styles.resultsHeader}>
       <SectionHeader
-        title={
-          !hasFilters
-            ? `Lugares em ${cityName}`
-            : count == null
-              ? `Resultados em ${cityName}`
-              : count === 0
-                ? `Nenhum resultado em ${cityName}`
-                : `${plural(count, 'resultado', 'resultados')} em ${cityName}`
-        }
+        title={resultsTitle}
         hint={
           !hasFilters
             ? count

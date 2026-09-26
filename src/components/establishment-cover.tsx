@@ -28,11 +28,18 @@ export function EstablishmentCover({
   cover,
   detail = false,
   height,
+  accessible = false,
 }: {
   cover?: Media | null
   detail?: boolean
   /** A fixed footprint, so a card keeps its height with or without a photo. */
   height?: number
+  /**
+   * On its own, as on a place's page, the photo is an element a screen reader
+   * reaches and reads by its description. Inside a card it is not: the card
+   * speaks as one.
+   */
+  accessible?: boolean
 }) {
   const colors = useColors()
   const image = coverImage(cover)
@@ -58,6 +65,7 @@ export function EstablishmentCover({
   return (
     <RemoteImage
       source={{ uri: image.uri }}
+      accessible={accessible && Boolean(image.alt)}
       accessibilityLabel={image.alt}
       style={[styles.cover, detail && styles.detail, height != null && { height }]}
       contentFit="cover"

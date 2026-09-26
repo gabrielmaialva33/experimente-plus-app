@@ -84,6 +84,17 @@ it('offers removal only where the caller may remove, and says which photo', asyn
   expect(readOnly.queryByTestId('remove-photo-1')).toBeNull()
 })
 
+// The drawn circle is 28; the target is a full 44 inside the 88 photo, without a hit
+// slop past its edge that Android would never deliver.
+it('gives the remove control a 44 target inside the photo', async () => {
+  const view = await render(
+    <ReviewPhotos photos={[photo(1, 'Prato do dia')]} onRemove={jest.fn()} />
+  )
+  const target = view.getByRole('button', { name: 'Remover Prato do dia' })
+  expect(target).toHaveStyle({ width: 44, height: 44, top: 0, right: 0 })
+  expect(target.props.hitSlop).toBeUndefined()
+})
+
 it('sends a photo as a file part, under the field the server reads', async () => {
   // expo/fetch replaces the global fetch and sends only Blob parts; React
   // Native's { uri, name, type } object throws on the device before any request.

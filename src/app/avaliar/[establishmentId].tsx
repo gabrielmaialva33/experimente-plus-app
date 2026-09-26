@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
@@ -42,6 +43,16 @@ export default function WriteReviewScreen() {
   // known, and when it is zero, no picker is offered: a picker whose every
   // upload fails is worse than none.
   const maxPhotos = rules.data?.max_photos ?? 0
+  const failedPhotos = create.isSuccess ? create.data.failed : 0
+  const photosNotice =
+    failedPhotos === 1
+      ? 'Uma foto não pôde ser enviada.'
+      : `${failedPhotos} fotos não puderam ser enviadas.`
+  useAnnouncement(
+    failedPhotos > 0
+      ? `Avaliação publicada. ${photosNotice}`
+      : create.isError && failureMessage(create.error)
+  )
 
   const submit = () => {
     if (rating < 1) return
@@ -58,15 +69,14 @@ export default function WriteReviewScreen() {
   if (create.isSuccess && create.data.failed > 0) {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Avaliação publicada</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Avaliação publicada
+        </Text>
         <Text
           style={[styles.error, { color: colors.destructiveAccent }]}
           testID="review-photos-failed"
         >
-          {create.data.failed === 1
-            ? 'Uma foto não pôde ser enviada.'
-            : `${create.data.failed} fotos não puderam ser enviadas.`}{' '}
-          Você pode tentar de novo editando a avaliação.
+          {photosNotice} Você pode tentar de novo editando a avaliação.
         </Text>
         <Button label="Voltar" size={52} fill onPress={() => router.back()} />
       </View>
@@ -84,12 +94,18 @@ export default function WriteReviewScreen() {
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
-        <StarsInput rating={rating} onChange={setRating} disabled={create.isPending} />
+        <StarsInput
+          label="Sua nota"
+          rating={rating}
+          onChange={setRating}
+          disabled={create.isPending}
+        />
       </View>
 
       <View style={styles.field}>
         <Text style={[styles.label, { color: colors.foreground }]}>Conte como foi (opcional)</Text>
         <FormTextInput
+          accessibilityLabel="Conte como foi (opcional)"
           value={comment}
           onChangeText={setComment}
           multiline

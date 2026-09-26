@@ -3,12 +3,14 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { TextField } from '@/components/text-field'
 import { useCreateItinerary, useItineraries } from '@/explorer/queries'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -25,6 +27,7 @@ export default function ItinerariesScreen() {
   const router = useRouter()
   const query = useItineraries()
   const [composing, setComposing] = useState(false)
+  const nameLines = useLineCap(1)
   const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
@@ -94,7 +97,7 @@ export default function ItinerariesScreen() {
             <Ionicons name="trail-sign-outline" size={22} color={colors.primaryAccent} />
           </View>
           <View style={styles.copy}>
-            <Text numberOfLines={1} style={[styles.name, { color: colors.foreground }]}>
+            <Text numberOfLines={nameLines} style={[styles.name, { color: colors.foreground }]}>
               {item.name}
             </Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
@@ -113,6 +116,8 @@ function NewItinerary({ onCancel }: { onCancel: () => void }) {
   const router = useRouter()
   const create = useCreateItinerary()
   const [name, setName] = useState('')
+  const failure = create.isError ? 'Não foi possível criar o roteiro agora.' : null
+  useAnnouncement(failure)
 
   const submit = () => {
     const trimmed = name.trim()
@@ -142,7 +147,7 @@ function NewItinerary({ onCancel }: { onCancel: () => void }) {
         returnKeyType="done"
         autoFocus
         onSubmitEditing={submit}
-        error={create.isError ? 'Não foi possível criar o roteiro agora.' : null}
+        error={failure}
         testID="new-itinerary-name"
       />
       <View style={styles.actions}>

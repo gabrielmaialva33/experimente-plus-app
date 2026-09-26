@@ -85,6 +85,17 @@ it('gives every star its own touch target and names the score it sets', async ()
   expect(changed).toHaveBeenCalledWith(3)
 })
 
+// One choice of five, announced like every other single choice: the chosen star is checked.
+it('reads the stars as a named radio group with the chosen one checked', async () => {
+  const view = await render(<StarsInput label="Sua nota" rating={4} onChange={jest.fn()} />)
+
+  // The group is not itself one element — that would hide the stars on iOS — so it is found by its name.
+  expect(view.getByLabelText('Sua nota').props.accessibilityRole).toBe('radiogroup')
+  expect(view.getByRole('radio', { name: '4 de 5, Bom' })).toBeChecked()
+  expect(view.getByRole('radio', { name: '5 de 5, Ótimo' })).not.toBeChecked()
+  expect(view.getAllByRole('radio', { checked: true })).toHaveLength(1)
+})
+
 it('shows the author, the reply and both report entries', async () => {
   const report = jest.fn()
   const view = await render(

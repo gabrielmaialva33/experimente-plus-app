@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text } from 'react-native'
 
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -40,6 +41,8 @@ export function Button({
   testID,
 }: ButtonProps) {
   const colors = useColors()
+  // One line at the drawn size; with larger text a label wraps instead of losing its end.
+  const lines = useLineCap(1)
   const tone = disabled
     ? variant === 'ghost'
       ? { background: 'transparent', border: 'transparent', foreground: colors.mutedForeground }
@@ -88,7 +91,7 @@ export function Button({
     >
       {icon ? <Ionicons name={icon} size={20} color={tone.foreground} /> : null}
       <Text
-        numberOfLines={1}
+        numberOfLines={lines}
         style={[styles.label, size === 52 && styles.large, { color: tone.foreground }]}
       >
         {label}

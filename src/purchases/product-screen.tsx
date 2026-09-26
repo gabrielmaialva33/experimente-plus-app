@@ -17,6 +17,7 @@ import Animated from 'react-native-reanimated'
 
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import {
   compactTitleText,
@@ -24,6 +25,7 @@ import {
   useCompactHeader,
   type CompactHeader,
 } from '@/components/compact-header'
+import { decorative } from '@/components/decorative'
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
 import {
@@ -44,6 +46,9 @@ const METHOD_HINT: Record<string, string> = { pix: 'O código Pix aparece no pr�
 // The server needs a tokenized card and this client has no tokenization flow,
 // so the card is shown — the person learns it exists — but cannot be chosen.
 const STARTABLE_METHODS = new Set(['pix'])
+
+const UNCONFIRMED =
+  'Não recebemos a confirmação do pedido. Isso não significa que o pagamento falhou. Consulte seus pedidos ou retome a mesma solicitação.'
 
 const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`
 
@@ -172,6 +177,9 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`, { withAnchor: true })
     },
   })
+
+  // "Ir para o pagamento" without an answer: the one outcome the person must hear.
+  useAnnouncement(start.isError && UNCONFIRMED)
 
   const submit = async () => {
     if (sending.current) return
@@ -305,10 +313,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
             <Body>Consultando seus pedidos…</Body>
           ) : prior || start.isError ? (
             <>
-              <Body>
-                Não recebemos a confirmação do pedido. Isso não significa que o pagamento falhou.
-                Consulte seus pedidos ou retome a mesma solicitação.
-              </Body>
+              <Body>{UNCONFIRMED}</Body>
               <PurchaseAction
                 label="Meus pedidos"
                 onPress={() => router.push('/wallet/edicoes', { withAnchor: true })}
@@ -495,7 +500,7 @@ function Included({ product }: { product: PurchaseProduct }) {
               index > 0 && { borderTopColor: colors.muted, borderTopWidth: 1 },
             ]}
           >
-            <View style={[styles.tile, { backgroundColor: colors.ctaSoft }]}>
+            <View style={[styles.tile, { backgroundColor: colors.ctaSoft }]} {...decorative}>
               <Ionicons name="ticket-outline" size={24} color={colors.ctaAccent} />
             </View>
             <View style={styles.includedText}>

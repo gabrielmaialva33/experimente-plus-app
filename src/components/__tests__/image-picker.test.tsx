@@ -44,7 +44,11 @@ describe('ImagePicker', () => {
 
     expect(view.getByText('Fotos do local')).toBeTruthy()
     expect(view.getByText('1/4')).toBeTruthy()
-    expect(view.getByRole('button', { name: 'Remover foto 1' })).toBeTruthy()
+    // A 44 target in the thumbnail's corner around the small drawn circle.
+    expect(view.getByRole('button', { name: 'Remover foto 1' })).toHaveStyle({
+      width: 44,
+      height: 44,
+    })
     expect(
       view.getByRole('button', {
         name: 'Adicionar foto. 1 de 4 adicionadas.',

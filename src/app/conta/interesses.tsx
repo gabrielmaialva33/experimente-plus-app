@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import type { Interest } from '@/api/explorer'
 import { useCategories } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { Checkbox } from '@/components/checkbox'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -71,6 +72,11 @@ function InterestsForm({
 
   const options = interestOptions(cityCategories, chosen)
   const changed = selectionChanged(selected, chosen)
+  useAnnouncement(
+    save.isError
+      ? 'Não foi possível salvar agora.'
+      : save.isSuccess && !changed && 'Interesses salvos.'
+  )
 
   const toggle = (slug: string) =>
     setSelected((previous) => {

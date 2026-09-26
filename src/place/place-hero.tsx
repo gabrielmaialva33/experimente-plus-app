@@ -13,7 +13,7 @@ import {
 import { EstablishmentCover, coverImage } from '@/components/establishment-cover'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
-import { publicEstablishmentUrl } from '@/explorer/save-actions'
+import { publicEstablishmentUrl } from '@/place/links'
 import { reportHref } from '@/reviews/report-link'
 import { useSession } from '@/session/context'
 import { minTouch, radius, spacing } from '@/theme/tokens'
@@ -46,7 +46,13 @@ export function placeBarRange(detail: EstablishmentDetail, insetTop: number): [n
 /** The photo that opens a place. Its controls float above it, in `PlaceChrome`. */
 export function PlaceHero({ detail }: { detail: EstablishmentDetail }) {
   const insets = useSafeAreaInsets()
-  return <EstablishmentCover cover={detail.cover} height={placeHeroHeight(detail, insets.top)} />
+  return (
+    <EstablishmentCover
+      cover={detail.cover}
+      height={placeHeroHeight(detail, insets.top)}
+      accessible
+    />
+  )
 }
 
 type Tone = 'image' | 'surface'

@@ -53,13 +53,15 @@ export function DateTile({
 }
 
 const styles = StyleSheet.create({
+  // A floor, not a box: larger system text grows the tile instead of spilling out of it.
   tile: {
     alignItems: 'center',
     borderRadius: radius.thumb,
     flexShrink: 0,
-    height: 72,
     justifyContent: 'center',
-    width: 64,
+    minHeight: 72,
+    minWidth: 64,
+    paddingHorizontal: 2,
   },
   weekday: { ...typography.overline, letterSpacing: 0.7 },
   day: { ...typography.title, fontSize: 26, lineHeight: 28 },

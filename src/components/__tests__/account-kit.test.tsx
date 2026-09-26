@@ -1,4 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
 
 import { Avatar, initialsOf } from '@/components/avatar'
 import { Checkbox } from '@/components/checkbox'
@@ -128,10 +129,16 @@ describe('EmptyState', () => {
 })
 
 describe('UndoBar', () => {
-  afterEach(() => jest.useRealTimers())
+  const a11y = AccessibilityInfo as unknown as Record<string, jest.Mock>
+  afterEach(() => {
+    jest.useRealTimers()
+    a11y.isScreenReaderEnabled.mockResolvedValue(false)
+    a11y.getRecommendedTimeoutMillis.mockResolvedValue(false)
+  })
 
   it('announces the removal, undoes it in one tap and leaves on its own', async () => {
     jest.useFakeTimers()
+    a11y.announceForAccessibility.mockClear()
     const undo = jest.fn()
     const dismiss = jest.fn()
     const view = await render(
@@ -139,6 +146,10 @@ describe('UndoBar', () => {
     )
 
     expect(view.getByRole('alert')).toHaveTextContent('Ateliê removido dos favoritos.')
+    // Said once by the announcement; no live region on the text to say it again.
+    expect(a11y.announceForAccessibility).toHaveBeenCalledTimes(1)
+    expect(a11y.announceForAccessibility).toHaveBeenCalledWith('Ateliê removido dos favoritos.')
+    expect(view.getByRole('alert').props.accessibilityLiveRegion).toBeUndefined()
     await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
     expect(undo).toHaveBeenCalledTimes(1)
     expect(dismiss).not.toHaveBeenCalled()
@@ -146,6 +157,42 @@ describe('UndoBar', () => {
       jest.advanceTimersByTime(8000)
     })
     expect(dismiss).toHaveBeenCalledTimes(1)
+    await view.unmount()
+  })
+
+  // WCAG 2.2.1: the time to reach "Desfazer" is the person's.
+  it('waits as long as Android asks for, when that is longer', async () => {
+    jest.useFakeTimers()
+    a11y.getRecommendedTimeoutMillis.mockResolvedValue(20000)
+    const dismiss = jest.fn()
+    const view = await render(
+      <UndoBar message="Ateliê removido dos favoritos." onUndo={jest.fn()} onDismiss={dismiss} />
+    )
+    await act(async () => {
+      jest.advanceTimersByTime(19000)
+    })
+    expect(dismiss).not.toHaveBeenCalled()
+    await act(async () => {
+      jest.advanceTimersByTime(1000)
+    })
+    expect(dismiss).toHaveBeenCalledTimes(1)
+    await view.unmount()
+  })
+
+  it('stays until it is used while a screen reader is on', async () => {
+    jest.useFakeTimers()
+    a11y.isScreenReaderEnabled.mockResolvedValue(true)
+    const dismiss = jest.fn()
+    const undo = jest.fn()
+    const view = await render(
+      <UndoBar message="Ateliê removido dos favoritos." onUndo={undo} onDismiss={dismiss} />
+    )
+    await act(async () => {
+      jest.advanceTimersByTime(60000)
+    })
+    expect(dismiss).not.toHaveBeenCalled()
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(undo).toHaveBeenCalledTimes(1)
     await view.unmount()
   })
 })

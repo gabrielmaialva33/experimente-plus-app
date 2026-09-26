@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { signIn } from '@/api/auth'
 import { ApiError } from '@/api/client'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { ScreenHeader } from '@/components/screen-header'
@@ -45,6 +46,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
       : mutation.isError
         ? 'Não foi possível entrar agora.'
         : null
+  useAnnouncement(message)
 
   // Recovery asks for an e-mail; one already typed here is not asked twice (audit A59).
   const typedEmail = uid.trim().includes('@') ? uid.trim() : null

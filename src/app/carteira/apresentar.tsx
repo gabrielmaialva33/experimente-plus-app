@@ -3,8 +3,10 @@ import { useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
@@ -28,6 +30,8 @@ function useCountdown(expiresAt: string | undefined): number {
 
   return target ? Math.max(0, Math.floor((target - now) / 1000)) : 0
 }
+
+const EXPIRED = 'Este código expirou. Gere um novo para apresentar.'
 
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
@@ -72,6 +76,8 @@ export default function PresentScreen() {
   const data = presentation.data
   const remaining = useCountdown(data?.expires_at)
   const expired = Boolean(data) && remaining === 0
+  // The countdown is silent; its end is not.
+  useAnnouncement(expired && EXPIRED)
 
   if (eligibility?.blocked || presentation.error instanceof FinancialRestrictionError) {
     return <Stopped icon="pause-circle-outline">{FINANCIAL_RESTRICTION_MESSAGE}</Stopped>
@@ -149,14 +155,18 @@ export default function PresentScreen() {
         <View style={styles.code}>
           {expired ? (
             <View style={[styles.qrSlot, { backgroundColor: colors.muted }]}>
-              <Ionicons name="time-outline" size={32} color={colors.mutedForeground} />
-              <Text style={[styles.message, { color: colors.mutedForeground }]}>
-                Este código expirou. Gere um novo para apresentar.
-              </Text>
+              <Ionicons
+                name="time-outline"
+                size={32}
+                color={colors.mutedForeground}
+                {...decorative}
+              />
+              <Text style={[styles.message, { color: colors.mutedForeground }]}>{EXPIRED}</Text>
             </View>
           ) : (
             <RemoteImage
               cachePolicy="none"
+              accessible
               accessibilityLabel="Código temporário do benefício"
               source={{ uri: data.qr_data_url }}
               style={styles.qr}
@@ -182,6 +192,7 @@ export default function PresentScreen() {
               name={expired ? 'alert-circle-outline' : 'time-outline'}
               size={18}
               color={expired ? colors.warningAccent : colors.primaryAccent}
+              {...decorative}
             />
             <Text
               style={[
@@ -206,7 +217,12 @@ export default function PresentScreen() {
       </View>
 
       <View style={styles.hint}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.mutedForeground} />
+        <Ionicons
+          name="information-circle-outline"
+          size={20}
+          color={colors.mutedForeground}
+          {...decorative}
+        />
         <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
           Mostre este código ao parceiro. A confirmação é feita por ele.
         </Text>
@@ -219,20 +235,24 @@ export default function PresentScreen() {
   )
 }
 
-/** A presentation that cannot happen now: one sentence, and a way back when there is one. */
+/**
+ * A presentation that cannot happen now: one sentence, and a way back when there is one.
+ * It replaces the code the person was waiting for, so the sentence is said.
+ */
 function Stopped({
   icon,
   children,
   action,
 }: {
   icon: keyof typeof Ionicons.glyphMap
-  children: ReactNode
+  children: string
   action?: ReactNode
 }) {
   const colors = useColors()
+  useAnnouncement(children)
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
-      <View style={[styles.stoppedIcon, { backgroundColor: colors.muted }]}>
+      <View style={[styles.stoppedIcon, { backgroundColor: colors.muted }]} {...decorative}>
         <Ionicons name={icon} size={28} color={colors.mutedForeground} />
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
@@ -274,12 +294,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
   },
   qr: { height: 248, width: 248 },
+  // The QR's footprint as a floor: the sentence that stands in for it may need more at large text.
   qrSlot: {
     alignItems: 'center',
     borderRadius: radius.thumb,
     gap: spacing.sm,
-    height: 248,
     justifyContent: 'center',
+    minHeight: 248,
     padding: spacing.lg,
     width: 248,
   },

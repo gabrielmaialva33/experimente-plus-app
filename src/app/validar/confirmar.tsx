@@ -1,18 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 import { focusManager, onlineManager } from '@tanstack/react-query'
 import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { decorative } from '@/components/decorative'
 import { ApiError } from '@/api/client'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { Receipt } from '@/wallet/types'
 
+const NOT_COMPLETED =
+  'A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o mesmo comprovante será devolvido.'
 const NEW_PRESENTATION_MESSAGE = 'Este código não vale mais. Peça ao cliente para gerar um novo.'
 // A 400 covers both expired/invalid tokens and domain refusals. Do not claim
 // that a new code can bypass a benefit restriction or expose the raw error.
@@ -59,6 +63,8 @@ export default function ConfirmRedemptionScreen() {
   }, [incomingToken, router])
 
   const { ready: previewReady, mutate: mutatePreview } = preview
+  // The one outcome of "Confirmar utilização" that leaves the screen as it was.
+  useAnnouncement(confirm.isError && !confirm.data && NOT_COMPLETED)
 
   useEffect(() => {
     if (previewReady && !started.current) {
@@ -160,11 +166,13 @@ export default function ConfirmRedemptionScreen() {
 
       {confirm.isError ? (
         <View style={[styles.notice, { backgroundColor: colors.warningSoft }]}>
-          <Ionicons name="alert-circle-outline" size={20} color={colors.warningAccent} />
-          <Text style={[styles.noticeText, { color: colors.warningAccent }]}>
-            A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o
-            mesmo comprovante será devolvido.
-          </Text>
+          <Ionicons
+            name="alert-circle-outline"
+            size={20}
+            color={colors.warningAccent}
+            {...decorative}
+          />
+          <Text style={[styles.noticeText, { color: colors.warningAccent }]}>{NOT_COMPLETED}</Text>
         </View>
       ) : null}
 
@@ -190,11 +198,12 @@ export default function ConfirmRedemptionScreen() {
 }
 
 /** A presentation that cannot be validated: the reason in one sentence and the way back to the reader. */
-function Stopped({ children, onBack }: { children: ReactNode; onBack: () => void }) {
+function Stopped({ children, onBack }: { children: string; onBack: () => void }) {
   const colors = useColors()
+  useAnnouncement(children)
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
-      <View style={[styles.mark, { backgroundColor: colors.warningSoft }]}>
+      <View style={[styles.mark, { backgroundColor: colors.warningSoft }]} {...decorative}>
         <Ionicons name="alert-circle-outline" size={28} color={colors.warningAccent} />
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
@@ -205,11 +214,12 @@ function Stopped({ children, onBack }: { children: ReactNode; onBack: () => void
 
 function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void }) {
   const colors = useColors()
+  useAnnouncement(`Utilização registrada. Comprovante ${receipt.receipt_code}.`)
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <View style={styles.done}>
-        <View style={[styles.mark, { backgroundColor: colors.successSoft }]}>
+        <View style={[styles.mark, { backgroundColor: colors.successSoft }]} {...decorative}>
           <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />
         </View>
         <Text

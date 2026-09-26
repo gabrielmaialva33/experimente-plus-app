@@ -6,9 +6,10 @@ import {
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useAnnouncement } from '@/components/announce'
 import { RemoteImage } from '@/components/remote-image'
 import { validateImageAsset, type ValidatedImageAsset } from '@/media/image-validation'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export type SelectedImage = ValidatedImageAsset
@@ -44,6 +45,7 @@ export function ImagePicker({
   const colors = useColors()
   const [localError, setLocalError] = useState<string | null>(null)
   const displayError = error ?? localError
+  useAnnouncement(displayError)
 
   const pickImages = async () => {
     if (disabled || images.length >= maxImages) return
@@ -112,7 +114,10 @@ export function ImagePicker({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
-        <Text style={[styles.counter, { color: colors.mutedForeground }]}>
+        <Text
+          accessibilityLabel={`${images.length} de ${maxImages} fotos`}
+          style={[styles.counter, { color: colors.mutedForeground }]}
+        >
           {images.length}/{maxImages}
         </Text>
       </View>
@@ -127,6 +132,7 @@ export function ImagePicker({
               source={{ uri: image.uri }}
               style={styles.thumbnail}
               contentFit="cover"
+              accessible
               accessibilityLabel={`Foto ${index + 1} de ${images.length}`}
               fallback={
                 <View
@@ -141,9 +147,12 @@ export function ImagePicker({
                 accessibilityRole="button"
                 accessibilityLabel={`Remover foto ${index + 1}`}
                 onPress={() => removeImage(index)}
-                style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}
+                style={styles.removeTarget}
+                testID={`remove-image-${index}`}
               >
-                <Ionicons name="close-circle" size={22} color={colors.foreground} />
+                <View style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}>
+                  <Ionicons name="close-circle" size={22} color={colors.foreground} />
+                </View>
               </Pressable>
             )}
           </View>
@@ -210,15 +219,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  removeButton: {
+  // The drawn circle stays in the corner; the target around it is a full 44, inside the thumbnail.
+  removeTarget: {
+    alignItems: 'flex-end',
+    height: minTouch,
+    padding: 2,
     position: 'absolute',
-    top: 2,
-    right: 2,
+    right: 0,
+    top: 0,
+    width: minTouch,
+  },
+  removeButton: {
     borderRadius: radius.pill,
   },
+  // A floor: "Adicionar" at large text grows the tile instead of spilling out.
   addButton: {
-    width: 80,
-    height: 80,
+    minWidth: 80,
+    minHeight: 80,
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',

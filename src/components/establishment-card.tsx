@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { operatingStatus } from '@/catalog/operating-status'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { Badge } from '@/components/badge'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { OperatingStatus } from '@/components/operating-status'
+import { ratingLabel as spokenRating } from '@/reviews/stars'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -22,12 +25,37 @@ export function ratingLabel(reviews: EstablishmentSummary['reviews'] | undefined
 }
 
 /**
+ * What the card says to a screen reader, in reading order: the name first, then
+ * its state, and the rating as words — "★ (2)" would be read as a symbol name.
+ */
+function cardLabel(establishment: EstablishmentSummary) {
+  const { reviews } = establishment
+  const rating =
+    reviews?.count && reviews.average != null
+      ? `Nota ${spokenRating(reviews.average)}, ${reviews.count === 1 ? '1 avaliação' : `${reviews.count} avaliações`}`
+      : null
+  return [
+    establishment.name,
+    operatingStatus(establishment).label,
+    establishment.primary_category?.name,
+    establishment.address.district,
+    rating,
+    establishment.is_sponsored ? 'Patrocinado' : null,
+    establishment.short_description,
+  ]
+    .filter(Boolean)
+    .join(', ')
+}
+
+/**
  * The place card of direction A: the photo leads, the state sits on it, and
  * the name is set in the display face. The seam under the photo stays, so a
  * photo edge never touches the text.
  */
 export function EstablishmentCard({ establishment, onPress, accessory }: Props) {
   const colors = useColors()
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
   const meta = [
     establishment.primary_category?.name,
     establishment.address.district,
@@ -39,6 +67,7 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={cardLabel(establishment)}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
@@ -63,16 +92,19 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
       </View>
 
       <View style={[styles.body, { borderTopColor: colors.borderSubtle }]}>
-        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={2}>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={twoLines}>
           {establishment.name}
         </Text>
         {meta ? (
-          <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={1}>
+          <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={oneLine}>
             {meta}
           </Text>
         ) : null}
         {establishment.short_description ? (
-          <Text style={[styles.description, { color: colors.mutedForeground }]} numberOfLines={2}>
+          <Text
+            style={[styles.description, { color: colors.mutedForeground }]}
+            numberOfLines={twoLines}
+          >
             {establishment.short_description}
           </Text>
         ) : null}

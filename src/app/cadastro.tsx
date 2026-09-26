@@ -8,8 +8,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { signUp } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { apiUrl } from '@/api/config'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { Checkbox } from '@/components/checkbox'
+import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
@@ -44,6 +46,8 @@ export default function SignUpScreen() {
   const [retryUntil, setRetryUntil] = useState(0)
   const [waiting, setWaiting] = useState(0)
   const submitting = useRef(false)
+  useAnnouncement(message)
+  useAnnouncement(created && 'Sua conta foi criada')
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -119,7 +123,11 @@ export default function SignUpScreen() {
     }
     setErrors(validation)
     setMessage(null)
-    if (Object.keys(validation).length) return
+    if (Object.keys(validation).length) {
+      // Each field says what it needs; the press itself answers with where to look.
+      announce('Confira os campos indicados para concluir seu cadastro.')
+      return
+    }
     submitting.current = true
     try {
       await mutation.mutateAsync()
@@ -161,7 +169,7 @@ export default function SignUpScreen() {
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
-            <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
+            <View style={[styles.badge, { backgroundColor: colors.successSoft }]} {...decorative}>
               <Ionicons name="checkmark" size={28} color={colors.successAccent} />
             </View>
             <Text

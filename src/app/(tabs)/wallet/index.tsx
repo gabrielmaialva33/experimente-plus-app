@@ -6,9 +6,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Purchase } from '@/api/purchases'
+import { useAnnouncement } from '@/components/announce'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { decorative } from '@/components/decorative'
 import { LinkCard } from '@/components/link-card'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { ScreenHeader } from '@/components/screen-header'
@@ -17,6 +19,7 @@ import { price, purchaseDay } from '@/purchases/components'
 import { orderState } from '@/purchases/order-state'
 import { usePurchases } from '@/purchases/queries'
 import { useSession } from '@/session/context'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
@@ -37,6 +40,8 @@ export default function WalletScreen() {
   const wallet = useWallet()
   const orders = usePurchases()
   const refreshControl = usePullToRefresh(wallet.refetch, orders.refetch)
+  // A refresh that failed leaves the old tickets on screen; this says they may be stale.
+  useAnnouncement(wallet.isError && 'Não foi possível atualizar a carteira')
 
   // The band runs under the status bar, so its icons turn light while the tab shows.
   useFocusEffect(
@@ -128,7 +133,7 @@ export default function WalletScreen() {
                 { backgroundColor: colors.card, borderColor: colors.borderSubtle },
               ]}
             >
-              <View style={[styles.emptyIcon, { backgroundColor: colors.ctaSoft }]}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.ctaSoft }]} {...decorative}>
                 <Ionicons name="ticket-outline" size={28} color={colors.ctaAccent} />
               </View>
               <Text
@@ -297,6 +302,7 @@ function BenefitTicket({
   onPresent: () => void
 }) {
   const colors = useColors()
+  const descriptionLines = useLineCap(2)
   const usable = canPresentBenefit(pass, benefit)
   const blocked = financiallyBlocked(pass.access)
   // A financial hold is explained once, above its tickets; each ticket names any other reason.
@@ -325,7 +331,10 @@ function BenefitTicket({
       }
     >
       {benefit.description ? (
-        <Text numberOfLines={2} style={[styles.meta, { color: colors.mutedForeground }]}>
+        <Text
+          numberOfLines={descriptionLines}
+          style={[styles.meta, { color: colors.mutedForeground }]}
+        >
           {benefit.description}
         </Text>
       ) : null}

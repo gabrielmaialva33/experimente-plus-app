@@ -1,12 +1,12 @@
 import { act, fireEvent, render, within } from '@testing-library/react-native'
-import { Linking, ScrollView, StyleSheet } from 'react-native'
+import { Linking, ScrollView, Share, StyleSheet } from 'react-native'
 
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
 import type { EstablishmentDetail, EstablishmentSummary } from '@/catalog/types'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentCover } from '@/components/establishment-cover'
-import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
+import { PracticalInfo } from '@/place/practical-info'
 import { palette, fontFamilies, minTouch } from '@/theme/tokens'
 
 const mockRouter = { push: jest.fn(), back: jest.fn() }
@@ -30,7 +30,7 @@ jest.mock('@/reviews/queries', () => ({
 }))
 const mockToggle = jest.fn()
 jest.mock('@/explorer/queries', () => ({
-  useSavedStatus: () => ({ data: undefined }),
+  useSavedStatus: jest.fn(),
   useToggleSaved: () => ({ mutate: mockToggle, isPending: false }),
   useSavedContent: () => ({ data: undefined }),
   useToggleSavedContent: () => ({ mutate: jest.fn(), isPending: false }),
@@ -51,6 +51,7 @@ const router = jest.requireMock('expo-router') as {
 const session = jest.requireMock('@/session/context') as { useSession: jest.Mock }
 const purchases = jest.requireMock('@/purchases/queries') as { usePurchaseEditions: jest.Mock }
 const content = jest.requireMock('@/partner-content/queries') as { usePartnerContent: jest.Mock }
+const saved = jest.requireMock('@/explorer/queries') as { useSavedStatus: jest.Mock }
 const hint = jest.requireMock('@/place/follow-hint') as {
   followExplained: jest.Mock
   markFollowExplained: jest.Mock
@@ -129,6 +130,7 @@ beforeEach(() => {
   purchases.usePurchaseEditions.mockReturnValue({ data: { products: [] } })
   content.usePartnerContent.mockReturnValue({ data: [], isPending: false, isError: false })
   hint.followExplained.mockReturnValue(false)
+  saved.useSavedStatus.mockReturnValue({ data: undefined })
 })
 
 afterEach(() => {
@@ -239,6 +241,28 @@ describe('establishment presentation', () => {
     expect(view.getByText('Sem contato cadastrado')).toBeOnTheScreen()
   })
 
+  // The card speaks as one: name first, its state, and the rating in words, not "★ (2)".
+  it('reads a place card as one sentence, the rating in words', async () => {
+    const summary: EstablishmentSummary = {
+      ...detail,
+      primary_category: { name: 'Cafés' } as EstablishmentSummary['primary_category'],
+      reviews: { count: 2, average: 4.5 },
+      is_sponsored: true,
+    }
+    const view = await render(<EstablishmentCard establishment={summary} onPress={jest.fn()} />)
+    expect(
+      view.getByRole('button', {
+        name: 'Café da Praça, Fechado agora, Cafés, Centro, Nota 4,5 de 5, 2 avaliações, Patrocinado',
+      })
+    ).toBeOnTheScreen()
+  })
+
+  // The photo that opens a place is reached and read by its description.
+  it('lets a screen reader reach the place photo by its description', async () => {
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByLabelText('Fachada do café').props.accessible).toBe(true)
+  })
+
   it('shows a temporary closure in both the detail and list card', async () => {
     const closed = { ...detail, business_status: 'temporarily_closed' as const }
     queries.useEstablishment.mockReturnValue({ data: closed })
@@ -273,41 +297,99 @@ describe('establishment presentation', () => {
     }
   )
 
-  it('highlights the city day, shows closed days and updates across local midnight', async () => {
+  it('reads the city day, closed days included, and follows it across local midnight', async () => {
     jest.useFakeTimers({ now: new Date('2026-09-07T02:59:30Z') })
-    const view = await render(<EstablishmentHours establishment={detail} />)
-    expect(view.getByText('Domingo · Hoje')).toHaveStyle({ fontFamily: fontFamilies.text[700] })
-    expect(view.getAllByText('Fechado')).toHaveLength(6)
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByText('Hoje, domingo: fechado')).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Ver horários da semana' }))
+    expect(view.getByText('Terça a domingo · Hoje')).toBeOnTheScreen()
+    expect(view.getByText('Fechado')).toBeOnTheScreen()
     expect(view.getByText('09:00 às 18:00')).toBeOnTheScreen()
 
     await act(async () => {
       jest.advanceTimersByTime(60_000)
     })
-    expect(view.queryByText('Domingo · Hoje')).toBeNull()
+    expect(view.queryByText('Hoje, domingo: fechado')).toBeNull()
+    expect(view.getByText('Hoje, segunda: 09:00 às 18:00')).toBeOnTheScreen()
     expect(view.getByText('Segunda · Hoje')).toBeOnTheScreen()
     await view.unmount()
   })
 
-  it('describes appointment-only hours without showing a closed seven-day schedule', async () => {
-    const view = await render(
-      <EstablishmentHours establishment={{ ...detail, availability_type: 'appointment_only' }} />
-    )
-    expect(view.getByText('Somente com agendamento')).toBeOnTheScreen()
-    expect(view.queryByText('Fechado')).toBeNull()
+  it('describes appointment-only hours without showing a closed week', async () => {
+    queries.useEstablishment.mockReturnValue({
+      data: { ...detail, availability_type: 'appointment_only' },
+    })
+    const view = await render(<EstablishmentScreen />)
+    const info = within(view.getByLabelText('Informações práticas'))
+    expect(info.getByText('Somente com agendamento')).toBeOnTheScreen()
+    expect(info.getByText('Combine o horário pelos contatos')).toBeOnTheScreen()
+    expect(info.queryByText('Fechado')).toBeNull()
+    expect(view.queryByRole('button', { name: 'Ver horários da semana' })).toBeNull()
   })
 
   it('shows habitual 24-hour availability and discloses special-day exceptions', async () => {
-    const view = await render(
-      <EstablishmentHours
-        establishment={{
-          ...detail,
-          availability_type: 'always_open',
-          opening_hours: { weekly: [], special_days: [{ date: '2026-09-07', status: 'closed' }] },
-        }}
-      />
-    )
-    expect(view.getAllByText('24 horas')).toHaveLength(7)
+    queries.useEstablishment.mockReturnValue({
+      data: {
+        ...detail,
+        availability_type: 'always_open',
+        opening_hours: { weekly: [], special_days: [{ date: '2026-09-07', status: 'closed' }] },
+      },
+    })
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByText('Todos os dias, 24 horas')).toBeOnTheScreen()
     expect(view.getByText(/Há horários especiais/)).toBeOnTheScreen()
+  })
+})
+
+// Share, follow, itinerary and favourite live in the place's own chrome and
+// actions; these carry over what the retired SaveActions row guaranteed.
+describe('saving and sharing a place', () => {
+  it('lets a visitor share, since sharing belongs to nobody', async () => {
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' })
+    const view = await render(<EstablishmentScreen />)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Compartilhar' }))
+
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Café da Praça',
+        url: expect.stringMatching(/\/cidades\/londrina\/estabelecimentos\/cafe$/),
+      })
+    )
+    expect(mockRouter.push).not.toHaveBeenCalled()
+  })
+
+  it('takes a visitor to sign in instead of toggling something that would fail', async () => {
+    const view = await render(<EstablishmentScreen />)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Seguir Café da Praça' }))
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar a um roteiro' }))
+
+    expect(mockToggle).not.toHaveBeenCalled()
+    expect(mockRouter.push).toHaveBeenCalledWith('/(tabs)/sign-in')
+    expect(mockRouter.push).not.toHaveBeenCalledWith('/roteiros/adicionar/1')
+  })
+
+  it('opens the itinerary picker for a signed-in explorer', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    const view = await render(<EstablishmentScreen />)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar a um roteiro' }))
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/roteiros/adicionar/1')
+  })
+
+  it('announces what the server says is saved and toggles to the opposite', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    saved.useSavedStatus.mockReturnValue({ data: { favorited: true, following: false } })
+    const view = await render(<EstablishmentScreen />)
+
+    const favorite = view.getByRole('button', { name: 'Remover Café da Praça dos favoritos' })
+    expect(favorite).toBeSelected()
+    expect(view.getByRole('button', { name: 'Seguir Café da Praça' })).not.toBeSelected()
+
+    await fireEvent.press(favorite)
+    expect(mockToggle).toHaveBeenCalledWith(false)
   })
 })
 
@@ -483,10 +565,11 @@ it.each(['light', 'dark'] as const)(
     const view = await render(
       <>
         <EstablishmentCover />
-        <EstablishmentHours establishment={detail} />
+        <PracticalInfo detail={detail} contacts={[]} />
         <OperatingStatus establishment={detail} />
       </>
     )
+    await fireEvent.press(view.getByRole('button', { name: 'Ver horários da semana' }))
     const absentLabel = view.getByText('Foto indisponível')
     const absent = absentLabel.parent!.parent!
     expect(absent).toHaveStyle({ backgroundColor: palette[mode].contentAbsent })
@@ -499,8 +582,8 @@ it.each(['light', 'dark'] as const)(
     const today = todayLabel.parent!
     expect(today).toHaveStyle({
       backgroundColor: palette[mode].temporalEmphasis,
-      borderLeftWidth: 4,
-      borderLeftColor: palette[mode].temporalEmphasisBorder,
+      borderLeftWidth: 3,
+      borderColor: palette[mode].temporalEmphasisBorder,
     })
     expect(todayLabel).toHaveStyle({ color: palette[mode].temporalEmphasisForeground })
     const status = view.getByTestId('operating-status')
@@ -615,6 +698,23 @@ describe('place page in direction A', () => {
       backgroundColor: palette.light.temporalEmphasis,
     })
     await view.unmount()
+  })
+
+  // A 44 target drawn in the 32 row of signals: the margins give the extra height back,
+  // so the header keeps its rhythm, and the row reaches as far as the target does.
+  it('makes the rating link a full touch target without moving the header', async () => {
+    queries.useEstablishment.mockReturnValue({
+      data: { ...detail, reviews: { count: 2, average: 4.5 } },
+    })
+    const view = await render(<EstablishmentScreen />)
+    const rating = view.getByRole('link', { name: 'Nota 4,5 de 5, 2 avaliações' })
+    const own = StyleSheet.flatten(rating.props.style)
+    expect(own.minHeight).toBe(minTouch)
+    expect(own.minHeight + 2 * own.marginVertical).toBe(32)
+    const row = StyleSheet.flatten(rating.parent!.props.style)
+    expect(row.paddingVertical).toBe(-own.marginVertical)
+    expect(row.marginVertical).toBe(own.marginVertical)
+    expect(rating.props.hitSlop).toBeUndefined()
   })
 
   it('names the header after the place and keeps its report in the "⋯" (A32, A40, A43)', async () => {
@@ -740,7 +840,13 @@ describe('place page in direction A', () => {
     expect(view.getByText('Para viver aqui')).toBeOnTheScreen()
     expect(view.queryByText('Descubra mais neste lugar')).toBeNull()
     expect(view.queryByText('Eventos')).toBeNull()
-    expect(view.getByTestId('date-tile')).toBeOnTheScreen()
+    expect(view.getByTestId('date-tile', { includeHiddenElements: true })).toBeOnTheScreen()
+    // The tile is drawn; the card says the day and the hours in words, in the city's zone.
+    expect(
+      view.getByRole('button', {
+        name: /^Evento, Degustação 11, 28 de set\. de 2026 · 16:00–18:00$/,
+      })
+    ).toBeOnTheScreen()
 
     await fireEvent.press(view.getByRole('button', { name: /^Evento, Degustação 11/ }))
     expect(view.getByText('Cafés especiais.')).toBeOnTheScreen()

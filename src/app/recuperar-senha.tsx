@@ -7,11 +7,16 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { forgotPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+
+const SENT =
+  'Se houver uma conta associada a este e-mail, você receberá um link para recuperar a senha.'
 
 export default function ForgotPasswordScreen() {
   const colors = useColors()
@@ -25,6 +30,8 @@ export default function ForgotPasswordScreen() {
   const [retryUntil, setRetryUntil] = useState(0)
   const [waiting, setWaiting] = useState(0)
   const submitting = useRef(false)
+  useAnnouncement(emailError ?? message)
+  useAnnouncement(requested && SENT)
 
   useEffect(() => {
     if (!retryUntil) return
@@ -103,12 +110,14 @@ export default function ForgotPasswordScreen() {
                 { backgroundColor: colors.card, borderColor: colors.borderSubtle },
               ]}
             >
-              <View style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}>
+              <View
+                style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}
+                {...decorative}
+              >
                 <Ionicons name="mail-outline" size={26} color={colors.successAccent} />
               </View>
               <Text accessibilityRole="alert" style={[styles.body, { color: colors.foreground }]}>
-                Se houver uma conta associada a este e-mail, você receberá um link para recuperar a
-                senha.
+                {SENT}
               </Text>
               <Text style={[styles.body, { color: colors.mutedForeground }]}>
                 Confira também a caixa de spam. O link abre uma página no navegador. Depois de

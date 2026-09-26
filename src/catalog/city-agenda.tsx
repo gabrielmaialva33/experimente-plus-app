@@ -5,6 +5,7 @@ import { resolveMediaUrl } from '@/api/config'
 import { CompactCard } from '@/components/compact-card'
 import { DateTile } from '@/components/date-tile'
 import { SectionHeader } from '@/components/section-header'
+import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { placeHref } from '@/place/links'
@@ -58,6 +59,8 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
   const router = useRouter()
   const agenda = useCityAgenda(citySlug)
   const data = agenda.data
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
 
   if (agenda.isPending && !data) {
     return (
@@ -99,7 +102,12 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
             testID={`agenda-band-${band.key}`}
             style={[styles.band, styles.gutter]}
           >
-            <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>{band.title}</Text>
+            <Text
+              accessibilityRole="header"
+              style={[styles.bandTitle, { color: colors.mutedForeground }]}
+            >
+              {band.title}
+            </Text>
             {band.items.map((item) => {
               // The tile carries the day, so the row itself only needs the hours.
               const hours = formatAgendaWindow(item, timeZone, false)
@@ -134,14 +142,14 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
                   <View style={styles.eventCopy}>
                     <Text
                       style={[styles.eventTitle, { color: colors.foreground }]}
-                      numberOfLines={2}
+                      numberOfLines={twoLines}
                     >
                       {item.title}
                     </Text>
                     {meta ? (
                       <Text
                         style={[styles.eventMeta, { color: colors.mutedForeground }]}
-                        numberOfLines={1}
+                        numberOfLines={oneLine}
                       >
                         {meta}
                       </Text>
@@ -156,7 +164,12 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
       {data.newExperiences.length > 0 ? (
         <View testID="agenda-band-new-experiences" style={styles.band}>
           <View style={styles.gutter}>
-            <Text style={[styles.bandTitle, { color: colors.mutedForeground }]}>Novidades</Text>
+            <Text
+              accessibilityRole="header"
+              style={[styles.bandTitle, { color: colors.mutedForeground }]}
+            >
+              Novidades
+            </Text>
             {/* The band is chronological. There is no prominence contract to imply. */}
             <Text style={[styles.bandHint, { color: colors.mutedForeground }]}>
               Publicados recentemente

@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -29,7 +30,7 @@ export function EmptyState({
       testID={testID}
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
     >
-      <View style={[styles.icon, { backgroundColor: colors.primarySoft }]}>
+      <View style={[styles.icon, { backgroundColor: colors.primarySoft }]} {...decorative}>
         <Ionicons name={icon} size={26} color={colors.primaryAccent} />
       </View>
       <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>

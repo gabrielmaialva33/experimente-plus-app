@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { announce } from '@/components/announce'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -93,8 +94,10 @@ export default function MyReviewsScreen() {
           ) : null}
 
           <View style={styles.actions}>
+            {/* Every card has the same two actions: each names the review it acts on. */}
             <Button
               label="Editar"
+              accessibilityLabel={`Editar avaliação de ${formatDate(item.created_at)}`}
               icon="create-outline"
               variant="outline"
               size={44}
@@ -102,10 +105,12 @@ export default function MyReviewsScreen() {
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Excluir"
+              accessibilityLabel={`Excluir avaliação de ${formatDate(item.created_at)}`}
               accessibilityState={{ disabled: remove.isPending }}
               disabled={remove.isPending}
-              onPress={() => remove.mutate(item.id)}
+              onPress={() =>
+                remove.mutate(item.id, { onSuccess: () => announce('Avaliação excluída.') })
+              }
               style={styles.delete}
               testID={`delete-review-${item.id}`}
             >

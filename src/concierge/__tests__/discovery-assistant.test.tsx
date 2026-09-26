@@ -1,4 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
 
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 
@@ -45,6 +46,32 @@ it('says when the server applied interests', async () => {
   expect(api.askAssistant).toHaveBeenCalledWith(
     { question: 'Onde passar a tarde?', city: 'londrina' },
     expect.anything()
+  )
+})
+
+// The answer arrives after the question, away from where the person is: it is said once.
+it('says the answer when it arrives, and says a failure too', async () => {
+  const said = AccessibilityInfo.announceForAccessibility as jest.Mock
+  api.askAssistant.mockResolvedValue({
+    ...reply(false),
+    outcome: 'grounded',
+    text: 'Tente o Ateliê.',
+  })
+
+  const view = await ask()
+
+  await waitFor(() =>
+    expect(said).toHaveBeenCalledWith('Sugestão ancorada no catálogo. Tente o Ateliê.')
+  )
+  expect(said).toHaveBeenCalledTimes(1)
+  expect(view.getByText('Tente o Ateliê.')).toBeOnTheScreen()
+
+  api.askAssistant.mockRejectedValue(new Error('offline'))
+  await fireEvent.press(view.getByText('Perguntar'))
+  await waitFor(() =>
+    expect(said).toHaveBeenLastCalledWith(
+      'Não foi possível consultar agora. Tente novamente em instantes.'
+    )
   )
 })
 

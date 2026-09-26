@@ -5,11 +5,15 @@ import { useCallback, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { usePartnerAreas } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { extractPresentationToken } from '@/wallet/presentation-token'
+
+const REJECTED = 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
 
 /**
  * Partner scanner.
@@ -26,6 +30,8 @@ export default function ValidateScreen() {
   const [rejected, setRejected] = useState(false)
   const [active, setActive] = useState(false)
   const handled = useRef(false)
+  // The status box below is a live region Android speaks as it changes; iOS is told here.
+  useAnnouncement(rejected && REJECTED, { spokenByLiveRegion: true })
 
   // Re-arming on focus, not on a timer: a partner still pointing at the same
   // code while reading the preview would otherwise push a duplicate screen and
@@ -76,7 +82,9 @@ export default function ValidateScreen() {
   if (!permission.granted) {
     return (
       <Centered icon="camera-outline">
-        <Text style={[styles.title, { color: colors.foreground }]}>Leitor de códigos</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Leitor de códigos
+        </Text>
         <Text style={[styles.message, { color: colors.mutedForeground }]}>
           Para ler o código do cliente, o aplicativo precisa da câmera.
         </Text>
@@ -130,6 +138,7 @@ export default function ValidateScreen() {
             name={rejected ? 'alert-circle-outline' : 'scan-outline'}
             size={20}
             color={rejected ? colors.warningAccent : colors.primaryAccent}
+            {...decorative}
           />
           <Text
             style={[
@@ -137,9 +146,7 @@ export default function ValidateScreen() {
               { color: rejected ? colors.warningAccent : colors.primaryAccent },
             ]}
           >
-            {rejected
-              ? 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
-              : 'Aponte para o código que o cliente está mostrando.'}
+            {rejected ? REJECTED : 'Aponte para o código que o cliente está mostrando.'}
           </Text>
         </View>
         <HistoryLink />
@@ -184,7 +191,7 @@ function Centered({
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
       {icon ? (
-        <View style={[styles.mark, { backgroundColor: colors.primarySoft }]}>
+        <View style={[styles.mark, { backgroundColor: colors.primarySoft }]} {...decorative}>
           <Ionicons name={icon} size={28} color={colors.primaryAccent} />
         </View>
       ) : null}

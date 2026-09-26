@@ -1,18 +1,24 @@
 import { useMutation } from '@tanstack/react-query'
-import { Stack, useRouter } from 'expo-router'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { forgotPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { Button } from '@/components/button'
+import { KeyboardForm } from '@/components/keyboard-form'
+import { TextField } from '@/components/text-field'
+import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function ForgotPasswordScreen() {
   const colors = useColors()
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  // The address already typed on sign-in comes along, so it is not asked twice (audit A59).
+  const params = useLocalSearchParams<{ email?: string }>()
+  const [email, setEmail] = useState(typeof params.email === 'string' ? params.email : '')
   const [emailError, setEmailError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [requested, setRequested] = useState(false)
@@ -80,49 +86,56 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.flex, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: 'Recuperar senha' }} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
-          {requested ? <>
-            <Text accessibilityRole="alert" style={[typography.body, { color: colors.foreground }]}>
+      <KeyboardForm contentContainerStyle={styles.page}>
+        {requested ? <>
+          <View style={[styles.receipt, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+            <View style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}>
+              <Ionicons name="mail-outline" size={26} color={colors.successAccent} />
+            </View>
+            <Text accessibilityRole="alert" style={[styles.body, { color: colors.foreground }]}>
               Se houver uma conta associada a este e-mail, você receberá um link para recuperar a senha.
             </Text>
-            <Text style={[typography.body, { color: colors.mutedForeground }]}>
+            <Text style={[styles.body, { color: colors.mutedForeground }]}>
               Confira também a caixa de spam. O link abre uma página no navegador. Depois de definir sua nova senha, volte ao aplicativo e entre.
             </Text>
-          </> : <>
-            <Text style={[typography.body, { color: colors.mutedForeground }]}>
-              Informe seu e-mail para solicitar a recuperação. O link enviado por e-mail abre no navegador, onde você poderá definir uma nova senha.
-            </Text>
-            <View style={styles.field}>
-              <Text style={[typography.body, { color: colors.foreground }]}>E-mail</Text>
-              <TextInput accessibilityLabel="E-mail" value={email} editable={!mutation.isPending}
-                onChangeText={(value) => { setEmail(value); setEmailError(null) }}
-                keyboardType="email-address" textContentType="emailAddress" autoCapitalize="none" autoCorrect={false}
-                style={[styles.input, { backgroundColor: colors.card, borderColor: emailError ? colors.destructiveAccent : colors.input, color: colors.foreground }]} />
-              {emailError ? <Text accessibilityRole="alert" style={[typography.caption, { color: colors.destructiveAccent }]}>{emailError}</Text> : null}
-            </View>
-            {message ? <Text accessibilityRole="alert" style={[typography.body, { color: colors.destructiveAccent }]}>{message}</Text> : null}
-            {waiting > 0 ? <Text style={[typography.body, { color: colors.foreground }]}>Tente novamente em {waiting}s.</Text> : null}
-            <Pressable accessibilityRole="button" disabled={mutation.isPending || waiting > 0} onPress={() => void submit()}
-              style={[styles.action, { backgroundColor: colors.primary, opacity: mutation.isPending || waiting > 0 ? 0.5 : 1 }]}>
-              <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{mutation.isPending ? 'Solicitando…' : 'Solicitar link'}</Text>
-            </Pressable>
-          </>}
-          <Pressable accessibilityRole="button" style={styles.back} disabled={mutation.isPending} onPress={back}>
-            <Text style={[styles.actionLabel, { color: colors.primary }]}>Voltar para entrar</Text>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </View>
+        </> : <>
+          <Text style={[styles.body, { color: colors.mutedForeground }]}>
+            Informe seu e-mail para solicitar a recuperação. O link enviado por e-mail abre no navegador, onde você poderá definir uma nova senha.
+          </Text>
+          <TextField
+            label="E-mail"
+            value={email}
+            editable={!mutation.isPending}
+            onChangeText={(value) => { setEmail(value); setEmailError(null) }}
+            error={emailError}
+            keyboardType="email-address"
+            textContentType="emailAddress"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect={false}
+            onSubmitEditing={() => void submit()}
+          />
+          {message ? <Text accessibilityRole="alert" style={[styles.body, { color: colors.destructiveAccent }]}>{message}</Text> : null}
+          {waiting > 0 ? <Text style={[styles.body, { color: colors.foreground }]}>Tente novamente em {waiting}s.</Text> : null}
+          <Button
+            label={mutation.isPending ? 'Solicitando…' : 'Solicitar link'}
+            size={52}
+            fill
+            disabled={mutation.isPending || waiting > 0}
+            onPress={() => void submit()}
+          />
+        </>}
+        <Button label="Voltar para entrar" variant="ghost" size={48} disabled={mutation.isPending} onPress={back} />
+      </KeyboardForm>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  page: { gap: spacing.md, padding: spacing.xl },
-  field: { gap: spacing.xs },
-  input: { ...typography.body, borderRadius: radius.pill, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  action: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
-  back: { minHeight: 48, justifyContent: 'center' },
+  page: { gap: spacing.lg, padding: spacing.gutter },
+  body: typography.body,
+  receipt: { alignItems: 'flex-start', borderRadius: radius.card, borderWidth: 1, gap: spacing.md, padding: spacing.xl },
+  receiptIcon: { alignItems: 'center', borderRadius: radius.pill, height: 48, justifyContent: 'center', width: 48 },
 })

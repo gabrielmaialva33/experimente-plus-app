@@ -17,6 +17,8 @@ interface ButtonProps {
   accessibilityLabel?: string
   /** Grows to the width its row gives it. */
   fill?: boolean
+  /** Sits in the middle of a centred column, such as an empty state. */
+  centered?: boolean
   testID?: string
 }
 
@@ -33,6 +35,7 @@ export function Button({
   disabled = false,
   accessibilityLabel,
   fill = false,
+  centered = false,
   testID,
 }: ButtonProps) {
   const colors = useColors()
@@ -56,9 +59,10 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         fill && styles.fill,
+        centered && styles.centered,
         {
           minHeight: size,
-          paddingHorizontal: size === 52 ? spacing.xl : spacing.gutter,
+          paddingHorizontal: size === 52 ? spacing.xl : size === 44 ? spacing.lg : spacing.gutter,
           backgroundColor: tone.background,
           borderColor: tone.border,
           opacity: pressed ? 0.85 : 1,
@@ -85,6 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fill: { alignSelf: 'stretch', flexGrow: 1 },
+  centered: { alignSelf: 'center' },
   label: { ...typography.label, ...textWeight('700'), flexShrink: 1 },
   large: { fontSize: 16 },
 })

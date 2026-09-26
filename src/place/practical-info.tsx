@@ -2,9 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useState, type ReactNode } from 'react'
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
 
-import { decorative } from '@/components/decorative'
 import { cityWeekday, groupedSchedule, weekdayName } from '@/catalog/opening-hours'
 import type { EstablishmentDetail } from '@/catalog/types'
+import { decorative } from '@/components/decorative'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 

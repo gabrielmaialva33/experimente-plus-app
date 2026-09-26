@@ -15,7 +15,6 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 
-import { decorative } from '@/components/decorative'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
@@ -26,6 +25,7 @@ import {
   useCompactHeader,
   type CompactHeader,
 } from '@/components/compact-header'
+import { decorative } from '@/components/decorative'
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
 import {

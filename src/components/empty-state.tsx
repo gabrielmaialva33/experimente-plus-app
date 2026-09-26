@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { decorative } from '@/components/decorative'
 import { Button } from '@/components/button'
+import { decorative } from '@/components/decorative'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 

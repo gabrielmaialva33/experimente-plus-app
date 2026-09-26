@@ -28,7 +28,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, navigate: mockNavigate }),
   useLocalSearchParams: jest.fn(),
 }))
-jest.mock('@/catalog/city-store', () => ({ useSelectedCity: () => 'londrina' }))
+jest.mock('@/catalog/city-store', () => ({ useSelectedCity: jest.fn(() => 'londrina') }))
 jest.mock('@/catalog/queries', () => ({ useCategories: jest.fn() }))
 jest.mock('@/explorer/queries', () => ({
   useSavedList: jest.fn(),
@@ -285,6 +285,34 @@ describe('interests', () => {
     expect(view.getByTestId('interest-museus').props.accessibilityState).toMatchObject({
       checked: true,
     })
+  })
+
+  // Audit A55: the same visible box as every other checkbox of the app.
+  it('draws each interest with the shared checkbox box', async () => {
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({
+      isPending: false,
+      data: { categories: [{ slug: 'cafes', name: 'Cafés' }] },
+    })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.getByTestId('interest-cafes-box')).toHaveStyle({ width: 24, height: 24, borderWidth: 2 })
+    expect(view.getByRole('checkbox', { name: 'Cafés' })).not.toBeChecked()
+  })
+
+  // Audit A34: without a city there is nothing to mark, and the screen says where to choose one.
+  it('leads to choosing a city when there is none', async () => {
+    const cityStore = jest.requireMock('@/catalog/city-store') as { useSelectedCity: jest.Mock }
+    cityStore.useSelectedCity.mockReturnValue(null)
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, data: undefined })
+
+    const view = await render(<InterestsScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Escolher cidade' }))
+
+    expect(mockPush).toHaveBeenCalledWith('/conta/cidade')
+    cityStore.useSelectedCity.mockReturnValue('londrina')
   })
 
   it('does not offer to save when nothing changed', async () => {

@@ -1,14 +1,17 @@
-import Ionicons from '@expo/vector-icons/Ionicons'
+import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import type { Interest } from '@/api/explorer'
 import { useCategories } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
+import { Button } from '@/components/button'
+import { Checkbox } from '@/components/checkbox'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { EmptyState } from '@/components/empty-state'
 import { interestOptions, selectionChanged } from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -83,97 +86,70 @@ function InterestsForm({
       </Text>
 
       {failed ? (
-        <Text style={[styles.lead, { color: colors.destructiveAccent }]}>
+        <Text accessibilityRole="alert" style={[styles.lead, { color: colors.destructiveAccent }]}>
           Não foi possível carregar seus interesses agora.
         </Text>
       ) : null}
 
-      {!hasCity && options.length === 0 ? (
-        <Text style={[styles.lead, { color: colors.mutedForeground }]}>
-          Escolha uma cidade na aba Explorar para ver as categorias disponíveis.
-        </Text>
+      {!hasCity && options.length === 0 ? <ChooseCity /> : null}
+
+      {options.length > 0 ? (
+        <View
+          accessibilityRole="list"
+          style={[styles.options, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+          {options.map((option) => (
+            // Audit A55: the same box as every other checkbox of the app.
+            <View key={option.slug} style={styles.option}>
+              <Checkbox
+                label={option.name}
+                hint={option.retired ? 'Não oferecida no momento' : null}
+                accessibilityLabel={option.retired ? `${option.name}, não oferecida no momento` : option.name}
+                checked={selected.has(option.slug)}
+                onPress={() => toggle(option.slug)}
+                testID={`interest-${option.slug}`}
+              />
+            </View>
+          ))}
+        </View>
       ) : null}
 
-      <View style={styles.options} accessibilityRole="list">
-        {options.map((option) => {
-          const checked = selected.has(option.slug)
-          return (
-            <Pressable
-              key={option.slug}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked }}
-              accessibilityLabel={
-                option.retired ? `${option.name}, não oferecida no momento` : option.name
-              }
-              onPress={() => toggle(option.slug)}
-              testID={`interest-${option.slug}`}
-              style={[
-                styles.option,
-                {
-                  backgroundColor: checked ? colors.primarySoft : colors.surfaceRaised,
-                  borderColor: checked ? colors.primary : colors.border,
-                },
-              ]}>
-              <Ionicons
-                name={checked ? 'checkbox' : 'square-outline'}
-                size={22}
-                color={checked ? colors.primary : colors.mutedForeground}
-                accessible={false}
-              />
-              <View style={styles.optionText}>
-                <Text style={[styles.optionName, { color: colors.foreground }]}>{option.name}</Text>
-                {option.retired ? (
-                  <Text style={[styles.optionNote, { color: colors.mutedForeground }]}>
-                    Não oferecida no momento
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
-          )
-        })}
-      </View>
-
       {save.isError ? (
-        <Text style={[styles.lead, { color: colors.destructiveAccent }]}>
+        <Text accessibilityRole="alert" style={[styles.lead, { color: colors.destructiveAccent }]}>
           Não foi possível salvar agora.
         </Text>
       ) : save.isSuccess && !changed ? (
         <Text style={[styles.lead, { color: colors.successAccent }]}>Interesses salvos.</Text>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
+      <Button
+        label={save.isPending ? 'Salvando…' : 'Salvar interesses'}
+        accessibilityLabel="Salvar interesses"
+        size={52}
+        fill
         disabled={!changed || save.isPending}
         onPress={() => save.mutate([...selected])}
-        style={[
-          styles.save,
-          { backgroundColor: colors.primary, opacity: !changed || save.isPending ? 0.5 : 1 },
-        ]}
-        testID="save-interests">
-        <Text style={[styles.saveLabel, { color: colors.primaryForeground }]}>
-          {save.isPending ? 'Salvando…' : 'Salvar interesses'}
-        </Text>
-      </Pressable>
+        testID="save-interests"
+      />
     </ScrollView>
   )
 }
 
+/** Categories are a city's; without one there is nothing to choose from yet. */
+function ChooseCity() {
+  const router = useRouter()
+  return (
+    <EmptyState
+      icon="location-outline"
+      title="Escolha uma cidade"
+      text="As categorias que você pode marcar dependem da cidade."
+      action={{ label: 'Escolher cidade', onPress: () => router.push('/conta/cidade') }}
+    />
+  )
+}
+
 const styles = StyleSheet.create({
-  page: { gap: spacing.lg, padding: spacing.lg },
+  page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   lead: typography.body,
-  options: { gap: spacing.sm },
-  option: {
-    alignItems: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-  },
-  optionText: { flex: 1, gap: spacing.xs },
-  optionName: { ...typography.body, ...textWeight('600') },
-  optionNote: typography.caption,
-  save: { alignItems: 'center', borderRadius: radius.md, justifyContent: 'center', minHeight: 48 },
-  saveLabel: { ...typography.body, ...textWeight('600') },
+  options: { borderRadius: radius.card, borderWidth: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
+  option: { minHeight: 52, justifyContent: 'center' },
 })

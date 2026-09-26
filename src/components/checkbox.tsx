@@ -12,6 +12,8 @@ import { useColors } from '@/theme/use-colors'
  */
 export function Checkbox({
   label,
+  hint,
+  accessibilityLabel = label,
   checked,
   onPress,
   disabled = false,
@@ -19,6 +21,9 @@ export function Checkbox({
   testID,
 }: {
   label: string
+  /** A second line inside the target, such as why an option is set apart. */
+  hint?: string | null
+  accessibilityLabel?: string
   checked: boolean
   onPress: () => void
   disabled?: boolean
@@ -32,7 +37,7 @@ export function Checkbox({
     <View style={styles.wrap}>
       <Pressable
         accessibilityRole="checkbox"
-        accessibilityLabel={label}
+        accessibilityLabel={accessibilityLabel}
         accessibilityState={{ checked, disabled }}
         disabled={disabled}
         onPress={onPress}
@@ -49,7 +54,10 @@ export function Checkbox({
           ]}>
           {checked ? <Ionicons name="checkmark" size={18} color={colors.primaryForeground} /> : null}
         </View>
-        <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
+        <View style={styles.copy}>
+          <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
+          {hint ? <Text style={[styles.hint, { color: colors.mutedForeground }]}>{hint}</Text> : null}
+        </View>
       </Pressable>
       {children}
     </View>
@@ -60,5 +68,7 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing.xs },
   row: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, minHeight: minTouch },
   box: { alignItems: 'center', borderRadius: 6, borderWidth: 2, height: 24, justifyContent: 'center', width: 24 },
-  label: { ...typography.body, flex: 1 },
+  copy: { flex: 1, gap: 2 },
+  label: typography.body,
+  hint: typography.meta,
 })

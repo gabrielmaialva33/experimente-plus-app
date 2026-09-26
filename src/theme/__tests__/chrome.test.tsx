@@ -74,7 +74,8 @@ it.each(['light', 'dark'] as const)('gives tabs and pushed routes one titled, op
   expect(wallet.screenOptions).toEqual(root.screenOptions)
   for (const screen of screens(wallet.children)) {
     const effective = { ...wallet.screenOptions, ...screen.props.options }
-    expect(effective.headerShown).toBe(true)
+    // The wallet root draws its own header band, like Explorar; pushed wallet screens keep the native bar.
+    expect(effective.headerShown).toBe(screen.props.name !== 'index')
     expect(effective.title.trim().length).toBeGreaterThan(0)
   }
   expect(screens(wallet.children)[0].props.options.title).toBe('Carteira')

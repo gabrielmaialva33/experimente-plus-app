@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react-native'
+import { act, fireEvent, render, within } from '@testing-library/react-native'
 import { Linking, ScrollView, StyleSheet } from 'react-native'
 
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
@@ -7,7 +7,7 @@ import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
-import { palette, fontFamilies } from '@/theme/tokens'
+import { palette, fontFamilies, minTouch } from '@/theme/tokens'
 
 const mockRouter = { push: jest.fn(), back: jest.fn() }
 jest.mock('expo-router', () => ({
@@ -398,6 +398,80 @@ describe('place page in direction A', () => {
     await fireEvent.press(view.getByRole('button', { name: 'Mais opções de Café da Praça' }))
     await fireEvent.press(view.getByText('Denunciar este lugar'))
     expect(mockRouter.push).toHaveBeenCalledWith('/denunciar/establishment/1?nome=Caf%C3%A9%20da%20Pra%C3%A7a')
+  })
+
+  // The photo's controls scroll away with it; a compact bar takes over so back
+  // and the place's name never leave the screen. One set is reachable at a time.
+  describe.each(['light', 'dark'] as const)('compact bar in %s', (mode) => {
+    const labels = ['Voltar', 'Favoritar Café da Praça', 'Mais opções de Café da Praça']
+    const scrollTo = (view: Awaited<ReturnType<typeof render>>, y: number) =>
+      fireEvent.scroll(view.getByTestId('place-scroll'), { nativeEvent: { contentOffset: { x: 0, y } } })
+
+    beforeEach(() => theme.useColors.mockReturnValue(palette[mode]))
+
+    it('keeps the floating controls reachable while the photo is in view', async () => {
+      const view = await render(<EstablishmentScreen />)
+      for (const y of [0, 100]) {
+        await scrollTo(view, y)
+        expect(view.queryByTestId('place-bar')).toBeNull()
+        expect(view.getByTestId('place-bar', { includeHiddenElements: true }).props.pointerEvents).toBe('none')
+        expect(view.getByRole('button', { name: 'Compartilhar' })).toBeOnTheScreen()
+        expect(view.getByTestId('place-favorite')).toBeOnTheScreen()
+        for (const name of labels) expect(view.getAllByRole('button', { name })).toHaveLength(1)
+      }
+      // The bar carries the same labels, out of reach until it is shown.
+      for (const name of labels) {
+        expect(view.getAllByRole('button', { name, includeHiddenElements: true })).toHaveLength(2)
+      }
+    })
+
+    it('names the place and keeps back, favourite and "⋯" once the photo scrolls away', async () => {
+      const view = await render(<EstablishmentScreen />)
+      await scrollTo(view, 400)
+
+      const bar = view.getByTestId('place-bar')
+      expect(bar.props.pointerEvents).toBe('auto')
+      expect(bar).toHaveStyle({ backgroundColor: palette[mode].surfaceBase, borderBottomColor: palette[mode].borderSubtle })
+      const title = within(bar).getByText('Café da Praça')
+      expect(title).toHaveStyle({ color: palette[mode].foreground, fontFamily: fontFamilies.display[800] })
+      expect(title.props.numberOfLines).toBe(1)
+      for (const name of labels) {
+        expect(within(bar).getByRole('button', { name })).toHaveStyle({ height: minTouch, width: minTouch })
+        // Never announced twice: the floating copy is hidden while the bar stands in for it.
+        expect(view.getAllByRole('button', { name })).toHaveLength(1)
+      }
+      expect(view.queryByRole('button', { name: 'Compartilhar' })).toBeNull()
+      expect(view.queryByTestId('place-favorite')).toBeNull()
+
+      await fireEvent.press(within(bar).getByRole('button', { name: 'Voltar' }))
+      expect(mockRouter.back).toHaveBeenCalledTimes(1)
+      await fireEvent.press(within(bar).getByRole('button', { name: 'Favoritar Café da Praça' }))
+      expect(mockRouter.push).toHaveBeenLastCalledWith('/(tabs)/sign-in')
+      await fireEvent.press(within(bar).getByRole('button', { name: 'Mais opções de Café da Praça' }))
+      await fireEvent.press(view.getByText('Denunciar este lugar'))
+      expect(mockRouter.push).toHaveBeenLastCalledWith('/denunciar/establishment/1?nome=Caf%C3%A9%20da%20Pra%C3%A7a')
+
+      // Back on the photo, the floating set returns and the bar steps aside.
+      await scrollTo(view, 0)
+      expect(view.queryByTestId('place-bar')).toBeNull()
+      expect(view.getByRole('button', { name: 'Compartilhar' })).toBeOnTheScreen()
+      for (const name of labels) expect(view.getAllByRole('button', { name })).toHaveLength(1)
+    })
+
+    it('favourites from the bar with the same toggle as the photo', async () => {
+      session.useSession.mockReturnValue({ status: 'authenticated' })
+      const view = await render(<EstablishmentScreen />)
+      await scrollTo(view, 400)
+      await fireEvent.press(within(view.getByTestId('place-bar')).getByRole('button', { name: 'Favoritar Café da Praça' }))
+      expect(mockToggle).toHaveBeenCalledWith(true)
+    })
+  })
+
+  it('brings the bar in sooner when the place has no photo', async () => {
+    queries.useEstablishment.mockReturnValue({ data: { ...detail, cover: null } })
+    const view = await render(<EstablishmentScreen />)
+    await fireEvent.scroll(view.getByTestId('place-scroll'), { nativeEvent: { contentOffset: { x: 0, y: 100 } } })
+    expect(within(view.getByTestId('place-bar')).getByText('Café da Praça')).toBeOnTheScreen()
   })
 
   it('shows its experiences and events under one title, in cards of one size (A41, A42)', async () => {

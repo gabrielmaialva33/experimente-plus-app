@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -15,6 +15,7 @@ export function ScreenHeader({
   subtitle,
   eyebrow,
   insetTop = true,
+  onTitleLayout,
   children,
 }: {
   title?: string
@@ -23,6 +24,8 @@ export function ScreenHeader({
   eyebrow?: ReactNode
   /** Off when the screen paints the status bar strip itself and the band scrolls under it. */
   insetTop?: boolean
+  /** Where the title sits in the band, for a compact header that takes over once it scrolls away. */
+  onTitleLayout?: (event: LayoutChangeEvent) => void
   children?: ReactNode
 }) {
   const colors = useColors()
@@ -34,7 +37,7 @@ export function ScreenHeader({
       style={[styles.band, { backgroundColor: colors.chrome, paddingTop: (insetTop ? insets.top : 0) + spacing.gutter }]}>
       {eyebrow}
       {title ? (
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.chromeForeground }]}>
+        <Text accessibilityRole="header" onLayout={onTitleLayout} style={[styles.title, { color: colors.chromeForeground }]}>
           {title}
         </Text>
       ) : null}

@@ -11,7 +11,12 @@ import { EstablishmentOffers } from '@/purchases/establishment-offers'
 import { palette } from '@/theme/tokens'
 
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: jest.fn(), useRouter: jest.fn(), useFocusEffect: jest.fn(), Stack: { Screen: () => null },
+  useLocalSearchParams: jest.fn(), useRouter: jest.fn(), useFocusEffect: jest.fn(),
+  // The native bar draws a custom title in the screen's tree; render it where the screen is.
+  Stack: {
+    Screen: ({ options }: { options?: { headerTitle?: unknown } }) =>
+      typeof options?.headerTitle === 'function' ? options.headerTitle({ children: '' }) : null,
+  },
 }))
 // The product band draws under the native bar and reads the insets, like every ScreenHeader.
 jest.mock('react-native-safe-area-context', () => ({
@@ -372,6 +377,33 @@ it('keeps the total beside the conversion action in a pinned footer', async () =
   await fireEvent.press(view.getByRole('radio', { name: 'Pix' }))
   await fireEvent.press(view.getByRole('checkbox', { name: /^Li e aceito as condições/ }))
   expect(footer.getByRole('button', { name: 'Ir para o pagamento' })).toBeEnabled()
+  expect(view.getAllByText('Edição 2026')).toHaveLength(1)
+})
+
+// The band names the product; once its title slides under the navy strip, the
+// strip names it instead, so the title is never lost — and never read twice.
+it.each(['light', 'dark'] as const)('hands the product name to the navy strip once the band scrolls under it in %s', async (mode) => {
+  jest.spyOn(jest.requireActual('@/theme/use-colors'), 'useColors').mockReturnValue(palette[mode])
+  const view = await page(<EditionScreen />)
+  // A title on two lines: the strip takes over once both have gone under it.
+  await fireEvent(view.getByRole('header', { name: 'Edição 2026' }), 'layout', {
+    nativeEvent: { layout: { x: 20, y: 64, width: 320, height: 64 } },
+  })
+  expect(view.getAllByText('Edição 2026')).toHaveLength(1)
+  expect(view.getByTestId('purchase-compact-title', { includeHiddenElements: true })).toHaveTextContent('Edição 2026')
+
+  const scroll = view.getByTestId('purchase-scroll')
+  await fireEvent.scroll(scroll, { nativeEvent: { contentOffset: { x: 0, y: 90 } } })
+  expect(view.queryByTestId('purchase-compact-title')).toBeNull()
+
+  await fireEvent.scroll(scroll, { nativeEvent: { contentOffset: { x: 0, y: 128 } } })
+  const strip = view.getByTestId('purchase-compact-title')
+  expect(strip).toHaveTextContent('Edição 2026')
+  expect(strip).toHaveStyle({ color: palette[mode].chromeForeground })
+  expect(strip.props.numberOfLines).toBe(1)
+
+  await fireEvent.scroll(scroll, { nativeEvent: { contentOffset: { x: 0, y: 0 } } })
+  expect(view.queryByTestId('purchase-compact-title')).toBeNull()
   expect(view.getAllByText('Edição 2026')).toHaveLength(1)
 })
 

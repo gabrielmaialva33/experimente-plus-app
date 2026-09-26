@@ -1,6 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef } from 'react'
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Linking, Pressable, StyleSheet, Text, View, type ScrollView } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
@@ -8,13 +10,14 @@ import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '@/catalog
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { Badge } from '@/components/badge'
+import { useCompactHeader } from '@/components/compact-header'
 import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
 import { PlaceBenefits } from '@/place/benefit-ticket'
 import { HIGHLIGHT_PARAM } from '@/place/links'
 import { PlaceActions } from '@/place/place-actions'
-import { PlaceHero } from '@/place/place-hero'
+import { PlaceChrome, PlaceHero, placeBarRange } from '@/place/place-hero'
 import { PracticalInfo, type ContactAction } from '@/place/practical-info'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { Stars, ratingLabel } from '@/reviews/stars'
@@ -84,7 +87,10 @@ function Detail({
   colors: ReturnType<typeof useColors>
 }) {
   const { contacts, address } = detail
+  const insets = useSafeAreaInsets()
   const scroll = useRef<ScrollView>(null)
+  // Once the photo scrolls away, a compact bar keeps back and the place's name on screen.
+  const header = useCompactHeader(...placeBarRange(detail, insets.top))
   // Offsets inside the scroll content, measured as the sections lay out.
   const offsets = useRef({ body: null as number | null, reviews: null as number | null, highlight: null as number | null })
   const arrived = useRef(false)
@@ -158,96 +164,105 @@ function Detail({
   const average = detail.reviews.average
 
   return (
-    <ScrollView ref={scroll} style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false, title: detail.name }} />
-      <PlaceHero detail={detail} citySlug={citySlug} />
-
-      <View
-        style={[styles.body, { backgroundColor: colors.background }]}
-        testID="place-body"
-        onLayout={(event) => {
-          offsets.current.body = event.nativeEvent.layout.y
-          bringHighlightIntoView()
-        }}>
-        <View style={styles.header}>
-          {category || address.district ? (
-            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
-              {[category, address.district].filter(Boolean).join(' · ')}
-            </Text>
-          ) : null}
-          <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
-            {detail.name}
-          </Text>
-          <View style={styles.signals}>
-            {average !== null && detail.reviews.count > 0 ? (
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel={`Nota ${ratingLabel(average)}, ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
-                onPress={() => scrollTo(offsets.current.reviews)}
-                hitSlop={spacing.sm}
-                style={styles.rating}>
-                <Stars rating={average} />
-                <Text style={[styles.ratingLabel, { color: colors.foreground }]}>
-                  {`${average.toFixed(1).replace('.', ',')} · ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
-                </Text>
-              </Pressable>
-            ) : null}
-            <OperatingStatus establishment={detail} />
-            {detail.is_sponsored ? <Badge label="Patrocinado" /> : null}
-          </View>
-          <PlaceActions establishmentId={detail.id} name={detail.name} primary={primaryAction} />
-        </View>
-
-        <PlaceBenefits citySlug={citySlug} slug={detail.slug} timeZone={detail.city.timezone} />
-
-        {detail.description ? (
-          <Text style={[styles.description, { color: colors.foreground }]}>{detail.description}</Text>
-        ) : null}
-
-        <PracticalInfo detail={detail} contacts={secondaryActions} />
-
-        {detail.attributes.some((attribute) => attribute.value === true) ? (
-          <View style={styles.section}>
-            <SectionHeader title="Este lugar oferece" />
-            <View style={styles.attributes}>
-              {detail.attributes
-                .filter((attribute) => attribute.value === true)
-                .map((attribute) => (
-                  <Badge key={attribute.name} label={attribute.name} />
-                ))}
-            </View>
-          </View>
-        ) : null}
+      <PlaceChrome detail={detail} citySlug={citySlug} header={header} />
+      <Animated.ScrollView
+        ref={scroll}
+        testID="place-scroll"
+        onScroll={header.onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={styles.page}>
+        <PlaceHero detail={detail} />
 
         <View
+          style={[styles.body, { backgroundColor: colors.background }]}
+          testID="place-body"
           onLayout={(event) => {
-            offsets.current.reviews = event.nativeEvent.layout.y
+            offsets.current.body = event.nativeEvent.layout.y
+            bringHighlightIntoView()
           }}>
-          <EstablishmentReviews
+          <View style={styles.header}>
+            {category || address.district ? (
+              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+                {[category, address.district].filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
+            <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
+              {detail.name}
+            </Text>
+            <View style={styles.signals}>
+              {average !== null && detail.reviews.count > 0 ? (
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel={`Nota ${ratingLabel(average)}, ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
+                  onPress={() => scrollTo(offsets.current.reviews)}
+                  hitSlop={spacing.sm}
+                  style={styles.rating}>
+                  <Stars rating={average} />
+                  <Text style={[styles.ratingLabel, { color: colors.foreground }]}>
+                    {`${average.toFixed(1).replace('.', ',')} · ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
+                  </Text>
+                </Pressable>
+              ) : null}
+              <OperatingStatus establishment={detail} />
+              {detail.is_sponsored ? <Badge label="Patrocinado" /> : null}
+            </View>
+            <PlaceActions establishmentId={detail.id} name={detail.name} primary={primaryAction} />
+          </View>
+
+          <PlaceBenefits citySlug={citySlug} slug={detail.slug} timeZone={detail.city.timezone} />
+
+          {detail.description ? (
+            <Text style={[styles.description, { color: colors.foreground }]}>{detail.description}</Text>
+          ) : null}
+
+          <PracticalInfo detail={detail} contacts={secondaryActions} />
+
+          {detail.attributes.some((attribute) => attribute.value === true) ? (
+            <View style={styles.section}>
+              <SectionHeader title="Este lugar oferece" />
+              <View style={styles.attributes}>
+                {detail.attributes
+                  .filter((attribute) => attribute.value === true)
+                  .map((attribute) => (
+                    <Badge key={attribute.name} label={attribute.name} />
+                  ))}
+              </View>
+            </View>
+          ) : null}
+
+          <View
+            onLayout={(event) => {
+              offsets.current.reviews = event.nativeEvent.layout.y
+            }}>
+            <EstablishmentReviews
+              establishmentId={detail.id}
+              establishmentName={detail.name}
+              summary={detail.reviews}
+            />
+          </View>
+
+          <EstablishmentPartnerContent
             establishmentId={detail.id}
+            timeZone={detail.city.timezone}
             establishmentName={detail.name}
-            summary={detail.reviews}
+            citySlug={citySlug}
+            establishmentSlug={detail.slug}
+            highlight={highlight}
+            onHighlightLayout={(y) => {
+              offsets.current.highlight = y
+              bringHighlightIntoView()
+            }}
           />
         </View>
-
-        <EstablishmentPartnerContent
-          establishmentId={detail.id}
-          timeZone={detail.city.timezone}
-          establishmentName={detail.name}
-          citySlug={citySlug}
-          establishmentSlug={detail.slug}
-          highlight={highlight}
-          onHighlightLayout={(y) => {
-            offsets.current.highlight = y
-            bringHighlightIntoView()
-          }}
-        />
-      </View>
-    </ScrollView>
+      </Animated.ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   page: { paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
   // The content rises over the photo on a sheet with rounded top corners.

@@ -53,6 +53,8 @@ Abas: visitante tem Explorar/Entrar; consumidor tem Explorar/Carteira/Conta; par
 
 Use `src/theme/tokens.ts` e `useColors`; os tokens derivam de `../experimente-plus/inertia/css/app.css`. Preserve `primary` para marca/navegação, `cta` para conversão, estados semânticos e suporte claro/escuro. A paleta e os componentes do template Expo (`src/constants/theme.ts`, `ThemedText`, `ThemedView`) foram removidos; não os recrie nem crie outra paleta.
 
+Acessibilidade: controles têm `accessibilityRole`, nome em português quando o texto visível falta ou é ambíguo e `accessibilityState` para seleção, marcação, expansão e desabilitado; alvos de toque têm ao menos 44 dentro do próprio pai (no Android o `hitSlop` não passa da borda do pai). Mensagens que surgem após uma ação usam `useAnnouncement`/`announce` (`src/components/announce.ts`), sem `accessibilityLiveRegion` no mesmo texto. Ícones que só repetem o texto ao lado recebem `decorative`; imagens com significado recebem `accessible` e descrição. Limites de linha passam por `useLineCap` (`src/theme/font-scale.ts`) e caixas com texto usam `minHeight`, não altura fixa. Os pares de cor de texto estão em `src/theme/__tests__/contrast.test.ts`.
+
 ## Ambiente e comandos
 
 Execute na raiz deste repositório. `mise.toml` define Node 24, pnpm 11, Java Temurin 21 e os caminhos do Android SDK. Use `mise install` para preparar as ferramentas e `mise exec -- <comando>` quando o shell não ativar o ambiente local. Não use inadvertidamente Node ou Java globais de outra versão.

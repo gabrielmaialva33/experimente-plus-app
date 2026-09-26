@@ -43,7 +43,8 @@ export function Button({
   const tone = disabled
     ? variant === 'ghost'
       ? { background: 'transparent', border: 'transparent', foreground: colors.mutedForeground }
-      : { background: colors.muted, border: colors.muted, foreground: colors.mutedForeground }
+      : // The border keeps the pill visible where `muted` is close to the surface (a card in dark mode).
+        { background: colors.muted, border: colors.border, foreground: colors.mutedForeground }
     : {
         primary: {
           background: colors.primary,

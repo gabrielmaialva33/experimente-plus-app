@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { decorative } from '@/components/decorative'
 import { forgotPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { useAnnouncement } from '@/components/announce'
@@ -109,7 +110,10 @@ export default function ForgotPasswordScreen() {
                 { backgroundColor: colors.card, borderColor: colors.borderSubtle },
               ]}
             >
-              <View style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}>
+              <View
+                style={[styles.receiptIcon, { backgroundColor: colors.successSoft }]}
+                {...decorative}
+              >
                 <Ionicons name="mail-outline" size={26} color={colors.successAccent} />
               </View>
               <Text accessibilityRole="alert" style={[styles.body, { color: colors.foreground }]}>

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter, type Href } from 'expo-router'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
@@ -75,10 +76,15 @@ export function HistoryScreen({
       )}
       ListEmptyComponent={
         <View style={styles.center}>
-          <View style={[styles.mark, { backgroundColor: colors.muted }]}>
+          <View style={[styles.mark, { backgroundColor: colors.muted }]} {...decorative}>
             <Ionicons name="receipt-outline" size={26} color={colors.mutedForeground} />
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{emptyMessage}</Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.emptyTitle, { color: colors.foreground }]}
+          >
+            {emptyMessage}
+          </Text>
           {emptyHint ? (
             <Text style={[styles.message, { color: colors.mutedForeground }]}>{emptyHint}</Text>
           ) : null}

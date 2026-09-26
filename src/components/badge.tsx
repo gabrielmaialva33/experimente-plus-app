@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -34,7 +35,9 @@ export function Badge({
 
   return (
     <View testID={testID} style={[styles.badge, { backgroundColor: appearance.background }]}>
-      {icon ? <Ionicons name={icon} size={16} color={appearance.foreground} /> : null}
+      {icon ? (
+        <Ionicons name={icon} size={16} color={appearance.foreground} {...decorative} />
+      ) : null}
       <Text numberOfLines={lines} style={[styles.label, { color: appearance.foreground }]}>
         {label}
       </Text>

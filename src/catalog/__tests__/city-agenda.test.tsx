@@ -87,7 +87,8 @@ it('leads each event with its date in the city, never with an empty photo box', 
 it('keeps experiences in fixed-size cards and opens every item by its public identity', async () => {
   const view = await render(<CityAgenda citySlug="londrina" />)
 
-  expect(view.getByText('Novidades')).toBeOnTheScreen()
+  // Each band title is a heading, so a screen reader can jump between them.
+  expect(view.getByRole('header', { name: 'Novidades' })).toBeOnTheScreen()
   const card = view.getByTestId('agenda-card-experience-3')
   expect(card).toHaveStyle({ width: COMPACT_CARD.width, minHeight: COMPACT_CARD.height })
   expect(within(card).getByLabelText('Prato do menu de primavera')).toBeOnTheScreen()

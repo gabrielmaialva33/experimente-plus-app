@@ -64,7 +64,9 @@ export default function EstablishmentScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: page.name }} />
-        <Text style={[styles.name, { color: colors.foreground }]}>{page.name}</Text>
+        <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
+          {page.name}
+        </Text>
         <OperatingStatus establishment={{ ...page, is_open_now: false }} />
         <Text style={[styles.message, { color: colors.mutedForeground }]}>{page.message}</Text>
       </View>

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { ApiError } from '@/api/client'
 import { ACCOUNT_DELETION_LITERAL, deleteAccount } from '@/api/me'
 import { useAnnouncement } from '@/components/announce'
@@ -59,7 +60,12 @@ export default function DeleteAccountScreen() {
             { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
           ]}
         >
-          <Ionicons name="warning-outline" size={24} color={colors.destructiveAccent} />
+          <Ionicons
+            name="warning-outline"
+            size={24}
+            color={colors.destructiveAccent}
+            {...decorative}
+          />
           <Text style={[styles.body, styles.warningText, { color: colors.foreground }]}>
             Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
           </Text>

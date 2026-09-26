@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useState, type ReactNode } from 'react'
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { cityWeekday, groupedSchedule, weekdayName } from '@/catalog/opening-hours'
 import type { EstablishmentDetail } from '@/catalog/types'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
@@ -208,7 +209,7 @@ function Row({
   const colors = useColors()
   return (
     <View style={[styles.row, { borderTopColor: colors.borderSubtle }]}>
-      <Ionicons name={icon} size={22} color={colors.primary} style={styles.icon} />
+      <Ionicons name={icon} size={22} color={colors.primary} style={styles.icon} {...decorative} />
       <View style={[styles.grow, styles.copy]}>{children}</View>
       {action}
     </View>

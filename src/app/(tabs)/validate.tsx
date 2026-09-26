@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { decorative } from '@/components/decorative'
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { usePartnerAreas } from '@/session/context'
@@ -81,7 +82,9 @@ export default function ValidateScreen() {
   if (!permission.granted) {
     return (
       <Centered icon="camera-outline">
-        <Text style={[styles.title, { color: colors.foreground }]}>Leitor de códigos</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Leitor de códigos
+        </Text>
         <Text style={[styles.message, { color: colors.mutedForeground }]}>
           Para ler o código do cliente, o aplicativo precisa da câmera.
         </Text>
@@ -135,6 +138,7 @@ export default function ValidateScreen() {
             name={rejected ? 'alert-circle-outline' : 'scan-outline'}
             size={20}
             color={rejected ? colors.warningAccent : colors.primaryAccent}
+            {...decorative}
           />
           <Text
             style={[
@@ -187,7 +191,7 @@ function Centered({
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
       {icon ? (
-        <View style={[styles.mark, { backgroundColor: colors.primarySoft }]}>
+        <View style={[styles.mark, { backgroundColor: colors.primarySoft }]} {...decorative}>
           <Ionicons name={icon} size={28} color={colors.primaryAccent} />
         </View>
       ) : null}

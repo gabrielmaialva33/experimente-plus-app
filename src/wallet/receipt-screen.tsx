@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useQuery } from '@tanstack/react-query'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -29,7 +30,7 @@ export function ReceiptScreen({
   if (receipt.isError || !receipt.data) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <View style={[styles.mark, { backgroundColor: colors.muted }]}>
+        <View style={[styles.mark, { backgroundColor: colors.muted }]} {...decorative}>
           <Ionicons name="document-outline" size={26} color={colors.mutedForeground} />
         </View>
         <Text style={[styles.message, { color: colors.foreground }]}>

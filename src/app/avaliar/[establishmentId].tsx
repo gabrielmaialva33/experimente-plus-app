@@ -69,7 +69,9 @@ export default function WriteReviewScreen() {
   if (create.isSuccess && create.data.failed > 0) {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Avaliação publicada</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          Avaliação publicada
+        </Text>
         <Text
           style={[styles.error, { color: colors.destructiveAccent }]}
           testID="review-photos-failed"

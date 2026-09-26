@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { decorative } from '@/components/decorative'
 import { signUp } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { apiUrl } from '@/api/config'
@@ -168,7 +169,7 @@ export default function SignUpScreen() {
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
-            <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
+            <View style={[styles.badge, { backgroundColor: colors.successSoft }]} {...decorative}>
               <Ionicons name="checkmark" size={28} color={colors.successAccent} />
             </View>
             <Text

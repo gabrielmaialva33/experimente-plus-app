@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { useLineCap } from '@/theme/font-scale'
 import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -40,7 +41,7 @@ export function TicketCard({
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
     >
       <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
-        <Ionicons name="ticket-outline" size={26} color={colors.chromeForeground} />
+        <Ionicons name="ticket-outline" size={26} color={colors.chromeForeground} {...decorative} />
         <Text
           numberOfLines={stubLines}
           style={[styles.stubLabel, { color: colors.chromeForeground }]}

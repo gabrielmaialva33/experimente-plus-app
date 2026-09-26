@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -154,7 +155,12 @@ export default function PresentScreen() {
         <View style={styles.code}>
           {expired ? (
             <View style={[styles.qrSlot, { backgroundColor: colors.muted }]}>
-              <Ionicons name="time-outline" size={32} color={colors.mutedForeground} />
+              <Ionicons
+                name="time-outline"
+                size={32}
+                color={colors.mutedForeground}
+                {...decorative}
+              />
               <Text style={[styles.message, { color: colors.mutedForeground }]}>{EXPIRED}</Text>
             </View>
           ) : (
@@ -185,6 +191,7 @@ export default function PresentScreen() {
               name={expired ? 'alert-circle-outline' : 'time-outline'}
               size={18}
               color={expired ? colors.warningAccent : colors.primaryAccent}
+              {...decorative}
             />
             <Text
               style={[
@@ -208,7 +215,12 @@ export default function PresentScreen() {
       </View>
 
       <View style={styles.hint}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.mutedForeground} />
+        <Ionicons
+          name="information-circle-outline"
+          size={20}
+          color={colors.mutedForeground}
+          {...decorative}
+        />
         <Text style={[styles.hintText, { color: colors.mutedForeground }]}>
           Mostre este código ao parceiro. A confirmação é feita por ele.
         </Text>
@@ -238,7 +250,7 @@ function Stopped({
   useAnnouncement(children)
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
-      <View style={[styles.stoppedIcon, { backgroundColor: colors.muted }]}>
+      <View style={[styles.stoppedIcon, { backgroundColor: colors.muted }]} {...decorative}>
         <Ionicons name={icon} size={28} color={colors.mutedForeground} />
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>

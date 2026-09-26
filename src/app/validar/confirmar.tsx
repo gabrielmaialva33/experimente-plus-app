@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef } from 'react'
 import { focusManager, onlineManager } from '@tanstack/react-query'
+import { decorative } from '@/components/decorative'
 import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -165,7 +166,12 @@ export default function ConfirmRedemptionScreen() {
 
       {confirm.isError ? (
         <View style={[styles.notice, { backgroundColor: colors.warningSoft }]}>
-          <Ionicons name="alert-circle-outline" size={20} color={colors.warningAccent} />
+          <Ionicons
+            name="alert-circle-outline"
+            size={20}
+            color={colors.warningAccent}
+            {...decorative}
+          />
           <Text style={[styles.noticeText, { color: colors.warningAccent }]}>{NOT_COMPLETED}</Text>
         </View>
       ) : null}
@@ -197,7 +203,7 @@ function Stopped({ children, onBack }: { children: string; onBack: () => void })
   useAnnouncement(children)
   return (
     <View style={[styles.center, { backgroundColor: colors.background }]}>
-      <View style={[styles.mark, { backgroundColor: colors.warningSoft }]}>
+      <View style={[styles.mark, { backgroundColor: colors.warningSoft }]} {...decorative}>
         <Ionicons name="alert-circle-outline" size={28} color={colors.warningAccent} />
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
@@ -213,7 +219,7 @@ function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <View style={styles.done}>
-        <View style={[styles.mark, { backgroundColor: colors.successSoft }]}>
+        <View style={[styles.mark, { backgroundColor: colors.successSoft }]} {...decorative}>
           <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />
         </View>
         <Text

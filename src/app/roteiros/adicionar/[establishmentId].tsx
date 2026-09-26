@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { ApiError } from '@/api/client'
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
@@ -70,7 +71,7 @@ export default function AddToItineraryScreen() {
           style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
           testID="added"
         >
-          <View style={[styles.badge, { backgroundColor: colors.successSoft }]}>
+          <View style={[styles.badge, { backgroundColor: colors.successSoft }]} {...decorative}>
             <Ionicons name="checkmark" size={26} color={colors.successAccent} />
           </View>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>

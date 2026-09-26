@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { useAnnouncement } from '@/components/announce'
@@ -231,7 +232,12 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
   if (cancel.isSuccess) {
     return (
       <View style={[styles.notice, { backgroundColor: colors.infoSoft }]}>
-        <Ionicons name="checkmark-circle-outline" size={20} color={colors.infoAccent} />
+        <Ionicons
+          name="checkmark-circle-outline"
+          size={20}
+          color={colors.infoAccent}
+          {...decorative}
+        />
         <Text style={[styles.noticeText, { color: colors.infoAccent }]}>{CANCEL_REQUESTED}</Text>
       </View>
     )

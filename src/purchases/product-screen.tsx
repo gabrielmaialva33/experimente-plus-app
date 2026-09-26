@@ -15,6 +15,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 
+import { decorative } from '@/components/decorative'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
@@ -492,7 +493,7 @@ function Included({ product }: { product: PurchaseProduct }) {
               index > 0 && { borderTopColor: colors.muted, borderTopWidth: 1 },
             ]}
           >
-            <View style={[styles.tile, { backgroundColor: colors.ctaSoft }]}>
+            <View style={[styles.tile, { backgroundColor: colors.ctaSoft }]} {...decorative}>
               <Ionicons name="ticket-outline" size={24} color={colors.ctaAccent} />
             </View>
             <View style={styles.includedText}>

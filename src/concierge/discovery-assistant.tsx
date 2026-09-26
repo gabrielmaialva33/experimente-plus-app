@@ -97,7 +97,9 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
     >
       <View style={styles.copy}>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>Concierge</Text>
-        <Text style={[styles.title, { color: colors.foreground }]}>O que você quer fazer?</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+          O que você quer fazer?
+        </Text>
         <Text style={[styles.help, { color: colors.mutedForeground }]}>
           Pergunte por ideias em {cityName ?? 'sua cidade'}. As sugestões usam somente lugares
           publicados no Experimente+.

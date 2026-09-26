@@ -5,6 +5,7 @@ import { useCallback } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { decorative } from '@/components/decorative'
 import type { Purchase } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
 import { Badge } from '@/components/badge'
@@ -132,7 +133,7 @@ export default function WalletScreen() {
                 { backgroundColor: colors.card, borderColor: colors.borderSubtle },
               ]}
             >
-              <View style={[styles.emptyIcon, { backgroundColor: colors.ctaSoft }]}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.ctaSoft }]} {...decorative}>
                 <Ionicons name="ticket-outline" size={28} color={colors.ctaAccent} />
               </View>
               <Text

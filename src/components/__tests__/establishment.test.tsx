@@ -7,7 +7,7 @@ import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentCover } from '@/components/establishment-cover'
 import { EstablishmentHours } from '@/components/establishment-hours'
 import { OperatingStatus } from '@/components/operating-status'
-import { palette } from '@/theme/tokens'
+import { palette, fontFamilies } from '@/theme/tokens'
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useLocalSearchParams: () => ({ city: 'londrina', slug: 'cafe' }) }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
@@ -168,7 +168,7 @@ describe('establishment presentation', () => {
   it('highlights the city day, shows closed days and updates across local midnight', async () => {
     jest.useFakeTimers({ now: new Date('2026-09-07T02:59:30Z') })
     const view = await render(<EstablishmentHours establishment={detail} />)
-    expect(view.getByText('Domingo · Hoje')).toHaveStyle({ fontWeight: '700' })
+    expect(view.getByText('Domingo · Hoje')).toHaveStyle({ fontFamily: fontFamilies.text[700] })
     expect(view.getAllByText('Fechado')).toHaveLength(6)
     expect(view.getByText('09:00 às 18:00')).toBeOnTheScreen()
 
@@ -271,8 +271,10 @@ describe.each(['light', 'dark'] as const)('card cover seam in %s', (mode) => {
     if (photo) expect(view.getByLabelText('Fachada do café')).toBeOnTheScreen()
     else expect(view.getByText('Foto indisponível')).toBeOnTheScreen()
     const body = view.getByText(detail.name).parent!
-    expect(body).toHaveStyle({ borderTopWidth: 1, borderTopColor: palette[mode].border })
-    expect(StyleSheet.flatten(body.props.style).padding).toBeGreaterThan(0)
+    expect(body).toHaveStyle({ borderTopWidth: 1, borderTopColor: palette[mode].borderSubtle })
+    const inset = StyleSheet.flatten(body.props.style)
+    expect(inset.paddingTop).toBeGreaterThan(0)
+    expect(inset.paddingHorizontal).toBeGreaterThan(0)
     expect(view.getByRole('button')).toHaveStyle({ overflow: 'hidden' })
   })
 })

@@ -1,5 +1,5 @@
 import { navigationColors, stackSurfaceOptions } from '../navigation'
-import { elevation, palette, radius } from '../tokens'
+import { displayWeight, elevation, fontFamilies, minTouch, palette, radius, spacing, textWeight, typography } from '../tokens'
 
 // Exact canonical CSS OKLCH, 2026-09-08. Portable without the sibling checkout.
 const canonicalOklch = {
@@ -309,4 +309,51 @@ it.each(['light', 'dark'] as const)('keeps new interactive boundaries and the te
     ['choiceSelectedBorder', 'choiceSelected'], ['actionSecondaryBorder', 'actionSecondary'],
     ['temporalEmphasisBorder', 'temporalEmphasis'],
   ] as const) expect(contrast(colors[border], colors[fill])).toBeGreaterThanOrEqual(3)
+})
+
+it('gives every role of the direction A scale a loaded face and an explicit line height', () => {
+  const display = Object.values(fontFamilies.display) as string[]
+  const text = Object.values(fontFamilies.text) as string[]
+  for (const role of ['display', 'title', 'heading'] as const) {
+    expect(display).toContain(typography[role].fontFamily)
+  }
+  for (const role of ['body', 'label', 'meta', 'caption', 'overline'] as const) {
+    expect(text).toContain(typography[role].fontFamily)
+  }
+  for (const style of Object.values(typography)) {
+    expect(style).not.toHaveProperty('fontWeight')
+    expect(style.lineHeight).toBeGreaterThanOrEqual(style.fontSize)
+  }
+  expect([typography.display.fontSize, typography.title.fontSize, typography.heading.fontSize, typography.body.fontSize])
+    .toEqual([30, 21, 18, 16])
+})
+
+it('turns a weight into its real face and never past the family', () => {
+  expect(textWeight('400')).toEqual({ fontFamily: fontFamilies.text[400] })
+  expect(textWeight(600)).toEqual({ fontFamily: fontFamilies.text[600] })
+  expect(textWeight('800')).toEqual({ fontFamily: fontFamilies.text[700] })
+  expect(displayWeight('400')).toEqual({ fontFamily: fontFamilies.display[600] })
+  expect(displayWeight('700')).toEqual({ fontFamily: fontFamilies.display[700] })
+  expect(displayWeight(800)).toEqual({ fontFamily: fontFamilies.display[800] })
+})
+
+it('adds the card, thumbnail and sheet radii, the gutter and the section rhythm of direction A', () => {
+  expect([radius.thumb, radius.card, radius.sheet, radius.pill]).toEqual([16, 20, 28, 999])
+  expect([spacing.gutter, spacing.section]).toEqual([20, 28])
+  expect(minTouch).toBe(44)
+})
+
+it.each(['light', 'dark'] as const)('keeps the subtle border decorative: visible on cards, quieter than an interactive boundary, in %s', (mode) => {
+  const colors = palette[mode]
+  for (const surface of [colors.surfaceBase, colors.surfaceRaised]) {
+    expect(contrast(colors.borderSubtle, surface)).toBeGreaterThan(1.1)
+    expect(contrast(colors.borderSubtle, surface)).toBeLessThan(contrast(colors.border, surface))
+  }
+})
+
+it.each(['light', 'dark'] as const)('keeps the header band readable: text and chips on it meet AA in %s', (mode) => {
+  const colors = palette[mode]
+  expect(contrast(colors.chromeForeground, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+  expect(contrast(colors.chromeMuted, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+  expect(contrast(colors.chromeForeground, colors.chromeRaised)).toBeGreaterThanOrEqual(4.5)
 })

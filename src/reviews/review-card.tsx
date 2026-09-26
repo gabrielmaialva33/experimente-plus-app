@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { Review } from '@/api/reviews'
 import { ReviewPhotos } from '@/reviews/review-photos'
 import { Stars } from '@/reviews/stars'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -92,11 +92,11 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.md, gap: spacing.sm, padding: spacing.md },
   header: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
   identity: { flex: 1, gap: 2 },
-  author: { ...typography.body, fontWeight: '600' },
+  author: { ...typography.body, ...textWeight('600') },
   date: typography.caption,
   body: typography.body,
   reply: { borderLeftWidth: 2, gap: spacing.xs, paddingLeft: spacing.md },
-  replyLabel: { ...typography.caption, fontWeight: '700' },
+  replyLabel: { ...typography.caption, ...textWeight('700') },
   report: { minHeight: 32, justifyContent: 'center' },
   reportLabel: { ...typography.caption, textDecorationLine: 'underline' },
 })

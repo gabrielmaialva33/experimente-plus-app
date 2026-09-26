@@ -6,7 +6,7 @@ import { RemoteImage } from '@/components/remote-image'
 import { ReportLink } from '@/reviews/report-link'
 import { ContentActions } from './content-actions'
 import type { PartnerContentKind } from '@/api/partner-content'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { publishedContentView, type PublishedContentView } from './presentation'
@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
   },
   heading: typography.heading,
   group: { gap: spacing.sm },
-  eyebrow: { ...typography.caption, fontWeight: '700', textTransform: 'uppercase' },
-  groupTitle: { ...typography.body, fontWeight: '700' },
+  eyebrow: { ...typography.caption, ...textWeight('700'), textTransform: 'uppercase' },
+  groupTitle: { ...typography.body, ...textWeight('700') },
   card: {
     borderRadius: radius.md,
     borderWidth: 1,
@@ -197,9 +197,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'space-between',
   },
-  itemTitle: { ...typography.body, flex: 1, fontWeight: '700', paddingLeft: spacing.md, paddingTop: spacing.md },
-  price: { ...typography.body, fontWeight: '700', paddingRight: spacing.md, paddingTop: spacing.md },
-  meta: { ...typography.caption, fontWeight: '600', paddingHorizontal: spacing.md },
+  itemTitle: { ...typography.body, flex: 1, ...textWeight('700'), paddingLeft: spacing.md, paddingTop: spacing.md },
+  price: { ...typography.body, ...textWeight('700'), paddingRight: spacing.md, paddingTop: spacing.md },
+  meta: { ...typography.caption, ...textWeight('600'), paddingHorizontal: spacing.md },
   body: { ...typography.body, paddingHorizontal: spacing.md },
   caption: { ...typography.caption, paddingHorizontal: spacing.md },
 })

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { RemoteImage } from '@/components/remote-image'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
 import { FinancialRestrictionError, useCreatePresentation, useWallet } from '@/wallet/queries'
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   countdown: { ...typography.heading, fontVariant: ['tabular-nums'] },
   message: { ...typography.body, textAlign: 'center' },
-  link: { ...typography.body, fontWeight: '700' },
+  link: { ...typography.body, ...textWeight('700') },
   action: {
     alignItems: 'center',
     borderRadius: radius.pill,
@@ -186,6 +186,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
   },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
   terms: { ...typography.caption, textAlign: 'center' },
 })

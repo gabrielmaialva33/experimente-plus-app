@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } f
 
 import { ApiError } from '@/api/client'
 import type { PurchaseSnapshot } from '@/api/purchases'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export function PurchasePage({ children, refreshControl }: {
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   terms: { gap: spacing.sm },
   offer: { gap: spacing.xs },
   toggle: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  toggleLabel: { ...typography.body, fontWeight: '700' },
+  toggleLabel: { ...typography.body, ...textWeight('700') },
   action: { borderRadius: radius.md, padding: spacing.md, minHeight: 48, justifyContent: 'center' },
-  actionLabel: { ...typography.body, fontWeight: '700', textAlign: 'center' },
+  actionLabel: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
 })

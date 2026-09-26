@@ -6,7 +6,7 @@ import type { PartnerContentItemKind } from '@/api/partner-content'
 import { publicEstablishmentUrl } from '@/explorer/save-actions'
 import { useSavedContent, useToggleSavedContent } from '@/explorer/queries'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const PATH = { experience: 'experiences', event: 'events' } as const
@@ -145,5 +145,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 44,
   },
-  label: { ...typography.body, fontWeight: '600' },
+  label: { ...typography.body, ...textWeight('600') },
 })

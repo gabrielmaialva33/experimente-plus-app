@@ -14,7 +14,7 @@ import {
   useReorderItineraryStops,
   useUpdateItinerary,
 } from '@/explorer/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function ItineraryScreen() {
@@ -222,11 +222,11 @@ const styles = StyleSheet.create({
   section: { borderRadius: radius.surface, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
   nameInput: { ...typography.title, borderRadius: radius.md, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.md },
   body: typography.body,
-  position: { ...typography.caption, fontWeight: '600' },
+  position: { ...typography.caption, ...textWeight('600') },
   stopActions: { flexDirection: 'row', gap: spacing.sm },
   iconButton: { alignItems: 'center', borderRadius: radius.md, borderWidth: 1, height: 48, justifyContent: 'center', width: 48 },
   primary: { alignItems: 'center', borderRadius: radius.md, justifyContent: 'center', minHeight: 48 },
-  primaryLabel: { ...typography.body, fontWeight: '600' },
+  primaryLabel: { ...typography.body, ...textWeight('600') },
   secondary: { alignItems: 'center', borderRadius: radius.md, borderWidth: 1, flex: 1, justifyContent: 'center', minHeight: 48 },
   deleteLink: { alignItems: 'center', minHeight: 48, justifyContent: 'center' },
 })

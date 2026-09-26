@@ -5,7 +5,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useCreateItinerary, useItineraries } from '@/explorer/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -110,9 +110,9 @@ const styles = StyleSheet.create({
   lead: typography.body,
   input: { ...typography.body, borderRadius: radius.md, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.md },
   primary: { alignItems: 'center', borderRadius: radius.md, justifyContent: 'center', minHeight: 48 },
-  primaryLabel: { ...typography.body, fontWeight: '600' },
+  primaryLabel: { ...typography.body, ...textWeight('600') },
   empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
   card: { borderRadius: radius.surface, borderWidth: 1, gap: spacing.xs, padding: spacing.lg },
-  name: { ...typography.body, fontWeight: '600' },
+  name: { ...typography.body, ...textWeight('600') },
   meta: typography.caption,
 })

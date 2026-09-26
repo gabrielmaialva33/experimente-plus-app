@@ -8,7 +8,7 @@ import { useSelectedCity } from '@/catalog/city-store'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { interestOptions, selectionChanged } from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -172,8 +172,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   optionText: { flex: 1, gap: spacing.xs },
-  optionName: { ...typography.body, fontWeight: '600' },
+  optionName: { ...typography.body, ...textWeight('600') },
   optionNote: typography.caption,
   save: { alignItems: 'center', borderRadius: radius.md, justifyContent: 'center', minHeight: 48 },
-  saveLabel: { ...typography.body, fontWeight: '600' },
+  saveLabel: { ...typography.body, ...textWeight('600') },
 })

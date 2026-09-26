@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 interface ChoiceControlProps {
@@ -52,7 +52,7 @@ export function ChoiceControl({ label, selected = false, disabled = false, shape
       <Text
         style={[
           styles.label,
-          { color: selected ? colors.choiceSelectedForeground : colors.choiceForeground, fontWeight: selected ? '700' : '500' },
+          { color: selected ? colors.choiceSelectedForeground : colors.choiceForeground, ...textWeight(selected ? '700' : '500') },
         ]}>
         {label}
       </Text>
@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   compact: { minHeight: 40 },
   fill: { flexGrow: 1, flexBasis: 0, minWidth: 0, justifyContent: 'center' },
   indicator: { width: 16, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
-  label: { ...typography.caption, fontWeight: '600', flexShrink: 1, minWidth: 0 },
+  label: { ...typography.caption, ...textWeight('600'), flexShrink: 1, minWidth: 0 },
 })

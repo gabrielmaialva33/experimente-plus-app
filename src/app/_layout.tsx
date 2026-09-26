@@ -1,10 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect } from 'react'
-import { useColorScheme } from 'react-native'
+import { useEffect, type ReactElement } from 'react'
+import { useColorScheme, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { useFontsReady } from '@/theme/fonts'
 import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
 import { useColors } from '@/theme/use-colors'
 
@@ -17,20 +18,21 @@ SplashScreen.preventAutoHideAsync()
 const queryClient = createQueryClient()
 
 /**
- * Holds the splash until the session context resolves.
+ * Holds the splash until the session context resolves and the faces are usable.
  *
  * This is what keeps ADR-0023 §2 honest: the tab set is only ever painted once
  * the server has told us which areas the actor has, so a partner tab is never
- * shown and then withdrawn.
+ * shown and then withdrawn. The fonts wait with it; `useFontsReady` gives up
+ * after a short timeout, so a font problem never keeps the app behind the splash.
  */
-function SplashGate() {
+function SplashGate({ fontsReady }: { fontsReady: boolean }) {
   const { status } = useSession()
 
   useEffect(() => {
-    if (status !== 'loading') {
+    if (status !== 'loading' && fontsReady) {
       void SplashScreen.hideAsync()
     }
-  }, [status])
+  }, [status, fontsReady])
 
   return null
 }
@@ -43,16 +45,23 @@ function SplashGate() {
  * SIGSEGV. Expo's own guidance is the same: the root layout's content must be
  * mounted before any navigation event. The splash screen, held by SplashGate,
  * is what covers the loading state.
+ *
+ * What waits for the faces is each screen's content, inside the mounted
+ * navigator. Android measures a text once, with whatever face it has at the
+ * time, and keeps that measure after the real face arrives: a screen drawn
+ * before the fonts would keep its words clipped to the width of the system face.
  */
-function Shell() {
+function Shell({ fontsReady }: { fontsReady: boolean }) {
   const colorScheme = useColorScheme()
   const colors = useColors()
   const insets = useSafeAreaInsets()
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
+  const screenLayout = ({ children }: { children: ReactElement }) =>
+    fontsReady ? children : <View style={{ backgroundColor: colors.surfaceBase, flex: 1 }} />
 
   return (
     <ThemeProvider value={{ ...baseTheme, colors: navigationColors(colors) }}>
-      <Stack screenOptions={stackSurfaceOptions(colors, insets.bottom)}>
+      <Stack screenOptions={stackSurfaceOptions(colors, insets.bottom)} screenLayout={screenLayout}>
         <Stack.Screen
           name="(tabs)"
           options={{ headerShown: false, contentStyle: stackSurfaceOptions(colors).contentStyle }}
@@ -115,13 +124,14 @@ export default function RootLayout() {
   // Registering listeners in an effect, not in a render-time initializer: a
   // discarded render would otherwise leave a listener with no cleanup.
   useEffect(() => installQueryEnvironment(), [])
+  const fontsReady = useFontsReady()
 
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <SplashGate />
+        <SplashGate fontsReady={fontsReady} />
         <SessionCacheGuard />
-        <Shell />
+        <Shell fontsReady={fontsReady} />
       </SessionProvider>
     </QueryClientProvider>
   )

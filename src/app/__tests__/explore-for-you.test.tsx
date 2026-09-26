@@ -3,9 +3,10 @@ import { render } from '@testing-library/react-native'
 
 import ExploreScreen from '@/app/(tabs)/index'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
 // A signed-in person with interests: the one case where the row is drawn.
@@ -88,8 +89,9 @@ function textsOf(node: Rendered | string): string[] {
   return (node.children ?? []).flatMap((child) => textsOf(child as Rendered | string))
 }
 
-it('adds the personal row between the agenda and the filters and leaves search as it was', async () => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+it('adds the personal row after the places and before the agenda, and leaves search as it was', async () => {
+  // No garbage-collection timer: one left behind keeps jest from exiting.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
   const view = await render(
     <QueryClientProvider client={client}>
       <ExploreScreen />
@@ -99,8 +101,9 @@ it('adds the personal row between the agenda and the filters and leaves search a
   expect(await view.findByText('Bistrô Pessoal')).toBeOnTheScreen()
   const texts = textsOf(view.root)
   const at = (text: string) => texts.indexOf(text)
-  expect(at('Agenda da cidade')).toBeLessThan(at('Para você'))
-  expect(at('Para você')).toBeLessThan(at('Filtros'))
+  // Places first (audit A1), then the personal row, then the city's agenda.
+  expect(at('Café da Praça')).toBeLessThan(at('Para você'))
+  expect(at('Para você')).toBeLessThan(at('Agenda da cidade'))
 
   // Organic results are the search's alone, asked with the same parameters.
   expect(view.getAllByText('Café da Praça')).toHaveLength(1)

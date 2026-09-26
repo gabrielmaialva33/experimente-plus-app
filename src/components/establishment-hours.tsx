@@ -3,7 +3,7 @@ import { AppState, StyleSheet, Text, View } from 'react-native'
 
 import { cityWeekday, weeklySchedule } from '@/catalog/opening-hours'
 import type { EstablishmentDetail } from '@/catalog/types'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export function EstablishmentHours({ establishment }: { establishment: EstablishmentDetail }) {
@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
   caption: typography.caption,
   body: typography.body,
   day: { borderRadius: radius.surface, borderLeftWidth: 4, gap: spacing.xs, padding: spacing.sm },
-  today: { fontWeight: '700' },
+  today: { ...textWeight('700') },
 })

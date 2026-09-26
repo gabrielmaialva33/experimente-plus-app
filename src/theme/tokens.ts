@@ -70,6 +70,13 @@ const basePalette = {
     contentAbsent: '#d3d6da',
     contentAbsentForeground: '#49515b',
     contentAbsentBorder: '#6a727d',
+    borderSubtle: '#dde1e6',
+    // Direction A header band: the brand navy in light, its soft plane in dark,
+    // where primary is a light blue that white text cannot sit on.
+    chrome: '#13467c',
+    chromeRaised: '#0d3866',
+    chromeForeground: '#ffffff',
+    chromeMuted: '#d3e3f8',
     temporalEmphasis: '#f9fbfe',
     temporalEmphasisForeground: '#333840',
     temporalEmphasisBorder: '#687380',
@@ -128,6 +135,11 @@ const basePalette = {
     contentAbsent: '#191b1d',
     contentAbsentForeground: '#c1c8d1',
     contentAbsentBorder: '#515962',
+    borderSubtle: '#2e3450',
+    chrome: '#23374d',
+    chromeRaised: '#1d2134',
+    chromeForeground: '#f7f6f2',
+    chromeMuted: '#c9d6e6',
     temporalEmphasis: '#383e45',
     temporalEmphasisForeground: '#d8dfe8',
     temporalEmphasisBorder: '#94a0ae',
@@ -163,13 +175,19 @@ export const palette = {
 export type ColorScheme = keyof typeof palette
 export type Colors = (typeof palette)[ColorScheme]
 
-/** Logical units, never PixelRatio-scaled. Full radius is only pill/circle geometry. */
+/**
+ * Logical units, never PixelRatio-scaled. Full radius is only pill/circle geometry.
+ * Direction A adds the card, thumbnail and sheet radii; the canonical ones stay.
+ */
 export const radius = {
   sm: 4,
   md: 8,
   lg: 12,
   xl: 12,
   surface: 12,
+  thumb: 16,
+  card: 20,
+  sheet: 28,
   pill: 999,
 } as const
 
@@ -185,13 +203,70 @@ export const spacing = {
   sm: 8,
   md: 12,
   lg: 16,
+  /** Screen gutter of direction A. */
+  gutter: 20,
   xl: 24,
+  /** Between sections of a screen. */
+  section: 28,
   xxl: 32,
 } as const
 
+/** The smallest touch target, whatever the drawing inside it. */
+export const minTouch = 44
+
+/**
+ * Each weight is its own loaded family (see `theme/fonts.ts`): Android draws the
+ * real face instead of synthesising a bold, and iOS never falls back to the
+ * system font for a weight the family lacks.
+ */
+export const fontFamilies = {
+  text: {
+    400: 'InstrumentSans_400Regular',
+    500: 'InstrumentSans_500Medium',
+    600: 'InstrumentSans_600SemiBold',
+    700: 'InstrumentSans_700Bold',
+  },
+  display: {
+    600: 'PlusJakartaSans_600SemiBold',
+    700: 'PlusJakartaSans_700Bold',
+    800: 'PlusJakartaSans_800ExtraBold',
+  },
+} as const
+
+type WeightInput = '400' | '500' | '600' | '700' | '800' | 400 | 500 | 600 | 700 | 800
+
+/** A text weight as its face. Text stops at 700; heavier asks come back as 700. */
+export function textWeight(weight: WeightInput) {
+  const value = Number(weight)
+  const step = value >= 700 ? 700 : value >= 600 ? 600 : value >= 500 ? 500 : 400
+  return { fontFamily: fontFamilies.text[step] }
+}
+
+/** A display weight as its face. Display starts at 600. */
+export function displayWeight(weight: WeightInput) {
+  const value = Number(weight)
+  const step = value >= 800 ? 800 : value >= 700 ? 700 : 600
+  return { fontFamily: fontFamilies.display[step] }
+}
+
+/**
+ * Direction A scale. Display roles (display, title, heading) use Plus Jakarta
+ * Sans; everything read uses Instrument Sans. Line heights are explicit so a
+ * face swap never moves the layout.
+ */
 export const typography = {
-  title: { fontSize: 24, fontWeight: '700' },
-  heading: { fontSize: 18, fontWeight: '600' },
-  body: { fontSize: 15, fontWeight: '400' },
-  caption: { fontSize: 13, fontWeight: '400' },
+  display: { fontFamily: fontFamilies.display[800], fontSize: 30, lineHeight: 34, letterSpacing: -0.6 },
+  title: { fontFamily: fontFamilies.display[800], fontSize: 21, lineHeight: 26, letterSpacing: -0.2 },
+  heading: { fontFamily: fontFamilies.display[700], fontSize: 18, lineHeight: 23 },
+  body: { fontFamily: fontFamilies.text[400], fontSize: 16, lineHeight: 23 },
+  label: { fontFamily: fontFamilies.text[600], fontSize: 15, lineHeight: 20 },
+  meta: { fontFamily: fontFamilies.text[500], fontSize: 14, lineHeight: 19 },
+  caption: { fontFamily: fontFamilies.text[500], fontSize: 13, lineHeight: 17 },
+  overline: {
+    fontFamily: fontFamilies.text[700],
+    fontSize: 12,
+    lineHeight: 15,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
 } as const

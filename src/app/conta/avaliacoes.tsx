@@ -6,7 +6,7 @@ import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useDeleteReview, useMyReviews } from '@/reviews/queries'
 import { formatDate } from '@/reviews/review-card'
 import { Stars } from '@/reviews/stars'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 // The statuses the server has: `pending_moderation` never existed — the API
@@ -111,11 +111,11 @@ const styles = StyleSheet.create({
   list: { gap: spacing.md, padding: spacing.lg },
   card: { borderWidth: 1, borderRadius: radius.surface, gap: spacing.sm, padding: spacing.lg },
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
-  status: { ...typography.caption, fontWeight: '600' },
+  status: { ...typography.caption, ...textWeight('600') },
   date: typography.caption,
   body: typography.body,
   empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
   actions: { flexDirection: 'row', gap: spacing.sm },
   secondary: { alignItems: 'center', borderWidth: 1, borderRadius: radius.md, flex: 1, justifyContent: 'center', minHeight: 44 },
-  secondaryLabel: { ...typography.body, fontWeight: '600' },
+  secondaryLabel: { ...typography.body, ...textWeight('600') },
 })

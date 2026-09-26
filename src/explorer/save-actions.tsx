@@ -4,7 +4,7 @@ import { Pressable, Share, StyleSheet, Text, View } from 'react-native'
 
 import { apiUrl } from '@/api/config'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { useSavedStatus, useToggleSaved } from './queries'
@@ -152,5 +152,5 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: spacing.md,
   },
-  label: { ...typography.body, fontWeight: '600' },
+  label: { ...typography.body, ...textWeight('600') },
 })

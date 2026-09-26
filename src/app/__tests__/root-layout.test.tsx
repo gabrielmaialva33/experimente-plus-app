@@ -7,6 +7,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, right: 0, bottom: 48, left: 0 }),
 }))
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hideAsync: jest.fn() }))
+jest.mock('@/theme/fonts', () => ({ useFontsReady: () => true }))
 jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.dark }))
 jest.mock('@/api/query-client', () => ({
   createQueryClient: () => new (jest.requireActual('@tanstack/react-query').QueryClient)(),

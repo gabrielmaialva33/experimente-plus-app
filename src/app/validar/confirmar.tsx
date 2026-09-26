@@ -7,7 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { ApiError } from '@/api/client'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import type { Receipt } from '@/wallet/types'
 
@@ -210,14 +210,14 @@ const styles = StyleSheet.create({
   heading: { ...typography.title, marginBottom: spacing.sm },
   field: { gap: 2 },
   label: { ...typography.caption, textTransform: 'uppercase' },
-  value: { ...typography.body, fontWeight: '600' },
+  value: { ...typography.body, ...textWeight('600') },
   message: { ...typography.body, textAlign: 'center' },
-  link: { ...typography.body, fontWeight: '700', textAlign: 'center' },
+  link: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
   action: {
     alignItems: 'center',
     borderRadius: radius.pill,
     marginTop: spacing.lg,
     paddingVertical: spacing.md,
   },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { useSavedContent, useToggleSavedContent } from './queries'
@@ -97,12 +97,12 @@ export function ContentFavoritesSection() {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.md, paddingBottom: spacing.sm },
-  heading: { ...typography.body, fontWeight: '700' },
+  heading: { ...typography.body, ...textWeight('700') },
   notice: typography.caption,
   card: { borderRadius: radius.surface, borderWidth: 1, gap: spacing.md, padding: spacing.lg },
-  kind: { ...typography.caption, fontWeight: '600' },
-  title: { ...typography.body, fontWeight: '600' },
+  kind: { ...typography.caption, ...textWeight('600') },
+  title: { ...typography.body, ...textWeight('600') },
   meta: typography.caption,
   remove: { alignItems: 'center', borderRadius: radius.md, borderWidth: 1, justifyContent: 'center', minHeight: 44 },
-  removeLabel: { ...typography.body, fontWeight: '600' },
+  removeLabel: { ...typography.body, ...textWeight('600') },
 })

@@ -2,7 +2,7 @@ import { Camera, Map, Marker } from '@maplibre/maplibre-react-native'
 import { useMemo, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useMapCredit } from './attribution'
 import { mapStyleUrl } from './config'
@@ -92,5 +92,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
-  label: { ...typography.caption, fontWeight: '700' },
+  label: { ...typography.caption, ...textWeight('700') },
 })

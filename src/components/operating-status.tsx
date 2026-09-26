@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native'
 
 import { operatingStatus } from '@/catalog/operating-status'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** The shared palette stores hex; keep the canonical border opacity explicit. */
@@ -49,13 +49,16 @@ export function OperatingStatus({
 }
 
 const styles = StyleSheet.create({
+  // A pill of direction A; it sits on the card photo or under a title.
   status: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    maxWidth: '100%',
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    justifyContent: 'center',
+    maxWidth: '100%',
+    minHeight: 30,
+    paddingHorizontal: spacing.md,
   },
-  label: { ...typography.caption, fontWeight: '600', flexShrink: 1 },
+  label: { ...typography.caption, ...textWeight('700'), flexShrink: 1 },
 })

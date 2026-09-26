@@ -7,7 +7,7 @@ import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportAnonymously, useReportContent } from '@/reviews/queries'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -211,5 +211,5 @@ const styles = StyleSheet.create({
   note: { ...typography.caption, textAlign: 'center' },
   protocol: { ...typography.title, letterSpacing: 1 },
   action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

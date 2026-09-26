@@ -15,7 +15,7 @@ import {
 } from '@/reviews/queries'
 import { ReviewPhotos } from '@/reviews/review-photos'
 import { StarsInput } from '@/reviews/stars'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -158,5 +158,5 @@ const styles = StyleSheet.create({
   body: typography.body,
   photos: { gap: spacing.sm },
   action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, fontWeight: '700' },
+  actionLabel: { ...typography.body, ...textWeight('700') },
 })

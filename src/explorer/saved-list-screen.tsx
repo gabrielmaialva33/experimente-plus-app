@@ -5,7 +5,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import type { SavedKind } from '@/api/explorer'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 import { EstablishmentCardRow } from './establishment-card-row'
@@ -118,5 +118,5 @@ const styles = StyleSheet.create({
   notice: { ...typography.caption, paddingBottom: spacing.sm },
   empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
   remove: { alignItems: 'center', borderRadius: radius.md, borderWidth: 1, justifyContent: 'center', minHeight: 44 },
-  removeLabel: { ...typography.body, fontWeight: '600' },
+  removeLabel: { ...typography.body, ...textWeight('600') },
 })

@@ -5,7 +5,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { ApiError } from '@/api/client'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { useAddItineraryStop, useCreateItinerary, useItineraries } from '@/explorer/queries'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -113,6 +113,6 @@ const styles = StyleSheet.create({
   input: { ...typography.body, borderRadius: radius.md, borderWidth: 1, minHeight: 48, paddingHorizontal: spacing.md },
   primary: { alignItems: 'center', borderRadius: radius.md, justifyContent: 'center', minHeight: 48 },
   body: typography.body,
-  label: { ...typography.body, fontWeight: '600' },
+  label: { ...typography.body, ...textWeight('600') },
   caption: typography.caption,
 })

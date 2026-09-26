@@ -2836,7 +2836,7 @@ export interface paths {
         put?: never;
         /**
          * Refuse the version awaiting review
-         * @description Returns the item to a draft, or to its previously approved version when there is one: refusing an edit is not a reason to take down what was already accepted.
+         * @description Returns the item to a draft, or to its previously approved version when there is one: refusing an edit is not a reason to take down what was already accepted. The reason is required: the partner reads it on the item until they send a new version, and the history keeps it.
          */
         post: operations["rejectPartnerContent"];
         delete?: never;
@@ -5602,6 +5602,10 @@ export interface components {
             archived_by?: number | null;
             /** Format: date-time */
             archived_at?: string | null;
+            /** @description Why the moderation refused the last version, while that refusal is the item's current state; cleared when the partner sends a new version. */
+            rejection_reason?: string | null;
+            /** Format: date-time */
+            rejected_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -5628,6 +5632,10 @@ export interface components {
             archived_by?: number | null;
             /** Format: date-time */
             archived_at?: string | null;
+            /** @description Why the moderation refused the last version, while that refusal is the item's current state; cleared when the partner sends a new version. */
+            rejection_reason?: string | null;
+            /** Format: date-time */
+            rejected_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -5649,6 +5657,10 @@ export interface components {
             archived_by?: number | null;
             /** Format: date-time */
             archived_at?: string | null;
+            /** @description Why the moderation refused the last version, while that refusal is the item's current state; cleared when the partner sends a new version. */
+            rejection_reason?: string | null;
+            /** Format: date-time */
+            rejected_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -5740,6 +5752,7 @@ export interface components {
                     to: unknown;
                 };
             } | null;
+            /** @description Context of the act. A `rejected` event carries the moderation's `reason`; an `admin_edited` one, whether it was `republished`. */
             metadata: Record<string, never> | null;
             /** Format: date-time */
             created_at: string;
@@ -14408,7 +14421,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
         responses: {
             /** @description Version refused */
             200: {
@@ -14435,6 +14454,13 @@ export interface operations {
             };
             /** @description Content not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The reason is missing, too short or too long */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -30,8 +30,11 @@ async function mountWith(client: QueryClient) {
   return move
 }
 
+// No garbage-collection timers: a cached list left behind keeps jest from exiting.
+const newClient = () => new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } })
+
 it('drops the previous person’s lists when they sign out', async () => {
-  const client = new QueryClient()
+  const client = newClient()
   mockSession.current = signedIn(7)
   const move = await mountWith(client)
   client.setQueryData(favourites, ['casa-de-petiscos'])
@@ -44,7 +47,7 @@ it('drops the previous person’s lists when they sign out', async () => {
 })
 
 it('drops them when another account or another operation takes the session', async () => {
-  const client = new QueryClient()
+  const client = newClient()
   mockSession.current = signedIn(7)
   const move = await mountWith(client)
   client.setQueryData(favourites, ['casa-de-petiscos'])
@@ -57,7 +60,7 @@ it('drops them when another account or another operation takes the session', asy
 })
 
 it('keeps the cache through a revalidation, a network failure and a visitor signing in', async () => {
-  const client = new QueryClient()
+  const client = newClient()
   mockSession.current = { status: 'anonymous', context: null }
   const move = await mountWith(client)
   client.setQueryData(['catalog', 'londrina'], ['public'])

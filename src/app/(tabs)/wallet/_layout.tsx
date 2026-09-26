@@ -7,7 +7,8 @@ export default function WalletLayout() {
   const colors = useColors()
   return (
     <Stack screenOptions={stackSurfaceOptions(colors)}>
-      <Stack.Screen name="index" options={{ title: 'Carteira' }} />
+      {/* The wallet draws its own header band, which also reserves the status bar. */}
+      <Stack.Screen name="index" options={{ title: 'Carteira', headerShown: false }} />
       <Stack.Screen name="edicoes" options={{ title: 'Pacotes, vouchers e pedidos' }} />
       <Stack.Screen name="edicao/[id]" options={{ title: 'Comprar benefício' }} />
       <Stack.Screen name="pedido/[id]" options={{ title: 'Meu pedido' }} />

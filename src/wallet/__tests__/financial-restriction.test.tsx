@@ -15,9 +15,13 @@ jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), setParams: jest.fn() }),
   useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: 'private-test-token' }),
+  useFocusEffect: jest.fn(),
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {
   status: number
   body: unknown
@@ -30,6 +34,7 @@ jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'authenticated', context: { user: { id: 1 } } }) }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
 jest.mock('@/api/redemptions', () => ({ previewRedemption: jest.fn(), confirmRedemption: jest.fn() }))
+jest.mock('@/api/purchases', () => ({ listPurchases: jest.fn(() => Promise.resolve({ purchases: [] })) }))
 
 const api = jest.requireMock('@/api/wallet') as { getWallet: jest.Mock; createPresentation: jest.Mock }
 const redemptions = jest.requireMock('@/api/redemptions') as { previewRedemption: jest.Mock; confirmRedemption: jest.Mock }
@@ -87,7 +92,7 @@ it('removing a hold preserves server availability and does not restore consumed 
 it('explains the blocked wallet without offering a presentation or financial details', async () => {
   const view = await page(<WalletScreen />)
   await waitFor(() => expect(view.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).length).toBeGreaterThan(0))
-  expect(view.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+  expect(view.getByRole('button', { name: /^Apresentar/ })).toBeDisabled()
   expect(view.queryByText(/disputa|reembolso|cartão/i)).toBeNull()
 })
 
@@ -133,36 +138,37 @@ it('a partner preview refused by the server has no confirmation action or financ
   expect(redemptions.confirmRedemption).not.toHaveBeenCalled()
 })
 
-it.each(['light', 'dark'] as const)('uses bounded E1 for editions and benefits with a localized neutral blocked state in %s', async (mode) => {
+// Direction A draws each benefit as a ticket: a card on the subtle border with a
+// chrome stub naming the benefit; a hold stays a neutral note, never an alarm.
+it.each(['light', 'dark'] as const)('draws benefits as bounded tickets with a localized neutral blocked state in %s', async (mode) => {
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   api.getWallet.mockResolvedValue(wallet)
   const available = await page(<WalletScreen />)
-  expect((await available.findByText('Edição')).parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised, borderWidth: 1 })
-  expect(available.getByText('Benefício').parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
+  expect(await available.findByTestId('wallet-benefit-1:2')).toHaveStyle({ backgroundColor: palette[mode].card, borderColor: palette[mode].borderSubtle, borderWidth: 1 })
+  expect(available.getByText('Benefício').parent).toHaveStyle({ backgroundColor: palette[mode].chrome })
+  expect(available.getByText('Benefício')).toHaveStyle({ color: palette[mode].chromeForeground })
   await available.unmount()
   api.getWallet.mockResolvedValue(blockedWallet)
   const blocked = await page(<WalletScreen />)
-  expect((await blocked.findByText('Benefício')).parent).toHaveStyle({ backgroundColor: palette[mode].surfaceRaised })
+  expect(await blocked.findByTestId('wallet-benefit-1:2')).toHaveStyle({ backgroundColor: palette[mode].card })
   expect(blocked.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).at(-1)).toHaveStyle({ backgroundColor: palette[mode].statusNeutral, color: palette[mode].statusNeutralForeground })
-  expect(blocked.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+  expect(blocked.getByRole('button', { name: /^Apresentar/ })).toBeDisabled()
 })
 
-it.each(['light', 'dark'] as const)('keeps wallet navigation left in its own flow and reserves CTA for use in %s', async (mode) => {
+// The catalog and past uses are whole cards (support plane and subtle border);
+// CTA orange stays reserved for presenting a benefit.
+it.each(['light', 'dark'] as const)('leads to the catalog and past uses from cards and reserves CTA for presenting in %s', async (mode) => {
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   api.getWallet.mockResolvedValue(wallet)
   const view = await page(<WalletScreen />)
-  const editions = await view.findByRole('button', { name: 'Conhecer pacotes, vouchers e pedidos' })
+  const catalog = await view.findByRole('button', { name: /^Ver benefícios disponíveis/ })
   const history = view.getByRole('button', { name: 'Meus usos' })
-  for (const button of [editions, history]) {
-    expect(button).toHaveStyle({ alignItems: 'flex-start', minHeight: 48 })
-  }
-  expect(view.getByTestId('wallet-navigation')).toHaveStyle({ flexDirection: 'column', paddingRight: 64 })
-  for (const label of ['Conhecer pacotes, vouchers e pedidos', 'Meus usos']) {
-    expect(view.getByText(label)).toHaveStyle({ color: palette[mode].primary, textAlign: 'left' })
-  }
-  expect(view.getByRole('button', { name: 'Usar benefício' })).toHaveStyle({ backgroundColor: palette[mode].cta })
-  expect(view.getByText('Usar benefício')).toHaveStyle({ color: palette[mode].ctaForeground })
-  expect(view.getByText('1 uso(s) restante(s)')).toHaveStyle({ color: palette[mode].ctaAccent })
+  expect(catalog).toHaveStyle({ backgroundColor: palette[mode].primarySoft, minHeight: 64 })
+  expect(history).toHaveStyle({ backgroundColor: palette[mode].card, borderColor: palette[mode].borderSubtle, minHeight: 64 })
+  expect(view.getByText('Ver benefícios disponíveis')).toHaveStyle({ color: palette[mode].primaryAccent })
+  expect(view.getByRole('button', { name: 'Apresentar Benefício em Café' })).toHaveStyle({ backgroundColor: palette[mode].cta })
+  expect(view.getByText('Apresentar')).toHaveStyle({ color: palette[mode].ctaForeground })
+  expect(view.getByText('1 uso restante')).toHaveStyle({ color: palette[mode].ctaAccent })
 })
 
 it('distinguishes a multi-offer package from one store voucher and uses the effective access window', async () => {
@@ -176,14 +182,14 @@ it('distinguishes a multi-offer package from one store voucher and uses the effe
   const pack = within(await view.findByTestId('wallet-pass-1'))
   const voucher = within(view.getByTestId('wallet-pass-2'))
   expect(pack.getByText('Pacote da cidade')).toBeOnTheScreen()
-  expect(pack.getAllByRole('button', { name: 'Usar benefício' })).toHaveLength(2)
+  expect(pack.getAllByRole('button', { name: /^Apresentar/ })).toHaveLength(2)
   expect(voucher.getByText('Voucher avulso')).toBeOnTheScreen()
   expect(voucher.getAllByText('Bistrô').length).toBeGreaterThan(0)
   expect(voucher.queryByText('Café')).toBeNull()
-  expect(voucher.getAllByRole('button', { name: 'Usar benefício' })).toHaveLength(1)
+  expect(voucher.getAllByRole('button', { name: /^Apresentar/ })).toHaveLength(1)
   // The access windows are instants at midnight UTC, read on Londrina's clock.
-  expect(voucher.getByText(/Uso:.*31\/10\/2026.*29\/11\/2026/)).toBeOnTheScreen()
-  expect(pack.getByText(/Uso:.*30\/09\/2026.*30\/12\/2026/)).toBeOnTheScreen()
+  expect(voucher.getByText('Válido até 29/11/2026')).toBeOnTheScreen()
+  expect(pack.getAllByText('Válido até 30/12/2026')).toHaveLength(2)
   expect(view.queryByText(/UTC/)).toBeNull()
 })
 
@@ -196,7 +202,7 @@ it('uses the server product type rather than counting remaining benefits and pre
   const voucher = within(view.getByTestId('wallet-pass-2'))
   expect(voucher.getByText('Voucher avulso')).toBeOnTheScreen()
   expect(voucher.getAllByText(FINANCIAL_RESTRICTION_MESSAGE).length).toBeGreaterThan(0)
-  expect(voucher.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+  expect(voucher.getByRole('button', { name: /^Apresentar/ })).toBeDisabled()
 })
 
 
@@ -212,7 +218,7 @@ it.each([
     const view = await page(<WalletScreen />)
     expect(await view.findByText(label)).toBeOnTheScreen()
     expect(view.queryByText('Disponível')).toBeNull()
-    const action = view.getByRole('button', { name: 'Usar benefício' })
+    const action = view.getByRole('button', { name: /^Apresentar/ })
     expect(action).toBeDisabled()
     await fireEvent.press(action)
     expect(mockPush).not.toHaveBeenCalled()
@@ -226,7 +232,7 @@ it('explains a revoked access even if availability still reads available', async
   }] })
   const view = await page(<WalletScreen />)
   expect(await view.findByText('Revogado')).toBeOnTheScreen()
-  expect(view.getByRole('button', { name: 'Usar benefício' })).toBeDisabled()
+  expect(view.getByRole('button', { name: /^Apresentar/ })).toBeDisabled()
 })
 
 it.each([
@@ -236,7 +242,7 @@ it.each([
   redemptions.previewRedemption.mockReturnValue(new Promise(() => {}))
   const view = await page(kind === 'wallet' ? <WalletScreen /> : kind === 'presentation' ? <PresentScreen /> : <ConfirmScreen />)
   expect((await view.findByRole('progressbar', { name: label })).props.accessibilityState).toEqual({ busy: true })
-  expect(view.queryByRole('button', { name: /Usar benefício|Confirmar utilização|Gerar outro/ })).toBeNull()
+  expect(view.queryByRole('button', { name: /Apresentar|Confirmar utilização|Gerar outro/ })).toBeNull()
   expect(view.queryByLabelText('Código temporário do benefício')).toBeNull()
 })
 

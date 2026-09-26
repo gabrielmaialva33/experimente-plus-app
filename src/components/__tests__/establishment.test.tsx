@@ -678,6 +678,23 @@ describe('place page in direction A', () => {
     await view.unmount()
   })
 
+  // A 44 target drawn in the 32 row of signals: the margins give the extra height back,
+  // so the header keeps its rhythm, and the row reaches as far as the target does.
+  it('makes the rating link a full touch target without moving the header', async () => {
+    queries.useEstablishment.mockReturnValue({
+      data: { ...detail, reviews: { count: 2, average: 4.5 } },
+    })
+    const view = await render(<EstablishmentScreen />)
+    const rating = view.getByRole('link', { name: 'Nota 4,5 de 5, 2 avaliações' })
+    const own = StyleSheet.flatten(rating.props.style)
+    expect(own.minHeight).toBe(minTouch)
+    expect(own.minHeight + 2 * own.marginVertical).toBe(32)
+    const row = StyleSheet.flatten(rating.parent!.props.style)
+    expect(row.paddingVertical).toBe(-own.marginVertical)
+    expect(row.marginVertical).toBe(own.marginVertical)
+    expect(rating.props.hitSlop).toBeUndefined()
+  })
+
   it('names the header after the place and keeps its report in the "⋯" (A32, A40, A43)', async () => {
     const view = await render(<EstablishmentScreen />)
     const calls = router.Stack.Screen.mock.calls

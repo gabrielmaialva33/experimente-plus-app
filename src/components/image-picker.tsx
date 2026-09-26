@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAnnouncement } from '@/components/announce'
 import { RemoteImage } from '@/components/remote-image'
 import { validateImageAsset, type ValidatedImageAsset } from '@/media/image-validation'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export type SelectedImage = ValidatedImageAsset
@@ -143,9 +143,12 @@ export function ImagePicker({
                 accessibilityRole="button"
                 accessibilityLabel={`Remover foto ${index + 1}`}
                 onPress={() => removeImage(index)}
-                style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}
+                style={styles.removeTarget}
+                testID={`remove-image-${index}`}
               >
-                <Ionicons name="close-circle" size={22} color={colors.foreground} />
+                <View style={[styles.removeButton, { backgroundColor: colors.surfaceBase }]}>
+                  <Ionicons name="close-circle" size={22} color={colors.foreground} />
+                </View>
               </Pressable>
             )}
           </View>
@@ -212,10 +215,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  removeButton: {
+  // The drawn circle stays in the corner; the target around it is a full 44, inside the thumbnail.
+  removeTarget: {
+    alignItems: 'flex-end',
+    height: minTouch,
+    padding: 2,
     position: 'absolute',
-    top: 2,
-    right: 2,
+    right: 0,
+    top: 0,
+    width: minTouch,
+  },
+  removeButton: {
     borderRadius: radius.pill,
   },
   // A floor: "Adicionar" at large text grows the tile instead of spilling out.

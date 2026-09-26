@@ -2,7 +2,7 @@ import { Camera, Map, Marker } from '@maplibre/maplibre-react-native'
 import { useMemo, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useMapCredit } from './attribution'
 import { mapStyleUrl } from './config'
@@ -36,18 +36,24 @@ export function MapLibreRenderer({ pins, center, onSelect }: MapRendererProps) {
               group.pins.length === 1 ? onSelect(group.pins[0].slug) : setOpen(group)
             }
           >
+            {/* The pill is drawn small; the marker's target around it is a full 44, centred,
+                so the pin stays on its coordinate. */}
             <View
+              accessible
               accessibilityRole="button"
               accessibilityLabel={
                 group.pins.length === 1
                   ? group.pins[0].name
                   : `${groupLabel(group)}: ${group.pins.map((pin) => pin.name).join(', ')}`
               }
-              style={[styles.pin, { backgroundColor: colors.primary }]}
+              style={styles.target}
+              testID={`pin-${group.key}`}
             >
-              <Text style={[styles.label, { color: colors.primaryForeground }]} numberOfLines={1}>
-                {groupLabel(group)}
-              </Text>
+              <View style={[styles.pin, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.label, { color: colors.primaryForeground }]} numberOfLines={1}>
+                  {groupLabel(group)}
+                </Text>
+              </View>
             </View>
           </Marker>
         ))}
@@ -88,6 +94,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   creditLabel: { ...typography.caption, fontSize: 11 },
+  target: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: minTouch,
+    minWidth: minTouch,
+    padding: spacing.sm,
+  },
   pin: {
     borderRadius: radius.pill,
     maxWidth: 160,

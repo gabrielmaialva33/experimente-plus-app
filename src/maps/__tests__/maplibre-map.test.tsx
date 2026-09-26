@@ -63,6 +63,23 @@ it('opens exactly the place picked from a spot that holds several', async () => 
   expect(onSelect).toHaveBeenCalledWith('casa-de-petiscos')
 })
 
+// The pill is drawn small; the marker is a full 44 target around it, one element a
+// screen reader names with every place it holds.
+it('makes each marker a named 44 target', async () => {
+  const view = await render(
+    <MapLibreRenderer
+      pins={pins}
+      center={{ latitude: -23.31, longitude: -51.16 }}
+      onSelect={jest.fn()}
+    />
+  )
+  const marker = view.getByRole('button', {
+    name: '2 lugares aqui: Casa de Petiscos, Ateliê do Café',
+  })
+  expect(marker.props.accessible).toBe(true)
+  expect(marker).toHaveStyle({ minHeight: 44, minWidth: 44 })
+})
+
 it('opens a lone place straight from its marker', async () => {
   const onSelect = jest.fn()
   const view = await render(

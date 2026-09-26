@@ -21,7 +21,7 @@ import { PlaceChrome, PlaceHero, placeBarRange } from '@/place/place-hero'
 import { PracticalInfo, type ContactAction } from '@/place/practical-info'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { Stars, ratingLabel } from '@/reviews/stars'
-import { displayWeight, radius, spacing, textWeight, typography } from '@/theme/tokens'
+import { displayWeight, minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function EstablishmentScreen() {
@@ -239,8 +239,8 @@ function Detail({
                   accessibilityRole="link"
                   accessibilityLabel={`Nota ${ratingLabel(average)}, ${detail.reviews.count === 1 ? '1 avaliação' : `${detail.reviews.count} avaliações`}`}
                   onPress={() => scrollTo(offsets.current.reviews)}
-                  hitSlop={spacing.sm}
                   style={styles.rating}
+                  testID="place-rating"
                 >
                   <Stars rating={average} />
                   <Text style={[styles.ratingLabel, { color: colors.foreground }]}>
@@ -307,6 +307,9 @@ function Detail({
   )
 }
 
+/** How far the 44 rating target reaches past the 32 row it sits in, above and below. */
+const RATING_BLEED = (minTouch - 32) / 2
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { paddingBottom: spacing.xxl },
@@ -329,8 +332,24 @@ const styles = StyleSheet.create({
   header: { gap: 10 },
   meta: { ...typography.meta, ...textWeight('600') },
   name: { ...typography.display, ...displayWeight('800') },
-  signals: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  rating: { alignItems: 'center', flexDirection: 'row', gap: 6, minHeight: 32 },
+  // The rating link is a 44 target drawn in a 32 row: its extra height and the row's are
+  // taken back by negative margins, so the header keeps its rhythm and the whole target
+  // stays inside its parent, where Android delivers the touch.
+  signals: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginVertical: -RATING_BLEED,
+    paddingVertical: RATING_BLEED,
+  },
+  rating: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginVertical: -RATING_BLEED,
+    minHeight: minTouch,
+  },
   ratingLabel: typography.label,
   description: typography.body,
   section: { gap: spacing.md },

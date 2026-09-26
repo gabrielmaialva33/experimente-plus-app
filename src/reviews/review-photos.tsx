@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import type { ReviewPhoto } from '@/api/reviews'
 import { resolveMediaUrl } from '@/api/config'
 import { RemoteImage } from '@/components/remote-image'
-import { radius, spacing } from '@/theme/tokens'
+import { minTouch, radius, spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -59,20 +59,23 @@ export function ReviewPhotos({
                 accessibilityLabel={`Remover ${label}`}
                 accessibilityState={{ disabled: removing }}
                 disabled={removing}
-                hitSlop={spacing.sm}
                 onPress={() => onRemove(photo)}
-                style={[
-                  styles.remove,
-                  { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
-                ]}
+                style={styles.removeTarget}
                 testID={`remove-photo-${photo.id}`}
               >
-                <Ionicons
-                  name="close"
-                  size={16}
-                  color={colors.destructiveAccent}
-                  accessible={false}
-                />
+                <View
+                  style={[
+                    styles.remove,
+                    { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
+                  ]}
+                >
+                  <Ionicons
+                    name="close"
+                    size={16}
+                    color={colors.destructiveAccent}
+                    accessible={false}
+                  />
+                </View>
               </Pressable>
             ) : null}
           </View>
@@ -86,15 +89,22 @@ const styles = StyleSheet.create({
   row: { gap: spacing.sm },
   item: { position: 'relative' },
   image: { borderRadius: radius.md, height: 88, width: 88 },
+  // A 44 target inside the photo: a hit slop past the photo's edge would not reach on Android.
+  removeTarget: {
+    alignItems: 'flex-end',
+    height: minTouch,
+    padding: 4,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: minTouch,
+  },
   remove: {
     alignItems: 'center',
     borderRadius: 999,
     borderWidth: 1,
     height: 28,
     justifyContent: 'center',
-    position: 'absolute',
-    right: 4,
-    top: 4,
     width: 28,
   },
 })

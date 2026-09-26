@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router'
 import { useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { resolveMediaUrl } from '@/api/config'
 import type { PartnerContentItemKind, PartnerContentKind } from '@/api/partner-content'
@@ -226,6 +227,7 @@ function ContentSheet({
 }) {
   const colors = useColors()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   if (!item) return null
 
   const cover = coverOf(item)
@@ -236,7 +238,14 @@ function ContentSheet({
   const props = { kind: item.kind, id: item.id, title: item.title, ...context }
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
       <View style={styles.root}>
         <Pressable
           accessibilityRole="button"
@@ -249,7 +258,11 @@ function ContentSheet({
           style={[styles.sheet, { backgroundColor: colors.background }]}
         >
           <ScrollView
-            contentContainerStyle={styles.sheetContent}
+            // A modal draws under the system navigation bar; the last action stays above it.
+            contentContainerStyle={[
+              styles.sheetContent,
+              { paddingBottom: insets.bottom + spacing.xl },
+            ]}
             testID={`content-sheet-${item.kind}-${item.id}`}
           >
             {cover ? (

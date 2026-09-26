@@ -75,6 +75,9 @@
   "private": true,
   "jest": {
     "preset": "jest-expo",
-    "resolver": "<rootDir>/jest.resolver.js"
+    "resolver": "<rootDir>/jest.resolver.js",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
   }
 }

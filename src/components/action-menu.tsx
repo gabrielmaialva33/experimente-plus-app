@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { IconButton } from '@/components/icon-button'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
@@ -39,6 +40,7 @@ export function ActionMenu({
   testID?: string
 }) {
   const colors = useColors()
+  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
 
@@ -65,6 +67,7 @@ export function ActionMenu({
         animationType="fade"
         onRequestClose={close}
         statusBarTranslucent
+        navigationBarTranslucent
       >
         <View style={styles.root}>
           <Pressable
@@ -77,6 +80,8 @@ export function ActionMenu({
             accessibilityViewIsModal
             style={[
               styles.sheet,
+              // A modal draws under the system navigation bar; its last row stays above it.
+              { paddingBottom: insets.bottom + spacing.lg },
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
@@ -118,7 +123,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
     borderWidth: 1,
-    paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.gutter,
     paddingTop: spacing.lg,
   },

@@ -89,7 +89,7 @@ A validação visual em Android e iOS reais ainda não foi feita e exige develop
 
 ## Testes e entrega
 
-Jest está configurado em `package.json` com `jest-expo`. Os testes usam `*.test.ts`/`*.test.tsx` em `__tests__`, com mocks de serviços nativos. Execute `pnpm typecheck` e os testes afetados após mudanças de código; valide em development build quando houver impacto em navegação ou módulos nativos. Não afirme que câmera, mapas ou iOS foram testados apenas porque Jest passou.
+Jest está configurado em `package.json` com `jest-expo`; `jest.resolver.js` compõe o resolver do preset com o filtro do Worklets para que Reanimated rode em Jest com sua implementação JavaScript (o estado derivado do scroll é testável; a animação em si só se verifica em development build). Os testes usam `*.test.ts`/`*.test.tsx` em `__tests__`, com mocks de serviços nativos. Execute `pnpm typecheck` e os testes afetados após mudanças de código; valide em development build quando houver impacto em navegação ou módulos nativos. Não afirme que câmera, mapas ou iOS foram testados apenas porque Jest passou.
 
 Priorize regressões de rotação concorrente, capabilities, filtros/cidade, horários/contatos, pins e parsing de QR. Mudanças de contrato exigem regenerar e versionar `src/api/schema.d.ts`, revisar o diff e testar consumidores; não edite esse arquivo manualmente.
 

@@ -9,7 +9,7 @@ import { usePurchaseEditions } from '@/purchases/queries'
 import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-const SIDE = 128
+const SIDE = 136
 const NOTCH = 24
 
 /**
@@ -75,14 +75,17 @@ function BenefitTicket({
       </View>
       <View style={styles.side}>
         <Text style={[styles.price, { color: colors.foreground }]}>{amount}</Text>
-        <Button
-          label="Ver oferta"
-          variant="cta"
-          size={44}
-          fill
-          accessibilityLabel={`Ver oferta · ${product.name} · ${amount}`}
-          onPress={onPress}
-        />
+        {/* A row, so the button fills the stub's width and not its height. */}
+        <View style={styles.action}>
+          <Button
+            label="Ver oferta"
+            variant="cta"
+            size={44}
+            fill
+            accessibilityLabel={`Ver oferta · ${product.name} · ${amount}`}
+            onPress={onPress}
+          />
+        </View>
       </View>
       {/* The two bites of a ticket stub, cut in the page's own colour. */}
       <View style={[styles.notch, styles.top, { backgroundColor: colors.background }]} />
@@ -100,7 +103,8 @@ const styles = StyleSheet.create({
   terms: typography.meta,
   perforation: { justifyContent: 'space-between', paddingVertical: spacing.lg, width: 2 },
   dash: { borderRadius: 1, height: 6, opacity: 0.35, width: 2 },
-  side: { alignItems: 'center', gap: 10, justifyContent: 'center', paddingHorizontal: 14, paddingVertical: spacing.lg, width: SIDE },
+  side: { alignItems: 'center', gap: 10, justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.lg, width: SIDE },
+  action: { alignSelf: 'stretch', flexDirection: 'row' },
   price: { ...typography.heading, ...displayWeight('800'), fontSize: 20 },
   notch: { borderRadius: NOTCH / 2, height: NOTCH, position: 'absolute', right: SIDE - NOTCH / 2 + 1, width: NOTCH },
   top: { top: -NOTCH / 2 },

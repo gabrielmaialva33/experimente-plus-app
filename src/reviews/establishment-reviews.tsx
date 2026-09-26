@@ -44,7 +44,7 @@ export function EstablishmentReviews({
         <Text style={[styles.heading, { color: colors.foreground }]}>Avaliações</Text>
         {summary.average !== null ? (
           <View style={styles.score}>
-            <Stars rating={Math.round(summary.average)} />
+            <Stars rating={summary.average} />
             <Text style={[styles.average, { color: colors.foreground }]}>
               {summary.average.toFixed(1).replace('.', ',')}
             </Text>

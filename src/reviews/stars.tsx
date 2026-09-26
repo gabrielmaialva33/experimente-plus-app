@@ -6,31 +6,43 @@ import { useColors } from '@/theme/use-colors'
 
 const STARS = [1, 2, 3, 4, 5] as const
 
+/** "4,5 de 5" — one decimal at most, with the comma a person reads. */
+export const ratingLabel = (rating: number) => {
+  const value = Math.round(rating * 10) / 10
+  return `${Number.isInteger(value) ? value : value.toFixed(1).replace('.', ',')} de 5`
+}
+
 /**
  * A rating read aloud is a number, not a row of icons.
  *
  * The icons are hidden from assistive technology and the whole row carries a
- * single label, so a screen reader says "4 de 5" instead of five separate
- * star images.
+ * single label, so a screen reader says "4,5 de 5" instead of five separate
+ * star images. An average is drawn to the nearest half star: 4,5 is four stars
+ * and a half, never five.
  */
 export function Stars({ rating, size = 16 }: { rating: number; size?: number }) {
   const colors = useColors()
+  const drawn = Math.round(rating * 2) / 2
 
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel={`${rating} de 5`}
+      accessibilityLabel={ratingLabel(rating)}
       style={styles.row}
       testID="review-stars">
-      {STARS.map((star) => (
-        <Ionicons
-          key={star}
-          name={star <= rating ? 'star' : 'star-outline'}
-          size={size}
-          color={star <= rating ? colors.warning : colors.mutedForeground}
-          accessible={false}
-        />
-      ))}
+      {STARS.map((star) => {
+        const name = star <= drawn ? 'star' : star - 0.5 === drawn ? 'star-half' : 'star-outline'
+        return (
+          <Ionicons
+            key={star}
+            name={name}
+            size={size}
+            color={name === 'star-outline' ? colors.mutedForeground : colors.warning}
+            accessible={false}
+            testID={`star-icon-${name}`}
+          />
+        )
+      })}
     </View>
   )
 }

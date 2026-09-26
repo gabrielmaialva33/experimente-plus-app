@@ -13,7 +13,7 @@ import {
 import { EstablishmentCover, coverImage } from '@/components/establishment-cover'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
-import { publicEstablishmentUrl } from '@/explorer/save-actions'
+import { publicEstablishmentUrl } from '@/place/links'
 import { reportHref } from '@/reviews/report-link'
 import { useSession } from '@/session/context'
 import { minTouch, radius, spacing } from '@/theme/tokens'

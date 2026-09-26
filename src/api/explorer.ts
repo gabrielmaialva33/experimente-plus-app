@@ -1,3 +1,5 @@
+import type { EstablishmentSummary } from '@/catalog/types'
+
 import { request } from './client'
 import type { components } from './schema'
 
@@ -55,6 +57,18 @@ export const replaceInterests = (categorySlugs: string[]) =>
     method: 'PUT',
     authenticated: true,
     body: { category_slugs: categorySlugs },
+  })
+
+/**
+ * The "Para você" row (ADR-0030, revision of 26/09/2026). Its rows are organic
+ * search results, so they carry the runtime catalogue shape the search list
+ * already draws; the spec types that shape's nested objects as bare objects.
+ */
+export type ForYou = Omit<Schemas['ExplorerForYou'], 'data'> & { data: EstablishmentSummary[] }
+
+export const listForYou = (citySlug: string) =>
+  request<ForYou>(`/api/v1/me/for-you?${new URLSearchParams({ city: citySlug })}`, {
+    authenticated: true,
   })
 
 export const listItineraries = () =>

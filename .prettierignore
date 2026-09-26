@@ -1,0 +1,11 @@
+# Generated
+android/
+ios/
+.expo/
+dist/
+coverage/
+src/api/schema.d.ts
+
+# Dependencies and lock files
+node_modules/
+pnpm-lock.yaml

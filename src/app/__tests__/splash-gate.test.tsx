@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
+import { Text } from 'react-native'
 
 import RootLayout from '@/app/_layout'
 
@@ -21,7 +22,7 @@ jest.mock('@/session/context', () => ({
   useSession: () => mockSession.current,
 }))
 jest.mock('expo-router', () => ({
-  Stack: Object.assign(() => null, { Screen: () => null }),
+  Stack: Object.assign(jest.fn(() => null), { Screen: () => null }),
   ThemeProvider: ({ children }: { children: ReactNode }) => children,
   DarkTheme: { colors: {} },
   DefaultTheme: { colors: {} },
@@ -46,4 +47,20 @@ it('lifts the splash once the session resolved and the faces are ready', async (
   mockFontsReady.current = true
   await render(<RootLayout />)
   expect(hideAsync).toHaveBeenCalled()
+})
+
+it('mounts each screen only once the faces are usable, inside a navigator that is already there', async () => {
+  const { Stack } = jest.requireMock('expo-router') as { Stack: jest.Mock }
+  const screen = <Text>Explorar</Text>
+  mockSession.current = { status: 'anonymous' }
+
+  mockFontsReady.current = false
+  await render(<RootLayout />)
+  const waiting = Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({ children: screen })
+  expect(waiting).not.toBe(screen)
+  expect((await render(waiting)).queryByText('Explorar')).toBeNull()
+
+  mockFontsReady.current = true
+  await render(<RootLayout />)
+  expect(Stack.mock.calls[Stack.mock.calls.length - 1][0].screenLayout({ children: screen })).toBe(screen)
 })

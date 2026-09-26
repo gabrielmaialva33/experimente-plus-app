@@ -15,11 +15,11 @@ export function orderState(order: Purchase): OrderState {
 export const ORDER_COPY: Record<OrderState, { title: string; message: string }> = {
   pending: {
     title: 'Pedido pendente',
-    message: 'Aguardando confirmação do pagamento. O pedido ainda não concede acesso aos benefícios.',
+    message: 'Aguardando a confirmação do pagamento. Até lá, o pedido ainda não libera os benefícios.',
   },
   confirmed: {
     title: 'Pagamento confirmado',
-    message: 'Consulte a carteira para conferir o acesso, as datas de uso e a disponibilidade de cada benefício.',
+    message: 'Seus benefícios estão na carteira, com as datas de uso e a disponibilidade de cada um.',
   },
   late_confirmation: {
     title: 'Confirmação em análise',
@@ -27,11 +27,11 @@ export const ORDER_COPY: Record<OrderState, { title: string; message: string }> 
   },
   failed: {
     title: 'Pedido não concluído',
-    message: 'Este pedido não liberou acesso. Consulte novamente para acompanhar eventual confirmação tardia.',
+    message: 'Este pedido não liberou benefícios. Consulte novamente para acompanhar uma eventual confirmação tardia.',
   },
   blocked: {
-    title: 'Acesso indisponível',
-    message: 'O acesso está temporariamente indisponível para novos usos. Aguarde a atualização ou procure o suporte da operação.',
+    title: 'Benefícios pausados',
+    message: 'Os benefícios desta compra estão temporariamente indisponíveis para novos usos. Aguarde a atualização ou procure o suporte da operação.',
   },
   refunded: {
     title: 'Pedido reembolsado',

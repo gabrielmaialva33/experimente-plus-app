@@ -28,6 +28,7 @@ jest.mock('@/purchases/intent-store', () => ({
   purchaseIntent: (_user: number, body: unknown) => ({ key: 'stable-intention-123', body }),
 }))
 jest.mock('@/wallet/queries', () => ({ walletKeys: { wallet: ['wallet'] } }))
+jest.mock('@/purchases/cancel', () => ({ cancelPurchase: jest.fn() }))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 
 const queries = jest.requireMock('@/purchases/queries') as Record<string, jest.Mock>
@@ -398,4 +399,37 @@ it('lists each product as a card with what it includes and until when it is used
   const voucherCard = within(view.getByRole('button', { name: /Voucher avulso · Bistrô · Oferta 3/ }))
   expect(voucherCard.getByText('Oferta publicada')).toBeOnTheScreen()
   expect(voucherCard.getByText(/14,90/)).toBeOnTheScreen()
+})
+
+// A4: a pending order says what happens next and can be cancelled through the
+// existing endpoint, after an explicit second step.
+it('explains the next steps of a pending order and cancels it only after confirmation', async () => {
+  const cancel = jest.requireMock('@/purchases/cancel').cancelPurchase as jest.Mock
+  cancel.mockResolvedValue({ id: pending.id })
+  const refetch = jest.fn()
+  queries.usePurchase.mockReturnValue({ data: { ...pending, instructions: { pix_code: '000201-pix' } }, refetch })
+  const view = await page(<OrderScreen />)
+  const steps = within(view.getByTestId('order-next-steps'))
+  expect(steps.getByText(/Copie o código abaixo no app do seu banco\. Prazo: 06\/09\/2026/)).toBeOnTheScreen()
+  expect(steps.getByText('Os benefícios aparecem na Carteira assim que o pagamento é confirmado.')).toBeOnTheScreen()
+  expect(view.getByText('000201-pix')).toBeOnTheScreen()
+
+  await fireEvent.press(view.getByRole('button', { name: 'Cancelar pedido' }))
+  expect(cancel).not.toHaveBeenCalled()
+  await fireEvent.press(view.getByRole('button', { name: 'Manter pedido' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Cancelar pedido' }))
+  await fireEvent.press(view.getByRole('button', { name: 'Sim, cancelar pedido' }))
+  expect(await view.findByText(/Cancelamento solicitado/)).toBeOnTheScreen()
+  expect(cancel).toHaveBeenCalledTimes(1)
+  expect(cancel).toHaveBeenCalledWith(pending.id)
+  expect(refetch).toHaveBeenCalled()
+})
+
+it('offers neither next steps nor cancellation once the payment is confirmed', async () => {
+  queries.usePurchase.mockReturnValue({ data: { ...pending, status: 'paid', access_id: 1, paid_at: '2026-09-07T00:10:00Z' }, refetch: jest.fn() })
+  const view = await page(<OrderScreen />)
+  expect(view.getByText('Pagamento confirmado')).toBeOnTheScreen()
+  expect(view.queryByTestId('order-next-steps')).toBeNull()
+  expect(view.queryByRole('button', { name: 'Cancelar pedido' })).toBeNull()
+  expect(view.getByRole('button', { name: 'Consultar carteira' })).toBeOnTheScreen()
 })

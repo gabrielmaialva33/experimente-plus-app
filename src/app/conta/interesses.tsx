@@ -17,14 +17,17 @@ import { useColors } from '@/theme/use-colors'
  * Saving sends the whole set, because that is what the screen shows: a list
  * with checkmarks, not a sequence of separate decisions.
  *
- * What an interest does is said plainly. It is recorded and does not reorder
- * discovery yet (ADR-0030), and promising a personalised feed the server does
- * not compute would be a claim the product cannot keep.
+ * What an interest does is said plainly: it feeds the "Para você" row in
+ * Explorar (ADR-0030), and the copy names that row instead of promising a
+ * personalised search the server does not compute.
  */
 export default function InterestsScreen() {
   const city = useSelectedCity()
   const interests = useInterests()
   const categories = useCategories(city)
+  // Held here, above the remount below: saving replaces the server's set, the
+  // form starts over from it, and the confirmation must survive that.
+  const save = useReplaceInterests()
 
   if (interests.isPending || (city && categories.isPending)) {
     return <ContentSkeleton label="Carregando interesses" variant="catalog" />
@@ -39,6 +42,7 @@ export default function InterestsScreen() {
       cityCategories={categories.data?.categories ?? []}
       hasCity={Boolean(city)}
       failed={interests.isError}
+      save={save}
     />
   )
 }
@@ -48,14 +52,15 @@ function InterestsForm({
   cityCategories,
   hasCity,
   failed,
+  save,
 }: {
   chosen: Interest[]
   cityCategories: { slug: string; name: string }[]
   hasCity: boolean
   failed: boolean
+  save: ReturnType<typeof useReplaceInterests>
 }) {
   const colors = useColors()
-  const save = useReplaceInterests()
   const [selected, setSelected] = useState(
     () => new Set(chosen.map((interest) => interest.category.slug))
   )
@@ -74,8 +79,7 @@ function InterestsForm({
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <Text style={[styles.lead, { color: colors.mutedForeground }]}>
-        Marque o que você gosta de explorar. Seus interesses ficam guardados na sua conta; a ordem
-        da busca ainda não muda por causa deles.
+        Marque o que você gosta de explorar. Usamos seus interesses no Para você, em Explorar.
       </Text>
 
       {failed ? (

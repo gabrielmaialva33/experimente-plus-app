@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
@@ -17,6 +18,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function DeleteAccountScreen() {
   const colors = useColors()
+  const router = useRouter()
   const { signOut } = useSession()
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -24,8 +26,12 @@ export default function DeleteAccountScreen() {
   const remove = useMutation({
     mutationFn: () => deleteAccount(password, confirmation),
     retry: false,
-    // The account is gone; the local session must go with it.
-    onSuccess: () => signOut(),
+    // The account is gone; the local session must go with it, and so must this
+    // form: left on screen, it offers to delete an account that no longer exists.
+    onSuccess: async () => {
+      await signOut()
+      router.replace('/')
+    },
   })
 
   const matches = confirmation.trim().toUpperCase() === ACCOUNT_DELETION_LITERAL
@@ -47,6 +53,7 @@ export default function DeleteAccountScreen() {
       <View style={styles.field}>
         <Text style={[styles.label, { color: colors.mutedForeground }]}>Senha atual</Text>
         <TextInput
+          accessibilityLabel="Senha atual"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -60,6 +67,7 @@ export default function DeleteAccountScreen() {
           Digite {ACCOUNT_DELETION_LITERAL}
         </Text>
         <TextInput
+          accessibilityLabel={`Digite ${ACCOUNT_DELETION_LITERAL}`}
           value={confirmation}
           onChangeText={setConfirmation}
           autoCapitalize="characters"

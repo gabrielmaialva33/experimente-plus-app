@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native'
@@ -115,6 +115,8 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={[styles.flex, { backgroundColor: colors.background }]}>
+      {/* Once the account exists there is no form to go back to. */}
+      {created ? <Stack.Screen options={{ title: 'Conta criada', headerBackVisible: false }} /> : null}
       <KeyboardForm contentContainerStyle={styles.page}>
           {created ? (
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>

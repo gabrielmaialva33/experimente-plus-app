@@ -10,7 +10,7 @@ import { apiUrl } from '@/api/config'
 import { palette } from '@/theme/tokens'
 import { registrationErrors } from '@/session/registration'
 
-jest.mock('expo-router', () => ({ useRouter: jest.fn(), useLocalSearchParams: jest.fn() }))
+jest.mock('expo-router', () => ({ useRouter: jest.fn(), useLocalSearchParams: jest.fn(), Stack: { Screen: jest.fn(() => null) } }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -104,6 +104,9 @@ it('offers interests as the next step once the new account is loaded', async () 
 
   expect(await view.findByRole('button', { name: 'Escolha seus interesses' })).toBeOnTheScreen()
   expect(view.getByRole('header', { name: 'Sua conta foi criada' })).toBeOnTheScreen()
+  // There is no form to go back to any more.
+  const { Stack } = jest.requireMock('expo-router') as { Stack: { Screen: jest.Mock } }
+  expect(Stack.Screen.mock.calls.at(-1)[0].options).toEqual({ title: 'Conta criada', headerBackVisible: false })
   expect(router.replace).not.toHaveBeenCalled()
   await fireEvent.press(view.getByRole('button', { name: 'Escolha seus interesses' }))
   expect(router.replace).toHaveBeenCalledWith('/conta/interesses')

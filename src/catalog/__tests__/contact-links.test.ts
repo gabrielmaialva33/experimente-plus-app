@@ -1,4 +1,4 @@
-import { brazilianWhatsApp, dialable } from '../contact-links'
+import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '../contact-links'
 
 describe('brazilianWhatsApp', () => {
   it('prefixes 55 only for a national-length number', () => {
@@ -29,5 +29,27 @@ describe('dialable', () => {
   it('refuses something too short to be a number', () => {
     expect(dialable(null)).toBeNull()
     expect(dialable('123')).toBeNull()
+  })
+})
+
+describe('mailto', () => {
+  it('opens a plausible address and drops anything else', () => {
+    expect(mailto(' contato@casa.com.br ')).toBe('mailto:contato@casa.com.br')
+    expect(mailto('contato arroba casa')).toBeNull()
+    expect(mailto(null)).toBeNull()
+  })
+})
+
+describe('instagramProfile', () => {
+  it('opens the same profile whether the partner typed the handle, the @ or the link', () => {
+    for (const value of ['casadepetiscos', '@casadepetiscos', 'https://www.instagram.com/casadepetiscos/', 'instagram.com/casadepetiscos?hl=pt']) {
+      expect(instagramProfile(value)).toBe('https://instagram.com/casadepetiscos')
+    }
+  })
+
+  it('opens nothing for a value that is not an Instagram handle', () => {
+    expect(instagramProfile('https://example.com/casa')).toBeNull()
+    expect(instagramProfile('casa de petiscos')).toBeNull()
+    expect(instagramProfile('')).toBeNull()
   })
 })

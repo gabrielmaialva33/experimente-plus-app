@@ -5,7 +5,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
-import { brazilianWhatsApp, dialable } from '@/catalog/contact-links'
+import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '@/catalog/contact-links'
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { EstablishmentCover } from '@/components/establishment-cover'
@@ -90,6 +90,11 @@ function Detail({
     }
   }
 
+  // The analytics contract has no e-mail or Instagram event; these open untracked
+  // rather than inventing one the server would refuse.
+  const openUntracked = (url: string | null): (() => void) | undefined =>
+    url ? () => void Linking.openURL(url) : undefined
+
   const routeUrl =
     address.latitude != null && address.longitude != null
       ? `https://www.google.com/maps/dir/?api=1&destination=${address.latitude},${address.longitude}`
@@ -112,7 +117,11 @@ function Detail({
       })()),
     },
     { label: 'Site', icon: 'globe-outline' as const, onPress: open('website_click', contacts.website) },
+    { label: 'E-mail', icon: 'mail-outline' as const, onPress: openUntracked(mailto(contacts.email)) },
+    { label: 'Instagram', icon: 'logo-instagram' as const, onPress: openUntracked(instagramProfile(contacts.instagram)) },
   ].filter((action) => action.onPress)
+  // Everything after the route is a way to get in touch.
+  const hasContact = actions.some((action) => action.label !== 'Como chegar')
   // Visiting is the primary discovery conversion. Without coordinates, promote
   // the first available contact rather than offering an unusable route.
   const [primaryAction, ...secondaryActions] = actions
@@ -173,6 +182,9 @@ function Detail({
           </View>
         </View>
       ) : null}
+      {!hasContact ? (
+        <Text style={[styles.noContact, { color: colors.mutedForeground }]}>Sem contato cadastrado</Text>
+      ) : null}
 
       <EstablishmentOffers citySlug={citySlug} slug={detail.slug} />
 
@@ -223,6 +235,7 @@ function Detail({
 }
 
 const styles = StyleSheet.create({
+  noContact: { ...typography.caption, paddingHorizontal: spacing.lg },
   page: { paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center', padding: spacing.xxl },
   section: { gap: spacing.xs, marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: spacing.lg, borderWidth: 1, borderRadius: radius.surface },
@@ -234,9 +247,11 @@ const styles = StyleSheet.create({
   message: { ...typography.body, textAlign: 'center' },
   actions: { gap: spacing.sm, padding: spacing.lg },
   action: { borderRadius: radius.surface, padding: spacing.md, minHeight: 48 },
-  secondaryActions: { flexDirection: 'row', gap: spacing.sm },
+  // Up to five contacts: three to a row, so a label never shrinks past reading.
+  secondaryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   secondaryAction: {
     flex: 1,
+    minWidth: '30%',
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,

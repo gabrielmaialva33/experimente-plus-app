@@ -455,6 +455,10 @@ describe('itinerary', () => {
     expect(queries.useSavedList).toHaveBeenCalledWith('favorites')
     // Already the first stop, so not offered again.
     expect(view.queryByRole('button', { name: 'Adicionar Café da Manhã ao roteiro' })).toBeNull()
+    // The place beside its "+" is information, not a control announced as dimmed.
+    expect(
+      view.getByLabelText(/^Sorveteria da Praça/).props.accessibilityState?.disabled
+    ).toBeFalsy()
     await fireEvent.press(
       view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' })
     )

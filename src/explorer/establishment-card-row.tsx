@@ -29,10 +29,11 @@ export function EstablishmentCardRow({
 
   return (
     <View style={styles.line}>
+      {/* Without `onPress` the row is information, not a disabled control: it is
+          neither pressable nor announced as dimmed. */}
       <Pressable
         accessibilityRole={onPress ? 'link' : undefined}
         accessibilityLabel={`${card.name}${meta ? `, ${meta}` : ''}`}
-        disabled={!onPress}
         onPress={onPress}
         style={styles.row}
       >

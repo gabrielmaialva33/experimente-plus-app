@@ -29,7 +29,7 @@ const COPY: Record<
 > = {
   favorites: {
     loading: 'Carregando seus favoritos',
-    emptyTitle: 'Nenhum lugar favorito ainda',
+    emptyTitle: 'Você ainda não tem lugares favoritos',
     empty: 'Toque no coração na página de um lugar para guardá-lo aqui.',
     icon: 'heart',
     remove: 'Remover dos favoritos',

@@ -42,6 +42,7 @@ jest.mock('@/explorer/queries', () => ({
   useReorderItineraryStops: jest.fn(),
   useRemoveItineraryStop: jest.fn(),
   useDeleteItinerary: jest.fn(),
+  useAddItineraryStop: jest.fn(),
 }))
 
 const router = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
@@ -77,6 +78,7 @@ beforeEach(() => {
     'useRemoveItineraryStop',
     'useDeleteItinerary',
     'useToggleSavedContent',
+    'useAddItineraryStop',
   ]) {
     queries[hook].mockReturnValue(idle())
   }
@@ -141,7 +143,7 @@ describe('favourites', () => {
 
   // Audit A34: an empty list is not a dead end.
   it.each([
-    [FavoritesScreen, 'Nenhum lugar favorito ainda'],
+    [FavoritesScreen, 'Você ainda não tem lugares favoritos'],
     [FollowingScreen, 'Você ainda não segue nenhum lugar'],
   ] as const)('offers a way to fill an empty list (%#)', async (Screen, title) => {
     queries.useSavedList.mockReturnValue({ isPending: false, isError: false, data: { data: [], unavailable: 0 } })
@@ -357,11 +359,56 @@ describe('itinerary', () => {
     expect(mutate).toHaveBeenCalledWith(5, expect.any(Object))
   })
 
+  // Audit A26: the name is kept when the field is left; there is no button to find.
+  it('saves the name when the field is left, and restores an emptied one', async () => {
+    const mutate = jest.fn()
+    queries.useUpdateItinerary.mockReturnValue(idle({ mutate }))
+
+    const view = await render(<ItineraryScreen />)
+    expect(view.queryByTestId('rename-itinerary')).toBeNull()
+    await fireEvent.changeText(view.getByLabelText('Nome do roteiro'), ' Domingo no lago ')
+    await fireEvent(view.getByLabelText('Nome do roteiro'), 'blur')
+    expect(mutate).toHaveBeenCalledWith({ name: 'Domingo no lago', notes: null })
+
+    mutate.mockClear()
+    await fireEvent.changeText(view.getByLabelText('Nome do roteiro'), '   ')
+    await fireEvent(view.getByLabelText('Nome do roteiro'), 'blur')
+    expect(mutate).not.toHaveBeenCalled()
+    expect(view.getByLabelText('Nome do roteiro')).toHaveDisplayValue('Sábado no centro')
+  })
+
+  // Audit A25: places are added from inside the itinerary.
+  it('adds a favourite place that is not a stop yet', async () => {
+    const mutate = jest.fn()
+    queries.useAddItineraryStop.mockReturnValue(idle({ mutate }))
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        data: [
+          { id: 1, establishment: card(7, 'Café da Manhã'), created_at: '2026-09-23T12:00:00Z' },
+          { id: 2, establishment: card(9, 'Sorveteria da Praça'), created_at: '2026-09-23T12:00:00Z' },
+        ],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar lugar' }))
+    expect(queries.useSavedList).toHaveBeenCalledWith('favorites')
+    // Already the first stop, so not offered again.
+    expect(view.queryByRole('button', { name: 'Adicionar Café da Manhã ao roteiro' })).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' }))
+    expect(mutate).toHaveBeenCalledWith({ id: 5, establishmentId: 9 })
+  })
+
   it('says so when the itinerary is not the caller’s or does not exist', async () => {
     queries.useItinerary.mockReturnValue({ isPending: false, data: undefined })
 
     const view = await render(<ItineraryScreen />)
 
     expect(view.getByText('Este roteiro não foi encontrado.')).toBeTruthy()
+    await fireEvent.press(view.getByRole('button', { name: 'Ver meus roteiros' }))
+    expect(mockReplace).toHaveBeenCalledWith('/roteiros')
   })
 })

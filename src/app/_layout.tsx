@@ -1,5 +1,4 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { NavigationBar } from 'expo-navigation-bar'
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, type ReactElement } from 'react'
@@ -8,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useFontsReady } from '@/theme/fonts'
 import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
+import { useNavigationBarStyle } from '@/theme/system-bars'
 import { useColors } from '@/theme/use-colors'
 
 import { createQueryClient, installQueryEnvironment } from '@/api/query-client'
@@ -56,15 +56,13 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
   const colorScheme = useColorScheme()
   const colors = useColors()
   const insets = useSafeAreaInsets()
+  useNavigationBarStyle()
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
   const screenLayout = ({ children }: { children: ReactElement }) =>
     fontsReady ? children : <View style={{ backgroundColor: colors.surfaceBase, flex: 1 }} />
 
   return (
     <ThemeProvider value={{ ...baseTheme, colors: navigationColors(colors) }}>
-      {/* Android draws no contrast scrim (app.json `enforceContrast: false`): every
-          surface already reserves the bar, so its buttons just follow the theme. */}
-      <NavigationBar style="auto" />
       <Stack screenOptions={stackSurfaceOptions(colors, insets.bottom)} screenLayout={screenLayout}>
         <Stack.Screen
           name="(tabs)"

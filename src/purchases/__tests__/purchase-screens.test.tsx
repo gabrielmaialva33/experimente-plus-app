@@ -642,6 +642,21 @@ it('does not repeat a voucher named after its only benefit', async () => {
   expect(card.getByText('Use até 30/12/2026')).toBeOnTheScreen()
 })
 
+// A4 in homologation: the fake provider charges nothing, so the order says the
+// payment is simulated instead of asking for a code the bank would reject.
+it('says a simulated payment needs nothing paid', async () => {
+  queries.usePurchase.mockReturnValue({
+    data: { ...pending, instructions: { simulated: true } },
+    refetch: jest.fn(),
+  })
+  const view = await page(<OrderScreen />)
+  const steps = within(view.getByTestId('order-next-steps'))
+  expect(steps.getByText('Pagamento simulado')).toBeOnTheScreen()
+  expect(steps.getByText(/nada é cobrado e não há o que pagar/)).toBeOnTheScreen()
+  expect(view.queryByText(/Copie o código/)).toBeNull()
+  expect(view.queryByText(/Código de pagamento/)).toBeNull()
+})
+
 // A4: a pending order says what happens next and can be cancelled through the
 // existing endpoint, after an explicit second step.
 it('explains the next steps of a pending order and cancels it only after confirmation', async () => {

@@ -4677,6 +4677,19 @@ export interface components {
             revision: {
                 [key: string]: unknown;
             };
+            /** @description Display values of every field of the submitted revision and of the revision on the public page today (null on a first publication), under the same stable keys, so a moderator sees what changed. Labels name attribute keys. */
+            comparison?: {
+                published_version: number | null;
+                submitted: {
+                    [key: string]: string | null;
+                };
+                published: {
+                    [key: string]: string | null;
+                } | null;
+                labels: {
+                    [key: string]: string;
+                };
+            };
             publication_gate: components["schemas"]["EstablishmentCompleteness"];
             review_issues: components["schemas"]["EstablishmentReviewIssue"][];
             events: components["schemas"]["EstablishmentRevisionEvent"][];
@@ -5339,6 +5352,8 @@ export interface components {
                 pix_code?: string;
                 /** Format: uri */
                 pix_url?: string;
+                /** @description Only in development and homologation (fake payment provider): nothing is charged and there is no code to pay; the operation confirms the order. Clients should say so instead of asking the buyer to pay. */
+                simulated?: boolean;
             };
             /** Format: date-time */
             created_at: string;

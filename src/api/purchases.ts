@@ -38,4 +38,6 @@ export const createPurchase = (body: CreatePurchaseRequest, idempotencyKey: stri
 export const paymentInstructions = (order: Purchase) => ({
   url: order.instructions?.pix_url ?? null,
   code: order.instructions?.pix_code ?? null,
+  /** Development and homologation only: nothing is charged; the operation confirms the order. */
+  simulated: order.instructions?.simulated === true,
 })

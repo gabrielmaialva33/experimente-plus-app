@@ -97,7 +97,12 @@ export default function PurchaseOrderScreen() {
 
       {/* A4: a pending order says what happens next, in order, instead of waiting mute. */}
       {pending ? (
-        <NextSteps order={order} hasCode={Boolean(instructions.code)} hasLink={Boolean(url)} />
+        <NextSteps
+          order={order}
+          hasCode={Boolean(instructions.code)}
+          hasLink={Boolean(url)}
+          simulated={instructions.simulated}
+        />
       ) : null}
 
       {pending && instructions.code ? (
@@ -162,10 +167,12 @@ function NextSteps({
   order,
   hasCode,
   hasLink,
+  simulated,
 }: {
   order: Purchase
   hasCode: boolean
   hasLink: boolean
+  simulated: boolean
 }) {
   const how =
     hasCode && hasLink
@@ -180,7 +187,14 @@ function NextSteps({
   return (
     <View testID="order-next-steps" style={styles.section}>
       <SectionHeader title="O que acontece agora" />
-      <Step number={1} title="Pague o pedido">{`${how}${deadline}`}</Step>
+      {/* Homologation's fake provider: nothing to pay, so the step says so instead of asking. */}
+      {simulated ? (
+        <Step number={1} title="Pagamento simulado">
+          Nesta versão de testes nada é cobrado e não há o que pagar: a equipe confirma o pedido.
+        </Step>
+      ) : (
+        <Step number={1} title="Pague o pedido">{`${how}${deadline}`}</Step>
+      )}
       <Step number={2} title="Aguarde a confirmação">
         Esta tela confere o pedido sozinha. Você também pode consultar agora.
       </Step>

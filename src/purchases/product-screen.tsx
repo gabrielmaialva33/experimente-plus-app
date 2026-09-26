@@ -3,11 +3,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { setStatusBarStyle } from 'expo-status-bar'
 import { useCallback, useRef, useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native'
+import Animated from 'react-native-reanimated'
 
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
 import { Button } from '@/components/button'
+import { compactTitleText, hiddenFromAccessibility, useCompactHeader, type CompactHeader } from '@/components/compact-header'
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
 import { ConditionsDetail, PurchaseAction, RetryPurchase, price, usageWindow } from '@/purchases/components'
@@ -25,13 +27,21 @@ const STARTABLE_METHODS = new Set(['pix'])
 
 const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`
 
+// Where the band's title sits until it is measured: below the band's padding,
+// the kind pill (28) and the band's gap, one 32 line tall.
+const TITLE_TOP = spacing.gutter + 28 + spacing.lg
+const TITLE_ESTIMATE: [number, number] = [TITLE_TOP, TITLE_TOP + 32]
+// iOS centres a custom header title without bounding it; this leaves room for back.
+const IOS_TITLE_INSET = 96
+
 export default function PurchaseProductScreen() {
   const colors = useColors()
   const { id, offerId } = useLocalSearchParams<{ id: string; offerId?: string }>()
   const { userId } = usePurchaseScope()
   const identity = productIdentity(id, offerId)
 
-  // The native bar and the band below it read as one navy plane; the band carries the title.
+  // The native bar and the band below it read as one navy plane; the band carries the
+  // title, and hands it to the bar once it scrolls away (see `CompactTitle`).
   useFocusEffect(
     useCallback(() => {
       setStatusBarStyle('light')
@@ -75,6 +85,9 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   const [conditionsOpen, setConditionsOpen] = useState(false)
   const scroll = useRef<ScrollView>(null)
   const whenY = useRef(0)
+  // The band's title, in scroll offsets: as it slides under the navy strip, the strip takes the name.
+  const [titleSpan, setTitleSpan] = useState(TITLE_ESTIMATE)
+  const header = useCompactHeader(titleSpan[0], titleSpan[1])
   const sending = useRef(false)
   const existing = orders.data?.purchases.find((order) => order.edition_id === editionId && order.offer_id === offerId)
   const prior = userId ? readIntent(userId, editionId, offerId) : null
@@ -120,11 +133,21 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
     scroll.current?.scrollTo({ y: whenY.current, animated: true })
   }
 
-  if (catalog.isPending && !prior && !existing) return <Notice><Body>Carregando produto…</Body></Notice>
-  if ((catalog.isError || !product) && !prior && !existing) return <Notice>
+  const measureTitle = (event: LayoutChangeEvent) => {
+    const { y, height } = event.nativeEvent.layout
+    setTitleSpan((span) => (span[0] === y && span[1] === y + height ? span : [y, y + height]))
+  }
+
+  // Every state sets the strip's title, so a product that goes away takes its name with it.
+  const strip = <Stack.Screen options={{
+    headerTitle: product ? () => <CompactTitle title={product.snapshot.name} header={header} /> : '',
+  }} />
+
+  if (catalog.isPending && !prior && !existing) return <>{strip}<Notice><Body>Carregando produto…</Body></Notice></>
+  if ((catalog.isError || !product) && !prior && !existing) return <>{strip}<Notice>
     <Body>Este produto não está disponível agora.</Body>
     <RetryPurchase error={catalog.error} onRetry={() => void catalog.refetch()} />
-  </Notice>
+  </Notice></>
 
   const buying = Boolean(product && userId && !existing && !orders.isError && !orders.isPending && !prior && !start.isError)
   const ready = Boolean(product && userId && product.purchasable && /^[a-f0-9]{64}$/.test(product.terms_version) && method &&
@@ -133,8 +156,10 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.page}>
-        {product ? <ProductHeader product={product} /> : <ScreenHeader insetTop={false} />}
+      {strip}
+      <Animated.ScrollView ref={scroll} testID="purchase-scroll" onScroll={header.onScroll} scrollEventThrottle={16}
+        contentContainerStyle={styles.page}>
+        {product ? <ProductHeader product={product} onTitleLayout={measureTitle} /> : <ScreenHeader insetTop={false} />}
         <View style={styles.content}>
           {product ? <>
             {product.snapshot.description ? <Text style={[styles.lead, { color: colors.foreground }]}>{product.snapshot.description}</Text> : null}
@@ -177,7 +202,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
             </View>
           </> : null}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* The price sits beside the action that pays it (A30). */}
       {product ? (
@@ -197,7 +222,10 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   )
 }
 
-function ProductHeader({ product }: { product: PurchaseProduct }) {
+function ProductHeader({ product, onTitleLayout }: {
+  product: PurchaseProduct
+  onTitleLayout: (event: LayoutChangeEvent) => void
+}) {
   const colors = useColors()
   const offers = product.snapshot.offers
   const subtitle = product.product_type === 'offer'
@@ -214,7 +242,33 @@ function ProductHeader({ product }: { product: PurchaseProduct }) {
       }
       title={product.snapshot.name}
       subtitle={subtitle}
+      onTitleLayout={onTitleLayout}
     />
+  )
+}
+
+/**
+ * The product's name in the navy strip, once the band that carries it has
+ * scrolled under the strip: the title is never lost. Screen readers reach it
+ * only then; before, the band's own title is the one on screen.
+ */
+function CompactTitle({ title, header }: { title: string; header: CompactHeader }) {
+  const colors = useColors()
+  const { width } = useWindowDimensions()
+  return (
+    <Animated.Text
+      testID="purchase-compact-title"
+      numberOfLines={1}
+      {...hiddenFromAccessibility(!header.compact)}
+      style={[
+        compactTitleText,
+        { color: colors.chromeForeground },
+        Platform.OS === 'ios' && { maxWidth: width - 2 * IOS_TITLE_INSET },
+        header.revealStyle,
+        header.riseStyle,
+      ]}>
+      {title}
+    </Animated.Text>
   )
 }
 

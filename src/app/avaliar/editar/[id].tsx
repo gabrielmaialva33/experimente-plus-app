@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
+import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
-import { failureMessage } from '@/app/avaliar/[establishmentId]'
+import { ReviewSubject, failureMessage } from '@/app/avaliar/[establishmentId]'
 import type { Review } from '@/api/reviews'
 import { ImagePicker } from '@/components/image-picker'
 import {
@@ -28,7 +29,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function EditReviewScreen() {
   const colors = useColors()
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, nome } = useLocalSearchParams<{ id: string; nome?: string }>()
   const reviewId = Number(id)
 
   // Same page size as the listing this screen is opened from, so the review is
@@ -58,10 +59,10 @@ export default function EditReviewScreen() {
   // Keyed by the review: the form's initial state is the review that was
   // loaded, so it is set once when that review arrives and never synchronised
   // back and forth by an effect.
-  return <EditForm key={review.id} review={review} />
+  return <EditForm key={review.id} review={review} place={nome} />
 }
 
-function EditForm({ review }: { review: Review }) {
+function EditForm({ review, place }: { review: Review; place?: string }) {
   const colors = useColors()
   const router = useRouter()
   const [rating, setRating] = useState(review.rating)
@@ -79,12 +80,15 @@ function EditForm({ review }: { review: Review }) {
 
   return (
     <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Editar avaliação</Text>
+      {/* The header already says "Editar avaliação" (audit A45); the page names the place. */}
+      {place ? <ReviewSubject name={place} /> : null}
 
-      <View style={[styles.card, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+        <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
         <StarsInput rating={rating} onChange={setRating} disabled={update.isPending} />
       </View>
 
+      <Text style={[styles.label, { color: colors.foreground }]}>Seu comentário</Text>
       <FormTextInput
         value={comment}
         onChangeText={setComment}
@@ -130,9 +134,10 @@ function EditForm({ review }: { review: Review }) {
         </Text>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: rating < 1 || update.isPending }}
+      <Button
+        label={update.isPending ? 'Salvando…' : 'Salvar alterações'}
+        size={52}
+        fill
         disabled={rating < 1 || update.isPending}
         onPress={() =>
           update.mutate(
@@ -140,23 +145,17 @@ function EditForm({ review }: { review: Review }) {
             { onSuccess: () => router.back() }
           )
         }
-        style={[styles.action, { backgroundColor: colors.cta, opacity: update.isPending ? 0.5 : 1 }]}
-        testID="edit-submit">
-        <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-          {update.isPending ? 'Salvando…' : 'Salvar alterações'}
-        </Text>
-      </Pressable>
+        testID="edit-submit"
+      />
     </KeyboardForm>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: typography.title,
-  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.surface, padding: spacing.lg },
-  input: { borderWidth: 1, borderRadius: radius.md, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
+  page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
+  card: { alignItems: 'center', borderWidth: 1, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
+  label: { ...typography.label, ...textWeight('700') },
+  input: { borderWidth: 1, borderRadius: radius.thumb, marginTop: -spacing.md, minHeight: 120, padding: spacing.md, textAlignVertical: 'top', ...typography.body },
   body: typography.body,
   photos: { gap: spacing.sm },
-  action: { alignItems: 'center', borderRadius: radius.surface, justifyContent: 'center', minHeight: 48, padding: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
 })

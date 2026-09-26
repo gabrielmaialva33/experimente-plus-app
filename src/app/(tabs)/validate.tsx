@@ -1,9 +1,11 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { Button } from '@/components/button'
 import { usePartnerAreas } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -58,7 +60,7 @@ export default function ValidateScreen() {
   // states it rather than rendering a camera the actor cannot use.
   if (!canValidate) {
     return (
-      <Centered>
+      <Centered icon="lock-closed-outline">
         <Text style={[styles.message, { color: colors.foreground }]}>
           Sua conta não tem permissão para validar benefícios.
         </Text>
@@ -73,42 +75,54 @@ export default function ValidateScreen() {
 
   if (!permission.granted) {
     return (
-      <Centered>
-        <Text style={[styles.message, { color: colors.foreground }]}>
+      <Centered icon="camera-outline">
+        <Text style={[styles.title, { color: colors.foreground }]}>Leitor de códigos</Text>
+        <Text style={[styles.message, { color: colors.mutedForeground }]}>
           Para ler o código do cliente, o aplicativo precisa da câmera.
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={requestPermission}
-          style={[styles.action, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>Permitir câmera</Text>
-        </Pressable>
+        <Button label="Permitir câmera" icon="camera-outline" onPress={requestPermission} />
         <HistoryLink />
       </Centered>
     )
   }
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
-      {/* Unmounted when the screen loses focus: a camera running behind a
-          pushed screen keeps scanning and keeps costing battery. */}
-      {active ? (
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-          onBarcodeScanned={onScanned}
-        />
-      ) : (
-        <View style={styles.camera} />
-      )}
-      <View style={styles.hint}>
+    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.chrome, flex: 1 }}>
+      <View style={styles.viewfinder}>
+        {/* Unmounted when the screen loses focus: a camera running behind a
+            pushed screen keeps scanning and keeps costing battery. */}
+        {active ? (
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={onScanned}
+          />
+        ) : (
+          <View style={styles.camera} />
+        )}
+        {/* A frame to aim with; it draws over the camera and never takes a touch. */}
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.aim}>
+          <View style={[styles.frame, { borderColor: rejected ? colors.warning : colors.chromeForeground }]} />
+        </View>
+      </View>
+      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>Leia o código do cliente</Text>
+        <View
+          accessibilityLiveRegion="polite"
+          style={[styles.status, { backgroundColor: rejected ? colors.warningSoft : colors.primarySoft }]}>
+          <Ionicons
+            name={rejected ? 'alert-circle-outline' : 'scan-outline'}
+            size={20}
+            color={rejected ? colors.warningAccent : colors.primaryAccent}
+          />
+          <Text style={[styles.statusText, { color: rejected ? colors.warningAccent : colors.primaryAccent }]}>
+            {rejected
+              ? 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
+              : 'Aponte para o código que o cliente está mostrando.'}
+          </Text>
+        </View>
         <HistoryLink />
-        <Text style={[styles.message, { color: colors.mutedForeground }]}>
-          {rejected
-            ? 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
-            : 'Aponte para o código que o cliente está mostrando.'}
-        </Text>
       </View>
     </SafeAreaView>
   )
@@ -121,7 +135,6 @@ export default function ValidateScreen() {
  * are entitled to.
  */
 function HistoryLink() {
-  const colors = useColors()
   const router = useRouter()
   const { canReadHistory } = usePartnerAreas()
 
@@ -129,21 +142,40 @@ function HistoryLink() {
     return null
   }
 
+  return <Button label="Ver utilizações" variant="ghost" size={44} icon="receipt-outline" onPress={() => router.push('/validar/historico')} />
+}
+
+function Centered({ icon, children }: { icon?: keyof typeof Ionicons.glyphMap; children?: React.ReactNode }) {
+  const colors = useColors()
   return (
-    <Pressable accessibilityRole="button" onPress={() => router.push('/validar/historico')}>
-      <Text style={[styles.actionLabel, { color: colors.primary }]}>Ver utilizações</Text>
-    </Pressable>
+    <View style={[styles.center, { backgroundColor: colors.background }]}>
+      {icon ? (
+        <View style={[styles.mark, { backgroundColor: colors.primarySoft }]}>
+          <Ionicons name={icon} size={28} color={colors.primaryAccent} />
+        </View>
+      ) : null}
+      {children}
+    </View>
   )
 }
 
-function Centered({ children }: { children?: React.ReactNode }) {
-  const colors = useColors()
-  return <View style={[styles.center, { backgroundColor: colors.background }]}>{children}</View>
-}
+const FRAME = 232
 
 const styles = StyleSheet.create({
+  viewfinder: { flex: 1 },
   camera: { flex: 1 },
-  hint: { gap: spacing.md, padding: spacing.xl },
+  aim: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
+  frame: { borderRadius: radius.sheet, borderWidth: 3, height: FRAME, width: FRAME },
+  sheet: {
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    gap: spacing.md,
+    marginTop: -radius.sheet,
+    padding: spacing.gutter,
+    paddingTop: spacing.xl,
+  },
+  status: { alignItems: 'flex-start', borderRadius: radius.surface, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  statusText: { ...typography.meta, ...textWeight('600'), flex: 1 },
   center: {
     alignItems: 'center',
     flex: 1,
@@ -151,7 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xxl,
   },
+  mark: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
+  title: { ...typography.heading, textAlign: 'center' },
   message: { ...typography.body, textAlign: 'center' },
-  action: { borderRadius: radius.pill, paddingHorizontal: spacing.xxl, paddingVertical: spacing.md },
-  actionLabel: { ...typography.body, ...textWeight('700') },
 })

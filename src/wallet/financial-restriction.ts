@@ -1,7 +1,7 @@
 import type { Wallet, WalletBenefit, WalletPass } from './types'
 
 export const FINANCIAL_RESTRICTION_MESSAGE =
-  'Este acesso está indisponível para novos usos. Aguarde a atualização ou procure o suporte da operação.'
+  'Uso pausado: os benefícios desta compra não podem ser apresentados agora. Aguarde a atualização ou procure o suporte da operação.'
 
 export const financiallyBlocked = (value: Pick<WalletPass['access'], 'financially_blocked'>) => value.financially_blocked === true
 

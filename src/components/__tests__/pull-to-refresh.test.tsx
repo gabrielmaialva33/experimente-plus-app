@@ -11,8 +11,11 @@ import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { SavedListScreen } from '@/explorer/saved-list-screen'
 import { HistoryScreen } from '@/wallet/history-screen'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'authenticated' }) }))
@@ -93,12 +96,15 @@ describe('lists the server fills can be pulled to refresh', () => {
     expect(query.refetch).toHaveBeenCalledTimes(1)
   })
 
-  it('the wallet', async () => {
-    const query = loaded({ passes: [] })
+  it('the wallet, with the orders it announces', async () => {
+    const query = loaded({ passes: [], summary: { passes: 0, benefits: 0, available: 0, upcoming: 0, redeemed: 0 } })
+    const orders = loaded({ purchases: [] })
     wallet.useWallet.mockReturnValue(query)
+    purchases.usePurchases.mockReturnValue(orders)
     const view = await render(<WalletScreen />)
     await act(async () => refreshAround(view, 'Sua carteira está vazia').onRefresh?.())
     expect(query.refetch).toHaveBeenCalledTimes(1)
+    expect(orders.refetch).toHaveBeenCalledTimes(1)
   })
 
   it('packages, vouchers and orders together', async () => {

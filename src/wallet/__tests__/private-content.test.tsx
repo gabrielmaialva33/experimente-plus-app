@@ -267,3 +267,19 @@ it('does not create a presentation if its eligibility read finishes after logout
   await view.unmount()
   client.clear()
 })
+
+// A code that could not be generated offers a real, reachable retry — not a bare
+// text link — and the retry asks the server for a new presentation.
+it('retries a failed presentation from a button', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport') as typeof import('@/api/transport')
+  api.createPresentation.mockRejectedValueOnce(new ApiError(503, null))
+  const { view, client } = await mount(<PresentScreen />)
+  const retry = await view.findByRole('button', { name: 'Tentar de novo' })
+  expect(retry).toHaveStyle({ minHeight: 48 })
+  await fireEvent.press(retry)
+  expect(await view.findByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(2)
+  expectNoPrivateCache(client)
+  await view.unmount()
+  client.clear()
+})

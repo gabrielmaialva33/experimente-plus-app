@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { focusManager, onlineManager } from '@tanstack/react-query'
 import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { ApiError } from '@/api/client'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
@@ -80,22 +82,17 @@ export default function ConfirmRedemptionScreen() {
     const status = preview.error instanceof ApiError ? preview.error.status : 0
 
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.message, { color: colors.foreground }]}>
-          {status === 404 || status === 422
-            ? NEW_PRESENTATION_MESSAGE
-            : status === 403
-              ? 'Sua conta não pode validar este benefício.'
-              : status === 400
-                ? UNAVAILABLE_PRESENTATION_MESSAGE
-                : status === 409
-                  ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
-                  : 'Não foi possível ler este código agora.'}
-        </Text>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>
-        </Pressable>
-      </View>
+      <Stopped onBack={() => router.back()}>
+        {status === 404 || status === 422
+          ? NEW_PRESENTATION_MESSAGE
+          : status === 403
+            ? 'Sua conta não pode validar este benefício.'
+            : status === 400
+              ? UNAVAILABLE_PRESENTATION_MESSAGE
+              : status === 409
+                ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
+                : 'Não foi possível ler este código agora.'}
+      </Stopped>
     )
   }
 
@@ -107,18 +104,13 @@ export default function ConfirmRedemptionScreen() {
 
   if (refused) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.message, { color: colors.foreground }]}>
-          {confirmationStatus === 400
-            ? UNAVAILABLE_PRESENTATION_MESSAGE
-            : confirmationStatus === 422
-              ? NEW_PRESENTATION_MESSAGE
-              : 'Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.'}
-        </Text>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.link, { color: colors.primary }]}>Voltar ao leitor</Text>
-        </Pressable>
-      </View>
+      <Stopped onBack={() => router.back()}>
+        {confirmationStatus === 400
+          ? UNAVAILABLE_PRESENTATION_MESSAGE
+          : confirmationStatus === 422
+            ? NEW_PRESENTATION_MESSAGE
+            : 'Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.'}
+      </Stopped>
     )
   }
 
@@ -126,41 +118,70 @@ export default function ConfirmRedemptionScreen() {
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.page}>
-      <Text style={[styles.heading, { color: colors.foreground }]}>Confirmar utilização</Text>
+      <View style={styles.head}>
+        <Text accessibilityRole="header" style={[styles.heading, { color: colors.foreground }]}>Confirmar utilização</Text>
+        <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+          Confira o cliente e o benefício. Nada é registrado antes de você confirmar.
+        </Text>
+      </View>
 
-      <Field label="Cliente" value={holder.full_name} />
-      <Field label="Unidade" value={benefit.establishment_name} />
-      <Field label="Benefício" value={benefit.offer_title} />
-      <Field label="Edição" value={benefit.edition_name} />
-      <Field label="Usos restantes" value={String(benefit.remaining_redemptions)} />
-      {benefit.terms ? <Field label="Regras" value={benefit.terms} /> : null}
+      {/* The benefit as the customer's ticket: the navy stub names it and its place. */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+        <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
+          <Text style={[styles.overline, { color: colors.chromeMuted }]}>Benefício</Text>
+          <Text style={[styles.benefit, { color: colors.chromeForeground }]}>{benefit.offer_title}</Text>
+          <Text style={[styles.place, { color: colors.chromeMuted }]}>{benefit.establishment_name}</Text>
+        </View>
+        <View style={styles.fields}>
+          <Field label="Cliente" value={holder.full_name} emphasis />
+          <Field label="Pacote" value={benefit.edition_name} />
+          <Field label="Usos restantes" value={String(benefit.remaining_redemptions)} />
+          {benefit.terms ? <Field label="Regras" value={benefit.terms} /> : null}
+        </View>
+      </View>
 
       {confirm.isError ? (
-        <Text style={[styles.message, { color: colors.warningAccent }]}>
-          A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o mesmo
-          comprovante será devolvido.
-        </Text>
+        <View style={[styles.notice, { backgroundColor: colors.warningSoft }]}>
+          <Ionicons name="alert-circle-outline" size={20} color={colors.warningAccent} />
+          <Text style={[styles.noticeText, { color: colors.warningAccent }]}>
+            A confirmação não completou. Tentar de novo é seguro: se o uso já foi registrado, o mesmo
+            comprovante será devolvido.
+          </Text>
+        </View>
       ) : null}
 
       {/* Explicit human intent. Nothing here confirms automatically. */}
-      <Pressable
-        accessibilityRole="button"
-        disabled={confirm.isPending}
-        onPress={() => {
-          confirmationStarted.current = true
-          preview.cancel()
-          confirm.mutate()
-        }}
-        style={[styles.action, { backgroundColor: colors.cta, opacity: confirm.isPending ? 0.6 : 1 }]}>
-        <Text style={[styles.actionLabel, { color: colors.ctaForeground }]}>
-          {confirm.isPending ? 'Confirmando…' : 'Confirmar utilização'}
-        </Text>
-      </Pressable>
-
-      <Pressable onPress={() => router.back()}>
-        <Text style={[styles.link, { color: colors.mutedForeground }]}>Cancelar</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Button
+          label={confirm.isPending ? 'Confirmando…' : 'Confirmar utilização'}
+          variant="cta"
+          size={52}
+          icon="checkmark-circle-outline"
+          fill
+          disabled={confirm.isPending}
+          onPress={() => {
+            confirmationStarted.current = true
+            preview.cancel()
+            confirm.mutate()
+          }}
+        />
+        <Button label="Cancelar" variant="ghost" size={44} fill onPress={() => router.back()} />
+      </View>
     </ScrollView>
+  )
+}
+
+/** A presentation that cannot be validated: the reason in one sentence and the way back to the reader. */
+function Stopped({ children, onBack }: { children: ReactNode; onBack: () => void }) {
+  const colors = useColors()
+  return (
+    <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <View style={[styles.mark, { backgroundColor: colors.warningSoft }]}>
+        <Ionicons name="alert-circle-outline" size={28} color={colors.warningAccent} />
+      </View>
+      <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
+      <Button label="Voltar ao leitor" variant="outline" icon="scan-outline" onPress={onBack} />
+    </View>
   )
 }
 
@@ -169,37 +190,39 @@ function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
-      <Text style={[styles.heading, { color: colors.successAccent }]}>Utilização registrada</Text>
+      <View style={styles.done}>
+        <View style={[styles.mark, { backgroundColor: colors.successSoft }]}>
+          <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />
+        </View>
+        <Text accessibilityRole="header" style={[styles.heading, styles.centered, { color: colors.successAccent }]}>Utilização registrada</Text>
+      </View>
 
-      <Field label="Comprovante" value={receipt.receipt_code} />
-      <Field label="Cliente" value={receipt.holder.full_name} />
-      <Field label="Unidade" value={receipt.establishment.name} />
-      <Field label="Benefício" value={receipt.offer.title} />
-      <Field label="Uso número" value={String(receipt.redemption_number)} />
+      <View style={[styles.card, styles.fields, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
+        <Field label="Comprovante" value={receipt.receipt_code} emphasis />
+        <Field label="Cliente" value={receipt.holder.full_name} />
+        <Field label="Unidade" value={receipt.establishment.name} />
+        <Field label="Benefício" value={receipt.offer.title} />
+        <Field label="Uso número" value={String(receipt.redemption_number)} />
+      </View>
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={onDone}
-        style={[styles.action, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>Ler outro código</Text>
-      </Pressable>
+      <Button label="Ler outro código" icon="scan-outline" size={52} fill onPress={onDone} />
     </ScrollView>
   )
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
   const colors = useColors()
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
+      <Text style={[styles.overline, { color: colors.mutedForeground }]}>{label}</Text>
+      <Text style={[emphasis ? styles.emphasis : styles.value, { color: colors.foreground }]}>{value}</Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { gap: spacing.md, padding: spacing.xl },
+  page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   center: {
     alignItems: 'center',
     flex: 1,
@@ -207,17 +230,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xxl,
   },
-  heading: { ...typography.title, marginBottom: spacing.sm },
+  head: { gap: spacing.xs },
+  heading: typography.title,
+  hint: typography.meta,
+  centered: { textAlign: 'center' },
+  card: { borderRadius: radius.card, borderWidth: 1, overflow: 'hidden' },
+  stub: { gap: spacing.xs, padding: spacing.gutter },
+  overline: typography.overline,
+  benefit: { ...typography.display, fontSize: 24, lineHeight: 28 },
+  place: typography.body,
+  fields: { gap: spacing.md, padding: spacing.gutter },
   field: { gap: 2 },
-  label: { ...typography.caption, textTransform: 'uppercase' },
   value: { ...typography.body, ...textWeight('600') },
+  emphasis: typography.heading,
+  notice: { alignItems: 'flex-start', borderRadius: radius.surface, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  noticeText: { ...typography.meta, ...textWeight('600'), flex: 1 },
+  actions: { gap: spacing.sm },
+  done: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.lg },
+  mark: { alignItems: 'center', borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
   message: { ...typography.body, textAlign: 'center' },
-  link: { ...typography.body, ...textWeight('700'), textAlign: 'center' },
-  action: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  actionLabel: { ...typography.body, ...textWeight('700') },
 })

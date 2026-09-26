@@ -350,3 +350,10 @@ it.each(['light', 'dark'] as const)('keeps the subtle border decorative: visible
     expect(contrast(colors.borderSubtle, surface)).toBeLessThan(contrast(colors.border, surface))
   }
 })
+
+it.each(['light', 'dark'] as const)('keeps the header band readable: text and chips on it meet AA in %s', (mode) => {
+  const colors = palette[mode]
+  expect(contrast(colors.chromeForeground, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+  expect(contrast(colors.chromeMuted, colors.chrome)).toBeGreaterThanOrEqual(4.5)
+  expect(contrast(colors.chromeForeground, colors.chromeRaised)).toBeGreaterThanOrEqual(4.5)
+})

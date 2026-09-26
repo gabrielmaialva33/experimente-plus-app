@@ -271,8 +271,10 @@ describe.each(['light', 'dark'] as const)('card cover seam in %s', (mode) => {
     if (photo) expect(view.getByLabelText('Fachada do café')).toBeOnTheScreen()
     else expect(view.getByText('Foto indisponível')).toBeOnTheScreen()
     const body = view.getByText(detail.name).parent!
-    expect(body).toHaveStyle({ borderTopWidth: 1, borderTopColor: palette[mode].border })
-    expect(StyleSheet.flatten(body.props.style).padding).toBeGreaterThan(0)
+    expect(body).toHaveStyle({ borderTopWidth: 1, borderTopColor: palette[mode].borderSubtle })
+    const inset = StyleSheet.flatten(body.props.style)
+    expect(inset.paddingTop).toBeGreaterThan(0)
+    expect(inset.paddingHorizontal).toBeGreaterThan(0)
     expect(view.getByRole('button')).toHaveStyle({ overflow: 'hidden' })
   })
 })

@@ -9,9 +9,12 @@ import { useColors } from '@/theme/use-colors'
 export function EstablishmentCover({
   cover,
   detail = false,
+  height,
 }: {
   cover?: Media | null
   detail?: boolean
+  /** A fixed footprint, so a card keeps its height with or without a photo. */
+  height?: number
 }) {
   const colors = useColors()
   const asset = cover?.asset
@@ -25,7 +28,7 @@ export function EstablishmentCover({
     asset.height >= 180
 
   const fallback = (
-    <View style={[styles.fallback, { backgroundColor: colors.contentAbsent }]}>
+    <View style={[styles.fallback, height != null && { height }, { backgroundColor: colors.contentAbsent }]}>
       <View style={[styles.identifier, { borderColor: colors.contentAbsentBorder }]}>
         <Text style={[styles.caption, { color: colors.contentAbsentForeground }]}>Foto indisponível</Text>
       </View>
@@ -38,7 +41,7 @@ export function EstablishmentCover({
     <RemoteImage
       source={{ uri: resolveMediaUrl(url) }}
       accessibilityLabel={cover.alt_text}
-      style={[styles.cover, detail && styles.detail]}
+      style={[styles.cover, detail && styles.detail, height != null && { height }]}
       contentFit="cover"
       transition={150}
       fallback={fallback}

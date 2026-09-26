@@ -1,10 +1,11 @@
-import { fireEvent, render } from '@testing-library/react-native'
+import { act, fireEvent, render } from '@testing-library/react-native'
 
 import { Avatar, initialsOf } from '@/components/avatar'
 import { Checkbox } from '@/components/checkbox'
 import { EmptyState } from '@/components/empty-state'
 import { ListGroup, ListRow } from '@/components/list-row'
 import { TextField } from '@/components/text-field'
+import { UndoBar } from '@/components/undo-bar'
 import { minTouch, palette } from '@/theme/tokens'
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
@@ -97,5 +98,24 @@ describe('EmptyState', () => {
     expect(view.getByRole('header', { name: 'Nenhum favorito ainda' })).toBeOnTheScreen()
     await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
     expect(go).toHaveBeenCalled()
+  })
+})
+
+describe('UndoBar', () => {
+  afterEach(() => jest.useRealTimers())
+
+  it('announces the removal, undoes it in one tap and leaves on its own', async () => {
+    jest.useFakeTimers()
+    const undo = jest.fn()
+    const dismiss = jest.fn()
+    const view = await render(<UndoBar message="Ateliê removido dos favoritos." onUndo={undo} onDismiss={dismiss} />)
+
+    expect(view.getByRole('alert')).toHaveTextContent('Ateliê removido dos favoritos.')
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(undo).toHaveBeenCalledTimes(1)
+    expect(dismiss).not.toHaveBeenCalled()
+    await act(async () => { jest.advanceTimersByTime(8000) })
+    expect(dismiss).toHaveBeenCalledTimes(1)
+    await view.unmount()
   })
 })

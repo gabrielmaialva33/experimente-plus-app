@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native'
 
 import InterestsScreen from '@/app/conta/interesses'
 import FavoritesScreen from '@/app/conta/favoritos'
+import FollowingScreen from '@/app/conta/seguindo'
 import ItineraryScreen from '@/app/roteiros/[id]'
 
 jest.mock('@/api/client', () => ({
@@ -22,8 +23,9 @@ jest.mock('@/theme/use-colors', () => ({
 
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
+const mockNavigate = jest.fn()
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, navigate: mockNavigate }),
   useLocalSearchParams: jest.fn(),
 }))
 jest.mock('@/catalog/city-store', () => ({ useSelectedCity: () => 'londrina' }))
@@ -113,6 +115,42 @@ describe('favourites', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
   })
+
+  // Audit A57: removal is one tap on the filled heart, and so is taking it back.
+  it('removes a place with its heart and offers to undo it', async () => {
+    const mutate = jest.fn()
+    queries.useToggleSaved.mockReturnValue(idle({ mutate }))
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        data: [{ id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' }],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<FavoritesScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' }))
+    expect(mutate).toHaveBeenLastCalledWith(false)
+    expect(view.getByRole('alert')).toHaveTextContent(/Ateliê do Café removido dos favoritos/)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(mutate).toHaveBeenLastCalledWith(true)
+    expect(view.queryByTestId('undo-bar')).toBeNull()
+  })
+
+  // Audit A34: an empty list is not a dead end.
+  it.each([
+    [FavoritesScreen, 'Nenhum lugar favorito ainda'],
+    [FollowingScreen, 'Você ainda não segue nenhum lugar'],
+  ] as const)('offers a way to fill an empty list (%#)', async (Screen, title) => {
+    queries.useSavedList.mockReturnValue({ isPending: false, isError: false, data: { data: [], unavailable: 0 } })
+
+    const view = await render(<Screen />)
+    expect(view.getByRole('header', { name: title })).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
+    expect(mockNavigate).toHaveBeenCalledWith('/')
+  })
 })
 
 describe('content favourites', () => {
@@ -123,7 +161,7 @@ describe('content favourites', () => {
       data: { data: [], unavailable: 0 },
     })
 
-  it('lists favourited experiences and events above the places, with unavailable ones counted', async () => {
+  it('lists favourited experiences and events below the places, with unavailable ones counted', async () => {
     savedPlaces()
     queries.useSavedContent.mockReturnValue({
       isPending: false,
@@ -150,6 +188,9 @@ describe('content favourites', () => {
     const view = await render(<FavoritesScreen />)
 
     expect(view.getByText('Noite de jazz')).toBeTruthy()
+    // Audit A56: the places come first.
+    const headers = view.getAllByRole('header').map((header) => header.props.children)
+    expect(headers.indexOf('Lugares')).toBeLessThan(headers.indexOf('Experiências e eventos'))
     expect(view.getByTestId('content-unavailable').props.children).toMatch(/^1 item salvo/)
     await fireEvent.press(view.getByLabelText('Noite de jazz, Ateliê do Café'))
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
@@ -185,6 +226,8 @@ describe('content favourites', () => {
     await fireEvent.press(view.getByTestId('unsave-content-experience-31'))
 
     expect(mutate).toHaveBeenCalledWith({ kind: 'experiences', id: 31, save: false })
+    await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
+    expect(mutate).toHaveBeenLastCalledWith({ kind: 'experiences', id: 31, save: true })
   })
 })
 

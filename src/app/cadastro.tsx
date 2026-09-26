@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native'
+import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { signUp } from '@/api/auth'
@@ -104,8 +105,7 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={[styles.flex, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+      <KeyboardForm contentContainerStyle={styles.page}>
           {created ? <>
             <Text style={[typography.heading, { color: colors.foreground }]}>Sua conta foi criada</Text>
             <Text style={[typography.body, { color: colors.foreground }]}>Estamos carregando sua conta. Se necessário, tente novamente; não precisa repetir o cadastro.</Text>
@@ -118,7 +118,7 @@ export default function SignUpScreen() {
               const password = field === 'password' || field === 'password_confirmation'
               return <View key={field} style={styles.field}>
                 <Text style={[typography.body, { color: colors.foreground }]}>{labels[field]}</Text>
-                <TextInput accessibilityLabel={labels[field]} value={fields[field]} editable={!mutation.isPending}
+                <FormTextInput accessibilityLabel={labels[field]} value={fields[field]} editable={!mutation.isPending}
                   onChangeText={(value) => {
                     setFields((previous) => ({ ...previous, [field]: value }))
                     setErrors((previous) => ({ ...previous, [field]: undefined }))
@@ -153,8 +153,7 @@ export default function SignUpScreen() {
               <Text style={[styles.actionLabel, { color: colors.primary }]}>Já tenho conta. Entrar</Text>
             </Pressable>
           </>}
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardForm>
     </SafeAreaView>
   )
 }

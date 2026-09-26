@@ -72,6 +72,7 @@ it('removes a photo as soon as it is asked, not on save', async () => {
   queries.useMyReviews.mockReturnValue(withPhotos([photo(10), photo(11)]))
 
   const view = await render(<EditReviewScreen />)
+  expect(view.getByTestId('keyboard-form')).toBeOnTheScreen()
   await fireEvent.press(view.getByTestId('remove-photo-11'))
 
   expect(mutate).toHaveBeenCalledWith(11)

@@ -4,7 +4,7 @@ import { AppState, Text } from 'react-native'
 import { RemoteImage } from '@/components/remote-image'
 
 const mockMounts = { count: 0 }
-const mockErrors: Array<() => void> = []
+const mockErrors: (() => void)[] = []
 jest.mock('expo-image', () => {
   const { useEffect } = jest.requireActual('react')
   const { View } = jest.requireActual('react-native')

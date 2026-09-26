@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportAnonymously, useReportContent } from '@/reviews/queries'
@@ -116,7 +117,7 @@ export default function ReportContentScreen() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <KeyboardForm style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <Text style={[styles.title, { color: colors.foreground }]}>{TITLES[target]}</Text>
 
       <View style={styles.reasons}>
@@ -144,7 +145,7 @@ export default function ReportContentScreen() {
         <Text style={[styles.label, { color: colors.mutedForeground }]}>
           Quer explicar melhor? (opcional)
         </Text>
-        <TextInput
+        <FormTextInput
           value={details}
           onChangeText={setDetails}
           multiline
@@ -193,7 +194,7 @@ export default function ReportContentScreen() {
           {report.isPending ? 'Enviando…' : 'Enviar denúncia'}
         </Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardForm>
   )
 }
 

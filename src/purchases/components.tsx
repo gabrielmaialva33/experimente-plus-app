@@ -76,6 +76,32 @@ export function purchaseDate(value: string, timeZone = DEFAULT_TIME_ZONE) {
 
 const usesPerPerson = (count: number) => `${count} ${count === 1 ? 'uso' : 'usos'} por pessoa`
 
+/** Until when to buy and the use window, on the city's clock; "from" only when use opens after the sale. */
+export function usageWindow(snapshot: PurchaseSnapshot, timeZone = DEFAULT_TIME_ZONE) {
+  const usageStartsLater = known(snapshot.usage_starts_at) && known(snapshot.sales_starts_at) &&
+    Date.parse(snapshot.usage_starts_at) > Date.parse(snapshot.sales_starts_at)
+  return {
+    buyUntil: purchaseDay(snapshot.sales_ends_at, timeZone),
+    useFrom: usageStartsLater ? purchaseDay(snapshot.usage_starts_at, timeZone) : null,
+    useUntil: purchaseDay(snapshot.usage_ends_at, timeZone),
+  }
+}
+
+/** The windows to the minute, each offer's terms and the legal line: the full conditions. */
+export function ConditionsDetail({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snapshot: PurchaseSnapshot; timeZone?: string }) {
+  const single = snapshot.offers.length === 1 && snapshot.offers[0].title === snapshot.name
+  return (
+    <View style={styles.terms}>
+      <PurchaseText>{`Venda: ${purchaseDate(snapshot.sales_starts_at, timeZone)} a ${purchaseDate(snapshot.sales_ends_at, timeZone)}.`}</PurchaseText>
+      <PurchaseText>{`Uso: ${purchaseDate(snapshot.usage_starts_at, timeZone)} a ${purchaseDate(snapshot.usage_ends_at, timeZone)}.`}</PurchaseText>
+      {snapshot.offers.map((offer) => offer.terms
+        ? <PurchaseText key={offer.id}>{single ? offer.terms : `${offer.title}: ${offer.terms}`}</PurchaseText>
+        : null)}
+      <PurchaseText>A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
+    </View>
+  )
+}
+
 /**
  * What a person needs before paying — until when to buy, until when to use,
  * how many uses — in one line each. The windows to the minute and the legal
@@ -86,16 +112,13 @@ export function EditionTerms({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snaps
   const [open, setOpen] = useState(false)
   // A voucher is one offer named like the product: repeating its title reads as a second item.
   const single = snapshot.offers.length === 1 && snapshot.offers[0].title === snapshot.name
-  const usageStartsLater = known(snapshot.usage_starts_at) && known(snapshot.sales_starts_at) &&
-    Date.parse(snapshot.usage_starts_at) > Date.parse(snapshot.sales_starts_at)
-  const use = usageStartsLater
-    ? `Use de ${purchaseDay(snapshot.usage_starts_at, timeZone)} a ${purchaseDay(snapshot.usage_ends_at, timeZone)}`
-    : `Use até ${purchaseDay(snapshot.usage_ends_at, timeZone)}`
+  const window = usageWindow(snapshot, timeZone)
+  const use = window.useFrom ? `Use de ${window.useFrom} a ${window.useUntil}` : `Use até ${window.useUntil}`
 
   return (
     <View style={styles.terms}>
       {snapshot.description ? <PurchaseText>{snapshot.description}</PurchaseText> : null}
-      <PurchaseText>{`Compre até ${purchaseDay(snapshot.sales_ends_at, timeZone)} · ${use}`}</PurchaseText>
+      <PurchaseText>{`Compre até ${window.buyUntil} · ${use}`}</PurchaseText>
       {snapshot.offers.map((offer) => (
         <View key={offer.id} style={styles.offer}>
           {single ? null : <PurchaseText heading>{offer.title}</PurchaseText>}
@@ -106,16 +129,7 @@ export function EditionTerms({ snapshot, timeZone = DEFAULT_TIME_ZONE }: { snaps
         onPress={() => setOpen(!open)} style={styles.toggle}>
         <Text style={[styles.toggleLabel, { color: colors.primary }]}>{open ? 'Ocultar condições' : 'Ver condições'}</Text>
       </Pressable>
-      {open ? (
-        <View style={styles.terms}>
-          <PurchaseText>{`Venda: ${purchaseDate(snapshot.sales_starts_at, timeZone)} a ${purchaseDate(snapshot.sales_ends_at, timeZone)}.`}</PurchaseText>
-          <PurchaseText>{`Uso: ${purchaseDate(snapshot.usage_starts_at, timeZone)} a ${purchaseDate(snapshot.usage_ends_at, timeZone)}.`}</PurchaseText>
-          {snapshot.offers.map((offer) => offer.terms
-            ? <PurchaseText key={offer.id}>{single ? offer.terms : `${offer.title}: ${offer.terms}`}</PurchaseText>
-            : null)}
-          <PurchaseText>A confirmação do pagamento não antecipa as datas de uso nem a disponibilidade de cada benefício.</PurchaseText>
-        </View>
-      ) : null}
+      {open ? <ConditionsDetail snapshot={snapshot} timeZone={timeZone} /> : null}
     </View>
   )
 }

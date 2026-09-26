@@ -1,11 +1,13 @@
 import { Camera, Map, Marker } from '@maplibre/maplibre-react-native'
+import { useMemo, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useMapCredit } from './attribution'
 import { mapStyleUrl } from './config'
-import type { MapRendererProps } from './types'
+import { PinGroupList } from './pin-group-list'
+import { groupLabel, groupPins, type MapPinGroup, type MapRendererProps } from './types'
 
 /**
  * Open-source renderer, used when no Google Maps key is configured.
@@ -17,26 +19,48 @@ import type { MapRendererProps } from './types'
 export function MapLibreRenderer({ pins, center, onSelect }: MapRendererProps) {
   const colors = useColors()
   const credit = useMapCredit()
+  const groups = useMemo(() => groupPins(pins), [pins])
+  const [open, setOpen] = useState<MapPinGroup | null>(null)
 
   return (
     <View style={styles.map}>
       <Map style={styles.map} mapStyle={mapStyleUrl}>
         <Camera initialViewState={{ center: [center.longitude, center.latitude], zoom: 11 }} />
 
-        {pins.map((pin) => (
+        {groups.map((group) => (
           <Marker
-            key={pin.slug}
-            id={pin.slug}
-            lngLat={[pin.longitude, pin.latitude]}
-            onPress={() => onSelect(pin.slug)}>
-            <View style={[styles.pin, { backgroundColor: colors.primary }]}>
+            key={group.key}
+            id={group.key}
+            lngLat={[group.longitude, group.latitude]}
+            onPress={() =>
+              group.pins.length === 1 ? onSelect(group.pins[0].slug) : setOpen(group)
+            }>
+            <View
+              accessibilityRole="button"
+              accessibilityLabel={
+                group.pins.length === 1
+                  ? group.pins[0].name
+                  : `${groupLabel(group)}: ${group.pins.map((pin) => pin.name).join(', ')}`
+              }
+              style={[styles.pin, { backgroundColor: colors.primary }]}>
               <Text style={[styles.label, { color: colors.primaryForeground }]} numberOfLines={1}>
-                {pin.name}
+                {groupLabel(group)}
               </Text>
             </View>
           </Marker>
         ))}
       </Map>
+
+      {open ? (
+        <PinGroupList
+          group={open}
+          onClose={() => setOpen(null)}
+          onSelect={(slug) => {
+            setOpen(null)
+            onSelect(slug)
+          }}
+        />
+      ) : null}
 
       {/* The native dialog keeps the licence link; this keeps the credit visible. */}
       <View style={[styles.credit, { backgroundColor: colors.background }]} pointerEvents="none">

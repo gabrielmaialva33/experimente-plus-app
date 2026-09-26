@@ -188,7 +188,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
             <Button label="Acompanhar pedido" size={52} fill
               onPress={() => router.push(`/wallet/pedido/${encodeURIComponent(existing.id)}`)} />
           ) : buying ? (
-            <Button label={start.isPending ? 'Iniciando pedido…' : 'Continuar para o pagamento'} variant="cta" size={52} fill
+            <Button label={start.isPending ? 'Iniciando pedido…' : 'Ir para o pagamento'} variant="cta" size={52} fill
               disabled={!ready} onPress={() => void submit()} />
           ) : null}
         </StickyFooter>

@@ -57,6 +57,9 @@ jobs:
       NODE_ENV: production
       # Public pilot origin, inlined by Expo during bundling. Not a secret.
       EXPO_PUBLIC_API_BASE_URL: https://experimente-plus.mahina.fun
+      # Public alias of the regional basemap (backend ADR-0026). Not a secret;
+      # without it the map falls back to demo tiles that stop at zoom 6.
+      EXPO_PUBLIC_MAP_STYLE_URL: https://midia-experimente.mahina.fun/maps/norte-parana/style.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,7 +100,7 @@ jobs:
           mise exec -- ./gradlew :app:assembleRelease --no-daemon --no-parallel --max-workers=2
           -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=768m"
           -PreactNativeArchitectures=arm64-v8a,x86_64
-      - name: Verify standalone payload, pilot origin and debug signature
+      - name: Verify standalone payload, pilot origin, regional map and debug signature
         run: mise exec -- python3 scripts/ci/verify-apk.py android/app/build/outputs/apk/release/app-release.apk
       - name: Name APK by commit and UTC date
         id: artifact

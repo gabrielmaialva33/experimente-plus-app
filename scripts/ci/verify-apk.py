@@ -25,11 +25,18 @@ sdk = Path(os.environ["ANDROID_HOME"])
 origin = os.environ["EXPO_PUBLIC_API_BASE_URL"]
 if origin != "https://experimente-plus.mahina.fun":
     raise SystemExit("CI APK must explicitly target the public pilot origin")
+# The demo fallback stays in the bundle as a literal, so what proves the map is
+# the regional style being inlined — not the fallback being absent.
+map_style = os.environ.get("EXPO_PUBLIC_MAP_STYLE_URL", "")
+if map_style != "https://midia-experimente.mahina.fun/maps/norte-parana/style.json":
+    raise SystemExit("CI APK must use the published regional basemap (ADR-0026)")
 
 with zipfile.ZipFile(apk) as archive:
     bundle = archive.read("assets/index.android.bundle")
     if not bundle or origin.encode() not in bundle:
         raise SystemExit("Missing embedded bundle or inlined pilot origin")
+    if map_style.encode() not in bundle:
+        raise SystemExit("Regional map style not inlined; the map would show demo tiles")
     for abi in ("arm64-v8a", "x86_64"):
         if f"lib/{abi}/libreactnative.so" not in archive.namelist():
             raise SystemExit(f"Missing native payload for {abi}")
@@ -65,5 +72,5 @@ if not actual or {digest.lower() for digest in actual} != {expected.lower()}:
         f"  apksigner output:\n{signature}"
     )
 
-print(f"Verified {apk.name}: embedded bundle ({len(bundle)} bytes), pilot origin,")
+print(f"Verified {apk.name}: embedded bundle ({len(bundle)} bytes), pilot origin, regional map,")
 print("arm64-v8a + x86_64, debuggable=false, valid generated debug-key signature.")

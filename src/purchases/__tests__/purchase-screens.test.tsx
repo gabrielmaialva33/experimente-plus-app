@@ -402,6 +402,15 @@ it('lists each product as a card with what it includes and until when it is used
   expect(voucherCard.getByText(/14,90/)).toBeOnTheScreen()
 })
 
+it('does not repeat a voucher named after its only benefit', async () => {
+  const named = { ...voucher(4, 'Café', 'd'.repeat(64)), name: 'Oferta publicada' }
+  queries.usePurchaseEditions.mockReturnValue({ data: { products: [named] } })
+  const view = await page(<EditionsScreen />)
+  const card = within(view.getByRole('button', { name: /Voucher avulso · Café · Oferta publicada/ }))
+  expect(card.getAllByText('Oferta publicada')).toHaveLength(1)
+  expect(card.getByText('Use até 30/12/2026')).toBeOnTheScreen()
+})
+
 // A4: a pending order says what happens next and can be cancelled through the
 // existing endpoint, after an explicit second step.
 it('explains the next steps of a pending order and cancels it only after confirmation', async () => {

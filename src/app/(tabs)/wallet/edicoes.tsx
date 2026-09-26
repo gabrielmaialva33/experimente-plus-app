@@ -67,17 +67,19 @@ function ProductCard({ product, onPress }: { product: PurchaseProduct; onPress: 
   const includes = product.product_type === 'offer'
     ? offers.map((offer) => offer.title).join(' · ')
     : `${offers.length} ${offers.length === 1 ? 'benefício' : 'benefícios'}: ${offers.map((offer) => offer.establishment.public_name).join(', ')}`
+  // A voucher is usually named after its one benefit; the line would only repeat the title.
+  const showIncludes = offers.length > 0 && includes !== product.name
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${productLabel(product)} · ${product.name} · ${amount}`}
-      accessibilityHint={`Inclui ${includes}. Use até ${window.useUntil}.`}
+      accessibilityHint={`${showIncludes ? `Inclui ${includes}. ` : ''}Use até ${window.useUntil}.`}
       onPress={onPress}
       style={({ pressed }) => [styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle, opacity: pressed ? 0.85 : 1 }]}>
       <Text style={[styles.overline, { color: colors.ctaAccent }]}>{productLabel(product)}</Text>
       <Text style={[styles.name, { color: colors.foreground }]}>{product.name}</Text>
-      {offers.length ? (
+      {showIncludes ? (
         <View style={styles.line}>
           <Ionicons name="ticket-outline" size={16} color={colors.mutedForeground} />
           <Text style={[styles.meta, { color: colors.mutedForeground }]}>{includes}</Text>

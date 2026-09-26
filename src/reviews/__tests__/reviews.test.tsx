@@ -8,7 +8,8 @@ import { palette } from '@/theme/tokens'
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('@/theme/use-colors', () => ({ useColors: () => jest.requireActual('@/theme/tokens').palette.light }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 jest.mock('@/reviews/queries', () => ({ useEstablishmentReviews: jest.fn() }))
 
@@ -32,6 +33,7 @@ const review = (overrides: Partial<Review> = {}): Review => ({
 })
 
 beforeEach(() => {
+  mockPush.mockClear()
   session.useSession.mockReturnValue({ status: 'anonymous' })
   queries.useEstablishmentReviews.mockReturnValue({ data: undefined, isError: false, isPending: false })
 })
@@ -151,4 +153,39 @@ it('keeps the section readable when the listing fails', async () => {
 it('does not invent a date from an unparseable value', () => {
   expect(formatDate('not-a-date')).toBe('')
   expect(palette.light.foreground).toBeTruthy()
+})
+
+it('lets anyone report a review or its reply from the place itself, before any full list exists', async () => {
+  queries.useEstablishmentReviews.mockReturnValue({
+    data: {
+      data: [
+        review({
+          reply: {
+            id: 9,
+            tenant_id: 1,
+            review_id: 1,
+            organization_id: 3,
+            user_id: 5,
+            comment: 'Obrigado pela visita!',
+            status: 'published',
+            created_at: '2026-09-02T12:00:00.000Z',
+            updated_at: null,
+          },
+        }),
+      ],
+      meta: {},
+    },
+    isError: false,
+    isPending: false,
+  })
+
+  const view = await render(
+    <EstablishmentReviews establishmentId={7} summary={{ count: 1, average: 4 }} />
+  )
+
+  expect(view.queryByText(/Ver todas/)).toBeNull()
+  await fireEvent.press(view.getByText('Denunciar avaliação'))
+  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/review/1')
+  await fireEvent.press(view.getByText('Denunciar resposta'))
+  expect(mockPush).toHaveBeenLastCalledWith('/denunciar/reply/9')
 })

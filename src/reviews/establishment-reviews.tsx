@@ -66,8 +66,14 @@ export function EstablishmentReviews({
         </Text>
       ) : null}
 
+      {/* Reporting needs no session: a visitor files it anonymously. Up to the
+          preview size there is no full list to go to, so the entry lives here too. */}
       {reviews.map((review) => (
-        <ReviewCard key={review.id} review={review} />
+        <ReviewCard
+          key={review.id}
+          review={review}
+          onReport={(target) => router.push(`/denunciar/${target.type}/${target.id}`)}
+        />
       ))}
 
       {total > reviews.length && reviews.length > 0 ? (

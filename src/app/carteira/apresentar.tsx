@@ -199,6 +199,7 @@ export default function PresentScreen() {
             variant={expired ? 'cta' : 'outline'}
             size={expired ? 52 : 44}
             icon="refresh"
+            align="center"
             onPress={create}
           />
         </View>

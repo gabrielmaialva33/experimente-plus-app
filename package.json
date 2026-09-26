@@ -23,6 +23,7 @@
     "expo-linking": "~57.0.9",
     "expo-localization": "~57.0.1",
     "expo-maps": "~57.0.2",
+    "expo-navigation-bar": "~57.0.2",
     "expo-network": "~57.0.1",
     "expo-router": "~57.0.19",
     "expo-secure-store": "~57.0.3",

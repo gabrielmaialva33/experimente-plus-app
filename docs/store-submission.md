@@ -63,9 +63,12 @@ receber segredo versionado.
    o estilo de mapa de produção (item 15, provedor de mapas). A chave do Google
    Maps é opcional: sem ela o app usa MapLibre.
 6. **Identidade visual:** ícone 1024×1024, ícone adaptativo Android (frente,
-   fundo e monocromático), splash e capturas de tela. **Os ícones atuais são os
-   do template do Expo** e não podem ir para a loja. Criá-los está fora do
-   escopo (Anexo I item 16).
+   fundo e monocromático), splash e capturas de tela. O app usa um **monograma
+   provisório "E+"** da direção visual A (E branco e "+" laranja sobre o azul
+   da marca), em `assets/images/` e `assets/expo.icon/`, no lugar dos ícones do
+   template do Expo. A marca definitiva e as capturas das lojas continuam com o
+   contratante: criá-las está fora do escopo (Anexo I item 16). Para trocar,
+   substitua esses arquivos mantendo nomes e dimensões.
 7. **Textos das lojas e privacidade:** nome, descrições, categoria, e-mail e
    site de suporte, o conteúdo final de Termos e Política de Privacidade
    (cláusula 10.1), e as respostas do formulário *Data safety* do Google Play e

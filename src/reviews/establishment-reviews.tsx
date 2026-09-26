@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router'
+import { useRouter, type Href } from 'expo-router'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { Button } from '@/components/button'
@@ -14,7 +14,8 @@ import { useColors } from '@/theme/use-colors'
 const PREVIEW = 3
 
 /** A route that carries the place's name, so the next screen can say it (audit A45). */
-const named = (path: string, name?: string) => (name ? `${path}?nome=${encodeURIComponent(name)}` : path)
+const named = <P extends `/${string}`>(path: P, name?: string): Href =>
+  (name ? `${path}?nome=${encodeURIComponent(name)}` : path) as Href
 
 /**
  * Public reviews of a place (ADR-0027).

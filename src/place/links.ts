@@ -1,3 +1,5 @@
+import type { Href } from 'expo-router'
+
 import type { PartnerContentItemKind } from '@/api/partner-content'
 
 /** The search parameter that names the item a place page opens on (audit A14). */
@@ -18,7 +20,7 @@ export function placeHref(
   citySlug: string,
   slug: string,
   highlight?: { kind: PartnerContentItemKind; id: number } | null
-) {
-  const path = `/estabelecimento/${citySlug}/${slug}`
+): Href {
+  const path = `/estabelecimento/${citySlug}/${slug}` as const
   return highlight ? `${path}?${HIGHLIGHT_PARAM}=${highlightKey(highlight.kind, highlight.id)}` : path
 }

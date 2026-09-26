@@ -75,7 +75,7 @@ it('keeps all discovery filters when switching between list and map', async () =
   await waitFor(() => expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected))
 
   await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
-  expect(view.getByText(/Nada encontrado em Londrina com os filtros/)).toBeOnTheScreen()
+  expect(view.getByText('Nada encontrado para “café” em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi.')).toBeOnTheScreen()
   expect(view.getByRole('radio', { name: 'Ver no mapa', selected: true })).toBeOnTheScreen()
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', expected)
 
@@ -187,7 +187,7 @@ it.each(['list', 'map'])('explains and clears a text-only empty search in %s wit
     await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'pizzaria')
     await act(async () => { jest.advanceTimersByTime(350) })
     if (mode === 'map') await fireEvent.press(view.getByRole('radio', { name: 'Ver no mapa' }))
-    expect(view.getByText('Nada encontrado em Londrina com os filtros: “pizzaria”.')).toBeOnTheScreen()
+    expect(view.getByText('Nada encontrado para “pizzaria” em Londrina.')).toBeOnTheScreen()
     await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
     expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('')
     expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', { q: undefined, category: undefined, openNow: false, attributes: [] })

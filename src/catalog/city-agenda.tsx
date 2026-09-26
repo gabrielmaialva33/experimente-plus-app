@@ -47,7 +47,7 @@ function bandsOf(agenda: CityAgendaView): Band[] {
       key: 'new-experiences',
       title: 'Novidades',
       // The band is chronological. There is no prominence contract to imply.
-      hint: 'Em ordem de publicação',
+      hint: 'Publicados recentemente',
       items: agenda.newExperiences,
       withDate: false,
     },

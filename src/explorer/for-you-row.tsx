@@ -57,9 +57,9 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
       <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
         Para você
       </Text>
-      {/* Honest about the order: interests choose the places, not who comes first. */}
+      {/* Interests choose the places; the hint claims no ranking among them. */}
       <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-        Pelos seus interesses, em ordem alfabética
+        Com base nos seus interesses
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {row.data.map((establishment) => (

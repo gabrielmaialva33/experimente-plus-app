@@ -72,12 +72,11 @@ export default function ExploreScreen() {
   const refreshControl = usePullToRefresh(search.refetch)
 
   const activeFilters = [
-    debouncedTerm ? `“${debouncedTerm}”` : null,
     category ? categories.data?.categories.find((item) => item.slug === category)?.name ?? category : null,
     openNow ? 'Aberto agora' : null,
     ...attributes.map((key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key),
   ].filter(Boolean)
-  const hasFilters = activeFilters.length > 0
+  const hasFilters = debouncedTerm !== '' || activeFilters.length > 0
   const clearFilters = () => {
     setTerm('')
     setDebouncedTerm('')
@@ -216,7 +215,12 @@ export default function ExploreScreen() {
     <View testID="catalog-empty" style={styles.feedback}>
       <Text style={[styles.message, { color: colors.foreground }]}>
         {hasFilters
-          ? `Nada encontrado em ${city?.name ?? 'sua cidade'} com os filtros: ${activeFilters.join(', ')}.`
+          ? [
+              'Nada encontrado',
+              debouncedTerm ? `para “${debouncedTerm}”` : null,
+              `em ${city?.name ?? 'sua cidade'}`,
+              activeFilters.length ? `com os filtros: ${activeFilters.join(', ')}` : null,
+            ].filter(Boolean).join(' ') + '.'
           : `Ainda não há lugares publicados em ${city?.name ?? 'sua cidade'}.`}
       </Text>
       {hasFilters ? (

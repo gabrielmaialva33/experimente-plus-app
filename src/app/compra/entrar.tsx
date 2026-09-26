@@ -10,7 +10,7 @@ export default function PurchaseSignInScreen() {
   useEffect(() => {
     if (status === 'authenticated') {
       if (router.canGoBack()) router.back()
-      else router.replace('/wallet/edicoes')
+      else router.replace('/wallet/edicoes', { withAnchor: true })
     }
   }, [router, status])
   return <SignInScreen purchase />

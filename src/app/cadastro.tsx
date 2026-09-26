@@ -49,7 +49,7 @@ export default function SignUpScreen() {
     if (status !== 'authenticated') return
     if (origin === 'compra') {
       if (router.canGoBack()) router.back()
-      else router.replace('/wallet/edicoes')
+      else router.replace('/wallet/edicoes', { withAnchor: true })
       // A person who just created the account here sees the next step first;
       // one who arrives already signed in has nothing to do on this screen.
     } else if (!created) router.replace('/')

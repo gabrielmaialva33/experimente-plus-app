@@ -169,7 +169,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
     onSuccess: (order) => {
       // A list of orders still mounted underneath would otherwise say there are none.
       void client.invalidateQueries({ queryKey: ['purchases'] })
-      router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`)
+      router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`, { withAnchor: true })
     },
   })
 
@@ -309,7 +309,10 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
                 Não recebemos a confirmação do pedido. Isso não significa que o pagamento falhou.
                 Consulte seus pedidos ou retome a mesma solicitação.
               </Body>
-              <PurchaseAction label="Meus pedidos" onPress={() => router.push('/wallet/edicoes')} />
+              <PurchaseAction
+                label="Meus pedidos"
+                onPress={() => router.push('/wallet/edicoes', { withAnchor: true })}
+              />
               <Body>A retomada mantém o valor e as condições da solicitação original.</Body>
               {start.isPending ? (
                 <Body>Retomando pedido…</Body>
@@ -391,7 +394,11 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
               label="Acompanhar pedido"
               size={52}
               fill
-              onPress={() => router.push(`/wallet/pedido/${encodeURIComponent(existing.id)}`)}
+              onPress={() =>
+                router.push(`/wallet/pedido/${encodeURIComponent(existing.id)}`, {
+                  withAnchor: true,
+                })
+              }
             />
           ) : buying ? (
             <Button

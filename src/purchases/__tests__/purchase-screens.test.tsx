@@ -195,7 +195,10 @@ it('shows price and separate windows, accepts terms and starts only with a serve
       'stable-intention-123'
     )
   )
-  expect(router.replace).toHaveBeenCalledWith('/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1')
+  expect(router.replace).toHaveBeenCalledWith(
+    '/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1',
+    { withAnchor: true }
+  )
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
@@ -215,7 +218,9 @@ it('offers an existing pending order rather than a second charge', async () => {
   const view = await page(<EditionScreen />)
   expect(view.queryByRole('button', { name: 'Ir para o pagamento' })).toBeNull()
   await fireEvent.press(view.getByRole('button', { name: 'Acompanhar pedido' }))
-  expect(router.push).toHaveBeenCalledWith('/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1')
+  expect(router.push).toHaveBeenCalledWith('/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1', {
+    withAnchor: true,
+  })
 })
 
 it('can resume a persisted intention after restart even when the edition is omitted from the public catalog', async () => {

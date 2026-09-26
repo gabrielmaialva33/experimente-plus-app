@@ -3,6 +3,10 @@ import { Stack } from 'expo-router'
 import { stackSurfaceOptions } from '@/theme/navigation'
 import { useColors } from '@/theme/use-colors'
 
+// The wallet home always sits under an order or the catalog opened from elsewhere
+// (a purchase, sign-in), so their back arrow leads to the Carteira instead of nowhere.
+export const unstable_settings = { initialRouteName: 'index' }
+
 export default function WalletLayout() {
   const colors = useColors()
   return (

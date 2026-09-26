@@ -22,6 +22,7 @@ import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -67,6 +68,8 @@ export default function ExploreScreen() {
     [debouncedTerm, category, openNow, attributes]
   )
   const search = useSearch(selectedCity, params)
+  // A pull asks again for the results alone: one request against the anonymous limit.
+  const refreshControl = usePullToRefresh(search.refetch)
 
   const activeFilters = [
     debouncedTerm ? `“${debouncedTerm}”` : null,
@@ -269,6 +272,7 @@ export default function ExploreScreen() {
           keyExtractor={(item) => item.slug}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.list}
+          refreshControl={refreshControl}
           ListHeaderComponent={
             <>
               {citySelector}

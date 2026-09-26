@@ -198,6 +198,15 @@ it.each(['list', 'map'])('explains and clears a text-only empty search in %s wit
   } finally { jest.useRealTimers() }
 })
 
+it('refreshes the results on a pull', async () => {
+  const refetch = jest.fn(() => Promise.resolve())
+  queries.useSearch.mockReturnValue({ data: { organic: [], meta: { total: 0 } }, refetch })
+  const view = await render(<ExploreScreen />)
+  const scroll = verticalScrollOf(view.getByText('Ainda não há lugares publicados em Londrina.'))
+  await act(async () => scroll?.props.refreshControl.props.onRefresh())
+  expect(refetch).toHaveBeenCalledTimes(1)
+})
+
 it('names active category and attribute filters and clears them together', async () => {
   const view = await render(<ExploreScreen />)
   await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))

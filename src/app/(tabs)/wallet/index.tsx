@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { purchaseDate } from '@/purchases/components'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -16,6 +17,7 @@ export default function WalletScreen() {
   const router = useRouter()
   const { status } = useSession()
   const wallet = useWallet()
+  const refreshControl = usePullToRefresh(wallet.refetch)
 
   if (status !== 'authenticated') {
     return (
@@ -35,7 +37,7 @@ export default function WalletScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.page}>
+      <ScrollView contentContainerStyle={styles.page} refreshControl={refreshControl}>
         <View testID="wallet-navigation" style={styles.navigation}>
           <Pressable accessibilityRole="button" onPress={() => router.push('/wallet/edicoes')} style={styles.historyLink}>
             <Text style={[styles.navigationLabel, { color: colors.primary }]}>Conhecer pacotes, vouchers e pedidos</Text>

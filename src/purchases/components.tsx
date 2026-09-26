@@ -1,14 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import type { PurchaseSnapshot } from '@/api/purchases'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-export function PurchasePage({ children }: { children: ReactNode }) {
+export function PurchasePage({ children, refreshControl }: {
+  children: ReactNode; refreshControl?: ScrollViewProps['refreshControl']
+}) {
   const colors = useColors()
-  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>{children}</ScrollView>
+  return <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page} refreshControl={refreshControl}>{children}</ScrollView>
 }
 
 export function PurchaseText({ children, heading = false }: { children: ReactNode; heading?: boolean }) {

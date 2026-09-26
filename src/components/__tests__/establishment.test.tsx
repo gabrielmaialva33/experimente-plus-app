@@ -241,6 +241,28 @@ describe('establishment presentation', () => {
     expect(view.getByText('Sem contato cadastrado')).toBeOnTheScreen()
   })
 
+  // The card speaks as one: name first, its state, and the rating in words, not "★ (2)".
+  it('reads a place card as one sentence, the rating in words', async () => {
+    const summary: EstablishmentSummary = {
+      ...detail,
+      primary_category: { name: 'Cafés' } as EstablishmentSummary['primary_category'],
+      reviews: { count: 2, average: 4.5 },
+      is_sponsored: true,
+    }
+    const view = await render(<EstablishmentCard establishment={summary} onPress={jest.fn()} />)
+    expect(
+      view.getByRole('button', {
+        name: 'Café da Praça, Fechado agora, Cafés, Centro, Nota 4,5 de 5, 2 avaliações, Patrocinado',
+      })
+    ).toBeOnTheScreen()
+  })
+
+  // The photo that opens a place is reached and read by its description.
+  it('lets a screen reader reach the place photo by its description', async () => {
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByLabelText('Fachada do café').props.accessible).toBe(true)
+  })
+
   it('shows a temporary closure in both the detail and list card', async () => {
     const closed = { ...detail, business_status: 'temporarily_closed' as const }
     queries.useEstablishment.mockReturnValue({ data: closed })
@@ -818,7 +840,13 @@ describe('place page in direction A', () => {
     expect(view.getByText('Para viver aqui')).toBeOnTheScreen()
     expect(view.queryByText('Descubra mais neste lugar')).toBeNull()
     expect(view.queryByText('Eventos')).toBeNull()
-    expect(view.getByTestId('date-tile')).toBeOnTheScreen()
+    expect(view.getByTestId('date-tile', { includeHiddenElements: true })).toBeOnTheScreen()
+    // The tile is drawn; the card says the day and the hours in words, in the city's zone.
+    expect(
+      view.getByRole('button', {
+        name: /^Evento, Degustação 11, 28 de set\. de 2026 · 16:00–18:00$/,
+      })
+    ).toBeOnTheScreen()
 
     await fireEvent.press(view.getByRole('button', { name: /^Evento, Degustação 11/ }))
     expect(view.getByText('Cafés especiais.')).toBeOnTheScreen()

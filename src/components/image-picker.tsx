@@ -114,7 +114,10 @@ export function ImagePicker({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
-        <Text style={[styles.counter, { color: colors.mutedForeground }]}>
+        <Text
+          accessibilityLabel={`${images.length} de ${maxImages} fotos`}
+          style={[styles.counter, { color: colors.mutedForeground }]}
+        >
           {images.length}/{maxImages}
         </Text>
       </View>
@@ -129,6 +132,7 @@ export function ImagePicker({
               source={{ uri: image.uri }}
               style={styles.thumbnail}
               contentFit="cover"
+              accessible
               accessibilityLabel={`Foto ${index + 1} de ${images.length}`}
               fallback={
                 <View

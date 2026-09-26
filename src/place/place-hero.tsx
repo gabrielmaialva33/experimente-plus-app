@@ -46,7 +46,13 @@ export function placeBarRange(detail: EstablishmentDetail, insetTop: number): [n
 /** The photo that opens a place. Its controls float above it, in `PlaceChrome`. */
 export function PlaceHero({ detail }: { detail: EstablishmentDetail }) {
   const insets = useSafeAreaInsets()
-  return <EstablishmentCover cover={detail.cover} height={placeHeroHeight(detail, insets.top)} />
+  return (
+    <EstablishmentCover
+      cover={detail.cover}
+      height={placeHeroHeight(detail, insets.top)}
+      accessible
+    />
+  )
 }
 
 type Tone = 'image' | 'surface'

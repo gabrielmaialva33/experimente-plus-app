@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -30,6 +31,7 @@ export function CompactCard({
   meta?: string | null
   overline?: string | null
   image?: { uri: string; alt: string } | null
+  /** Drawn in the photo's place and hidden from screen readers: say it in `accessibilityLabel`. */
   media?: ReactNode
   onPress: () => void
   accessibilityLabel?: string
@@ -69,7 +71,11 @@ export function CompactCard({
           fallback={fallback}
         />
       ) : media ? (
-        <View style={[styles.image, styles.fallback, { backgroundColor: colors.primarySoft }]}>
+        // The card speaks as one; what `media` shows belongs in its label.
+        <View
+          style={[styles.image, styles.fallback, { backgroundColor: colors.primarySoft }]}
+          {...decorative}
+        >
           {media}
         </View>
       ) : (

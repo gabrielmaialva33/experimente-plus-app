@@ -94,12 +94,18 @@ export default function WriteReviewScreen() {
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
-        <StarsInput rating={rating} onChange={setRating} disabled={create.isPending} />
+        <StarsInput
+          label="Sua nota"
+          rating={rating}
+          onChange={setRating}
+          disabled={create.isPending}
+        />
       </View>
 
       <View style={styles.field}>
         <Text style={[styles.label, { color: colors.foreground }]}>Conte como foi (opcional)</Text>
         <FormTextInput
+          accessibilityLabel="Conte como foi (opcional)"
           value={comment}
           onChangeText={setComment}
           multiline

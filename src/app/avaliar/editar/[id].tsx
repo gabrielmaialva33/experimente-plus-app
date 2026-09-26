@@ -96,11 +96,17 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
         <Text style={[styles.label, { color: colors.foreground }]}>Sua nota</Text>
-        <StarsInput rating={rating} onChange={setRating} disabled={update.isPending} />
+        <StarsInput
+          label="Sua nota"
+          rating={rating}
+          onChange={setRating}
+          disabled={update.isPending}
+        />
       </View>
 
       <Text style={[styles.label, { color: colors.foreground }]}>Seu comentário</Text>
       <FormTextInput
+        accessibilityLabel="Seu comentário"
         value={comment}
         onChangeText={setComment}
         multiline

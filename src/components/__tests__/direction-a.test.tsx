@@ -202,7 +202,15 @@ it.each(['success', 'warning', 'info', 'neutral', 'benefit'] as const)(
 
 it('keeps a fallback behind a compact card without a photo', async () => {
   const view = await render(
-    <CompactCard title="Sem foto" media={<Text>28</Text>} onPress={jest.fn()} />
+    <CompactCard
+      title="Sem foto"
+      media={<Text>28</Text>}
+      accessibilityLabel="Evento, Sem foto, 28 de setembro"
+      onPress={jest.fn()}
+    />
   )
-  expect(view.getByText('28')).toBeOnTheScreen()
+  // Drawn for the eye; the card's own label is what a screen reader hears.
+  expect(view.getByText('28', { includeHiddenElements: true })).toBeOnTheScreen()
+  expect(view.queryByText('28')).toBeNull()
+  expect(view.getByRole('button', { name: 'Evento, Sem foto, 28 de setembro' })).toBeOnTheScreen()
 })

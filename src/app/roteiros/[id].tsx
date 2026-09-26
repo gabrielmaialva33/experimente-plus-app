@@ -238,6 +238,7 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
             <Button label="Cancelar" variant="ghost" onPress={() => setConfirmingDelete(false)} />
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Excluir roteiro"
               accessibilityState={{ disabled: destroy.isPending }}
               disabled={destroy.isPending}
               onPress={() =>

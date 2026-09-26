@@ -94,8 +94,10 @@ export default function MyReviewsScreen() {
           ) : null}
 
           <View style={styles.actions}>
+            {/* Every card has the same two actions: each names the review it acts on. */}
             <Button
               label="Editar"
+              accessibilityLabel={`Editar avaliação de ${formatDate(item.created_at)}`}
               icon="create-outline"
               variant="outline"
               size={44}
@@ -103,7 +105,7 @@ export default function MyReviewsScreen() {
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Excluir"
+              accessibilityLabel={`Excluir avaliação de ${formatDate(item.created_at)}`}
               accessibilityState={{ disabled: remove.isPending }}
               disabled={remove.isPending}
               onPress={() =>

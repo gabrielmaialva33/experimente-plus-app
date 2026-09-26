@@ -236,6 +236,7 @@ export default function ReportContentScreen() {
           Quer explicar melhor? (opcional)
         </Text>
         <FormTextInput
+          accessibilityLabel="Quer explicar melhor? (opcional)"
           value={details}
           onChangeText={setDetails}
           multiline

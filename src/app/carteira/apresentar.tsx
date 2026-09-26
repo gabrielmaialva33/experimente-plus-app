@@ -166,6 +166,7 @@ export default function PresentScreen() {
           ) : (
             <RemoteImage
               cachePolicy="none"
+              accessible
               accessibilityLabel="Código temporário do benefício"
               source={{ uri: data.qr_data_url }}
               style={styles.qr}

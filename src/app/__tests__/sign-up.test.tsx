@@ -53,20 +53,65 @@ it('requires explicit consent, links both actual legal pages, normalizes optiona
   const view = await page()
   await fill(view, { ...valid, full_name: ' Ana Silva ', email: ' ANA@example.com ', username: '   ' })
   const submit = view.getByRole('button', { name: 'Criar conta' })
-  expect(submit).toBeDisabled()
+  // Audit A17: the button stays available and a press says what is missing.
+  expect(submit).toBeEnabled()
   await fireEvent.press(submit)
+  expect(view.getByRole('alert')).toHaveTextContent('Leia e aceite os Termos de Uso e a Política de Privacidade.')
   expect(api.signUp).not.toHaveBeenCalled()
   await fireEvent.press(view.getByRole('link', { name: 'Ler Termos de Uso' }))
   await fireEvent.press(view.getByRole('link', { name: 'Ler Política de Privacidade' }))
   expect(open).toHaveBeenNthCalledWith(1, apiUrl('/termos'))
   expect(open).toHaveBeenNthCalledWith(2, apiUrl('/privacidade'))
-  expect(submit).toBeDisabled()
+  // Reading the documents is not consent.
+  expect(view.getByRole('checkbox', { name: consent })).not.toBeChecked()
   await fireEvent.press(view.getByRole('checkbox', { name: consent }))
-  await fireEvent.press(submit)
+  expect(view.queryByRole('alert')).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
   await waitFor(() => expect(api.signUp).toHaveBeenCalledWith({ ...valid, username: null, terms_accepted: true }))
   expect(refresh).toHaveBeenCalledTimes(1)
   expect(view.getByText('Sua conta foi criada')).toBeOnTheScreen()
   expect(view.queryByLabelText('Senha')).toBeNull()
+})
+
+it('explains every missing field and the consent on one press, without a request', async () => {
+  const view = await page()
+  await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
+  // Name, e-mail, password, confirmation and consent; the optional username is fine empty.
+  expect(view.getAllByRole('alert')).toHaveLength(5)
+  expect(view.getByLabelText('Nome completo').props.accessibilityHint).toBe('Informe seu nome, com até 255 caracteres.')
+  expect(api.signUp).not.toHaveBeenCalled()
+})
+
+it.each(['light', 'dark'] as const)('draws the consent box even when it is not ticked in %s', async (mode) => {
+  jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+  const view = await page()
+  expect(view.getByTestId('terms-box')).toHaveStyle({ borderColor: palette[mode].choiceBorder, borderWidth: 2, width: 24 })
+  await fireEvent.press(view.getByRole('checkbox', { name: consent }))
+  expect(view.getByRole('checkbox', { name: consent })).toBeChecked()
+  expect(view.getByTestId('terms-box')).toHaveStyle({ backgroundColor: palette[mode].primary })
+})
+
+it('offers interests as the next step once the new account is loaded', async () => {
+  const view = await page()
+  await fill(view)
+  await fireEvent.press(view.getByRole('checkbox', { name: consent }))
+  // Loading the context is what signs the new account in.
+  refresh.mockImplementationOnce(async () => { session.useSession.mockReturnValue({ status: 'authenticated', refresh }) })
+  await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
+
+  expect(await view.findByRole('button', { name: 'Escolha seus interesses' })).toBeOnTheScreen()
+  expect(view.getByRole('header', { name: 'Sua conta foi criada' })).toBeOnTheScreen()
+  expect(router.replace).not.toHaveBeenCalled()
+  await fireEvent.press(view.getByRole('button', { name: 'Escolha seus interesses' }))
+  expect(router.replace).toHaveBeenCalledWith('/conta/interesses')
+  await fireEvent.press(view.getByRole('button', { name: 'Começar a explorar' }))
+  expect(router.replace).toHaveBeenLastCalledWith('/')
+})
+
+it('leaves the screen at once when already signed in', async () => {
+  session.useSession.mockReturnValue({ status: 'authenticated', refresh })
+  await page()
+  expect(router.replace).toHaveBeenCalledWith('/')
 })
 
 it('shows local field errors without making a request', async () => {
@@ -176,7 +221,7 @@ it('replaces the purchase gate, supports returning to sign-in and returns to the
 it.each(['light', 'dark'] as const)('uses existing theme tokens for fields, navigation and conversion in %s', async (mode) => {
   jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
   const view = await page()
-  expect(view.getByLabelText('Nome completo')).toHaveStyle({ backgroundColor: palette[mode].card, color: palette[mode].foreground })
+  expect(view.getByLabelText('Nome completo')).toHaveStyle({ color: palette[mode].foreground })
   expect(view.getByText('Ler Termos de Uso')).toHaveStyle({ color: palette[mode].primary })
   expect(view.getByRole('button', { name: 'Criar conta' })).toHaveStyle({ backgroundColor: palette[mode].cta })
   expect(view.getByText('Criar conta')).toHaveStyle({ color: palette[mode].ctaForeground })

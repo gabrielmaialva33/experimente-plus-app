@@ -64,6 +64,7 @@ function InterestsForm({
   save: ReturnType<typeof useReplaceInterests>
 }) {
   const colors = useColors()
+  const router = useRouter()
   const [selected, setSelected] = useState(
     () => new Set(chosen.map((interest) => interest.category.slug))
   )
@@ -130,6 +131,11 @@ function InterestsForm({
         onPress={() => save.mutate([...selected])}
         testID="save-interests"
       />
+
+      {/* Saved: the next step is to see what they change, in Para você. */}
+      {save.isSuccess && !changed ? (
+        <Button label="Ver sugestões em Explorar" variant="ghost" align="center" onPress={() => router.navigate('/')} />
+      ) : null}
     </ScrollView>
   )
 }

@@ -10,6 +10,9 @@ jest.mock('@/catalog/queries', () => ({
   useCategories: () => ({ isPending: false, data: { categories: [{ slug: 'cafes', name: 'Cafés' }] } }),
 }))
 jest.mock('@/api/explorer', () => ({ listInterests: jest.fn(), replaceInterests: jest.fn() }))
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter }))
+
+const mockRouter = { navigate: jest.fn(), push: jest.fn() }
 
 const api = jest.requireMock('@/api/explorer') as { listInterests: jest.Mock; replaceInterests: jest.Mock }
 const cafes = { category: { slug: 'cafes', name: 'Cafés' } }
@@ -40,4 +43,8 @@ it('confirms the save after the screen starts over from the saved set', async ()
   expect(await view.findByText('Interesses salvos.')).toBeOnTheScreen()
   expect(api.replaceInterests).toHaveBeenCalledWith(['cafes'])
   expect(view.getByTestId('interest-cafes').props.accessibilityState).toMatchObject({ checked: true })
+
+  // The saved set changes Para você; the next step goes there.
+  await fireEvent.press(view.getByRole('button', { name: 'Ver sugestões em Explorar' }))
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/')
 })

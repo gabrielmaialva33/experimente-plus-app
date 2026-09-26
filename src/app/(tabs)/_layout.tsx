@@ -85,7 +85,8 @@ export default function TabsLayout() {
       <Tabs.Protected guard={!authenticated}>
         <Tabs.Screen
           name="sign-in"
-          options={{ title: 'Entrar', tabBarIcon: icon('log-in-outline') }}
+          // Like Carteira and Conta, Entrar draws its own navy band.
+          options={{ title: 'Entrar', headerShown: false, tabBarIcon: icon('log-in-outline') }}
         />
       </Tabs.Protected>
     </Tabs>

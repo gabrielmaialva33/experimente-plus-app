@@ -17,8 +17,9 @@ interface ButtonProps {
   accessibilityLabel?: string
   /** Grows to the width its row gives it. */
   fill?: boolean
-  /** Sits in the middle of a centred column, such as an empty state. */
-  centered?: boolean
+  /** Where the button sits across a column: the start by default, the middle of an
+   * empty state, or the end, as a secondary link under a field. Ignored with `fill`. */
+  align?: 'start' | 'center' | 'end'
   testID?: string
 }
 
@@ -35,7 +36,7 @@ export function Button({
   disabled = false,
   accessibilityLabel,
   fill = false,
-  centered = false,
+  align = 'start',
   testID,
 }: ButtonProps) {
   const colors = useColors()
@@ -61,7 +62,8 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         fill && styles.fill,
-        centered && styles.centered,
+        align === 'center' && styles.center,
+        align === 'end' && styles.end,
         {
           minHeight: size,
           // A ghost has no surface to pad: its label lines up with the column it sits in.
@@ -92,7 +94,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fill: { alignSelf: 'stretch', flexGrow: 1 },
-  centered: { alignSelf: 'center' },
+  center: { alignSelf: 'center' },
+  end: { alignSelf: 'flex-end' },
   label: { ...typography.label, ...textWeight('700'), flexShrink: 1 },
   large: { fontSize: 16 },
 })

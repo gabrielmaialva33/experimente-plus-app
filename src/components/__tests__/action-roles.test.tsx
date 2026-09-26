@@ -15,7 +15,10 @@ jest.mock('@/session/context', () => ({
 }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), useFocusEffect: jest.fn() }))
 jest.mock('expo-camera', () => ({ useCameraPermissions: () => [{ granted: false }, jest.fn()] }))
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 
 describe.each(['light', 'dark'] as const)('action roles in %s', (mode) => {
   beforeEach(() => jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode]))
@@ -34,8 +37,8 @@ describe.each(['light', 'dark'] as const)('action roles in %s', (mode) => {
 
   it('does not style login or recovery as conversion', async () => {
     const view = await render(<QueryClientProvider client={new QueryClient()}><SignInScreen /></QueryClientProvider>)
-    await fireEvent.changeText(view.getByPlaceholderText('E-mail ou usuário'), 'ana')
-    await fireEvent.changeText(view.getByPlaceholderText('Senha'), 'test-password')
+    await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
+    await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
     expect(view.getByRole('button', { name: 'Entrar' })).toHaveStyle({ backgroundColor: palette[mode].primary, opacity: 1 })
     expect(view.getByText('Tentar de novo')).toHaveStyle({ color: palette[mode].primary })
   })

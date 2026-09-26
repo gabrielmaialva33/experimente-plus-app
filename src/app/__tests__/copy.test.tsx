@@ -23,7 +23,10 @@ jest.mock('@/session/context', () => ({
 }))
 jest.mock('@/catalog/queries', () => ({ useCityAgenda: jest.fn() }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 
 const { ApiError } = jest.requireMock('@/api/client') as { ApiError: new (status: number) => Error }
 const auth = jest.requireMock('@/api/auth') as { signIn: jest.Mock }
@@ -34,8 +37,8 @@ it('refuses credentials without saying which of the two was wrong', async () => 
   // No garbage-collection timer for the mutation: one left behind keeps jest from exiting.
   const client = new QueryClient({ defaultOptions: { mutations: { gcTime: Infinity } } })
   const view = await render(<QueryClientProvider client={client}><SignInScreen /></QueryClientProvider>)
-  await fireEvent.changeText(view.getByPlaceholderText('E-mail ou usuário'), 'ana')
-  await fireEvent.changeText(view.getByPlaceholderText('Senha'), 'test-password')
+  await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
+  await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
   await fireEvent.press(view.getByRole('button', { name: 'Entrar' }))
 
   expect(await view.findByText('Dados de acesso incorretos.')).toBeOnTheScreen()

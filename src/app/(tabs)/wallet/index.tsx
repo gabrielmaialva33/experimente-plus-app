@@ -105,7 +105,7 @@ export default function WalletScreen() {
               <Text style={[styles.panelBody, styles.centered, { color: colors.mutedForeground }]}>
                 Escolha um pacote da cidade ou o voucher de um lugar. Os benefícios aparecem aqui assim que o pagamento é confirmado.
               </Text>
-              <Button label="Ver benefícios disponíveis" variant="cta" size={48} centered onPress={openCatalog} />
+              <Button label="Ver benefícios disponíveis" variant="cta" size={48} align="center" onPress={openCatalog} />
             </View>
           ) : null}
 

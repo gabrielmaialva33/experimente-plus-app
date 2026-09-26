@@ -33,7 +33,7 @@ export function EmptyState({
         {title}
       </Text>
       {text ? <Text style={[styles.text, { color: colors.mutedForeground }]}>{text}</Text> : null}
-      {action ? <Button label={action.label} variant="outline" centered onPress={action.onPress} /> : null}
+      {action ? <Button label={action.label} variant="outline" align="center" onPress={action.onPress} /> : null}
     </View>
   )
 }

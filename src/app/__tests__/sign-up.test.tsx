@@ -11,7 +11,10 @@ import { palette } from '@/theme/tokens'
 import { registrationErrors } from '@/session/registration'
 
 jest.mock('expo-router', () => ({ useRouter: jest.fn(), useLocalSearchParams: jest.fn() }))
-jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: jest.requireActual('react-native').View }))
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: jest.requireActual('react-native').View,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 jest.mock('@/api/auth', () => ({ signUp: jest.fn(), signIn: jest.fn() }))
 jest.mock('@/api/session', () => ({}))

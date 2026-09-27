@@ -40,6 +40,7 @@ import { blocksNewPurchase } from '@/purchases/order-state'
 import { productIdentity, productKind } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
+import { useStackedLayout } from '@/theme/font-scale'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -536,6 +537,8 @@ function WhenToUse({
   onToggle: () => void
 }) {
   const colors = useColors()
+  // Two dates side by side break mid-number with large text; then each takes a row.
+  const stacked = useStackedLayout()
   const timeZone = product.city?.timezone ?? undefined
   const window = usageWindow(product.snapshot, timeZone)
   const offers = product.snapshot.offers
@@ -552,7 +555,7 @@ function WhenToUse({
   return (
     <View testID="purchase-when" style={styles.section}>
       <SectionTitle>Quando usar</SectionTitle>
-      <View style={styles.tiles}>
+      <View testID="purchase-dates" style={[styles.tiles, stacked && styles.tilesStacked]}>
         {(
           [
             ['Compre até', window.buyUntil],
@@ -563,6 +566,7 @@ function WhenToUse({
             key={label}
             style={[
               styles.dateTile,
+              stacked && styles.dateTileStacked,
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
@@ -741,7 +745,9 @@ const styles = StyleSheet.create({
   place: { ...typography.body, ...textWeight('700') },
   benefit: { ...typography.meta, ...textWeight('700') },
   tiles: { flexDirection: 'row', gap: 10 },
+  tilesStacked: { flexDirection: 'column' },
   dateTile: { borderRadius: 18, borderWidth: 1, flex: 1, gap: 2, padding: 14 },
+  dateTileStacked: { flex: 0 },
   tileLabel: typography.caption,
   tileValue: { ...typography.heading, fontFamily: typography.title.fontFamily },
   usesRow: { alignItems: 'center', columnGap: spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },

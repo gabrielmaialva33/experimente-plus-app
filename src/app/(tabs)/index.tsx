@@ -458,9 +458,12 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   gutter: { paddingHorizontal: spacing.gutter },
+  // With large text the city pill wraps under the wordmark as a whole, instead of
+  // squeezing "Londrina" into a column of syllables beside it.
   brandRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
     justifyContent: 'space-between',
   },

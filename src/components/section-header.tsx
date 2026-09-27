@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useStackedLayout } from '@/theme/font-scale'
 import { minTouch, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -20,9 +21,12 @@ export function SectionHeader({
   }
 }) {
   const colors = useColors()
+  // With large text the action moves under the title instead of squeezing it
+  // into a narrow column ("Lugares / em / Londrina").
+  const stacked = useStackedLayout()
 
   return (
-    <View style={styles.row}>
+    <View testID="section-header" style={[styles.row, stacked && styles.wrap]}>
       <View style={styles.copy}>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
           {title}
@@ -51,6 +55,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     justifyContent: 'space-between',
   },
+  wrap: { flexWrap: 'wrap', rowGap: spacing.xs },
   copy: { flexShrink: 1, gap: 2 },
   title: typography.title,
   hint: typography.meta,

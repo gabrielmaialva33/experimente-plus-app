@@ -141,7 +141,8 @@ const styles = StyleSheet.create({
   initials: { ...typography.label, ...displayWeight('800') },
   identity: { flex: 1, gap: 2 },
   author: { ...typography.label, ...textWeight('700') },
-  meta: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  // The date wraps under the stars with large text instead of running under the "⋯".
+  meta: { alignItems: 'center', columnGap: 6, flexDirection: 'row', flexWrap: 'wrap' },
   date: typography.caption,
   body: { ...typography.body, fontSize: 15, lineHeight: 22 },
   reply: { borderRadius: 14, gap: spacing.xs, paddingHorizontal: 14, paddingVertical: spacing.md },

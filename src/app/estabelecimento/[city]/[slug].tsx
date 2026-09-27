@@ -19,7 +19,7 @@ import { EstablishmentPartnerContent } from '@/partner-content/establishment-con
 import { PlaceBenefits } from '@/place/benefit-ticket'
 import { HIGHLIGHT_PARAM } from '@/place/links'
 import { PlaceActions } from '@/place/place-actions'
-import { PlaceChrome, PlaceHero, placeBarRange } from '@/place/place-hero'
+import { PlaceChrome, PlaceHero, offsetBelowBar, placeBarRange } from '@/place/place-hero'
 import { PracticalInfo, type ContactAction } from '@/place/practical-info'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { Stars, ratingLabel } from '@/reviews/stars'
@@ -127,19 +127,26 @@ function Detail({
     reviews: null as number | null,
     highlight: null as number | null,
   })
-  const arrived = useRef(false)
-
-  const scrollTo = (section: number | null, animated = true) => {
-    if (offsets.current.body === null || section === null) return false
+  // Brought just below the compact bar, which covers the page's top by then.
+  const scrollTo = (section: number | null) => {
+    if (offsets.current.body === null || section === null) return
     scroll.current?.scrollTo({
-      y: Math.max(0, offsets.current.body + section - spacing.lg),
-      animated,
+      y: offsetBelowBar(offsets.current.body + section, insets.top),
+      animated: true,
     })
-    return true
   }
-  // Once, when both the page body and the item have a place on screen.
-  const bringHighlightIntoView = () => {
-    if (!arrived.current && scrollTo(offsets.current.highlight)) arrived.current = true
+
+  /**
+   * The item a link names sits in the last section, under benefits and reviews
+   * that load on their own. A single scroll at the item's first layout landed
+   * where it was then: reviews arriving above pushed it a screen further down,
+   * and a page still short at that moment clamped the scroll at its end. So the
+   * page follows the item every time the layout moves it, until the person
+   * touches the page; from then on, where it is belongs to them.
+   */
+  const following = useRef(highlight !== null)
+  const followHighlight = () => {
+    if (following.current) scrollTo(offsets.current.highlight)
   }
 
   /**
@@ -233,6 +240,10 @@ function Detail({
         testID="place-scroll"
         onScroll={header.onScroll}
         scrollEventThrottle={16}
+        onContentSizeChange={followHighlight}
+        onTouchStart={() => {
+          following.current = false
+        }}
         contentContainerStyle={styles.page}
       >
         <PlaceHero detail={detail} />
@@ -242,7 +253,7 @@ function Detail({
           testID="place-body"
           onLayout={(event) => {
             offsets.current.body = event.nativeEvent.layout.y
-            bringHighlightIntoView()
+            followHighlight()
           }}
         >
           <View style={styles.header}>
@@ -299,6 +310,7 @@ function Detail({
           ) : null}
 
           <View
+            testID="place-reviews"
             onLayout={(event) => {
               offsets.current.reviews = event.nativeEvent.layout.y
             }}
@@ -319,7 +331,7 @@ function Detail({
             highlight={highlight}
             onHighlightLayout={(y) => {
               offsets.current.highlight = y
-              bringHighlightIntoView()
+              followHighlight()
             }}
           />
         </View>

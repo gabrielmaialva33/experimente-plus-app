@@ -912,7 +912,88 @@ describe('place page in direction A', () => {
     await fireEvent(view.getByTestId('place-content'), 'layout', {
       nativeEvent: { layout: { y: 900 } },
     })
-    expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 900 - 16, animated: true })
+    // Just below the compact bar (24 of status bar, a 60 row) with a 12 gap, not under it.
+    expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 900 - (24 + 60) - 12, animated: true })
+  })
+
+  // The item's section is the last one, under reviews and benefits that load on their own.
+  describe('while the page settles around a linked item', () => {
+    const scrollTo = () => (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+    const arrive = async () => {
+      router.useLocalSearchParams.mockReturnValue({
+        city: 'londrina',
+        slug: 'cafe',
+        destaque: 'event-12',
+      })
+      content.usePartnerContent.mockImplementation((_id: number, kind: string) => ({
+        data: kind === 'events' ? [event(11), event(12)] : [],
+        isPending: false,
+        isError: false,
+      }))
+      const view = await render(<EstablishmentScreen />)
+      await fireEvent(view.getByTestId('place-body'), 'layout', {
+        nativeEvent: { layout: { y: 272 } },
+      })
+      await fireEvent(view.getByTestId('place-content'), 'layout', {
+        nativeEvent: { layout: { y: 1008 } },
+      })
+      return view
+    }
+
+    it('follows the item when reviews arriving above push it down', async () => {
+      const view = await arrive()
+      expect(scrollTo()).toHaveBeenLastCalledWith({ y: 272 + 1008 - 96, animated: true })
+
+      // The reviews load: the section moves a whole screen further down.
+      await fireEvent(view.getByTestId('place-content'), 'layout', {
+        nativeEvent: { layout: { y: 1666 } },
+      })
+      expect(scrollTo()).toHaveBeenLastCalledWith({ y: 272 + 1666 - 96, animated: true })
+
+      // A page that grows again asks once more, instead of keeping a clamped scroll.
+      scrollTo().mockClear()
+      await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
+      expect(scrollTo()).toHaveBeenCalledWith({ y: 272 + 1666 - 96, animated: true })
+    })
+
+    it('leaves the page where the person takes it', async () => {
+      const view = await arrive()
+      await fireEvent(view.getByTestId('place-scroll'), 'touchStart')
+      scrollTo().mockClear()
+
+      await fireEvent(view.getByTestId('place-content'), 'layout', {
+        nativeEvent: { layout: { y: 1666 } },
+      })
+      await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
+      expect(scrollTo()).not.toHaveBeenCalled()
+    })
+
+    it('never moves a page opened without an item', async () => {
+      const view = await render(<EstablishmentScreen />)
+      await fireEvent(view.getByTestId('place-body'), 'layout', {
+        nativeEvent: { layout: { y: 272 } },
+      })
+      await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
+      expect(scrollTo()).not.toHaveBeenCalled()
+    })
+  })
+
+  it('brings the reviews below the compact bar from the rating', async () => {
+    queries.useEstablishment.mockReturnValue({
+      data: { ...detail, reviews: { count: 5, average: 3.6 } },
+      isPending: false,
+      isError: false,
+    })
+    const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+    const view = await render(<EstablishmentScreen />)
+    await fireEvent(view.getByTestId('place-body'), 'layout', {
+      nativeEvent: { layout: { y: 272 } },
+    })
+    await fireEvent(view.getByTestId('place-reviews'), 'layout', {
+      nativeEvent: { layout: { y: 862 } },
+    })
+    await fireEvent.press(view.getByTestId('place-rating'))
+    expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 862 - 96, animated: true })
   })
 
   it('says once what following gives (A27)', async () => {

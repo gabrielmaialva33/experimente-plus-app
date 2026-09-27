@@ -43,6 +43,17 @@ export function placeBarRange(detail: EstablishmentDetail, insetTop: number): [n
   return [arrived - HANDOVER, arrived]
 }
 
+/**
+ * The scroll offset that shows a point of the page just below the compact bar.
+ *
+ * Every section a place page scrolls to (reviews, the item a link names) sits
+ * below the photo, so the bar has arrived by the time the page gets there and
+ * covers the page's top: a section brought to the very top would start under it.
+ */
+export function offsetBelowBar(y: number, insetTop: number) {
+  return Math.max(0, y - (insetTop + BAR_ROW) - spacing.md)
+}
+
 /** The photo that opens a place. Its controls float above it, in `PlaceChrome`. */
 export function PlaceHero({ detail }: { detail: EstablishmentDetail }) {
   const insets = useSafeAreaInsets()

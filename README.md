@@ -1,25 +1,115 @@
-# Experimente+ — aplicativo móvel
+<div align="center">
 
-Cliente Android e iOS do **Experimente+**, plataforma regional de descoberta e benefícios do norte do
-Paraná. Qualquer pessoa explora lugares, agenda e novidades de cada cidade sem criar conta; quem
-entra guarda favoritos e roteiros, compra pacotes e vouchers e apresenta os benefícios da carteira;
-o parceiro valida esses benefícios pela câmera. Restaurantes, bares e cafés são a primeira vertical,
-mas o domínio também comporta lazer, cultura, bem-estar e serviços.
+<img src=".github/assets/readme-hero.svg" alt="Experimente+ — o app da descoberta regional" width="100%"/>
 
-O aplicativo é um cliente fino: regras de negócio, elegibilidade, horários, limites e autorização
-ficam na API, no repositório [`experimente-plus`](https://github.com/gabrielmaialva33/experimente-plus),
-que também guarda o contrato OpenAPI. O guia de trabalho deste repositório, com os contratos que o
-código precisa respeitar, está em [`AGENTS.md`](AGENTS.md).
+**Explore a sua região sem criar conta. Guarde, compre e apresente benefícios pela carteira.**
 
-<p align="center">
-  <img src="docs/screenshots/explorar.png" width="200" alt="Explorar: busca, filtros e os 20 lugares de Londrina" />
-  <img src="docs/screenshots/mapa.png" width="200" alt="Mapa de Londrina com os lugares agrupados por proximidade e os nomes que cabem" />
-  <img src="docs/screenshots/lugar.png" width="200" alt="Página de um lugar com o benefício à venda" />
-  <img src="docs/screenshots/compra.png" width="200" alt="Compra de um voucher, com datas e total" />
-  <img src="docs/screenshots/carteira.png" width="200" alt="Carteira vazia, com o caminho para os benefícios" />
+<p>
+  <a href="https://github.com/gabrielmaialva33/experimente-plus-app/actions/workflows/ci.yml"><img src="https://github.com/gabrielmaialva33/experimente-plus-app/actions/workflows/ci.yml/badge.svg?branch=main" alt="Mobile CI"/></a>
+  <a href="https://docs.expo.dev/versions/v57.0.0/"><img src="https://img.shields.io/badge/Expo-SDK%2057-4630EB?style=flat-square&labelColor=101214" alt="Expo SDK 57"/></a>
+  <a href="https://reactnative.dev/"><img src="https://img.shields.io/badge/React%20Native-0.86-61DAFB?style=flat-square&labelColor=101214" alt="React Native 0.86"/></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-1CD6F4?style=flat-square&labelColor=101214" alt="React 19"/></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&labelColor=101214" alt="TypeScript strict"/></a>
+  <a href="https://maplibre.org/"><img src="https://img.shields.io/badge/MapLibre-PMTiles-295DAA?style=flat-square&labelColor=101214" alt="MapLibre com PMTiles"/></a>
+  <a href="#rodar-no-emulador-ou-no-aparelho"><img src="https://img.shields.io/badge/plataformas-Android%20%C2%B7%20iOS-3DDC84?style=flat-square&labelColor=101214" alt="Android e iOS"/></a>
 </p>
 
+<p>
+  <a href="#telas">Telas</a>
+  ·
+  <a href="#destaques">Destaques</a>
+  ·
+  <a href="#arquitetura">Arquitetura</a>
+  ·
+  <a href="#primeiros-passos">Primeiros passos</a>
+  ·
+  <a href="#testes-lint-e-formatação">Qualidade</a>
+  ·
+  <a href="https://github.com/gabrielmaialva33/experimente-plus">API e web</a>
+</p>
+
+---
+
+_"Descoberta primeiro: o catálogo é público, a conta é para guardar, comprar e usar."_
+
+</div>
+
+---
+
+> [!IMPORTANT]
+> **Cliente Android e iOS do Experimente+**, plataforma regional de descoberta e benefícios do
+> norte do Paraná. Qualquer pessoa explora lugares, agenda e novidades de cada cidade sem criar
+> conta; quem entra guarda favoritos e roteiros, compra pacotes e vouchers e apresenta os
+> benefícios da carteira; o parceiro valida esses benefícios pela câmera.
+
+> [!NOTE]
+> **O app é um cliente fino.** Regras de negócio, elegibilidade, horários, limites e autorização
+> ficam na API, no repositório [`experimente-plus`](https://github.com/gabrielmaialva33/experimente-plus),
+> que também guarda o contrato OpenAPI. Restaurantes, bares e cafés são a primeira vertical; o
+> domínio também comporta lazer, cultura, bem-estar e serviços. O guia de trabalho, com os
+> contratos que o código precisa respeitar, está em [`AGENTS.md`](AGENTS.md).
+
+## Telas
+
+<table>
+  <tr>
+    <td align="center" width="20%">
+      <img src="docs/screenshots/explorar.png" width="160" alt="Explorar: busca, filtros e os 20 lugares de Londrina"/>
+      <br/><sub><b>Explorar</b><br/>busca, filtros, agenda</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/screenshots/mapa.png" width="160" alt="Mapa de Londrina com os lugares agrupados por proximidade"/>
+      <br/><sub><b>Mapa</b><br/>lugares agrupados</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/screenshots/lugar.png" width="160" alt="Página de um lugar com o benefício à venda"/>
+      <br/><sub><b>Lugar</b><br/>ações e benefício</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/screenshots/compra.png" width="160" alt="Compra de um voucher, com datas e total"/>
+      <br/><sub><b>Compra</b><br/>voucher por Pix</sub>
+    </td>
+    <td align="center" width="20%">
+      <img src="docs/screenshots/carteira.png" width="160" alt="Carteira vazia, com o caminho para os benefícios"/>
+      <br/><sub><b>Carteira</b><br/>benefícios e QR</sub>
+    </td>
+  </tr>
+</table>
+
 <p align="center"><sub>Emulador Android, homologação, dados fictícios de demonstração: nove cidades, de Maringá a Bandeirantes.</sub></p>
+
+## Destaques
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <b>Explore sem conta</b><br/>
+      <sub>Lista e mapa com os mesmos filtros, nove cidades, agenda do dia, novidades e o Concierge, que sugere lugares a partir do que a pessoa conta.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <b>Mapa regional próprio</b><br/>
+      <sub>Basemap Protomaps servido do armazenamento da operação, sem chave de mapa. Lugares agrupados como camadas do mapa e um cartão do lugar no rodapé.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <b>Carteira com QR</b><br/>
+      <sub>Pacotes e vouchers comprados por Pix. O benefício é apresentado por um QR que vale cinco minutos e só conta quando o lugar confirma.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <b>Validação pelo parceiro</b><br/>
+      <sub>A aba Validar só aparece quando a API concede a capability. Prévia sem resgate, confirmação explícita e idempotente, histórico de usos.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <b>Sessão segura</b><br/>
+      <sub>Tokens só no SecureStore, uma única rotação do refresh em voo, preferências no MMKV. O QR e os tokens nunca vão para logs ou analytics.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <b>Acessível</b><br/>
+      <sub>Alvos de toque de 44, leitor de tela, fontes grandes do sistema, tema claro e escuro, teclado que nunca cobre o campo e Android de ponta a ponta.</sub>
+    </td>
+  </tr>
+</table>
 
 ## O que o app faz
 
@@ -32,6 +122,26 @@ código precisa respeitar, está em [`AGENTS.md`](AGENTS.md).
 A composição das abas vem de `GET /api/v1/me/context`; o app nunca decide sozinho que alguém é
 parceiro. Em homologação o provedor de pagamento é simulado: o pedido diz que nada é cobrado e a
 equipe confirma.
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+  subgraph App["App · Expo Router"]
+    UI["Telas em src/app"] --> Q["TanStack Query"]
+    Q --> C["Cliente HTTP<br/>src/api/client.ts"]
+    C --> S["Sessão<br/>SecureStore · MMKV"]
+    UI --> M["MapLibre"]
+  end
+  C -- "HTTPS · JWT e refresh rotativo" --> API["API Experimente+<br/>AdonisJS"]
+  API --> DB[("PostgreSQL")]
+  API --> R[("Redis")]
+  M -- "pmtiles:// por faixas" --> B["Basemap regional<br/>Protomaps no R2"]
+  API -. "OpenAPI → pnpm api:types" .-> C
+```
+
+O hostname da API escolhe a operação (tenant); cidade e categoria são só filtros de descoberta.
+Todas as chamadas passam por `src/api/client.ts`, e a rotação de tokens por `src/api/session.ts`.
 
 ## Stack
 
@@ -202,9 +312,9 @@ src/
   components/     componentes compartilhados da direção visual A
   theme/          tokens, fontes, escala de texto, barras do sistema
 assets/           ícones, splash e ícone iOS (monograma provisório "E+")
-docs/             publicação nas lojas e capturas deste README
+docs/             publicação nas lojas, detalhes da CI e capturas deste README
 scripts/ci/       verificação do APK gerado na CI
-.github/workflows/  pipeline "Mobile CI"
+.github/          pipeline "Mobile CI" (workflows/) e o banner deste README (assets/)
 ```
 
 Imports usam `@/` para `src/` e `@/assets/` para `assets/`.
@@ -245,7 +355,8 @@ O workflow [`Mobile CI`](.github/workflows/ci.yml) tem dois jobs:
 O APK sai como artefato da execução, na página do run em **Actions**, com o nome
 `experimente-plus-pilot-debug-key-<commit>-<data UTC>-<tentativa>` e um `.sha256` ao lado; fica
 disponível por 14 dias. Por ser assinado com a chave de debug, ele serve para o piloto e para
-testes, não para as lojas.
+testes, não para as lojas. Ambiente, caches e o que cada verificação garante estão em
+[`docs/ci.md`](docs/ci.md).
 
 ## Publicação nas lojas
 
@@ -273,22 +384,29 @@ contrário. O MapLibre lê fontes `pmtiles://` diretamente; não adicione a bibl
 `pmtiles`.
 
 No MapLibre os lugares são camadas do próprio mapa, não views sobrepostas: ficam recortados pela
-área do mapa e se agrupam quando se amontoam. Um círculo azul com um número reúne os lugares
-próximos, e tocá-lo aproxima até que se separem; um ponto é um lugar só, com o nome ao lado quando
-cabe sem cobrir outro (os primeiros resultados da busca têm prioridade), e tocá-lo abre o lugar.
-Lugares no mesmo endereço formam um único círculo que, tocado, lista os lugares daquele ponto. O
-leitor de tela não alcança o que o mapa desenha: o mapa se anuncia como "Mapa com N lugares" e,
-ativado, volta para a lista, que traz os mesmos lugares e filtros. O Google Maps continua com um
-marcador por ponto.
+área do mapa e se agrupam quando se amontoam.
 
-Manter dois renderizadores custa tamanho de binário e uma segunda implementação. É uma escolha
-deliberada e revisitável: consolidar em um só, provavelmente MapLibre, elimina de vez a dependência
-de credencial. O basemap regional cobre de Maringá a Bandeirantes, as nove cidades da demonstração;
-o agrupamento, os rótulos e o toque foram conferidos no emulador Android em Londrina e Maringá. A
-validação em aparelhos reais ainda **não foi feita**: zoom 11 a 15 nas nove cidades, acentos nos
-rótulos e a atribuição Protomaps/OpenStreetMap visível, em Android e iOS.
+- **Círculo azul com número:** lugares próximos. Tocá-lo aproxima até que se separem; lugares no
+  mesmo endereço formam um círculo que, tocado, lista os lugares daquele ponto.
+- **Ponto:** um lugar só, com o nome ao lado quando cabe sem cobrir outro (os primeiros resultados
+  da busca têm prioridade). Tocá-lo **segura o lugar num cartão no rodapé do mapa**, com foto,
+  categoria, nota, bairro e se está aberto; o ponto cresce, e o cartão abre a página do lugar.
+  Tocar fora dos lugares ou no × solta o cartão.
+- **Centralizar:** aparece depois que a pessoa arrasta o mapa e volta à cidade.
+- **Leitor de tela:** ele não alcança o que o mapa desenha; o mapa se anuncia como "Mapa com N
+  lugares" e, ativado, volta para a lista, que traz os mesmos lugares e filtros.
+
+O Google Maps continua com um marcador por ponto. Manter dois renderizadores custa tamanho de
+binário e uma segunda implementação; é uma escolha deliberada e revisitável: consolidar em um só,
+provavelmente MapLibre, elimina de vez a dependência de credencial. O basemap regional cobre de
+Maringá a Bandeirantes, as nove cidades da demonstração. Agrupamento, rótulos, recorte nas bordas,
+cartão e Centralizar foram conferidos no emulador e num aparelho Android real em Londrina e
+Maringá; **falta validar no iOS** e o zoom 11 a 15 nas nove cidades.
 
 ## Solução de problemas
+
+<details>
+<summary><b>Sintomas comuns e a saída de cada um</b></summary>
 
 | Sintoma                                                         | Causa e saída                                                                                                                                                        |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -302,3 +420,5 @@ rótulos e a atribuição Protomaps/OpenStreetMap visível, em Android e iOS.
 | API local não responde ou mostra outra operação                 | No emulador o host é `http://10.0.2.2:<porta>`; no aparelho, o IP da máquina na rede. Como o hostname escolhe a operação, um IP cai na operação padrão do backend.   |
 | Teste falha com "Failed to get NitroModules"                    | O teste importou `@/api/client` ou a sessão sem simular o MMKV. Simule `@/api/client` (ou `react-native-mmkv`) no próprio teste.                                     |
 | O emulador fecha sozinho                                        | Falta memória: ele precisa de alguns GB livres. Feche outros programas ou limite a RAM do AVD (`-memory 3072`).                                                      |
+
+</details>

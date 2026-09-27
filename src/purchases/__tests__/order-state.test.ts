@@ -1,5 +1,5 @@
 import type { Purchase } from '@/api/purchases'
-import { checkoutUrl, orderState } from '../order-state'
+import { blocksNewPurchase, checkoutUrl, orderState } from '../order-state'
 
 jest.mock('@/api/client', () => ({ request: jest.fn() }))
 
@@ -95,5 +95,18 @@ describe('purchase state projection', () => {
     ]) {
       expect(checkoutUrl({ ...pending, instructions: { pix_url } })).toBeNull()
     }
+  })
+})
+
+describe('what blocks buying the same product again', () => {
+  it.each([
+    ['pending', null, true],
+    ['paid', 7, true],
+    ['review', null, true],
+    ['refunded', 7, true],
+    ['cancelled', null, false],
+    ['failed', null, false],
+  ] as const)('a %s order with access %s blocks: %s', (status, access, blocks) => {
+    expect(blocksNewPurchase({ ...pending, status, access_id: access })).toBe(blocks)
   })
 })

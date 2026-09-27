@@ -35,6 +35,7 @@ import {
   price,
   usageWindow,
 } from '@/purchases/components'
+import { blocksNewPurchase } from '@/purchases/order-state'
 import { productIdentity, productKind } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
@@ -133,8 +134,10 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   const [titleSpan, setTitleSpan] = useState(TITLE_ESTIMATE)
   const header = useCompactHeader(titleSpan[0], titleSpan[1])
   const sending = useRef(false)
+  // Only an order that still holds the product; a cancelled or failed one is history.
   const existing = orders.data?.purchases.find(
-    (order) => order.edition_id === editionId && order.offer_id === offerId
+    (order) =>
+      order.edition_id === editionId && order.offer_id === offerId && blocksNewPurchase(order)
   )
   const prior = userId ? readIntent(userId, editionId, offerId) : null
 

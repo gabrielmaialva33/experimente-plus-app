@@ -223,6 +223,35 @@ it('offers an existing pending order rather than a second charge', async () => {
   })
 })
 
+it.each(['cancelled', 'failed'] as const)(
+  'lets a %s order without access give way to a new purchase of the same product',
+  async (status) => {
+    api.createPurchase.mockResolvedValue({ id: 'c0ffee00-9cd5-4a48-9f32-731a11cbe7f1' })
+    queries.usePurchases.mockReturnValue({ data: { purchases: [{ ...pending, status }] } })
+    const view = await page(<EditionScreen />)
+    expect(view.queryByText(/Você já tem um pedido deste produto/)).toBeNull()
+    expect(view.queryByRole('button', { name: 'Acompanhar pedido' })).toBeNull()
+    await fireEvent.press(view.getByRole('radio', { name: 'Pix' }))
+    await fireEvent.press(view.getByRole('checkbox', { name: /^Li e aceito as condições/ }))
+    await fireEvent.press(view.getByRole('button', { name: 'Ir para o pagamento' }))
+    await waitFor(() => expect(api.createPurchase).toHaveBeenCalledTimes(1))
+  }
+)
+
+it('keeps following the open order when an older one of the same product was cancelled', async () => {
+  const cancelled = {
+    ...pending,
+    id: 'c0ffee00-0000-4a48-9f32-731a11cbe7f1',
+    status: 'cancelled' as const,
+  }
+  queries.usePurchases.mockReturnValue({ data: { purchases: [cancelled, pending] } })
+  const view = await page(<EditionScreen />)
+  await fireEvent.press(view.getByRole('button', { name: 'Acompanhar pedido' }))
+  expect(router.push).toHaveBeenCalledWith('/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1', {
+    withAnchor: true,
+  })
+})
+
 it('can resume a persisted intention after restart even when the edition is omitted from the public catalog', async () => {
   const body: CreatePurchaseRequest = {
     edition_id: 2,

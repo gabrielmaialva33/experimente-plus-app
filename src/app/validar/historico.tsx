@@ -6,7 +6,7 @@ export default function PartnerHistoryScreen() {
     <HistoryScreen
       queryKey={['partner', 'redemptions']}
       load={listPartnerRedemptions}
-      emptyMessage="Nenhuma utilização registrada ainda."
+      emptyMessage="Nenhuma utilização registrada ainda"
       receiptHref={(code) => ({ pathname: '/validar/comprovante/[code]', params: { code } })}
     />
   )

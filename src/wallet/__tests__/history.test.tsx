@@ -25,7 +25,7 @@ beforeEach(() => jest.clearAllMocks())
 // A34: an empty "Meus usos" says what will appear there and leads back to the benefits.
 it('gives an empty history of uses a way to the benefits', async () => {
   const view = await page(<WalletHistoryScreen />)
-  expect(await view.findByText('Você ainda não utilizou nenhum benefício.')).toBeOnTheScreen()
+  expect(await view.findByText('Você ainda não utilizou nenhum benefício')).toBeOnTheScreen()
   expect(
     view.getByText('Quando você usar um benefício, o comprovante fica guardado aqui.')
   ).toBeOnTheScreen()

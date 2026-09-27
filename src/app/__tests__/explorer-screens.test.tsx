@@ -474,7 +474,7 @@ describe('itinerary', () => {
 
     const view = await render(<ItineraryScreen />)
 
-    expect(view.getByText('Este roteiro não foi encontrado.')).toBeTruthy()
+    expect(view.getByText('Este roteiro não foi encontrado')).toBeTruthy()
     await fireEvent.press(view.getByRole('button', { name: 'Ver meus roteiros' }))
     expect(mockReplace).toHaveBeenCalledWith('/roteiros')
   })

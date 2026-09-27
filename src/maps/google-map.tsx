@@ -6,7 +6,7 @@ import { PinGroupList } from './pin-group-list'
 import { groupLabel, groupPins, type MapPinGroup, type MapRendererProps } from './types'
 
 /** `expo-maps` exposes platform namespaces: Google on Android, Apple on iOS. */
-export function GoogleMapRenderer({ pins, center, onSelect }: MapRendererProps) {
+export function GoogleMapRenderer({ pins, center, onSelect, onOpen }: MapRendererProps) {
   const groups = useMemo(() => groupPins(pins), [pins])
   const [open, setOpen] = useState<MapPinGroup | null>(null)
   const markers = useMemo(
@@ -48,7 +48,7 @@ export function GoogleMapRenderer({ pins, center, onSelect }: MapRendererProps) 
           onClose={() => setOpen(null)}
           onSelect={(slug) => {
             setOpen(null)
-            onSelect(slug)
+            onOpen(slug)
           }}
         />
       ) : null}

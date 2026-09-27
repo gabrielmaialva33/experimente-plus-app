@@ -11,10 +11,11 @@ import {
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native'
 import { useMemo, useRef, useState } from 'react'
-import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 
-import { palette, radius, spacing, typography } from '@/theme/tokens'
+import { minTouch, palette, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useBasemap } from './basemap'
 import { mapStyleUrl } from './config'
@@ -46,6 +47,9 @@ const images = {
 const CLUSTER_RADIUS = 48
 const CLUSTER_MAX_ZOOM = 15
 
+/** A whole city in view, from its centre. */
+const INITIAL_ZOOM = 11
+
 /**
  * The basemap is the regional light style in either theme, so the marks keep
  * the light palette too: the navy of navigation with a white ring and halo. The
@@ -66,9 +70,17 @@ const clusterLayout = (textFont: string[]): SymbolLayout => ({
   'text-allow-overlap': true,
 })
 
-const placeLayout = (textFont: string[]): SymbolLayout => ({
+/** The mark a person picked, by its group key; nothing when no place is held. */
+const isHeld = (selected: string | null): ['==', ['get', string], string] => [
+  '==',
+  ['get', 'key'],
+  selected ?? '',
+]
+
+const placeLayout = (textFont: string[], selected: string | null): SymbolLayout => ({
   'icon-image': 'map-place',
-  'icon-size': 0.5,
+  // The held place grows, so the card at the foot points back at its mark.
+  'icon-size': ['case', isHeld(selected), 0.8, 0.5],
   // The dot always shows; the name gives way when it would cover another.
   'icon-allow-overlap': true,
   'text-optional': true,
@@ -79,7 +91,8 @@ const placeLayout = (textFont: string[]): SymbolLayout => ({
   'text-variable-anchor': ['top', 'bottom', 'right', 'left'],
   'text-radial-offset': 0.9,
   'text-justify': 'auto',
-  'symbol-sort-key': ['get', 'rank'],
+  // The held place is placed first, so its name is the one that stays.
+  'symbol-sort-key': ['case', isHeld(selected), -1, ['get', 'rank']],
 })
 
 /**
@@ -95,7 +108,15 @@ const placeLayout = (textFont: string[]): SymbolLayout => ({
  * twenty names stacked in one unreadable pile. Layers are clipped to the map,
  * cluster when they crowd and drop a name that would cover another.
  */
-export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRendererProps) {
+export function MapLibreRenderer({
+  pins,
+  center,
+  onSelect,
+  onOpen,
+  selected = null,
+  onBackgroundPress,
+  onShowList,
+}: MapRendererProps) {
   const colors = useColors()
   const { credit, textFont } = useBasemap()
   const reduceMotion = useReducedMotion()
@@ -105,6 +126,16 @@ export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRend
   const map = useRef<MapRef>(null)
   const camera = useRef<CameraRef>(null)
   const source = useRef<GeoJSONSourceRef>(null)
+  // Once the person moves the map away from the city, one tap brings it back.
+  const [moved, setMoved] = useState(false)
+  const recentre = () => {
+    setMoved(false)
+    camera.current?.easeTo({
+      center: [center.longitude, center.latitude],
+      zoom: INITIAL_ZOOM,
+      duration: reduceMotion ? 0 : 450,
+    })
+  }
 
   // A cluster opens at the zoom where it splits; one that cannot split lists its places.
   const expand = async (clusterId: number, point: [number, number]) => {
@@ -152,10 +183,21 @@ export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRend
           if (event.nativeEvent.actionName === 'activate') onShowList?.()
         }}
       >
-        <Map ref={map} style={styles.map} mapStyle={mapStyleUrl} onPress={() => setOpen(null)}>
+        <Map
+          ref={map}
+          style={styles.map}
+          mapStyle={mapStyleUrl}
+          onPress={() => {
+            setOpen(null)
+            onBackgroundPress?.()
+          }}
+          onRegionDidChange={(event) => {
+            if (event.nativeEvent.userInteraction) setMoved(true)
+          }}
+        >
           <Camera
             ref={camera}
-            initialViewState={{ center: [center.longitude, center.latitude], zoom: 11 }}
+            initialViewState={{ center: [center.longitude, center.latitude], zoom: INITIAL_ZOOM }}
           />
           <Images images={images} />
 
@@ -173,7 +215,7 @@ export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRend
               id="places"
               type="symbol"
               filter={['==', ['get', 'places'], 1]}
-              layout={placeLayout(textFont)}
+              layout={placeLayout(textFont, selected)}
               paint={{
                 'icon-color': ink,
                 'icon-halo-color': paper,
@@ -206,9 +248,25 @@ export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRend
           onClose={() => setOpen(null)}
           onSelect={(slug) => {
             setOpen(null)
-            onSelect(slug)
+            onOpen(slug)
           }}
         />
+      ) : null}
+
+      {moved ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Centralizar o mapa na cidade"
+          onPress={recentre}
+          style={({ pressed }) => [
+            styles.recentre,
+            { backgroundColor: paper, opacity: pressed ? 0.85 : 1 },
+          ]}
+          testID="map-recentre"
+        >
+          <Ionicons name="scan-outline" size={18} color={ink} />
+          <Text style={[styles.recentreLabel, { color: ink }]}>Centralizar</Text>
+        </Pressable>
       ) : null}
 
       {/* The native dialog keeps the licence link; this keeps the credit visible. */}
@@ -235,4 +293,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   creditLabel: { ...typography.caption, fontSize: 11 },
+  // Drawn in the map's own light palette, like the marks: the basemap is light in either theme.
+  recentre: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    elevation: 4,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: minTouch,
+    paddingHorizontal: spacing.lg,
+    position: 'absolute',
+    right: spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    top: spacing.md,
+  },
+  recentreLabel: { ...typography.label, ...textWeight('700') },
 })

@@ -104,7 +104,12 @@ beforeEach(() => {
 
 it('hands the map one point per spot, clustered by the places each stands for', async () => {
   const view = await render(
-    <MapLibreRenderer pins={[casa, atelie, forno]} center={center} onSelect={jest.fn()} />
+    <MapLibreRenderer
+      pins={[casa, atelie, forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+    />
   )
   const source = view.getByTestId('places-source')
 
@@ -137,7 +142,9 @@ it('hands the map one point per spot, clustered by the places each stands for', 
 // The basemap is light in either theme, so the marks keep the navy of navigation.
 it.each(['light', 'dark'] as const)('draws the marks in navy on the %s theme', async (mode) => {
   theme.useColors.mockReturnValue(palette[mode])
-  await render(<MapLibreRenderer pins={[forno]} center={center} onSelect={jest.fn()} />)
+  await render(
+    <MapLibreRenderer pins={[forno]} center={center} onSelect={jest.fn()} onOpen={jest.fn()} />
+  )
 
   expect(mockLayers.places.paint).toMatchObject({
     'icon-color': palette.light.primary,
@@ -150,10 +157,16 @@ it.each(['light', 'dark'] as const)('draws the marks in navy on the %s theme', a
   })
 })
 
-it('opens a lone place straight from its mark', async () => {
+it('picks a lone place from its mark, without leaving the map', async () => {
   const onSelect = jest.fn()
+  const onOpen = jest.fn()
   const view = await render(
-    <MapLibreRenderer pins={[casa, atelie, forno]} center={center} onSelect={onSelect} />
+    <MapLibreRenderer
+      pins={[casa, atelie, forno]}
+      center={center}
+      onSelect={onSelect}
+      onOpen={onOpen}
+    />
   )
 
   // The finger lands on Forno's label, which also reaches the shared spot's bubble.
@@ -168,13 +181,15 @@ it('opens a lone place straight from its mark', async () => {
 
   expect(onSelect).toHaveBeenCalledTimes(1)
   expect(onSelect).toHaveBeenCalledWith('forno-e-fermento')
+  expect(onOpen).not.toHaveBeenCalled()
   expect(mockCamera.easeTo).not.toHaveBeenCalled()
 })
 
 it('opens exactly the place picked from a spot that holds several', async () => {
   const onSelect = jest.fn()
+  const onOpen = jest.fn()
   const view = await render(
-    <MapLibreRenderer pins={[casa, atelie]} center={center} onSelect={onSelect} />
+    <MapLibreRenderer pins={[casa, atelie]} center={center} onSelect={onSelect} onOpen={onOpen} />
   )
 
   await press(
@@ -185,14 +200,21 @@ it('opens exactly the place picked from a spot that holds several', async () => 
   expect(onSelect).not.toHaveBeenCalled()
   expect(view.getByText('2 lugares aqui')).toBeOnTheScreen()
 
+  // Choosing from the list is already a decision: it goes straight to the page.
   await fireEvent.press(view.getByRole('button', { name: 'Casa de Petiscos, Bares' }))
-  expect(onSelect).toHaveBeenCalledTimes(1)
-  expect(onSelect).toHaveBeenCalledWith('casa-de-petiscos')
+  expect(onOpen).toHaveBeenCalledTimes(1)
+  expect(onOpen).toHaveBeenCalledWith('casa-de-petiscos')
+  expect(onSelect).not.toHaveBeenCalled()
 })
 
 it('closes the list when the map around it is tapped', async () => {
   const view = await render(
-    <MapLibreRenderer pins={[casa, atelie]} center={center} onSelect={jest.fn()} />
+    <MapLibreRenderer
+      pins={[casa, atelie]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+    />
   )
   await press(
     view,
@@ -210,7 +232,7 @@ it('zooms into a cluster until it splits', async () => {
   mockMap.getZoom.mockResolvedValue(11)
   const onSelect = jest.fn()
   const view = await render(
-    <MapLibreRenderer pins={[casa, forno]} center={center} onSelect={onSelect} />
+    <MapLibreRenderer pins={[casa, forno]} center={center} onSelect={onSelect} onOpen={jest.fn()} />
   )
 
   await press(
@@ -234,9 +256,14 @@ it('lists the places of a cluster that cannot split any further', async () => {
     { properties: { key: 'casa-de-petiscos', places: 2 } },
     { properties: { key: 'forno-e-fermento', places: 1 } },
   ])
-  const onSelect = jest.fn()
+  const onOpen = jest.fn()
   const view = await render(
-    <MapLibreRenderer pins={[casa, atelie, forno]} center={center} onSelect={onSelect} />
+    <MapLibreRenderer
+      pins={[casa, atelie, forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={onOpen}
+    />
   )
 
   await press(
@@ -248,12 +275,14 @@ it('lists the places of a cluster that cannot split any further', async () => {
   expect(mockCamera.easeTo).not.toHaveBeenCalled()
   expect(view.getByText('3 lugares aqui')).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('button', { name: 'Forno & Fermento, Padarias' }))
-  expect(onSelect).toHaveBeenCalledWith('forno-e-fermento')
+  expect(onOpen).toHaveBeenCalledWith('forno-e-fermento')
 })
 
 it('ignores a press that reaches no mark of its own', async () => {
   const onSelect = jest.fn()
-  const view = await render(<MapLibreRenderer pins={[forno]} center={center} onSelect={onSelect} />)
+  const view = await render(
+    <MapLibreRenderer pins={[forno]} center={center} onSelect={onSelect} onOpen={jest.fn()} />
+  )
 
   await press(
     view,
@@ -273,6 +302,7 @@ it('names the map and leads a screen reader to the list of the same places', asy
       pins={[casa, atelie, forno]}
       center={center}
       onSelect={jest.fn()}
+      onOpen={jest.fn()}
       onShowList={onShowList}
     />
   )
@@ -284,4 +314,65 @@ it('names the map and leads a screen reader to the list of the same places', asy
 
   await fireEvent(map, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } })
   expect(onShowList).toHaveBeenCalledTimes(1)
+})
+
+it('draws the held place larger and names it ahead of the others', async () => {
+  await render(
+    <MapLibreRenderer
+      pins={[casa, atelie, forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+      selected="forno-e-fermento"
+    />
+  )
+
+  const held = ['==', ['get', 'key'], 'forno-e-fermento']
+  expect(mockLayers.places.layout).toMatchObject({
+    'icon-size': ['case', held, 0.8, 0.5],
+    'symbol-sort-key': ['case', held, -1, ['get', 'rank']],
+  })
+})
+
+it('lets go of the held place when the map away from the marks is tapped', async () => {
+  const onBackgroundPress = jest.fn()
+  const view = await render(
+    <MapLibreRenderer
+      pins={[forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+      onBackgroundPress={onBackgroundPress}
+    />
+  )
+
+  await act(async () => view.getByTestId('native-map').props.onPress())
+  expect(onBackgroundPress).toHaveBeenCalledTimes(1)
+})
+
+it('offers to bring the city back once the person moves the map', async () => {
+  const view = await render(
+    <MapLibreRenderer pins={[forno]} center={center} onSelect={jest.fn()} onOpen={jest.fn()} />
+  )
+  expect(view.queryByTestId('map-recentre')).toBeNull()
+
+  // The map's own moves (a cluster opening) do not count as the person's.
+  await act(async () =>
+    view
+      .getByTestId('native-map')
+      .props.onRegionDidChange({ nativeEvent: { userInteraction: false } })
+  )
+  expect(view.queryByTestId('map-recentre')).toBeNull()
+
+  await act(async () =>
+    view
+      .getByTestId('native-map')
+      .props.onRegionDidChange({ nativeEvent: { userInteraction: true } })
+  )
+  await fireEvent.press(view.getByRole('button', { name: 'Centralizar o mapa na cidade' }))
+
+  expect(mockCamera.easeTo).toHaveBeenCalledWith(
+    expect.objectContaining({ center: [center.longitude, center.latitude], zoom: 11 })
+  )
+  expect(view.queryByTestId('map-recentre')).toBeNull()
 })

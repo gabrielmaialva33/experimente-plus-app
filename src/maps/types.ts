@@ -11,7 +11,14 @@ export interface MapPin {
 export interface MapRendererProps {
   pins: MapPin[]
   center: { latitude: number; longitude: number }
+  /** A place picked on the map itself: the map holds it and says which it is. */
   onSelect: (slug: string) => void
+  /** A place chosen from a list of several at one spot: straight to its page. */
+  onOpen: (slug: string) => void
+  /** The place held by the map, drawn larger and named ahead of the others. */
+  selected?: string | null
+  /** A tap on the map away from any mark. */
+  onBackgroundPress?: () => void
   /** Explorar's list of the same places: the way through for a screen reader. */
   onShowList?: () => void
 }

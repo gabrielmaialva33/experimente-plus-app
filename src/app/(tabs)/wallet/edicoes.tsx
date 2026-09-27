@@ -196,9 +196,13 @@ const styles = StyleSheet.create({
   name: typography.heading,
   line: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   meta: { ...typography.meta, flex: 1 },
+  // "Ver detalhes" goes under the price when the two no longer share a line (at large
+  // text they ran into each other and past the card's edge).
   footer: {
     alignItems: 'center',
+    columnGap: spacing.md,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: spacing.sm,
   },

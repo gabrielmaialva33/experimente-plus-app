@@ -45,6 +45,24 @@ analyzer = sdk_tool(sdk, "cmdline-tools", "bin/apkanalyzer")
 if run(analyzer, "manifest", "debuggable", str(apk)) != "false":
     raise SystemExit("Expected release runtime: developer support must be disabled")
 
+# The camera reads the benefit QR for partners; the network reaches the API.
+# Anything else a library adds (location, microphone, storage, biometrics,
+# overlay, advertising ID) must be reviewed and blocked in app.json
+# (android.blockedPermissions) or added here on purpose, never shipped silently.
+ALLOWED_PERMISSIONS = {
+    "android.permission.CAMERA",
+    "android.permission.INTERNET",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.ACCESS_WIFI_STATE",
+    "br.com.experimentemais.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+}
+requested = set(run(analyzer, "manifest", "permissions", str(apk)).split())
+unexpected = sorted(requested - ALLOWED_PERMISSIONS)
+if unexpected:
+    raise SystemExit("APK requests permissions outside the reviewed set:\n  " + "\n  ".join(unexpected))
+if "android.permission.CAMERA" not in requested:
+    raise SystemExit("APK lost the camera permission the partner scanner needs")
+
 signer = sdk_tool(sdk, "build-tools", "apksigner")
 signature = run(signer, "verify", "--print-certs", str(apk))
 certificate = subprocess.check_output([
@@ -73,4 +91,4 @@ if not actual or {digest.lower() for digest in actual} != {expected.lower()}:
     )
 
 print(f"Verified {apk.name}: embedded bundle ({len(bundle)} bytes), pilot origin, regional map,")
-print("arm64-v8a + x86_64, debuggable=false, valid generated debug-key signature.")
+print("arm64-v8a + x86_64, debuggable=false, reviewed permissions only, valid generated debug-key signature.")

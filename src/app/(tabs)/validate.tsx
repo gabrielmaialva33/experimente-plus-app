@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { useCallback, useRef, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState, Linking, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAnnouncement } from '@/components/announce'
@@ -26,12 +26,20 @@ export default function ValidateScreen() {
   const colors = useColors()
   const router = useRouter()
   const { canValidate } = usePartnerAreas()
-  const [permission, requestPermission] = useCameraPermissions()
+  const [permission, requestPermission, getPermission] = useCameraPermissions()
   const [rejected, setRejected] = useState(false)
   const [active, setActive] = useState(false)
   const handled = useRef(false)
   // The status box below is a live region Android speaks as it changes; iOS is told here.
   useAnnouncement(rejected && REJECTED, { spokenByLiveRegion: true })
+
+  // Coming back from the system settings: read the camera permission again.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void getPermission()
+    })
+    return () => subscription.remove()
+  }, [getPermission])
 
   // Re-arming on focus, not on a timer: a partner still pointing at the same
   // code while reading the preview would otherwise push a duplicate screen and
@@ -80,15 +88,28 @@ export default function ValidateScreen() {
   }
 
   if (!permission.granted) {
+    // Once refused for good the system no longer asks, so asking again would do
+    // nothing: the way forward is the app's page in the system settings.
+    const blocked = permission.canAskAgain === false
     return (
       <Centered icon="camera-outline">
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
           Leitor de códigos
         </Text>
         <Text style={[styles.message, { color: colors.mutedForeground }]}>
-          Para ler o código do cliente, o aplicativo precisa da câmera.
+          {blocked
+            ? 'A câmera está bloqueada para o Experimente+. Libere o acesso nas configurações do aparelho para ler o código do cliente.'
+            : 'Para ler o código do cliente, o aplicativo precisa da câmera.'}
         </Text>
-        <Button label="Permitir câmera" icon="camera-outline" onPress={requestPermission} />
+        {blocked ? (
+          <Button
+            label="Abrir configurações"
+            icon="settings-outline"
+            onPress={() => void Linking.openSettings()}
+          />
+        ) : (
+          <Button label="Permitir câmera" icon="camera-outline" onPress={requestPermission} />
+        )}
         <HistoryLink />
       </Centered>
     )

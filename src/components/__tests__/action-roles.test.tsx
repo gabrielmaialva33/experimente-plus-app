@@ -17,7 +17,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
   useFocusEffect: jest.fn(),
 }))
-jest.mock('expo-camera', () => ({ useCameraPermissions: () => [{ granted: false }, jest.fn()] }))
+jest.mock('expo-camera', () => ({
+  useCameraPermissions: () => [{ granted: false, canAskAgain: true }, jest.fn(), jest.fn()],
+}))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),

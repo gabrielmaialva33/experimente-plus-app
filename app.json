@@ -12,6 +12,9 @@
       "bundleIdentifier": "br.com.experimentemais",
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "pt-BR"
       }
     },
     "android": {
@@ -22,7 +25,24 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "br.com.experimentemais"
+      "package": "br.com.experimentemais",
+      "blockedPermissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.VIBRATE",
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "web": {
       "output": "static",
@@ -56,7 +76,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado no estabelecimento e para você fotografar o lugar ao avaliá-lo.",
+          "cameraPermission": "O Experimente+ usa a câmera só para ler o código de benefício que o cliente apresenta, quando você valida benefícios como parceiro.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -64,8 +84,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O Experimente+ precisa de acesso às suas fotos para você escolher imagens para a avaliação.",
-          "cameraPermission": "O Experimente+ usa a câmera para ler o código do benefício apresentado no estabelecimento e para você fotografar o lugar ao avaliá-lo.",
+          "photosPermission": "O Experimente+ abre suas fotos só para você escolher as imagens que quer publicar numa avaliação.",
+          "cameraPermission": "O Experimente+ usa a câmera só para ler o código de benefício que o cliente apresenta, quando você valida benefícios como parceiro.",
           "microphonePermission": false
         }
       ],

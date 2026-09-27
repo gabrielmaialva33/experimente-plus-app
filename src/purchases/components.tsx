@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } f
 import { ApiError } from '@/api/client'
 import type { PurchaseSnapshot } from '@/api/purchases'
 import { Button } from '@/components/button'
+import { useContentFrame } from '@/components/content-frame'
 import { spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -15,10 +16,11 @@ export function PurchasePage({
   refreshControl?: ScrollViewProps['refreshControl']
 }) {
   const colors = useColors()
+  const frame = useContentFrame(undefined, spacing.lg)
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
       refreshControl={refreshControl}
     >
       {children}

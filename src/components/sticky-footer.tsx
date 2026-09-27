@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useScreenFrame } from '@/components/content-frame'
 import { useStackedLayout } from '@/theme/font-scale'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -26,12 +27,15 @@ export function StickyFooter({
   // With large text the total and the button no longer share a row without
   // breaking the label mid-word ("Ir para o pa/gamento"): the button goes under.
   const stacked = useStackedLayout()
+  // The bar spans the window; the total and its action keep to the page's column.
+  const frame = useScreenFrame()
 
   return (
     <View
       testID={testID}
       style={[
         styles.bar,
+        frame.padding,
         stacked && styles.stacked,
         { backgroundColor: colors.card, borderTopColor: colors.borderSubtle },
       ]}
@@ -59,7 +63,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.lg,
     paddingBottom: 18,
-    paddingHorizontal: spacing.gutter,
     paddingTop: 14,
   },
   stacked: { alignItems: 'stretch', flexDirection: 'column', gap: spacing.md },

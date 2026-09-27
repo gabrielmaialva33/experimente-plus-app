@@ -8,6 +8,7 @@ import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
+import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
@@ -50,6 +51,7 @@ const clock = (seconds: number) =>
  */
 export default function PresentScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const { accessId, offerId } = useLocalSearchParams<{ accessId: string; offerId: string }>()
   const presentation = useCreatePresentation()
   const { mutate: mutatePresentation } = presentation
@@ -74,6 +76,8 @@ export default function PresentScreen() {
   }, [accessId, offerId, presentation.ready, create])
 
   const data = presentation.data
+  // The code at its drawn size, unless the ticket is narrower: clipped, it would not scan.
+  const qr = qrSize(frame.width)
   const remaining = useCountdown(data?.expires_at)
   const expired = Boolean(data) && remaining === 0
   // The countdown is silent; its end is not.
@@ -113,7 +117,10 @@ export default function PresentScreen() {
   if (!data) return null
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       {/* The benefit as a ticket: the navy stub names it, the code is the part torn off. */}
       <View
         style={[styles.ticket, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
@@ -154,7 +161,7 @@ export default function PresentScreen() {
 
         <View style={styles.code}>
           {expired ? (
-            <View style={[styles.qrSlot, { backgroundColor: colors.muted }]}>
+            <View style={[styles.qrSlot, { backgroundColor: colors.muted }, qr.slot]}>
               <Ionicons
                 name="time-outline"
                 size={32}
@@ -169,10 +176,10 @@ export default function PresentScreen() {
               accessible
               accessibilityLabel="Código temporário do benefício"
               source={{ uri: data.qr_data_url }}
-              style={styles.qr}
+              style={qr.code}
               contentFit="contain"
               fallback={
-                <View style={[styles.qrSlot, { backgroundColor: colors.muted }]}>
+                <View style={[styles.qrSlot, { backgroundColor: colors.muted }, qr.slot]}>
                   <Text style={[styles.message, { color: colors.mutedForeground }]}>
                     Não foi possível mostrar o código. Gere outro código abaixo.
                   </Text>
@@ -249,9 +256,10 @@ function Stopped({
   action?: ReactNode
 }) {
   const colors = useColors()
+  const frame = useContentFrame(undefined, spacing.xxl)
   useAnnouncement(children)
   return (
-    <View style={[styles.center, { backgroundColor: colors.background }]}>
+    <View style={[styles.center, frame.padding, { backgroundColor: colors.background }]}>
       <View style={[styles.stoppedIcon, { backgroundColor: colors.muted }]} {...decorative}>
         <Ionicons name={icon} size={28} color={colors.mutedForeground} />
       </View>
@@ -262,6 +270,18 @@ function Stopped({
 }
 
 const NOTCH = 24
+/** The code's drawn size: sharp to a partner's camera, with room around it on a phone. */
+const QR_SIZE = 248
+
+/**
+ * The code's size in a column `columnWidth` wide: the drawn size, or the
+ * ticket's inner width on a phone narrower than that (320 dp leaves 238). A
+ * tablet keeps the drawn size, which a camera reads from arm's length.
+ */
+function qrSize(columnWidth: number) {
+  const size = Math.min(QR_SIZE, columnWidth - 2 * spacing.gutter - 2)
+  return { code: { height: size, width: size }, slot: { minHeight: size, width: size } }
+}
 
 const styles = StyleSheet.create({
   page: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
@@ -293,16 +313,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.gutter,
   },
-  qr: { height: 248, width: 248 },
   // The QR's footprint as a floor: the sentence that stands in for it may need more at large text.
   qrSlot: {
     alignItems: 'center',
     borderRadius: radius.thumb,
     gap: spacing.sm,
     justifyContent: 'center',
-    minHeight: 248,
     padding: spacing.lg,
-    width: 248,
   },
   timer: {
     alignItems: 'center',

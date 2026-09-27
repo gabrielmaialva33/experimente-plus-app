@@ -3,10 +3,10 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, Linking, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { useContentFrame } from '@/components/content-frame'
 import { decorative } from '@/components/decorative'
 import { usePartnerAreas } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -24,6 +24,7 @@ const REJECTED = 'Este código não é uma apresentação válida. Peça um novo
  */
 export default function ValidateScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const { canValidate } = usePartnerAreas()
   const [permission, requestPermission, getPermission] = useCameraPermissions()
@@ -116,7 +117,8 @@ export default function ValidateScreen() {
   }
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.chrome, flex: 1 }}>
+    // The camera runs under a side cutout; the sheet's text keeps the readable column.
+    <View style={{ backgroundColor: colors.chrome, flex: 1 }}>
       <View style={styles.viewfinder}>
         {/* Unmounted when the screen loses focus: a camera running behind a
             pushed screen keeps scanning and keeps costing battery. */}
@@ -144,7 +146,7 @@ export default function ValidateScreen() {
           />
         </View>
       </View>
-      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+      <View style={[styles.sheet, frame.padding, { backgroundColor: colors.background }]}>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
           Leia o código do cliente
         </Text>
@@ -172,7 +174,7 @@ export default function ValidateScreen() {
         </View>
         <HistoryLink />
       </View>
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -209,8 +211,9 @@ function Centered({
   children?: React.ReactNode
 }) {
   const colors = useColors()
+  const frame = useContentFrame(undefined, spacing.xxl)
   return (
-    <View style={[styles.center, { backgroundColor: colors.background }]}>
+    <View style={[styles.center, frame.padding, { backgroundColor: colors.background }]}>
       {icon ? (
         <View style={[styles.mark, { backgroundColor: colors.primarySoft }]} {...decorative}>
           <Ionicons name={icon} size={28} color={colors.primaryAccent} />

@@ -7,6 +7,7 @@ import type { Purchase, PurchaseProduct } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { SectionHeader } from '@/components/section-header'
+import { useContentFrame } from '@/components/content-frame'
 import { RetryPurchase, price, usageWindow } from '@/purchases/components'
 import { productKey, productLabel, productRoute } from '@/purchases/products'
 import { ORDER_COPY, orderState, type OrderState } from '@/purchases/order-state'
@@ -25,6 +26,7 @@ const ORDER_TONE: Record<OrderState, BadgeTone> = {
 
 export default function PurchaseEditionsScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const editions = usePurchaseEditions()
   const orders = usePurchases()
@@ -35,7 +37,7 @@ export default function PurchaseEditionsScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
       refreshControl={refreshControl}
     >
       <View style={styles.section}>

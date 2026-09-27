@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
 import type { EstablishmentSummary } from '@/catalog/types'
+import { MEASURE, useContentFrame } from '@/components/content-frame'
 import { usesGoogleMaps } from '@/maps/config'
 import { GoogleMapRenderer } from '@/maps/google-map'
 import { MapLibreRenderer } from '@/maps/maplibre-map'
@@ -34,6 +35,8 @@ export function EstablishmentMap({ establishments, fallbackCenter, onSelect, onS
   const colors = useColors()
   const pins = useMemo(() => toPins(establishments), [establishments])
   const [held, setHeld] = useState<string | null>(null)
+  // A phone's measure for the card, centred however wide the map, and clear of a side cutout.
+  const frame = useContentFrame(MEASURE.overlay)
   // A place a new filter took off the map takes its card with it.
   const preview = held ? (establishments.find((item) => item.slug === held) ?? null) : null
 
@@ -65,35 +68,22 @@ export function EstablishmentMap({ establishments, fallbackCenter, onSelect, onS
         onShowList={onShowList}
       />
       {preview ? (
-        <View style={styles.preview}>
-          <View style={styles.previewCard}>
-            <PlacePreview
-              establishment={preview}
-              onOpen={() => onSelect(preview.slug)}
-              onClose={() => setHeld(null)}
-            />
-          </View>
+        <View style={[styles.preview, { left: frame.left, right: frame.right }]}>
+          <PlacePreview
+            establishment={preview}
+            onOpen={() => onSelect(preview.slug)}
+            onClose={() => setHeld(null)}
+          />
         </View>
       ) : null}
     </View>
   )
 }
 
-/** A phone's measure for the card, however wide the map. */
-const PREVIEW_MAX_WIDTH = 520
-
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   // Above the map's credit line and its logo, which stay in sight.
-  // On a tablet or an unfolded phone the card keeps a phone's measure, centred.
-  preview: {
-    alignItems: 'center',
-    bottom: 56,
-    left: spacing.gutter,
-    position: 'absolute',
-    right: spacing.gutter,
-  },
-  previewCard: { maxWidth: PREVIEW_MAX_WIDTH, width: '100%' },
+  preview: { bottom: 56, position: 'absolute' },
   empty: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: spacing.xxl },
   message: { ...typography.body, textAlign: 'center' },
 })

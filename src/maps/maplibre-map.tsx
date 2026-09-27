@@ -14,6 +14,7 @@ import { useMemo, useRef, useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { minTouch, palette, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -120,6 +121,8 @@ export function MapLibreRenderer({
   const colors = useColors()
   const { credit, textFont } = useBasemap()
   const reduceMotion = useReducedMotion()
+  // The map runs under a side cutout in landscape; its own controls stay clear of it.
+  const { right: rightInset } = useSafeAreaInsets()
   const groups = useMemo(() => groupPins(pins), [pins])
   const places = useMemo(() => placeFeatures(groups), [groups])
   const [open, setOpen] = useState<MapPinGroup | null>(null)
@@ -260,7 +263,7 @@ export function MapLibreRenderer({
           onPress={recentre}
           style={({ pressed }) => [
             styles.recentre,
-            { backgroundColor: paper, opacity: pressed ? 0.85 : 1 },
+            { backgroundColor: paper, opacity: pressed ? 0.85 : 1, right: spacing.md + rightInset },
           ]}
           testID="map-recentre"
         >
@@ -303,7 +306,6 @@ const styles = StyleSheet.create({
     minHeight: minTouch,
     paddingHorizontal: spacing.lg,
     position: 'absolute',
-    right: spacing.md,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.16,

@@ -13,6 +13,7 @@ import {
 import { EstablishmentCover, coverImage } from '@/components/establishment-cover'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
+import { openManual } from '@/help/manual'
 import { publicEstablishmentUrl } from '@/place/links'
 import { reportHref } from '@/reviews/report-link'
 import { useSession } from '@/session/context'
@@ -71,7 +72,8 @@ type Tone = 'image' | 'surface'
 /**
  * The page's own chrome: back, share, favourite and "⋯" — which holds
  * "Denunciar este lugar", so reporting is one tap away without a link sitting at
- * the foot of the page (audits A32, A43).
+ * the foot of the page (audits A32, A43), and "Ajuda", the manual's section on
+ * a place's page.
  *
  * The controls float on the photo and stay put while it scrolls under them. As
  * it goes, they give way to a compact bar that names the place and keeps back,
@@ -116,6 +118,15 @@ export function PlaceChrome({
       icon: 'flag-outline',
       onPress: () => router.push(reportHref('establishment', detail.id, detail.name)),
       testID: `report-establishment-${detail.id}`,
+    },
+    {
+      label: 'Ajuda',
+      accessibilityLabel: 'Ajuda: abrir o manual sobre a página do lugar',
+      icon: 'help-circle-outline',
+      // The promise keeps the sheet mounted until the browser settles: on iOS a browser
+      // presented over a sheet that is closing would close with it.
+      onPress: () => openManual('place'),
+      testID: 'place-help',
     },
   ]
 

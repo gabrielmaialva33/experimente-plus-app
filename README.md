@@ -123,6 +123,32 @@ A composição das abas vem de `GET /api/v1/me/context`; o app nunca decide sozi
 parceiro. Em homologação o provedor de pagamento é simulado: o pedido diz que nada é cobrado e a
 equipe confirma.
 
+## Ajuda e manual
+
+O app abre o manual do usuário publicado pelo site, em `/manual` na mesma origem da API
+(`EXPO_PUBLIC_API_BASE_URL`), no navegador interno do sistema (Custom Tabs no Android,
+Safari View Controller no iOS), com a barra no azul da marca. Sem navegador interno, cai no
+navegador padrão.
+
+| Onde                                                | Entrada                                         | Seção           |
+| --------------------------------------------------- | ----------------------------------------------- | --------------- |
+| Conta                                               | Linha "Ajuda e manual"                          | manual inteiro  |
+| Entrar (visitante)                                  | Link "Como usar o app", no pé da tela           | manual inteiro  |
+| Carteira                                            | Ícone de ajuda na faixa azul, ao lado do título | `app-carteira`  |
+| Apresentar benefício                                | Link sob a instrução do código                  | `app-carteira`  |
+| Validar (parceiro)                                  | Link ao lado de "Ver utilizações"               | `app-validar`   |
+| Validar com a câmera bloqueada                      | Link "Como liberar a câmera"                    | `app-problemas` |
+| Produto e pedido                                    | Link "Como funciona a compra", sob o conteúdo   | `app-comprar`   |
+| Página do lugar                                     | Item "Ajuda" do menu "⋯"                        | `app-lugar`     |
+| Mapa de Explorar                                    | Círculo de ajuda no canto do mapa               | `app-mapa`      |
+| Falhas ao carregar (lista, lugar, carteira, compra) | Link "Problemas comuns" sob a nova tentativa    | `app-problemas` |
+
+As âncoras ficam num só mapa, [`src/help/manual.ts`](src/help/manual.ts), e são **contrato com o
+manual web**: `app-instalar`, `app-explorar`, `app-mapa`, `app-lugar`, `app-novidades`,
+`app-concierge`, `app-conta`, `app-favoritos`, `app-comprar`, `app-carteira`, `app-avaliar`,
+`app-validar` e `app-problemas`. Renomear uma delas exige mudar os dois lados juntos; o teste do
+mapa fixa cada texto. O estado "sem conexão" não oferece o manual, que também depende da rede.
+
 ## Arquitetura
 
 ```mermaid
@@ -306,6 +332,7 @@ src/
   wallet/         carteira, apresentação do benefício, comprovantes e histórico
   reviews/        avaliações, fotos e denúncias
   concierge/      assistente de descoberta ancorado no catálogo
+  help/           âncoras do manual web e os links de ajuda que o abrem
   maps/           renderizadores MapLibre e Google, lugares agrupados no mapa e atribuição
   media/          validação de imagens enviadas
   analytics/      eventos de descoberta

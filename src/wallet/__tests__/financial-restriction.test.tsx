@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 
 import { palette } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
+import { apiBaseUrl } from '@/api/config'
 import WalletScreen from '@/app/(tabs)/wallet'
 import PresentScreen from '@/app/carteira/apresentar'
 import ConfirmScreen from '@/app/validar/confirmar'
@@ -41,6 +43,9 @@ jest.mock('@/session/context', () => ({
   useSession: () => ({ status: 'authenticated', context: { user: { id: 1 } } }),
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('@/api/redemptions', () => ({
   previewRedemption: jest.fn(),
   confirmRedemption: jest.fn(),
@@ -180,6 +185,19 @@ it('a direct presentation route rechecks the wallet and does not POST for a bloc
   expect(api.getWallet).toHaveBeenCalled()
   expect(api.createPresentation).not.toHaveBeenCalled()
   expect(view.queryByRole('button', { name: /Gerar/ })).toBeNull()
+})
+
+it('explains a held presentation through the manual’s wallet section', async () => {
+  const view = await page(<PresentScreen />)
+  await view.findByText(FINANCIAL_RESTRICTION_MESSAGE)
+  await fireEvent.press(
+    view.getByRole('link', { name: 'Abrir o manual: como apresentar o benefício' })
+  )
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-carteira`,
+    expect.any(Object)
+  )
+  expect(api.createPresentation).not.toHaveBeenCalled()
 })
 
 it('does not create a presentation when the fresh wallet cannot be read', async () => {

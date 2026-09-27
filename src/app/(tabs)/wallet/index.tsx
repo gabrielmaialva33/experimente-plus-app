@@ -14,6 +14,7 @@ import { LinkCard } from '@/components/link-card'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { ScreenHeader } from '@/components/screen-header'
 import { TicketCard } from '@/components/ticket-card'
+import { HelpButton, HelpLink, TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { price, purchaseDay } from '@/purchases/components'
 import { orderState } from '@/purchases/order-state'
 import { usePurchases } from '@/purchases/queries'
@@ -74,9 +75,12 @@ export default function WalletScreen() {
       {/* The band scrolls with the page; the status bar keeps its colour. */}
       <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
       <ScrollView contentContainerStyle={styles.page} refreshControl={refreshControl}>
+        {/* Help sits in the band, beside the title: the list below grows with every
+            purchase, and the question "how do I use this?" comes before any of it. */}
         <ScreenHeader
           insetTop={false}
           title="Carteira"
+          action={<HelpButton topic="wallet" label="Como apresentar o benefício" tone="chrome" />}
           subtitle={
             cities.length === 1
               ? `Seus benefícios em ${cities[0]}`
@@ -109,13 +113,16 @@ export default function WalletScreen() {
               <Text style={[styles.panelBody, { color: colors.mutedForeground }]}>
                 Tente novamente antes de apresentar um benefício.
               </Text>
-              <Button
-                label="Atualizar carteira"
-                variant="outline"
-                size={44}
-                icon="refresh"
-                onPress={() => void wallet.refetch()}
-              />
+              <View style={styles.panelActions}>
+                <Button
+                  label="Atualizar carteira"
+                  variant="outline"
+                  size={44}
+                  icon="refresh"
+                  onPress={() => void wallet.refetch()}
+                />
+                <HelpLink {...TROUBLESHOOTING_HELP} />
+              </View>
             </View>
           ) : null}
 
@@ -398,6 +405,7 @@ const styles = StyleSheet.create({
   },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   panel: { borderRadius: radius.card, borderWidth: 1, gap: spacing.sm, padding: 18 },
+  panelActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   emptyPanel: { alignItems: 'center', paddingVertical: spacing.xl },
   emptyIcon: {
     alignItems: 'center',

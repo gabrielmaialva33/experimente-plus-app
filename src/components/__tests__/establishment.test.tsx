@@ -1,6 +1,8 @@
-import { act, fireEvent, render, within } from '@testing-library/react-native'
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 import { Linking, ScrollView, Share, StyleSheet } from 'react-native'
 
+import { apiBaseUrl } from '@/api/config'
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
 import type { EstablishmentDetail, EstablishmentSummary } from '@/catalog/types'
 import { EstablishmentCard } from '@/components/establishment-card'
@@ -17,6 +19,9 @@ jest.mock('expo-router', () => ({
 }))
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, right: 0, bottom: 0, left: 0 }),
+}))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
 }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
@@ -637,6 +642,13 @@ describe('a place that does not load', () => {
     expect(view.queryByText(/não está mais disponível/)).toBeNull()
     await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
     expect(refetch).toHaveBeenCalledTimes(1)
+
+    await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+      `${apiBaseUrl}/manual#app-problemas`,
+      expect.any(Object)
+    )
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -770,6 +782,28 @@ describe('place page in direction A', () => {
       '/denunciar/establishment/1?nome=Caf%C3%A9%20da%20Pra%C3%A7a'
     )
   })
+
+  it.each(['anonymous', 'authenticated'])(
+    'opens the manual on a place’s page from the "⋯", for %s people',
+    async (status) => {
+      session.useSession.mockReturnValue({ status })
+      const view = await render(<EstablishmentScreen />)
+      await fireEvent.press(view.getByRole('button', { name: 'Mais opções de Café da Praça' }))
+      const help = view.getByRole('button', {
+        name: 'Ajuda: abrir o manual sobre a página do lugar',
+      })
+      expect(help).toHaveTextContent('Ajuda')
+
+      await fireEvent.press(help)
+      expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+        `${apiBaseUrl}/manual#app-lugar`,
+        expect.any(Object)
+      )
+      expect(mockRouter.push).not.toHaveBeenCalled()
+      // The sheet waits for the browser, then gets out of the way.
+      await waitFor(() => expect(view.queryByText('Denunciar este lugar')).toBeNull())
+    }
+  )
 
   // The photo's controls scroll away with it; a compact bar takes over so back
   // and the place's name never leave the screen. One set is reachable at a time.

@@ -6,7 +6,10 @@ import type {
 } from '@/api/purchases'
 import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 import { Linking } from 'react-native'
+
+import { apiBaseUrl } from '@/api/config'
 
 import EditionScreen from '@/app/(tabs)/wallet/edicao/[id]'
 import EditionsScreen from '@/app/(tabs)/wallet/edicoes'
@@ -47,6 +50,9 @@ jest.mock('@/purchases/intent-store', () => ({
 }))
 jest.mock('@/wallet/queries', () => ({ walletKeys: { wallet: ['wallet'] } }))
 jest.mock('@/purchases/cancel', () => ({ cancelPurchase: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 
 const queries = jest.requireMock('@/purchases/queries') as Record<string, jest.Mock>
@@ -781,5 +787,67 @@ it('names the benefit of a place without calling it a store', async () => {
   expect(view.queryByText(/\bloja\b/i)).toBeNull()
   expect(view.getByRole('button', { name: /^Ver oferta/ })).toHaveStyle({
     backgroundColor: palette.light.cta,
+  })
+})
+
+describe('help', () => {
+  const opened = (anchor: string) =>
+    expect(WebBrowser.openBrowserAsync).toHaveBeenLastCalledWith(
+      `${apiBaseUrl}/manual#${anchor}`,
+      expect.any(Object)
+    )
+  const purchaseHelp = { name: 'Abrir o manual: como funciona a compra' }
+
+  it('opens the manual on buying from a public product, before any sign-in', async () => {
+    queries.usePurchaseScope.mockReturnValue({ userId: null })
+    queries.usePurchases.mockReturnValue({ isPending: true })
+    const view = await page(<PublicProductScreen />)
+
+    await fireEvent.press(view.getByRole('link', purchaseHelp))
+    opened('app-comprar')
+    expect(router.push).not.toHaveBeenCalled()
+  })
+
+  it('keeps the same help for a signed-in buyer, apart from the conversion action', async () => {
+    const view = await page(<EditionScreen />)
+    expect(view.getByRole('button', { name: 'Ir para o pagamento' })).toBeOnTheScreen()
+    // Help is in the page; the pinned footer holds only the total and the action that pays it.
+    expect(within(view.getByTestId('purchase-footer')).queryByRole('link')).toBeNull()
+
+    await fireEvent.press(view.getByRole('link', purchaseHelp))
+    opened('app-comprar')
+    expect(api.createPurchase).not.toHaveBeenCalled()
+  })
+
+  it('points a product that could not load to the troubleshooting section', async () => {
+    queries.usePurchaseEditions.mockReturnValue({
+      isError: true,
+      error: new Error('502'),
+      refetch: jest.fn(),
+    })
+    const view = await page(<EditionScreen />)
+    expect(view.getByText('Este produto não está disponível agora.')).toBeOnTheScreen()
+
+    await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+    opened('app-problemas')
+  })
+
+  it('opens the manual on buying from an order', async () => {
+    const view = await page(<OrderScreen />)
+    await fireEvent.press(view.getByRole('link', purchaseHelp))
+    opened('app-comprar')
+  })
+
+  it('points an order that could not be read to the troubleshooting section', async () => {
+    queries.usePurchase.mockReturnValue({
+      isError: true,
+      error: new Error('502'),
+      refetch: jest.fn(),
+    })
+    const view = await page(<OrderScreen />)
+    expect(view.queryByRole('link', purchaseHelp)).toBeNull()
+
+    await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+    opened('app-problemas')
   })
 })

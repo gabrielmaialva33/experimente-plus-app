@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 import { AccessibilityInfo } from 'react-native'
 
+import { apiBaseUrl } from '@/api/config'
 import SignInScreen from '@/session/sign-in-screen'
 import { palette } from '@/theme/tokens'
 
@@ -20,6 +22,9 @@ jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 jest.mock('@/api/auth', () => ({ signIn: jest.fn() }))
 jest.mock('@/api/client', () => ({ ApiError: jest.requireActual('@/api/transport').ApiError }))
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 
 const auth = jest.requireMock('@/api/auth') as { signIn: jest.Mock }
 const session = jest.requireMock('@/session/context') as { useSession: jest.Mock }
@@ -110,4 +115,18 @@ it('keeps the purchase in the flow when creating an account from checkout', asyn
   expect(view.getByRole('header', { name: 'Entre para concluir a compra' })).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('button', { name: 'Não tenho conta. Criar conta' }))
   expect(mockReplace).toHaveBeenCalledWith('/cadastro?origin=compra')
+})
+
+// A visitor's way into the manual, and only on the tab: the purchase step keeps to its task.
+it('offers a visitor the manual under the sign-in tab, not in the purchase step', async () => {
+  const view = await page()
+  await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: como usar o app' }))
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual`,
+    expect.any(Object)
+  )
+  expect(mockPush).not.toHaveBeenCalled()
+
+  const purchase = await page(true)
+  expect(purchase.queryByRole('link', { name: /Abrir o manual/ })).toBeNull()
 })

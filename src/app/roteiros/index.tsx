@@ -7,6 +7,7 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { TextField } from '@/components/text-field'
 import { useContentFrame } from '@/components/content-frame'
@@ -55,6 +56,7 @@ export default function ItinerariesScreen() {
             icon="cloud-offline-outline"
             title="Não foi possível carregar seus roteiros agora"
             action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+            help={TROUBLESHOOTING_HELP}
           />
         ) : composing ? null : (
           // Audit A34: an empty list offers the way to fill it.

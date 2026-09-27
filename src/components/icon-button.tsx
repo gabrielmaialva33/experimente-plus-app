@@ -8,6 +8,8 @@ interface IconButtonProps {
   icon: keyof typeof Ionicons.glyphMap
   /** Required: an icon alone says nothing to a screen reader. */
   accessibilityLabel: string
+  /** `link` for a control that leaves the app, such as the manual in the browser. */
+  accessibilityRole?: 'button' | 'link'
   onPress: () => void
   /** `surface` sits on a card, `image` on a photo, `chrome` on the header band. */
   tone?: 'surface' | 'image' | 'chrome' | 'plain'
@@ -19,6 +21,7 @@ interface IconButtonProps {
 export function IconButton({
   icon,
   accessibilityLabel,
+  accessibilityRole = 'button',
   onPress,
   tone = 'surface',
   selected,
@@ -38,7 +41,7 @@ export function IconButton({
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={selected === undefined ? undefined : { selected }}
       onPress={onPress}

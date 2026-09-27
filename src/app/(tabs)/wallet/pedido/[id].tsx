@@ -12,6 +12,7 @@ import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { SectionHeader } from '@/components/section-header'
 import { useContentFrame } from '@/components/content-frame'
+import { HelpLink, TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { cancelPurchase } from '@/purchases/cancel'
@@ -80,6 +81,7 @@ export default function PurchaseOrderScreen() {
           falha de conexão.
         </PurchaseText>
         <RetryPurchase error={query.error} onRetry={() => void query.refetch()} />
+        <HelpLink {...TROUBLESHOOTING_HELP} />
       </PurchasePage>
     )
 
@@ -161,6 +163,9 @@ export default function PurchaseOrderScreen() {
       {pending && order.status === 'pending' ? (
         <CancelOrder id={order.id} onCancelled={() => void query.refetch()} />
       ) : null}
+
+      {/* Every state of an order is explained there, from paying to a refund. */}
+      <HelpLink topic="purchase" label="Como funciona a compra" />
 
       <View style={styles.section}>
         <SectionHeader title="Condições" />

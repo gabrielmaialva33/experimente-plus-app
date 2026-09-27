@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useScreenFrame } from '@/components/content-frame'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -17,6 +17,7 @@ export function ScreenHeader({
   title,
   subtitle,
   eyebrow,
+  action,
   insetTop = true,
   onTitleLayout,
   children,
@@ -25,6 +26,11 @@ export function ScreenHeader({
   subtitle?: string
   /** A small line above the title, such as the wordmark row. */
   eyebrow?: ReactNode
+  /**
+   * One 44 control at the end of the title's line, such as help for the screen.
+   * A band whose title hands over to a compact bar (`onTitleLayout`) has none.
+   */
+  action?: ReactNode
   /** Off when the screen paints the status bar strip itself and the band scrolls under it. */
   insetTop?: boolean
   /** Where the title sits in the band, for a compact header that takes over once it scrolls away. */
@@ -48,7 +54,17 @@ export function ScreenHeader({
       ]}
     >
       {eyebrow}
-      {title ? (
+      {title && action ? (
+        <View style={styles.titleRow}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.title, styles.titleBeside, { color: colors.chromeForeground }]}
+          >
+            {title}
+          </Text>
+          {action}
+        </View>
+      ) : title ? (
         <Text
           accessibilityRole="header"
           onLayout={onTitleLayout}
@@ -73,5 +89,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   title: { ...typography.display, fontSize: 28, lineHeight: 32 },
+  // The control keeps its 44 and the title wraps before it; they share the first line.
+  titleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
+  titleBeside: { flex: 1, paddingTop: (minTouch - 32) / 2 },
   subtitle: { ...typography.body, marginTop: -spacing.sm },
 })

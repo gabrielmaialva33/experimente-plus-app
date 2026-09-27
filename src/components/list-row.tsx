@@ -10,7 +10,8 @@ import { useColors } from '@/theme/use-colors'
  * One line of a grouped list: an icon, a name, an optional value, and a chevron
  * when it opens another screen (audit A23: links that look like a menu). The
  * destructive tone is for the one way out that cannot be undone, drawn in red
- * and without the chevron's invitation.
+ * and without the chevron's invitation. An `external` row leaves the app, for a
+ * page in the browser: it is a link, and ends in the "open" glyph instead.
  */
 export function ListRow({
   icon,
@@ -19,6 +20,7 @@ export function ListRow({
   onPress,
   tone = 'default',
   chevron = tone === 'default',
+  external = false,
   accessibilityLabel,
   testID,
 }: {
@@ -28,6 +30,7 @@ export function ListRow({
   onPress: () => void
   tone?: 'default' | 'destructive'
   chevron?: boolean
+  external?: boolean
   accessibilityLabel?: string
   testID?: string
 }) {
@@ -38,7 +41,7 @@ export function ListRow({
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={external ? 'link' : 'button'}
       accessibilityLabel={accessibilityLabel ?? (value ? `${label}, ${value}` : label)}
       onPress={onPress}
       testID={testID}
@@ -70,7 +73,14 @@ export function ListRow({
           </Text>
         ) : null}
       </View>
-      {chevron ? (
+      {external ? (
+        <Ionicons
+          testID="list-row-external"
+          name="open-outline"
+          size={20}
+          color={colors.mutedForeground}
+        />
+      ) : chevron ? (
         <Ionicons
           testID="list-row-chevron"
           name="chevron-forward"

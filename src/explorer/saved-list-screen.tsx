@@ -6,6 +6,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native'
 import type { EstablishmentCard, SavedKind } from '@/api/explorer'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { IconButton } from '@/components/icon-button'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { SectionHeader } from '@/components/section-header'
@@ -103,6 +104,7 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
               icon="cloud-offline-outline"
               title="Não foi possível carregar agora"
               action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+              help={TROUBLESHOOTING_HELP}
             />
           ) : (
             // Audit A34: an empty list says what goes here and where to find it.

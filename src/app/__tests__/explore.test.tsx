@@ -1,6 +1,8 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 
 import { Dimensions, FlatList, ScrollView, StyleSheet } from 'react-native'
+import { apiBaseUrl } from '@/api/config'
 import { minTouch, spacing } from '@/theme/tokens'
 
 import ExploreScreen from '@/app/(tabs)/index'
@@ -15,6 +17,9 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, right: 0, bottom: 0, left: 0 }),
 }))
 jest.mock('@/analytics/events', () => ({ track: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('@/session/context', () => ({
   useSession: jest.fn(() => {
     throw new Error('Discovery must not require a session')
@@ -388,6 +393,22 @@ it('offers another try on a failed search, in the shared failure card', async ()
   ).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
   expect(refetch).toHaveBeenCalledTimes(1)
+
+  await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-problemas`,
+    expect.any(Object)
+  )
+  expect(refetch).toHaveBeenCalledTimes(1)
+})
+
+// The band holds the wordmark, the city and the search; help lives where questions come up.
+it('keeps help out of the header band of Explorar', async () => {
+  queries.useSearch.mockReturnValue(oneResult)
+  const view = await render(<ExploreScreen />)
+  expect(view.queryByRole('link', { name: /Abrir o manual/ })).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
+  expect(within(view.getByTestId('screen-header')).queryByRole('link')).toBeNull()
 })
 
 it('still renders results in both views when the catalog is not empty', async () => {

@@ -9,6 +9,8 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
 import { useContentFrame } from '@/components/content-frame'
+import { HelpLink, TROUBLESHOOTING_HELP } from '@/help/help-link'
+import type { HelpTopic } from '@/help/manual'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { ApiError } from '@/api/client'
 import { useColors } from '@/theme/use-colors'
@@ -33,6 +35,8 @@ function useCountdown(expiresAt: string | undefined): number {
 }
 
 const EXPIRED = 'Este código expirou. Gere um novo para apresentar.'
+
+const WALLET_HELP = { topic: 'wallet', label: 'Como apresentar o benefício' } as const
 
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
@@ -84,7 +88,11 @@ export default function PresentScreen() {
   useAnnouncement(expired && EXPIRED)
 
   if (eligibility?.blocked || presentation.error instanceof FinancialRestrictionError) {
-    return <Stopped icon="pause-circle-outline">{FINANCIAL_RESTRICTION_MESSAGE}</Stopped>
+    return (
+      <Stopped icon="pause-circle-outline" help={WALLET_HELP}>
+        {FINANCIAL_RESTRICTION_MESSAGE}
+      </Stopped>
+    )
   }
 
   const refused =
@@ -92,7 +100,7 @@ export default function PresentScreen() {
     [400, 403, 409, 422].includes(presentation.error.status)
   if (wallet.isError || refused || (eligibility && !eligibility.allowed)) {
     return (
-      <Stopped icon="alert-circle-outline">
+      <Stopped icon="alert-circle-outline" help={WALLET_HELP}>
         Não é possível apresentar este benefício agora. Volte à carteira para atualizar seus
         benefícios.
       </Stopped>
@@ -108,6 +116,7 @@ export default function PresentScreen() {
       <Stopped
         icon="cloud-offline-outline"
         action={<Button label="Tentar de novo" variant="outline" icon="refresh" onPress={create} />}
+        help={TROUBLESHOOTING_HELP}
       >
         Não foi possível gerar o código agora.
       </Stopped>
@@ -234,6 +243,8 @@ export default function PresentScreen() {
           Mostre este código ao parceiro. A confirmação é feita por ele.
         </Text>
       </View>
+      {/* Under the instruction it expands, never between the person and the code. */}
+      <HelpLink {...WALLET_HELP} />
 
       {data.benefit.terms ? (
         <Text style={[styles.terms, { color: colors.mutedForeground }]}>{data.benefit.terms}</Text>
@@ -243,17 +254,21 @@ export default function PresentScreen() {
 }
 
 /**
- * A presentation that cannot happen now: one sentence, and a way back when there is one.
- * It replaces the code the person was waiting for, so the sentence is said.
+ * A presentation that cannot happen now: one sentence, a way back when there is
+ * one, and the manual's section on it. It replaces the code the person was
+ * waiting for, so the sentence is said.
  */
 function Stopped({
   icon,
   children,
   action,
+  help,
 }: {
   icon: keyof typeof Ionicons.glyphMap
   children: string
   action?: ReactNode
+  /** The manual's answer to why, under the way forward. */
+  help: { topic: HelpTopic; label: string }
 }) {
   const colors = useColors()
   const frame = useContentFrame(undefined, spacing.xxl)
@@ -265,6 +280,7 @@ function Stopped({
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
       {action}
+      <HelpLink topic={help.topic} label={help.label} align="center" />
     </View>
   )
 }

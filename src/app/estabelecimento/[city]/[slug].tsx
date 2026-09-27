@@ -14,6 +14,7 @@ import { Badge } from '@/components/badge'
 import { useCompactHeader } from '@/components/compact-header'
 import { MEASURE, useContentFrame } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
@@ -76,6 +77,7 @@ export default function EstablishmentScreen() {
             title="Não foi possível carregar este lugar"
             text="Confira a conexão e tente de novo."
             action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+            help={TROUBLESHOOTING_HELP}
           />
         )}
       </View>

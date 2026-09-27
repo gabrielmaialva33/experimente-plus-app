@@ -10,6 +10,8 @@ import { useColors } from '@/theme/use-colors'
 
 export interface ActionMenuItem {
   label: string
+  /** When the label alone does not say where the option leads; it starts with the label. */
+  accessibilityLabel?: string
   icon?: keyof typeof Ionicons.glyphMap
   /**
    * A promise keeps the sheet open until it settles. Sharing needs that on
@@ -80,7 +82,7 @@ export function ActionMenu({
           <Pressable
             key={item.label}
             accessibilityRole="button"
-            accessibilityLabel={item.label}
+            accessibilityLabel={item.accessibilityLabel ?? item.label}
             onPress={() => choose(item)}
             testID={item.testID}
             style={({ pressed }) => [

@@ -1,15 +1,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 import type { ReactElement } from 'react'
 
 import { palette } from '@/theme/tokens'
 import type { MobileUser } from '@/api/me'
+import { apiBaseUrl } from '@/api/config'
 import AccountScreen from '@/app/(tabs)/account'
 import ProfileScreen from '@/app/conta/perfil'
 
 const mockPush = jest.fn()
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
@@ -122,6 +127,18 @@ describe('account hub', () => {
       await fireEvent.press(view.getByRole('button', { name }))
       expect(mockPush).toHaveBeenLastCalledWith(href)
     }
+  })
+
+  it('opens the whole manual from Ajuda e manual, a link out of the app', async () => {
+    mockSession()
+    const view = await renderWithClient(<AccountScreen />)
+
+    await fireEvent.press(view.getByRole('link', { name: 'Ajuda e manual' }))
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+      `${apiBaseUrl}/manual`,
+      expect.any(Object)
+    )
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('hides the active operation from a consumer and shows it to a partner', async () => {

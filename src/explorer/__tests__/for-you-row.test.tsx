@@ -1,14 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Dimensions } from 'react-native'
 import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 
 import type { ForYou } from '@/api/explorer'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { COMPACT_CARD } from '@/components/compact-card'
+import { scaledWidth } from '@/theme/font-scale'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useReplaceInterests } from '@/explorer/queries'
 
 const mockPush = jest.fn()
+/** Cards of a row share one width, which follows the system text size. */
+const rowCardWidth = () => scaledWidth(COMPACT_CARD.width, Dimensions.get('window').fontScale)
+
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))
 jest.mock('@/api/explorer', () => ({ listForYou: jest.fn(), replaceInterests: jest.fn() }))
@@ -130,7 +135,7 @@ it('shows the chosen places, says how they are ordered, and opens each one', asy
   // Compact cards of one size, whatever the name or the photo (audit A47).
   for (const slug of ['alfa', 'beta']) {
     expect(view.getByTestId(`for-you-${slug}`)).toHaveStyle({
-      width: COMPACT_CARD.width,
+      width: rowCardWidth(),
       minHeight: COMPACT_CARD.height,
     })
   }

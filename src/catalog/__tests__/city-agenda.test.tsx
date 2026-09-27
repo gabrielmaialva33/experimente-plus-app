@@ -1,10 +1,15 @@
 import { fireEvent, render, within } from '@testing-library/react-native'
+import { Dimensions } from 'react-native'
 
 import { CityAgenda } from '@/catalog/city-agenda'
 import { COMPACT_CARD } from '@/components/compact-card'
+import { scaledWidth } from '@/theme/font-scale'
 import { palette } from '@/theme/tokens'
 
 const mockPush = jest.fn()
+/** Cards of a row share one width, which follows the system text size. */
+const rowCardWidth = () => scaledWidth(COMPACT_CARD.width, Dimensions.get('window').fontScale)
+
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
@@ -90,7 +95,7 @@ it('keeps experiences in fixed-size cards and opens every item by its public ide
   // Each band title is a heading, so a screen reader can jump between them.
   expect(view.getByRole('header', { name: 'Novidades' })).toBeOnTheScreen()
   const card = view.getByTestId('agenda-card-experience-3')
-  expect(card).toHaveStyle({ width: COMPACT_CARD.width, minHeight: COMPACT_CARD.height })
+  expect(card).toHaveStyle({ width: rowCardWidth(), minHeight: COMPACT_CARD.height })
   expect(within(card).getByLabelText('Prato do menu de primavera')).toBeOnTheScreen()
 
   await fireEvent.press(card)

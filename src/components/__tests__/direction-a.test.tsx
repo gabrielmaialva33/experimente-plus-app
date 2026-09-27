@@ -146,6 +146,25 @@ it('keeps compact cards the same size whether the title wraps or not', async () 
   ).toBe(2)
 })
 
+it.each([
+  [1, 220],
+  [1.3, 286],
+  [2, 352],
+])(
+  'widens every compact card of a row with the text, so a word fits a line (scale %s)',
+  async (scale, width) => {
+    await setFontScale(scale)
+    const view = await render(
+      <>
+        <CompactCard title="Café" onPress={jest.fn()} testID="short" />
+        <CompactCard title="Oficina — demonstração" onPress={jest.fn()} testID="long" />
+      </>
+    )
+    expect(view.getByTestId('short')).toHaveStyle({ width })
+    expect(view.getByTestId('long')).toHaveStyle({ width })
+  }
+)
+
 // At 200% a two-line cut hides most of a name: the card grows instead (a floor, not a box).
 it('lets a compact card grow instead of cutting its words at large text', async () => {
   const view = await render(

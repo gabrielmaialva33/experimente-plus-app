@@ -200,6 +200,22 @@ it.each(['success', 'warning', 'info', 'neutral', 'benefit'] as const)(
   }
 )
 
+it.each(['light', 'dark'] as const)(
+  'edges every badge, so a neutral pill still reads as one on a card of its colour in %s',
+  async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(<Badge label="Pedido não concluído" tone="neutral" testID="badge" />)
+    expect(view.getByTestId('badge')).toHaveStyle({
+      backgroundColor: palette[mode].statusNeutral,
+      borderColor: palette[mode].statusNeutralBorder,
+      borderWidth: 1,
+    })
+    // In dark the neutral fill is the card itself; the edge is what draws the pill.
+    if (mode === 'dark') expect(palette.dark.statusNeutral).toBe(palette.dark.card)
+    expect(palette[mode].statusNeutralBorder).not.toBe(palette[mode].card)
+  }
+)
+
 it('keeps a fallback behind a compact card without a photo', async () => {
   const view = await render(
     <CompactCard

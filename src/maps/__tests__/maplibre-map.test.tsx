@@ -13,7 +13,7 @@ const mockSource = {
   getClusterLeaves: jest.fn(),
 }
 const mockCamera = { easeTo: jest.fn() }
-const mockMap = { getZoom: jest.fn() }
+const mockMap = { getZoom: jest.fn(), project: jest.fn(), unproject: jest.fn() }
 const mockLayers: Record<string, Record<string, unknown>> = {}
 type MockProps = { children?: React.ReactNode; ref?: React.Ref<unknown> } & Record<string, unknown>
 
@@ -375,4 +375,44 @@ it('offers to bring the city back once the person moves the map', async () => {
     expect.objectContaining({ center: [center.longitude, center.latitude], zoom: 11 })
   )
   expect(view.queryByTestId('map-recentre')).toBeNull()
+})
+
+describe('a held place under the card at the foot', () => {
+  const holding = async (markY: number) => {
+    mockMap.project.mockResolvedValue([200, markY])
+    mockMap.unproject.mockResolvedValue([-51.2, -23.4])
+    const view = await render(
+      <MapLibreRenderer
+        pins={[casa, forno]}
+        center={center}
+        onSelect={jest.fn()}
+        onOpen={jest.fn()}
+        selected="forno-e-fermento"
+        coveredBottom={180}
+      />
+    )
+    // A short map: a small phone, or a tablet in landscape.
+    await act(async () => {
+      fireEvent(view.getByTestId('map-frame'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 300 } },
+      })
+    })
+    return view
+  }
+
+  it('slides the map until the mark clears the card', async () => {
+    await holding(260)
+    expect(mockMap.project).toHaveBeenCalledWith([forno.longitude, forno.latitude])
+    // The mark rises to the middle of the 120 the card leaves: the centre moves 200 down.
+    expect(mockMap.unproject).toHaveBeenCalledWith([200, 150 + (260 - 60)])
+    expect(mockCamera.easeTo).toHaveBeenCalledWith(
+      expect.objectContaining({ center: [-51.2, -23.4] })
+    )
+  })
+
+  it('leaves the map where it is when the mark is already in sight', async () => {
+    await holding(40)
+    expect(mockMap.project).toHaveBeenCalled()
+    expect(mockCamera.easeTo).not.toHaveBeenCalled()
+  })
 })

@@ -10,7 +10,7 @@ import {
   type PressEventWithFeatures,
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
@@ -23,6 +23,7 @@ import { mapStyleUrl } from './config'
 import { PinGroupList } from './pin-group-list'
 import {
   groupPins,
+  liftAboveCard,
   placeFeatures,
   pressedTarget,
   spotOfLeaves,
@@ -117,6 +118,7 @@ export function MapLibreRenderer({
   selected = null,
   onBackgroundPress,
   onShowList,
+  coveredBottom = 0,
 }: MapRendererProps) {
   const colors = useColors()
   const { credit, textFont } = useBasemap()
@@ -131,6 +133,32 @@ export function MapLibreRenderer({
   const source = useRef<GeoJSONSourceRef>(null)
   // Once the person moves the map away from the city, one tap brings it back.
   const [moved, setMoved] = useState(false)
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null)
+
+  // A held place stays in sight: if the card at the foot covers its mark, the
+  // map slides it up into the part the card leaves.
+  useEffect(() => {
+    const pin = selected ? pins.find((item) => item.slug === selected) : null
+    if (!pin || !size || coveredBottom <= 0) return
+    let cancelled = false
+    const reveal = async () => {
+      try {
+        const point = await map.current?.project([pin.longitude, pin.latitude])
+        const lift = point ? liftAboveCard(point[1], size.height, coveredBottom) : 0
+        if (cancelled || lift === 0) return
+        const center = await map.current?.unproject([size.width / 2, size.height / 2 + lift])
+        if (!cancelled && center) {
+          camera.current?.easeTo({ center, duration: reduceMotion ? 0 : 350 })
+        }
+      } catch {
+        // A map still loading answers nothing; the card stays where it is.
+      }
+    }
+    void reveal()
+    return () => {
+      cancelled = true
+    }
+  }, [selected, pins, size, coveredBottom, reduceMotion])
   const recentre = () => {
     setMoved(false)
     camera.current?.easeTo({
@@ -172,7 +200,13 @@ export function MapLibreRenderer({
   const count = pins.length === 1 ? '1 lugar' : `${pins.length} lugares`
 
   return (
-    <View style={styles.map}>
+    <View
+      style={styles.map}
+      testID="map-frame"
+      onLayout={({ nativeEvent }) =>
+        setSize({ width: nativeEvent.layout.width, height: nativeEvent.layout.height })
+      }
+    >
       {/* The marks are drawn by the map, out of a screen reader's reach; Explorar's
           list holds the same places, so the map says so and leads there. */}
       <View

@@ -16,6 +16,8 @@ interface ButtonProps {
   icon?: keyof typeof Ionicons.glyphMap
   disabled?: boolean
   accessibilityLabel?: string
+  /** `link` for a button that leaves the app, such as the manual in the browser. */
+  accessibilityRole?: 'button' | 'link'
   /** Grows to the width its row gives it. */
   fill?: boolean
   /** Where the button sits across a column: the start by default, the middle of an
@@ -36,6 +38,7 @@ export function Button({
   icon,
   disabled = false,
   accessibilityLabel,
+  accessibilityRole = 'button',
   fill = false,
   align = 'start',
   testID,
@@ -67,7 +70,7 @@ export function Button({
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled }}
       disabled={disabled}

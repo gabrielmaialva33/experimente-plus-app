@@ -4,24 +4,29 @@ import { StyleSheet, Text, View } from 'react-native'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { MEASURE } from '@/components/content-frame'
+import { HelpLink } from '@/help/help-link'
+import type { HelpTopic } from '@/help/manual'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
  * An empty list that says what goes there and offers the way to fill it
- * (audit A34): an empty screen with no action is a dead end.
+ * (audit A34): an empty screen with no action is a dead end. A failure can add
+ * a quiet way to the manual under its one action, for someone stuck there.
  */
 export function EmptyState({
   icon,
   title,
   text,
   action,
+  help,
   testID,
 }: {
   icon: keyof typeof Ionicons.glyphMap
   title: string
   text?: string | null
   action?: { label: string; onPress: () => void }
+  help?: { topic: HelpTopic; label: string }
   testID?: string
 }) {
   const colors = useColors()
@@ -41,6 +46,7 @@ export function EmptyState({
       {action ? (
         <Button label={action.label} variant="outline" align="center" onPress={action.onPress} />
       ) : null}
+      {help ? <HelpLink topic={help.topic} label={help.label} align="center" /> : null}
     </View>
   )
 }

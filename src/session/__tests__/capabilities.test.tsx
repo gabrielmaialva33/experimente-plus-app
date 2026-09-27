@@ -108,6 +108,50 @@ describe('partner area composition', () => {
     expect(session.clearCredentials).not.toHaveBeenCalled()
   })
 
+  it('asks for the context again once the connection returns, keeping the credential', async () => {
+    const { onlineManager } = jest.requireActual('@tanstack/react-query')
+    session.readCredentials.mockResolvedValue({
+      accessToken: 'a',
+      refreshToken: 'r',
+      accessExpiresAt: Date.now() + 900_000,
+    })
+    me.getContext.mockRejectedValueOnce(new Error('offline'))
+    const view = await renderProbe()
+    expect(await view.findByText('status:unavailable')).toBeTruthy()
+
+    me.getContext.mockResolvedValue({ user: { id: 1 }, capabilities: {} })
+    try {
+      await act(async () => onlineManager.setOnline(false))
+      expect(view.getByText('status:unavailable')).toBeTruthy()
+      await act(async () => onlineManager.setOnline(true))
+      expect(await view.findByText('status:authenticated')).toBeTruthy()
+      expect(session.clearCredentials).not.toHaveBeenCalled()
+    } finally {
+      onlineManager.setOnline(true)
+    }
+  })
+
+  it('asks for the context again when the app returns to the foreground', async () => {
+    const { AppState } = jest.requireActual('react-native')
+    session.readCredentials.mockResolvedValue({
+      accessToken: 'a',
+      refreshToken: 'r',
+      accessExpiresAt: Date.now() + 900_000,
+    })
+    me.getContext.mockRejectedValueOnce(new Error('offline'))
+    const view = await renderProbe()
+    expect(await view.findByText('status:unavailable')).toBeTruthy()
+
+    // The preset's AppState is a mock: its registered listeners are the calls.
+    const listeners = (AppState.addEventListener as jest.Mock).mock.calls
+      .filter(([event]) => event === 'change')
+      .map(([, listener]) => listener as (state: string) => void)
+    expect(listeners.length).toBeGreaterThan(0)
+    me.getContext.mockResolvedValue({ user: { id: 1 }, capabilities: {} })
+    await act(async () => listeners.forEach((listener) => listener('active')))
+    expect(await view.findByText('status:authenticated')).toBeTruthy()
+  })
+
   it('signs out only when the credential itself was rejected', async () => {
     const { SessionExpiredError } = jest.requireMock('@/api/session') as {
       SessionExpiredError: new () => Error

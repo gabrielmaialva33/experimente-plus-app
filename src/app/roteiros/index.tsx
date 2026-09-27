@@ -9,6 +9,7 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { useCreateItinerary, useItineraries } from '@/explorer/queries'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
@@ -24,6 +25,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function ItinerariesScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const query = useItineraries()
   const [composing, setComposing] = useState(false)
@@ -37,7 +39,7 @@ export default function ItinerariesScreen() {
   return (
     <FlatList
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, frame.padding]}
       data={items}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"

@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 
+import { useContentFrame } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
 import { spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -16,9 +17,10 @@ import { useColors } from '@/theme/use-colors'
 export default function NotFoundScreen() {
   const colors = useColors()
   const router = useRouter()
+  const frame = useContentFrame()
 
   return (
-    <View style={[styles.page, { backgroundColor: colors.background }]}>
+    <View style={[styles.page, frame.padding, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: 'Link não encontrado' }} />
       <EmptyState
         testID="not-found"

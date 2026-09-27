@@ -4,6 +4,7 @@ import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { Chip } from '@/components/chip'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { useContentFrame } from '@/components/content-frame'
 import { ReviewCard } from '@/reviews/review-card'
 import { reportHref } from '@/reviews/report-link'
 import { useEstablishmentReviews } from '@/reviews/queries'
@@ -20,6 +21,7 @@ const filterLabel = (value: (typeof FILTERS)[number]) =>
 export default function EstablishmentReviewsScreen() {
   const colors = useColors()
   const router = useRouter()
+  const frame = useContentFrame()
   // `nome` is the place: the header says "Avaliações", the page says of what.
   const { establishmentId, nome } = useLocalSearchParams<{
     establishmentId: string
@@ -39,7 +41,10 @@ export default function EstablishmentReviewsScreen() {
     <View style={[styles.page, { backgroundColor: colors.background }]}>
       <View style={styles.top}>
         {nome ? (
-          <Text accessibilityRole="header" style={[styles.place, { color: colors.foreground }]}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.place, frame.padding, { color: colors.foreground }]}
+          >
             {nome}
           </Text>
         ) : null}
@@ -47,7 +52,7 @@ export default function EstablishmentReviewsScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filters}
-          contentContainerStyle={styles.filtersContent}
+          contentContainerStyle={[styles.filtersContent, frame.padding]}
         >
           {FILTERS.map((value) => (
             <Chip
@@ -66,7 +71,7 @@ export default function EstablishmentReviewsScreen() {
         <FlatList
           data={reviews}
           keyExtractor={(review) => String(review.id)}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, frame.padding]}
           renderItem={({ item }) => (
             <ReviewCard
               review={item}
@@ -92,10 +97,10 @@ export default function EstablishmentReviewsScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   top: { gap: spacing.md, paddingTop: spacing.lg },
-  place: { ...typography.title, ...displayWeight('800'), paddingHorizontal: spacing.gutter },
-  // The row scrolls to the screen's edge; the gutter is its first inset.
+  place: { ...typography.title, ...displayWeight('800') },
+  // The row scrolls to the screen's edge; the column's edge is its first inset.
   filters: { flexGrow: 0 },
-  filtersContent: { gap: spacing.sm, paddingHorizontal: spacing.gutter },
+  filtersContent: { gap: spacing.sm },
   list: { gap: spacing.md, padding: spacing.gutter, paddingTop: spacing.md },
   empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
 })

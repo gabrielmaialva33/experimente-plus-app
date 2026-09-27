@@ -10,6 +10,7 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { useAddItineraryStop, useCreateItinerary, useItineraries } from '@/explorer/queries'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -24,6 +25,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function AddToItineraryScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const { establishmentId } = useLocalSearchParams<{ establishmentId: string }>()
   const target = Number(establishmentId)
@@ -95,7 +97,7 @@ export default function AddToItineraryScreen() {
   return (
     <FlatList
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, frame.padding]}
       data={items}
       keyboardShouldPersistTaps="handled"
       keyExtractor={(item) => String(item.id)}

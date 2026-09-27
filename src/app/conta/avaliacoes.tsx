@@ -8,6 +8,7 @@ import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
+import { useContentFrame } from '@/components/content-frame'
 import type { PaginatedMyReviews } from '@/api/reviews'
 import { useDeleteReview, useMyReviews } from '@/reviews/queries'
 import { formatDate } from '@/reviews/review-card'
@@ -41,6 +42,7 @@ const statusLabel = (review: { status: string; awaiting_moderation?: boolean }) 
  */
 export default function MyReviewsScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const query = useMyReviews({ perPage: 20 })
   const refreshControl = usePullToRefresh(query.refetch)
@@ -54,7 +56,7 @@ export default function MyReviewsScreen() {
   return (
     <FlatList
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, frame.padding]}
       data={reviews}
       refreshControl={refreshControl}
       keyExtractor={(review) => String(review.id)}

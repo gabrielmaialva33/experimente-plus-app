@@ -136,10 +136,18 @@ export function MapLibreRenderer({
   const [size, setSize] = useState<{ width: number; height: number } | null>(null)
 
   // A held place stays in sight: if the card at the foot covers its mark, the
-  // map slides it up into the part the card leaves.
+  // map slides it up into the part the card leaves. Once per place picked, the
+  // moment its card has a height: a later resize or rotation may find the map
+  // under another screen, where the native map answers nothing and logs an error.
+  const lifted = useRef<string | null>(null)
   useEffect(() => {
-    const pin = selected ? pins.find((item) => item.slug === selected) : null
-    if (!pin || !size || coveredBottom <= 0) return
+    if (!selected) {
+      lifted.current = null
+      return
+    }
+    const pin = pins.find((item) => item.slug === selected)
+    if (!pin || !size || coveredBottom <= 0 || lifted.current === selected) return
+    lifted.current = selected
     let cancelled = false
     const reveal = async () => {
       try {

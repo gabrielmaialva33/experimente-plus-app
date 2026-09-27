@@ -410,6 +410,17 @@ describe('a held place under the card at the foot', () => {
     )
   })
 
+  it('moves the map once per place picked, not again when the window changes', async () => {
+    const view = await holding(260)
+    // A rotation, or a resize while the map sits under another screen.
+    await act(async () => {
+      fireEvent(view.getByTestId('map-frame'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 700, height: 280 } },
+      })
+    })
+    expect(mockMap.project).toHaveBeenCalledTimes(1)
+  })
+
   it('leaves the map where it is when the mark is already in sight', async () => {
     await holding(40)
     expect(mockMap.project).toHaveBeenCalled()

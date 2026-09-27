@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ScrollView,
   StyleSheet,
@@ -33,8 +33,11 @@ export function ChoiceRow({
   const maxItemWidth = Math.max(0, (width ?? window.width) - gutter * 2)
   const scroll = useRef<ScrollView>(null)
   // A choice's x is measured from the first one, which starts at the gutter.
-  const reveal = (event: LayoutChangeEvent) =>
-    scroll.current?.scrollTo({ x: event.nativeEvent.layout.x, animated: false })
+  const [revealX, setRevealX] = useState<number | null>(null)
+  const reveal = (event: LayoutChangeEvent) => setRevealX(event.nativeEvent.layout.x)
+  useEffect(() => {
+    if (revealX !== null) scroll.current?.scrollTo({ x: revealX, animated: false })
+  }, [revealX])
 
   return (
     <View

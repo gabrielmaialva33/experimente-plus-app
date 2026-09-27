@@ -1,7 +1,8 @@
 import { act, render } from '@testing-library/react-native'
 import { Dimensions, StyleSheet, Text } from 'react-native'
 
-import { BottomSheet, SHEET_MAX_WIDTH } from '@/components/bottom-sheet'
+import { BottomSheet, SHEET_MAX_WIDTH, navigationBarPlane } from '@/components/bottom-sheet'
+import { palette } from '@/theme/tokens'
 
 const PHONE = 411
 const TABLET_LANDSCAPE = 1280
@@ -37,5 +38,20 @@ describe('BottomSheet', () => {
       marginLeft: (TABLET_LANDSCAPE - SHEET_MAX_WIDTH) / 2,
       width: SHEET_MAX_WIDTH,
     })
+  })
+})
+
+describe('what a sheet paints behind the navigation bar', () => {
+  const navy = palette.light.chrome
+
+  it('lays the navy plane under the white three-button bar of a light sheet', () => {
+    expect(navigationBarPlane(48, 'light', navy)).toBe(navy)
+    expect(navigationBarPlane(48, null, navy)).toBe(navy)
+  })
+
+  it('leaves the gesture bar and a dark sheet as they are', () => {
+    expect(navigationBarPlane(24, 'light', navy)).toBe('transparent')
+    expect(navigationBarPlane(0, 'light', navy)).toBe('transparent')
+    expect(navigationBarPlane(48, 'dark', navy)).toBe('transparent')
   })
 })

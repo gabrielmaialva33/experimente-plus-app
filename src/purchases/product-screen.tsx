@@ -29,6 +29,7 @@ import { decorative } from '@/components/decorative'
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
 import { useContentFrame } from '@/components/content-frame'
+import { HelpLink, TROUBLESHOOTING_HELP } from '@/help/help-link'
 import {
   ConditionsDetail,
   PurchaseAction,
@@ -236,6 +237,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
         <Notice>
           <Body>Este produto não está disponível agora.</Body>
           <RetryPurchase error={catalog.error} onRetry={() => void catalog.refetch()} />
+          {catalog.isError ? <HelpLink {...TROUBLESHOOTING_HELP} /> : null}
         </Notice>
       </>
     )
@@ -382,6 +384,9 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
               </View>
             </>
           ) : null}
+
+          {/* After the product and whatever step it is in, above nothing but the footer's action. */}
+          {product ? <HelpLink topic="purchase" label="Como funciona a compra" /> : null}
         </View>
       </Animated.ScrollView>
 

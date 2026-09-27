@@ -1,7 +1,10 @@
 import { fireEvent, render } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 
+import { apiBaseUrl } from '@/api/config'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { EstablishmentMap } from '@/components/establishment-map'
+import { minTouch } from '@/theme/tokens'
 import type { MapRendererProps } from '@/maps/types'
 
 jest.mock('@/maps/config', () => ({ usesGoogleMaps: false, mapStyleUrl: 'https://example.test' }))
@@ -25,6 +28,9 @@ jest.mock('@/maps/maplibre-map', () => {
     ),
   }
 })
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('@/theme/use-colors', () => ({
   useColors: () => jest.requireActual('@/theme/tokens').palette.light,
 }))
@@ -108,4 +114,34 @@ it('drops the card when a new filter takes its place off the map', async () => {
 
   expect(view.queryByTestId('map-preview-forno')).toBeNull()
   expect(view.getByTestId('held')).toHaveTextContent('none')
+})
+
+// A visitor on the map reaches its manual section from the map itself, not from Explorar's band.
+it('opens the manual on the map from a 44 circle over it, holding nothing', async () => {
+  const onSelect = jest.fn()
+  const view = await render(<EstablishmentMap establishments={[cafe, forno]} onSelect={onSelect} />)
+
+  const help = view.getByRole('link', { name: 'Abrir o manual: como usar o mapa' })
+  expect(help).toHaveStyle({ width: minTouch, height: minTouch, backgroundColor: '#ffffff' })
+  await fireEvent.press(help)
+
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-mapa`,
+    expect.any(Object)
+  )
+  expect(view.getByTestId('held')).toHaveTextContent('none')
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+it('leaves the help off a map with no place to show', async () => {
+  const view = await render(
+    <EstablishmentMap
+      establishments={[
+        { ...cafe, address: { district: 'Centro', latitude: null, longitude: null } },
+      ]}
+      onSelect={jest.fn()}
+    />
+  )
+  expect(view.getByText('Nenhum lugar com localização para mostrar no mapa.')).toBeOnTheScreen()
+  expect(view.queryByRole('link')).toBeNull()
 })

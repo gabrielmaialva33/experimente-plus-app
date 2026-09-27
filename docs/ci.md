@@ -1,6 +1,6 @@
 # CI e APK de teste
 
-`workflows/ci.yml` executa typecheck e toda a suíte Jest em cada push e pull request.
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) executa lint, typecheck e toda a suíte Jest em cada push e pull request.
 Após essas verificações, gera APK nos pushes da branch padrão e em **Actions →
 Mobile CI → Run workflow** (permite escolher a branch). PRs e branches de trabalho
 recebem as verificações rápidas; o build nativo fica para integração ou pedido
@@ -44,8 +44,9 @@ ações autenticadas; autonomia de Metro não significa funcionamento offline da
 API. `EXPO_NO_DOTENV=1` evita incluir configurações locais por acidente. Não há
 segredos `EXPO_PUBLIC_*`, keystore próprio, EAS ou publicação em loja.
 
-O mapa mantém o comportamento atual sem chave Google: MapLibre com o estilo de
-demo padrão. O CI não resolve a pendência de cartografia detalhada do piloto.
+O mapa usa MapLibre sem chave Google, com o estilo regional fixado no job
+(`EXPO_PUBLIC_MAP_STYLE_URL`, o basemap Protomaps publicado no R2), e
+`verify-apk.py` confere que é esse o estilo embutido.
 
 Antes de distribuir, confira o artefato da execução aprovada, instale em um
 dispositivo/emulador de teste sem redirecionamento de porta Metro e abra o app.

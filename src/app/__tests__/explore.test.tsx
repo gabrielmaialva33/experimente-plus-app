@@ -282,7 +282,9 @@ it.each(['list', 'map'])(
       })
       if (mode === 'map') await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
       expect(view.getByText('Nada encontrado para “pizzaria” em Londrina.')).toBeOnTheScreen()
-      await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
+      // A typed word is a search: the action says so, and clears it.
+      expect(view.queryByRole('button', { name: 'Limpar filtros' })).toBeNull()
+      await fireEvent.press(view.getByRole('button', { name: 'Ver todos os lugares' }))
       expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('')
       expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', {
         q: undefined,
@@ -334,6 +336,35 @@ it('names active category and attribute filters and clears them together', async
     attributes: [],
   })
   expect(view.queryByRole('button', { name: 'Limpar filtros' })).toBeNull()
+})
+
+it('names the clear action after what is set: a search, filters or both', async () => {
+  jest.useFakeTimers()
+  try {
+    const view = await render(<ExploreScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))
+    expect(view.getByRole('button', { name: 'Limpar filtros' })).toBeOnTheScreen()
+    await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'café')
+    await act(async () => {
+      jest.advanceTimersByTime(350)
+    })
+    await fireEvent.press(view.getByRole('button', { name: 'Limpar busca e filtros' }))
+    expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('')
+    expect(view.queryByRole('button', { name: /^Limpar (filtros|busca e)/ })).toBeNull()
+  } finally {
+    jest.useRealTimers()
+  }
+})
+
+it('offers another try on a failed search, in the shared failure card', async () => {
+  const refetch = jest.fn(() => Promise.resolve())
+  queries.useSearch.mockReturnValue({ isError: true, refetch })
+  const view = await render(<ExploreScreen />)
+  expect(
+    view.getByRole('header', { name: 'Não foi possível carregar os lugares' })
+  ).toBeOnTheScreen()
+  await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+  expect(refetch).toHaveBeenCalledTimes(1)
 })
 
 it('still renders results in both views when the catalog is not empty', async () => {

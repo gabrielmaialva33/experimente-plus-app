@@ -397,6 +397,7 @@ export default function ExploreScreen() {
                   : null
               }
               onSelect={openEstablishment}
+              onShowList={() => setView('list')}
             />
           )}
         </View>

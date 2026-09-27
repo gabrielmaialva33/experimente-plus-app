@@ -13,6 +13,8 @@ interface Props {
   establishments: EstablishmentSummary[]
   fallbackCenter?: { latitude: number; longitude: number } | null
   onSelect: (slug: string) => void
+  /** Back to the list, where a screen reader reaches every place the map draws. */
+  onShowList?: () => void
 }
 
 /**
@@ -24,7 +26,7 @@ interface Props {
  * key exists, MapLibre otherwise, so a build without credentials still shows a
  * map instead of a grey rectangle.
  */
-export function EstablishmentMap({ establishments, fallbackCenter, onSelect }: Props) {
+export function EstablishmentMap({ establishments, fallbackCenter, onSelect, onShowList }: Props) {
   const colors = useColors()
   const pins = useMemo(() => toPins(establishments), [establishments])
 
@@ -44,7 +46,7 @@ export function EstablishmentMap({ establishments, fallbackCenter, onSelect }: P
 
   const Renderer = usesGoogleMaps ? GoogleMapRenderer : MapLibreRenderer
 
-  return <Renderer pins={pins} center={center} onSelect={onSelect} />
+  return <Renderer pins={pins} center={center} onSelect={onSelect} onShowList={onShowList} />
 }
 
 const styles = StyleSheet.create({

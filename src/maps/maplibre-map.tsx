@@ -1,13 +1,85 @@
-import { Camera, Map, Marker } from '@maplibre/maplibre-react-native'
-import { useMemo, useState } from 'react'
+import {
+  Camera,
+  GeoJSONSource,
+  Images,
+  Layer,
+  Map,
+  type CameraRef,
+  type GeoJSONSourceRef,
+  type MapRef,
+  type SymbolLayerSpecification,
+} from '@maplibre/maplibre-react-native'
+import { useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
+import { useReducedMotion } from 'react-native-reanimated'
 
-import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { palette, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
-import { useMapCredit } from './attribution'
+import { useBasemap } from './basemap'
 import { mapStyleUrl } from './config'
 import { PinGroupList } from './pin-group-list'
-import { groupLabel, groupPins, type MapPinGroup, type MapRendererProps } from './types'
+import {
+  groupPins,
+  placeFeatures,
+  pressedTarget,
+  spotOfLeaves,
+  type MapPinGroup,
+  type MapRendererProps,
+  type PressedFeature,
+} from './types'
+
+/**
+ * The disc every mark is drawn from: a signed distance field (a 16 px radius
+ * inside a 48 px square, edge at 3/4 of the alpha range), so one small image
+ * scales to a dot or a cluster and takes its colour and ring from the layer.
+ */
+const images = {
+  'map-place': { source: require('@/assets/images/map-place.png'), sdf: true },
+}
+
+/**
+ * Places closer than this on screen merge into a cluster. From one zoom past the
+ * last clustered level every place stands alone: two places a street apart are
+ * two marks by then, and the same building is already one spot (`groupPins`).
+ */
+const CLUSTER_RADIUS = 48
+const CLUSTER_MAX_ZOOM = 15
+
+/**
+ * The basemap is the regional light style in either theme, so the marks keep
+ * the light palette too: the navy of navigation with a white ring and halo. The
+ * dark theme's primary is a pale blue that would vanish into a light map.
+ */
+const ink = palette.light.primary
+const paper = palette.light.primaryForeground
+
+type SymbolLayout = NonNullable<SymbolLayerSpecification['layout']>
+
+const clusterLayout = (textFont: string[]): SymbolLayout => ({
+  'icon-image': 'map-place',
+  'icon-size': ['step', ['get', 'places'], 1, 10, 1.2, 50, 1.4],
+  'icon-allow-overlap': true,
+  'text-field': ['to-string', ['get', 'places']],
+  'text-font': textFont,
+  'text-size': 14,
+  'text-allow-overlap': true,
+})
+
+const placeLayout = (textFont: string[]): SymbolLayout => ({
+  'icon-image': 'map-place',
+  'icon-size': 0.5,
+  // The dot always shows; the name gives way when it would cover another.
+  'icon-allow-overlap': true,
+  'text-optional': true,
+  'text-field': ['get', 'name'],
+  'text-font': textFont,
+  'text-size': 13,
+  'text-max-width': 10,
+  'text-variable-anchor': ['top', 'bottom', 'right', 'left'],
+  'text-radial-offset': 0.9,
+  'text-justify': 'auto',
+  'symbol-sort-key': ['get', 'rank'],
+})
 
 /**
  * Open-source renderer, used when no Google Maps key is configured.
@@ -15,49 +87,117 @@ import { groupLabel, groupPins, type MapPinGroup, type MapRendererProps } from '
  * MapLibre needs no credential of its own — the style does. A Protomaps archive
  * served from the operation's own storage keeps it keyless end to end, since
  * MapLibre Native reads `pmtiles://` sources directly.
+ *
+ * Places are the map's own layers, not views laid over it: a view marker is a
+ * native view the SDK lets draw past the map (it turns clipping off on the map
+ * view), so a pan slid the pins over the header, the filters and the tabs, and
+ * twenty names stacked in one unreadable pile. Layers are clipped to the map,
+ * cluster when they crowd and drop a name that would cover another.
  */
-export function MapLibreRenderer({ pins, center, onSelect }: MapRendererProps) {
+export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRendererProps) {
   const colors = useColors()
-  const credit = useMapCredit()
+  const { credit, textFont } = useBasemap()
+  const reduceMotion = useReducedMotion()
   const groups = useMemo(() => groupPins(pins), [pins])
+  const places = useMemo(() => placeFeatures(groups), [groups])
   const [open, setOpen] = useState<MapPinGroup | null>(null)
+  const map = useRef<MapRef>(null)
+  const camera = useRef<CameraRef>(null)
+  const source = useRef<GeoJSONSourceRef>(null)
+
+  // A cluster opens at the zoom where it splits; one that cannot split lists its places.
+  const expand = async (clusterId: number, point: [number, number]) => {
+    try {
+      const [zoom, current] = await Promise.all([
+        source.current?.getClusterExpansionZoom(clusterId),
+        map.current?.getZoom(),
+      ])
+      if (zoom != null && current != null && zoom > current) {
+        camera.current?.easeTo({ center: point, zoom, duration: reduceMotion ? 0 : 450 })
+        return
+      }
+      const leaves = await source.current?.getClusterLeaves(clusterId, 100, 0)
+      const spot = leaves ? spotOfLeaves(leaves as PressedFeature[], point, groups) : null
+      if (spot) setOpen(spot)
+    } catch {
+      // A source still loading answers nothing; the next tap asks again.
+    }
+  }
+
+  const onPlacePress = (event: {
+    nativeEvent: { features: PressedFeature[]; lngLat: [number, number] }
+  }) => {
+    const target = pressedTarget(event.nativeEvent.features, event.nativeEvent.lngLat, groups)
+    if (!target) return
+    if (target.kind === 'place') onSelect(target.slug)
+    else if (target.kind === 'spot') setOpen(target.group)
+    else void expand(target.clusterId, target.center)
+  }
+
+  const count = pins.length === 1 ? '1 lugar' : `${pins.length} lugares`
 
   return (
     <View style={styles.map}>
-      <Map style={styles.map} mapStyle={mapStyleUrl}>
-        <Camera initialViewState={{ center: [center.longitude, center.latitude], zoom: 11 }} />
+      {/* The marks are drawn by the map, out of a screen reader's reach; Explorar's
+          list holds the same places, so the map says so and leads there. */}
+      <View
+        style={styles.map}
+        accessible
+        accessibilityRole={onShowList ? 'button' : 'image'}
+        accessibilityLabel={`Mapa com ${count}`}
+        accessibilityHint="Os mesmos lugares estão na lista."
+        accessibilityActions={onShowList ? [{ name: 'activate', label: 'Ver em lista' }] : []}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'activate') onShowList?.()
+        }}
+      >
+        <Map ref={map} style={styles.map} mapStyle={mapStyleUrl} onPress={() => setOpen(null)}>
+          <Camera
+            ref={camera}
+            initialViewState={{ center: [center.longitude, center.latitude], zoom: 11 }}
+          />
+          <Images images={images} />
 
-        {groups.map((group) => (
-          <Marker
-            key={group.key}
-            id={group.key}
-            lngLat={[group.longitude, group.latitude]}
-            onPress={() =>
-              group.pins.length === 1 ? onSelect(group.pins[0].slug) : setOpen(group)
-            }
+          <GeoJSONSource
+            ref={source}
+            id="places"
+            data={places}
+            cluster
+            clusterRadius={CLUSTER_RADIUS}
+            clusterMaxZoom={CLUSTER_MAX_ZOOM}
+            clusterProperties={{ places: ['+', ['get', 'places']] }}
+            onPress={onPlacePress}
           >
-            {/* The pill is drawn small; the marker's target around it is a full 44, centred,
-                so the pin stays on its coordinate. */}
-            <View
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={
-                group.pins.length === 1
-                  ? group.pins[0].name
-                  : `${groupLabel(group)}: ${group.pins.map((pin) => pin.name).join(', ')}`
-              }
-              style={styles.target}
-              testID={`pin-${group.key}`}
-            >
-              <View style={[styles.pin, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.label, { color: colors.primaryForeground }]} numberOfLines={1}>
-                  {groupLabel(group)}
-                </Text>
-              </View>
-            </View>
-          </Marker>
-        ))}
-      </Map>
+            <Layer
+              id="places"
+              type="symbol"
+              filter={['==', ['get', 'places'], 1]}
+              layout={placeLayout(textFont)}
+              paint={{
+                'icon-color': ink,
+                'icon-halo-color': paper,
+                'icon-halo-width': 2,
+                'text-color': ink,
+                'text-halo-color': paper,
+                'text-halo-width': 1.5,
+                'text-halo-blur': 0.5,
+              }}
+            />
+            <Layer
+              id="place-clusters"
+              type="symbol"
+              filter={['>', ['get', 'places'], 1]}
+              layout={clusterLayout(textFont)}
+              paint={{
+                'icon-color': ink,
+                'icon-halo-color': paper,
+                'icon-halo-width': 2.5,
+                'text-color': paper,
+              }}
+            />
+          </GeoJSONSource>
+        </Map>
+      </View>
 
       {open ? (
         <PinGroupList
@@ -94,18 +234,4 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   creditLabel: { ...typography.caption, fontSize: 11 },
-  target: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: minTouch,
-    minWidth: minTouch,
-    padding: spacing.sm,
-  },
-  pin: {
-    borderRadius: radius.pill,
-    maxWidth: 160,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  label: { ...typography.caption, ...textWeight('700') },
 })

@@ -10,6 +10,7 @@ import { ListGroup, ListRow } from '@/components/list-row'
 import { ScreenHeader } from '@/components/screen-header'
 import { useSession } from '@/session/context'
 import { useLineCap } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -29,6 +30,7 @@ export default function AccountScreen() {
   const name = user?.full_name?.trim() || user?.username || 'Sua conta'
   const oneLine = useLineCap(1)
   const twoLines = useLineCap(2)
+  useBandStatusBar()
 
   const citySlug = useSelectedCity()
   const cities = useCities()

@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { setStatusBarStyle } from 'expo-status-bar'
+import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -26,6 +25,7 @@ import { SectionHeader } from '@/components/section-header'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useLineCap } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -55,12 +55,7 @@ export default function ExploreScreen() {
   const cityLines = useLineCap(1)
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light')
-      return () => setStatusBarStyle('auto')
-    }, [])
-  )
+  useBandStatusBar()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedTerm(term.trim().slice(0, MAX_TERM_LENGTH)), 350)

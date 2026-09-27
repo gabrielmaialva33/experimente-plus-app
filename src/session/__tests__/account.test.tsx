@@ -11,6 +11,7 @@ const mockPush = jest.fn()
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
   Tabs: { Screen: () => null },
   Stack: { Screen: () => null },

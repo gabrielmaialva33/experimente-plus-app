@@ -1,8 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { setStatusBarStyle } from 'expo-status-bar'
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useRef, useState, type ReactNode } from 'react'
 import {
   Platform,
   Pressable,
@@ -41,6 +40,7 @@ import { productIdentity, productKind } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
 import { useStackedLayout } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -70,12 +70,7 @@ export default function PurchaseProductScreen() {
 
   // The native bar and the band below it read as one navy plane; the band carries the
   // title, and hands it to the bar once it scrolls away (see `CompactTitle`).
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light')
-      return () => setStatusBarStyle('auto')
-    }, [])
-  )
+  useBandStatusBar()
   const chrome = (
     <Stack.Screen
       options={{

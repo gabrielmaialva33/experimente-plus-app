@@ -12,6 +12,7 @@ import { KeyboardForm } from '@/components/keyboard-form'
 import { ScreenHeader } from '@/components/screen-header'
 import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -29,6 +30,8 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { status, refresh, signOut } = useSession()
+  // As a tab it opens under the navy band; in the purchase flow the stack header is plain.
+  useBandStatusBar(!purchase)
   const [uid, setUid] = useState('')
   const [password, setPassword] = useState('')
 

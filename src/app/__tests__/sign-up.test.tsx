@@ -11,6 +11,7 @@ import { palette } from '@/theme/tokens'
 import { registrationErrors } from '@/session/registration'
 
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(),
   Stack: { Screen: jest.fn(() => null) },

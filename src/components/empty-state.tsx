@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
+import { MEASURE } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -45,8 +46,12 @@ export function EmptyState({
 }
 
 const styles = StyleSheet.create({
+  // One message and one action: never wider than a line of text on a tablet.
   card: {
     alignItems: 'center',
+    alignSelf: 'center',
+    maxWidth: MEASURE.readable,
+    width: '100%',
     borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.md,

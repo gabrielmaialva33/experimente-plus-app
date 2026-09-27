@@ -1,9 +1,10 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 
-import { FlatList, ScrollView, StyleSheet } from 'react-native'
+import { Dimensions, FlatList, ScrollView, StyleSheet } from 'react-native'
 import { minTouch, spacing } from '@/theme/tokens'
 
 import ExploreScreen from '@/app/(tabs)/index'
+import { feedLayout } from '@/components/content-frame'
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -221,9 +222,13 @@ it('bounds every scrolling choice to its measured viewport, including after a na
         flexShrink: 1,
         overflow: 'hidden',
       })
-      const gutter = StyleSheet.flatten(scroll.props.contentContainerStyle).paddingHorizontal
-      // Filters line up with the screen margin; cities with the panel they open in.
-      expect(gutter).toBe(label === 'Cidade' ? spacing.lg : spacing.gutter)
+      const { paddingLeft, paddingRight } = StyleSheet.flatten(scroll.props.contentContainerStyle)
+      // Filters line up with the feed's column; cities with the panel they open in.
+      const window = Dimensions.get('window')
+      const column = feedLayout(window.width, window.fontScale).frame
+      expect([paddingLeft, paddingRight]).toEqual(
+        label === 'Cidade' ? [spacing.lg, spacing.lg] : [column.left, column.right]
+      )
       // Content must stay wider than the viewport and scroll, never wrap into a form.
       expect(
         within(row).getByRole(label === 'Cidade' ? 'radio' : 'button', {
@@ -234,7 +239,7 @@ it('bounds every scrolling choice to its measured viewport, including after a na
       for (const control of controls) {
         const { maxWidth } = StyleSheet.flatten(control.props.style)
         expect(typeof maxWidth).toBe('number')
-        expect(maxWidth).toBeLessThanOrEqual(width - 2 * gutter)
+        expect(maxWidth).toBeLessThanOrEqual(width - Number(paddingLeft) - Number(paddingRight))
         expect(maxWidth).toBeGreaterThanOrEqual(48)
       }
     }

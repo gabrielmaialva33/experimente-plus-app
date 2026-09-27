@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { CompactCard } from '@/components/compact-card'
+import { MEASURE, useScreenFrame } from '@/components/content-frame'
 import { coverImage } from '@/components/establishment-cover'
 import { SectionHeader } from '@/components/section-header'
 import { useForYou } from '@/explorer/queries'
@@ -31,12 +32,14 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
       : null
   const forYou = useForYou(identity, citySlug)
   const row = forYou.data
+  // The feed's column: the title and the invite keep to it, the row scrolls past it.
+  const frame = useScreenFrame()
 
   if (!identity || !row) return null
 
   if (!row.has_interests) {
     return (
-      <View testID="for-you" style={styles.gutter}>
+      <View testID="for-you" style={frame.padding}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Escolher interesses para ver lugares para você"
@@ -59,13 +62,13 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
   return (
     <View testID="for-you" style={styles.section}>
       {/* Interests choose the places; the hint claims no ranking among them. */}
-      <View style={styles.gutter}>
+      <View style={frame.padding}>
         <SectionHeader title="Para você" hint="Com base nos seus interesses" />
       </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
+        contentContainerStyle={[styles.row, frame.padding]}
       >
         {row.data.map((establishment) => (
           <CompactCard
@@ -88,9 +91,13 @@ export function ForYouRow({ citySlug }: { citySlug: string | null }) {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.md },
-  gutter: { paddingHorizontal: spacing.gutter },
-  row: { gap: spacing.md, paddingHorizontal: spacing.gutter },
-  invite: { borderRadius: radius.card, gap: spacing.xs, padding: spacing.lg },
+  row: { gap: spacing.md },
+  invite: {
+    borderRadius: radius.card,
+    gap: spacing.xs,
+    maxWidth: MEASURE.readable,
+    padding: spacing.lg,
+  },
   inviteText: typography.meta,
   inviteAction: { ...typography.label, ...textWeight('700') },
 })

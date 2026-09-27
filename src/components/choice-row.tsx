@@ -24,13 +24,17 @@ export function ChoiceRow({
 }: {
   label: string
   single?: boolean
-  /** Where the first choice starts; it lines the row up with the screen's margin. */
-  gutter?: number
+  /**
+   * Where the first choice starts and the last one ends; it lines the row up
+   * with the screen's column, and the row still scrolls to the window's edges.
+   */
+  gutter?: number | { left: number; right: number }
   children: (maxItemWidth: number, reveal: (event: LayoutChangeEvent) => void) => ReactNode
 }) {
   const window = useWindowDimensions()
   const [width, setWidth] = useState<number | null>(null)
-  const maxItemWidth = Math.max(0, (width ?? window.width) - gutter * 2)
+  const { left, right } = typeof gutter === 'number' ? { left: gutter, right: gutter } : gutter
+  const maxItemWidth = Math.max(0, (width ?? window.width) - left - right)
   const scroll = useRef<ScrollView>(null)
   // A choice's x is measured from the first one, which starts at the gutter.
   const [revealX, setRevealX] = useState<number | null>(null)
@@ -51,7 +55,7 @@ export function ChoiceRow({
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.scroll}
-        contentContainerStyle={{ paddingHorizontal: gutter }}
+        contentContainerStyle={{ paddingLeft: left, paddingRight: right }}
       >
         <View
           accessibilityRole={single ? 'radiogroup' : undefined}

@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native'
 
 import { OFFLINE_MESSAGE, OFFLINE_WAITING, useOnline } from '@/api/online'
 import { useAnnouncement } from '@/components/announce'
+import { GRID_GAP, useCardGrid, useScreenFrame } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
 import { radius, spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -26,10 +27,15 @@ export function ContentSkeleton({
   useAnnouncement(!online && `${OFFLINE_MESSAGE} ${OFFLINE_WAITING}`)
   const repeated = variant === 'list' || variant === 'catalog'
   const bone = { backgroundColor: colors.border, borderRadius: radius.sm }
+  // The bones take the place of the content, in its column: a catalogue on a
+  // tablet waits as the grid it will become.
+  const frame = useScreenFrame()
+  const grid = useCardGrid()
+  const columns = variant === 'catalog' ? grid.columns : 1
 
   if (!online) {
     return (
-      <View style={[styles.page, { backgroundColor: colors.background }]}>
+      <View style={[styles.page, frame.padding, { backgroundColor: colors.background }]}>
         <EmptyState
           testID="content-offline"
           icon="cloud-offline-outline"
@@ -46,15 +52,22 @@ export function ContentSkeleton({
       accessibilityRole="progressbar"
       accessibilityLabel={label}
       accessibilityState={{ busy: true }}
-      style={[styles.page, { backgroundColor: colors.background }]}
+      style={[styles.page, frame.padding, { backgroundColor: colors.background }]}
     >
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         style={styles.content}
       >
-        {Array.from({ length: repeated ? 3 : 1 }, (_, index) => (
-          <View key={index} style={[styles.card, { backgroundColor: colors.surfaceRaised }]}>
+        {Array.from({ length: repeated ? 3 * columns : 1 }, (_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.card,
+              { backgroundColor: colors.surfaceRaised },
+              columns > 1 && { width: grid.columnWidth },
+            ]}
+          >
             {variant === 'catalog' ? <View style={[bone, styles.cover]} /> : null}
             <View style={styles.lines}>
               <View testID="skeleton-title" style={[bone, styles.title]} />
@@ -74,9 +87,9 @@ export function ContentSkeleton({
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, padding: spacing.lg, overflow: 'hidden' },
-  content: { gap: spacing.md },
-  card: { borderRadius: radius.surface, overflow: 'hidden' },
+  page: { flex: 1, paddingVertical: spacing.lg, overflow: 'hidden' },
+  content: { columnGap: GRID_GAP, flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.md },
+  card: { borderRadius: radius.surface, overflow: 'hidden', width: '100%' },
   cover: { height: 160, width: '100%' },
   lines: { gap: spacing.md, padding: spacing.lg },
   title: { height: 24, width: '70%' },

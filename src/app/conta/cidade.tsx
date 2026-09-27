@@ -6,6 +6,7 @@ import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCities } from '@/catalog/queries'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { useContentFrame } from '@/components/content-frame'
 import { spacing, textWeight, typography, radius } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -38,6 +39,7 @@ export default function CityScreen() {
             icon="cloud-offline-outline"
             title="Não foi possível carregar as cidades"
             action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
+            help={TROUBLESHOOTING_HELP}
           />
         </View>
       ) : (

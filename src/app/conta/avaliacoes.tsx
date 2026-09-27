@@ -7,6 +7,7 @@ import { Badge, type BadgeTone } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useContentFrame } from '@/components/content-frame'
 import type { PaginatedMyReviews } from '@/api/reviews'
@@ -66,6 +67,7 @@ export default function MyReviewsScreen() {
             icon="cloud-offline-outline"
             title="Não foi possível carregar suas avaliações agora"
             action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+            help={TROUBLESHOOTING_HELP}
           />
         ) : (
           // Audit A34: an empty list says what goes here and where to start.

@@ -17,6 +17,7 @@ import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
 import { ContentFrameProvider, GRID_GAP, MEASURE, useFeedLayout } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
 import { useKeyboardList } from '@/components/keyboard-form'
@@ -341,6 +342,7 @@ export default function ExploreScreen() {
         title="Não foi possível carregar os lugares"
         text="Confira a conexão e tente de novo. A busca e os filtros continuam como estão."
         action={{ label: 'Tentar de novo', onPress: () => void search.refetch() }}
+        help={TROUBLESHOOTING_HELP}
       />
     </View>
   ) : !results.length ? (

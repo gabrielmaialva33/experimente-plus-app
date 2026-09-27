@@ -12,13 +12,14 @@ que também guarda o contrato OpenAPI. O guia de trabalho deste repositório, co
 código precisa respeitar, está em [`AGENTS.md`](AGENTS.md).
 
 <p align="center">
-  <img src="docs/screenshots/explorar.png" width="200" alt="Explorar: busca, filtros e lugares de Londrina" />
+  <img src="docs/screenshots/explorar.png" width="200" alt="Explorar: busca, filtros e os 20 lugares de Londrina" />
+  <img src="docs/screenshots/mapa.png" width="200" alt="Mapa de Londrina com os lugares agrupados por proximidade e os nomes que cabem" />
   <img src="docs/screenshots/lugar.png" width="200" alt="Página de um lugar com o benefício à venda" />
   <img src="docs/screenshots/compra.png" width="200" alt="Compra de um voucher, com datas e total" />
   <img src="docs/screenshots/carteira.png" width="200" alt="Carteira vazia, com o caminho para os benefícios" />
 </p>
 
-<p align="center"><sub>Emulador Android, homologação, dados fictícios de demonstração.</sub></p>
+<p align="center"><sub>Emulador Android, homologação, dados fictícios de demonstração: nove cidades, de Maringá a Bandeirantes.</sub></p>
 
 ## O que o app faz
 
@@ -195,7 +196,7 @@ src/
   wallet/         carteira, apresentação do benefício, comprovantes e histórico
   reviews/        avaliações, fotos e denúncias
   concierge/      assistente de descoberta ancorado no catálogo
-  maps/           renderizadores MapLibre e Google, pins e atribuição
+  maps/           renderizadores MapLibre e Google, lugares agrupados no mapa e atribuição
   media/          validação de imagens enviadas
   analytics/      eventos de descoberta
   components/     componentes compartilhados da direção visual A
@@ -271,21 +272,33 @@ O app carrega dois renderizadores e escolhe pela configuração: Google Maps (`e
 contrário. O MapLibre lê fontes `pmtiles://` diretamente; não adicione a biblioteca JavaScript
 `pmtiles`.
 
+No MapLibre os lugares são camadas do próprio mapa, não views sobrepostas: ficam recortados pela
+área do mapa e se agrupam quando se amontoam. Um círculo azul com um número reúne os lugares
+próximos, e tocá-lo aproxima até que se separem; um ponto é um lugar só, com o nome ao lado quando
+cabe sem cobrir outro (os primeiros resultados da busca têm prioridade), e tocá-lo abre o lugar.
+Lugares no mesmo endereço formam um único círculo que, tocado, lista os lugares daquele ponto. O
+leitor de tela não alcança o que o mapa desenha: o mapa se anuncia como "Mapa com N lugares" e,
+ativado, volta para a lista, que traz os mesmos lugares e filtros. O Google Maps continua com um
+marcador por ponto.
+
 Manter dois renderizadores custa tamanho de binário e uma segunda implementação. É uma escolha
 deliberada e revisitável: consolidar em um só, provavelmente MapLibre, elimina de vez a dependência
-de credencial. A validação visual em aparelhos reais ainda **não foi feita**: zoom 11 a 15 nas três
-cidades, acentos nos rótulos e a atribuição Protomaps/OpenStreetMap visível.
+de credencial. O basemap regional cobre de Maringá a Bandeirantes, as nove cidades da demonstração;
+o agrupamento, os rótulos e o toque foram conferidos no emulador Android em Londrina e Maringá. A
+validação em aparelhos reais ainda **não foi feita**: zoom 11 a 15 nas nove cidades, acentos nos
+rótulos e a atribuição Protomaps/OpenStreetMap visível, em Android e iOS.
 
 ## Solução de problemas
 
-| Sintoma                                                         | Causa e saída                                                                                                                                                      |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Mudei `app.json` (permissão, plugin, ícone) e nada mudou no app | `android/` não foi regenerado. Rode `npx expo prebuild -p android` (ou `--clean`) e compile de novo.                                                               |
-| Erro de Gradle ou do Metro logo no início                       | Node ou Java do sistema em vez dos do projeto. Rode com `mise exec --` e confira `node -v` (24) e `java -version` (21).                                            |
-| O dev client não encontra o Metro                               | Encaminhe a porta (`adb -s <serial> reverse tcp:8081 tcp:8081`, ou a porta escolhida) e reabra o app; confira se o Metro está de pé.                               |
-| A compilação foi para o aparelho errado                         | Com emulador e aparelho conectados, passe `--device <nome>` ao `pnpm android` e `-s <serial>` ao `adb`.                                                            |
-| O mapa abre sem ruas                                            | Falta `EXPO_PUBLIC_MAP_STYLE_URL`; sem ela o app usa os tiles de demonstração, que param no zoom 6. Reinicie o Metro com `--clear` depois de ajustar o `.env`.     |
-| Build de produção recusado com "Production build refused"       | A trava do `app.config.ts`: configure a URL da API de produção (https) e o estilo de mapa de produção no ambiente do EAS.                                          |
-| API local não responde ou mostra outra operação                 | No emulador o host é `http://10.0.2.2:<porta>`; no aparelho, o IP da máquina na rede. Como o hostname escolhe a operação, um IP cai na operação padrão do backend. |
-| Teste falha com "Failed to get NitroModules"                    | O teste importou `@/api/client` ou a sessão sem simular o MMKV. Simule `@/api/client` (ou `react-native-mmkv`) no próprio teste.                                   |
-| O emulador fecha sozinho                                        | Falta memória: ele precisa de alguns GB livres. Feche outros programas ou limite a RAM do AVD (`-memory 3072`).                                                    |
+| Sintoma                                                         | Causa e saída                                                                                                                                                        |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mudei `app.json` (permissão, plugin, ícone) e nada mudou no app | `android/` não foi regenerado. Rode `npx expo prebuild -p android` (ou `--clean`) e compile de novo.                                                                 |
+| Erro de Gradle ou do Metro logo no início                       | Node ou Java do sistema em vez dos do projeto. Rode com `mise exec --` e confira `node -v` (24) e `java -version` (21).                                              |
+| O dev client não encontra o Metro                               | Encaminhe a porta (`adb -s <serial> reverse tcp:8081 tcp:8081`, ou a porta escolhida) e reabra o app; confira se o Metro está de pé.                                 |
+| A compilação foi para o aparelho errado                         | Com emulador e aparelho conectados, passe `--device <nome>` ao `pnpm android` e `-s <serial>` ao `adb`.                                                              |
+| O mapa abre sem ruas                                            | Falta `EXPO_PUBLIC_MAP_STYLE_URL`; sem ela o app usa os tiles de demonstração, que param no zoom 6. Reinicie o Metro com `--clear` depois de ajustar o `.env`.       |
+| No emulador o mapa não mostra nomes de rua nem os lugares       | A GPU por software (`-gpu swiftshader_indirect`) não desenha as camadas de símbolos do MapLibre: rótulos, pontos e agrupamentos somem. Inicie o AVD com `-gpu host`. |
+| Build de produção recusado com "Production build refused"       | A trava do `app.config.ts`: configure a URL da API de produção (https) e o estilo de mapa de produção no ambiente do EAS.                                            |
+| API local não responde ou mostra outra operação                 | No emulador o host é `http://10.0.2.2:<porta>`; no aparelho, o IP da máquina na rede. Como o hostname escolhe a operação, um IP cai na operação padrão do backend.   |
+| Teste falha com "Failed to get NitroModules"                    | O teste importou `@/api/client` ou a sessão sem simular o MMKV. Simule `@/api/client` (ou `react-native-mmkv`) no próprio teste.                                     |
+| O emulador fecha sozinho                                        | Falta memória: ele precisa de alguns GB livres. Feche outros programas ou limite a RAM do AVD (`-memory 3072`).                                                      |

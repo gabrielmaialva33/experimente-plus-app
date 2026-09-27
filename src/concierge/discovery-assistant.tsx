@@ -18,12 +18,24 @@ import {
 interface DiscoveryAssistantProps {
   citySlug: string | null
   cityName: string | null
+  /** Focus the question as soon as the Concierge appears. */
+  autoFocus?: boolean
+  /** The field took the focus or grew a line: the screen keeps it above the keyboard. */
+  onFieldMoved?: () => void
 }
 
 const MAX_QUESTION_LENGTH = 300
+
+/** The send button under the question and the gap above it: kept in sight with the field. */
+export const ASK_ACTION_ROOM = spacing.md + 48
 const FAILED = 'Não foi possível consultar agora. Tente novamente em instantes.'
 
-export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantProps) {
+export function DiscoveryAssistant({
+  citySlug,
+  cityName,
+  autoFocus = false,
+  onFieldMoved,
+}: DiscoveryAssistantProps) {
   const colors = useColors()
   const router = useRouter()
   const [question, setQuestion] = useState('')
@@ -113,6 +125,9 @@ export function DiscoveryAssistant({ citySlug, cityName }: DiscoveryAssistantPro
         placeholder="Ex.: quero um café tranquilo e depois algo para fazer à tarde"
         placeholderTextColor={colors.mutedForeground}
         multiline
+        autoFocus={autoFocus}
+        onFocus={onFieldMoved}
+        onContentSizeChange={onFieldMoved}
         maxLength={MAX_QUESTION_LENGTH}
         returnKeyType="send"
         onSubmitEditing={() => void submit()}
@@ -248,7 +263,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     borderRadius: radius.pill,
-    minHeight: 48,
+    minHeight: ASK_ACTION_ROOM - spacing.md,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,

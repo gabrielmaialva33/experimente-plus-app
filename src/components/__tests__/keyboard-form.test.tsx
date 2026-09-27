@@ -4,10 +4,13 @@ import { Keyboard, Platform, Text, TextInput } from 'react-native'
 
 import {
   KeyboardForm,
+  hiddenUnderKeyboard,
   keyboardOverlap,
   revealOffset,
   useKeyboardForm,
+  useKeyboardList,
   type KeyboardFormController,
+  type KeyboardListController,
 } from '@/components/keyboard-form'
 
 describe('keyboardOverlap', () => {
@@ -85,4 +88,56 @@ it('wraps its fields in one scroll that the keyboard can move', async () => {
     </KeyboardForm>
   )
   expect(view.getByTestId('keyboard-form')).toBeOnTheScreen()
+})
+
+describe('hiddenUnderKeyboard', () => {
+  it('measures how far a field and its margin reach under the keyboard', () => {
+    expect(hiddenUnderKeyboard(1900, 120, 1300)).toBe(1900 + 120 + 24 - 1300)
+    expect(hiddenUnderKeyboard(400, 120, 1300)).toBe(0)
+  })
+})
+
+// Explorar's feed holds the Concierge's field at its foot, under a keyboard that covered it.
+it('lifts a field at the foot of a list above the keyboard, from where the list stands', async () => {
+  const listeners: Record<string, (event: { endCoordinates: { screenY: number } }) => void> = {}
+  jest.spyOn(Keyboard, 'addListener').mockImplementation((event, handler) => {
+    listeners[event] = handler as (event: { endCoordinates: { screenY: number } }) => void
+    return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>
+  })
+  jest.spyOn(TextInput.State, 'currentlyFocusedInput').mockReturnValue({
+    measureInWindow: (onSuccess: (x: number, y: number, w: number, h: number) => void) =>
+      onSuccess(20, 1900, 350, 120),
+  } as unknown as ReturnType<typeof TextInput.State.currentlyFocusedInput>)
+
+  const scrollToOffset = jest.fn()
+  let controller: KeyboardListController | undefined
+  function Probe() {
+    // The field's send button, 60 under it, rises with it.
+    const keyboard = useKeyboardList(scrollToOffset, 60)
+    useEffect(() => {
+      controller = keyboard
+    })
+    return null
+  }
+
+  await render(<Probe />)
+  controller!.container({
+    measureInWindow: (callback: (x: number, y: number, w: number, h: number) => void) =>
+      callback(0, 0, 390, 2100),
+  } as never)
+  controller!.onScroll({ nativeEvent: { contentOffset: { x: 0, y: 3000 } } } as never)
+
+  const show = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+  const hide = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+  await act(async () => {
+    listeners[show]({ endCoordinates: { screenY: 1300 } })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  })
+
+  // Room for the rows under the keyboard, then the list moves by what the field hid.
+  expect(controller!.inset).toBe(2100 - 1300)
+  expect(scrollToOffset).toHaveBeenCalledWith(3000 + 1900 + 120 + 60 + 24 - 1300)
+
+  await act(async () => listeners[hide]({ endCoordinates: { screenY: 2340 } }))
+  expect(controller!.inset).toBe(0)
 })

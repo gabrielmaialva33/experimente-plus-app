@@ -145,6 +145,82 @@ export function useKeyboardForm(): KeyboardFormController {
   return { container, scroll, content, inset, onScroll, onLayout, reveal }
 }
 
+/** What the keyboard leaves between a field's lower edge and itself. */
+const FIELD_MARGIN = 24
+
+/** How far a field reaches under a keyboard whose top edge is at `keyboardTop`, margin included. */
+export const hiddenUnderKeyboard = (fieldY: number, fieldHeight: number, keyboardTop: number) =>
+  Math.max(0, fieldY + fieldHeight + FIELD_MARGIN - keyboardTop)
+
+export interface KeyboardListController {
+  container: (node: View | null) => void
+  /** Extra room at the end of the list, so a field at its foot can rise above the keyboard. */
+  inset: number
+  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  /** Brings the focused field above the keyboard; also a field's `onFocus`. */
+  reveal: () => void
+}
+
+/**
+ * `useKeyboardForm` for a list that holds a field among its rows, such as the
+ * Concierge at the foot of Explorar's feed: a virtualized list has no content
+ * view to measure a field against, so the field is measured in the window,
+ * against the keyboard's own top edge, and the list scrolls by what is hidden.
+ * `trailing` keeps what sits right under the field in sight too, such as its
+ * send button.
+ */
+export function useKeyboardList(
+  scrollToOffset: (offset: number) => void,
+  trailing = 0
+): KeyboardListController {
+  const containerRef = useRef<View | null>(null)
+  const offset = useRef(0)
+  const keyboardTop = useRef<number | null>(null)
+  const [inset, setInset] = useState(0)
+
+  const reveal = useCallback(() => {
+    requestAnimationFrame(() => {
+      const field = TextInput.State.currentlyFocusedInput()
+      const top = keyboardTop.current
+      if (!field || top === null) return
+      field.measureInWindow((_x, y, _width, height) => {
+        const hidden = hiddenUnderKeyboard(y, height + trailing, top)
+        if (hidden > 0) scrollToOffset(offset.current + hidden)
+      })
+    })
+  }, [scrollToOffset, trailing])
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+    const show = Keyboard.addListener(showEvent, (event) => {
+      keyboardTop.current = event.endCoordinates.screenY
+      containerRef.current?.measureInWindow((_x, y, _width, height) => {
+        setInset(keyboardOverlap(y, height, event.endCoordinates.screenY))
+        // The extra room lays out first; then the field scrolls into it.
+        requestAnimationFrame(reveal)
+      })
+    })
+    const hide = Keyboard.addListener(hideEvent, () => {
+      keyboardTop.current = null
+      setInset(0)
+    })
+    return () => {
+      show.remove()
+      hide.remove()
+    }
+  }, [reveal])
+
+  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    offset.current = event.nativeEvent.contentOffset.y
+  }, [])
+  const container = useCallback((node: View | null) => {
+    containerRef.current = node
+  }, [])
+
+  return { container, inset, onScroll, reveal }
+}
+
 const RevealContext = createContext<() => void>(() => {})
 
 /** A scrolling form whose focused field stays above the keyboard. */

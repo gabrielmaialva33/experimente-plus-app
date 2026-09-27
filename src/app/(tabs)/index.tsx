@@ -18,11 +18,12 @@ import { Chip } from '@/components/chip'
 import { EmptyState } from '@/components/empty-state'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
+import { useKeyboardList } from '@/components/keyboard-form'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { ScreenHeader } from '@/components/screen-header'
 import { SearchField } from '@/components/search-field'
 import { SectionHeader } from '@/components/section-header'
-import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
+import { ASK_ACTION_ROOM, DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useLineCap } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
@@ -52,6 +53,17 @@ export default function ExploreScreen() {
   const [choosingCity, setChoosingCity] = useState(false)
   const [asking, setAsking] = useState(false)
   const list = useRef<FlatList<EstablishmentSummary>>(null)
+  // The Concierge's field sits at the feed's foot: the feed lifts it above the keyboard.
+  const scrollFeedTo = useCallback(
+    (offset: number) => list.current?.scrollToOffset({ offset, animated: true }),
+    []
+  )
+  const {
+    container: feedFrame,
+    inset: keyboardInset,
+    onScroll: onFeedScroll,
+    reveal: revealField,
+  } = useKeyboardList(scrollFeedTo, ASK_ACTION_ROOM)
   const cityLines = useLineCap(1)
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
@@ -342,6 +354,9 @@ export default function ExploreScreen() {
       key={selectedCity ?? 'no-city'}
       citySlug={selectedCity}
       cityName={city?.name ?? null}
+      // Opened from its card, it is opened to ask: the field takes the focus at once.
+      autoFocus
+      onFieldMoved={revealField}
     />
   ) : (
     <View style={styles.gutter}>
@@ -403,7 +418,7 @@ export default function ExploreScreen() {
           )}
         </View>
       ) : (
-        <View style={styles.fill}>
+        <View ref={feedFrame} style={styles.fill}>
           {/* The band scrolls with the feed; the status bar keeps its colour. */}
           <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
           {/* One scroll for the whole feed: the band, the controls, the places and
@@ -414,7 +429,12 @@ export default function ExploreScreen() {
             data={feedback ? [] : results}
             keyExtractor={(item) => item.slug}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.list}
+            onScroll={onFeedScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={[
+              styles.list,
+              { paddingBottom: styles.list.paddingBottom + keyboardInset },
+            ]}
             refreshControl={refreshControl}
             ListHeaderComponent={
               <>

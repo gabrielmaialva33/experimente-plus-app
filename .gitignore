@@ -42,3 +42,6 @@ example
 /ios
 /android
 .env
+
+# Python bytecode (scripts/ci)
+__pycache__/

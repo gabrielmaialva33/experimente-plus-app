@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 
-import { FlatList, StyleSheet } from 'react-native'
+import { FlatList, ScrollView, StyleSheet } from 'react-native'
 import { minTouch, spacing } from '@/theme/tokens'
 
 import ExploreScreen from '@/app/(tabs)/index'
@@ -155,6 +155,24 @@ it('keeps city selection separate from attribute and view controls', async () =>
   // Choosing folds the list again and leaves the view where it was.
   expect(view.queryByRole('radio', { name: 'Cambé, PR' })).toBeNull()
   expect(view.getByRole('button', { name: 'Ver no mapa' })).toBeOnTheScreen()
+})
+
+// Nine cities no longer fit the band: the row opens on the chosen one, wherever it sits.
+it('opens the city row scrolled to the chosen city', async () => {
+  const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+  const view = await render(<ExploreScreen />)
+  await openCities(view)
+  scrollTo.mockClear()
+
+  await fireEvent(view.getByRole('radio', { name: 'Cambé, PR' }), 'layout', {
+    nativeEvent: { layout: { x: 180, y: 0, width: 120, height: 48 } },
+  })
+  expect(scrollTo).not.toHaveBeenCalled()
+
+  await fireEvent(view.getByRole('radio', { name: 'Londrina, PR', checked: true }), 'layout', {
+    nativeEvent: { layout: { x: 420, y: 0, width: 150, height: 48 } },
+  })
+  expect(scrollTo).toHaveBeenCalledWith({ x: 420, animated: false })
 })
 
 it('allows discovery without login or purchase checks even when payments are unavailable', async () => {

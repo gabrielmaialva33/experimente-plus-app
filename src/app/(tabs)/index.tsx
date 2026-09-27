@@ -188,11 +188,12 @@ export default function ExploreScreen() {
         <View style={[styles.cityPanel, { backgroundColor: colors.card }]}>
           <Text style={[styles.panelLabel, { color: colors.mutedForeground }]}>Cidade</Text>
           <ChoiceRow label="Cidade" single>
-            {(maxWidth) =>
+            {(maxWidth, reveal) =>
               cities.data?.map((item) => (
                 <ChoiceControl
                   key={item.slug}
                   maxWidth={maxWidth}
+                  onLayout={item.slug === selectedCity ? reveal : undefined}
                   role="radio"
                   accessibilityLabel={`${item.name}, ${item.state_code}`}
                   label={`${item.name} · ${item.state_code}`}

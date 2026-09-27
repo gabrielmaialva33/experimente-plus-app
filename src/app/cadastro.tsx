@@ -3,7 +3,6 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { signUp } from '@/api/auth'
 import { ApiError } from '@/api/client'
@@ -14,6 +13,7 @@ import { Checkbox } from '@/components/checkbox'
 import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { useSession } from '@/session/context'
 import {
   emptyRegistration,
@@ -35,6 +35,7 @@ const labels: Record<keyof RegistrationFields, string> = {
 
 export default function SignUpScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const { origin } = useLocalSearchParams<{ origin?: string }>()
   const { status, refresh } = useSession()
@@ -153,15 +154,12 @@ export default function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView
-      edges={['left', 'right']}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
+    <View style={[styles.flex, { backgroundColor: colors.background }]}>
       {/* Once the account exists there is no form to go back to. */}
       {created ? (
         <Stack.Screen options={{ title: 'Conta criada', headerBackVisible: false }} />
       ) : null}
-      <KeyboardForm contentContainerStyle={styles.page}>
+      <KeyboardForm contentContainerStyle={[styles.page, frame.padding]}>
         {created ? (
           <View
             style={[
@@ -320,7 +318,7 @@ export default function SignUpScreen() {
           </>
         )}
       </KeyboardForm>
-    </SafeAreaView>
+    </View>
   )
 }
 

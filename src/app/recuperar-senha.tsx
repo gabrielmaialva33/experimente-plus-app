@@ -12,6 +12,7 @@ import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -20,6 +21,7 @@ const SENT =
 
 export default function ForgotPasswordScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   // The address already typed on sign-in comes along, so it is not asked twice (audit A59).
   const params = useLocalSearchParams<{ email?: string }>()
@@ -96,12 +98,9 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <SafeAreaView
-      edges={['left', 'right', 'bottom']}
-      style={[styles.flex, { backgroundColor: colors.background }]}
-    >
+    <SafeAreaView edges={['bottom']} style={[styles.flex, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: 'Recuperar senha' }} />
-      <KeyboardForm contentContainerStyle={styles.page}>
+      <KeyboardForm contentContainerStyle={[styles.page, frame.padding]}>
         {requested ? (
           <>
             <View

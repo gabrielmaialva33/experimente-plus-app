@@ -9,6 +9,7 @@ import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { useSession } from '@/session/context'
 import { spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -68,6 +69,7 @@ const announceFirst = (errors: ProfileErrors) => {
  */
 export default function ProfileScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const { context, refresh } = useSession()
   const user = context?.user
 
@@ -130,7 +132,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>
       <Stack.Screen options={{ title: 'Editar perfil' }} />
-      <KeyboardForm contentContainerStyle={styles.page}>
+      <KeyboardForm contentContainerStyle={[styles.page, frame.padding]}>
         <TextField
           label="Nome"
           value={fullName}

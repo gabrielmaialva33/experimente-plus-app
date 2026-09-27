@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query'
 import {
   createContext,
   useCallback,
@@ -8,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { AppState } from 'react-native'
 
 import { subscribeSessionEvents } from '@/api/session-events'
 import { revokeSession } from '@/api/auth'
@@ -97,6 +99,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       generation.current += 1
     }
   }, [load])
+
+  // A context that failed to load for want of a connection (a cold start on the
+  // subway) kept the app in visitor tabs after the signal came back, until the
+  // person found "Tentar de novo" under Entrar. The credential is still there,
+  // so the context is asked again when the connection or the app returns.
+  useEffect(() => {
+    if (status !== 'unavailable') return
+    const retry = () => void load()
+    const offline = onlineManager.subscribe((online) => {
+      if (online) retry()
+    })
+    const foreground = AppState.addEventListener('change', (next) => {
+      if (next === 'active') retry()
+    })
+    return () => {
+      offline()
+      foreground.remove()
+    }
+  }, [status, load])
 
   const value = useMemo<SessionValue>(
     () => ({

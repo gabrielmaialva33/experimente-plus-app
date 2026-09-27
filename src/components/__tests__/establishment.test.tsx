@@ -9,7 +9,7 @@ import { OperatingStatus } from '@/components/operating-status'
 import { PracticalInfo } from '@/place/practical-info'
 import { palette, fontFamilies, minTouch } from '@/theme/tokens'
 
-const mockRouter = { push: jest.fn(), back: jest.fn() }
+const mockRouter = { push: jest.fn(), back: jest.fn(), navigate: jest.fn() }
 jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useLocalSearchParams: jest.fn(),
@@ -602,6 +602,43 @@ it.each(['light', 'dark'] as const)(
     ).toBe(3)
   }
 )
+
+describe('a place that does not load', () => {
+  const { ApiError } = jest.requireMock('@/api/client') as { ApiError: new () => Error }
+  const failure = (status: number) =>
+    Object.assign(new ApiError(), { status }) as Error & { status: number }
+
+  beforeEach(() => {
+    theme.useColors.mockReturnValue(palette.light)
+    router.useLocalSearchParams.mockReturnValue({ city: 'londrina', slug: 'cafe' })
+  })
+
+  it('leads back to Explorar when the place left the catalogue', async () => {
+    queries.useEstablishment.mockReturnValue({ isError: true, error: failure(404) })
+    const view = await render(<EstablishmentScreen />)
+    expect(
+      view.getByRole('header', { name: 'Este lugar não está mais disponível' })
+    ).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/')
+  })
+
+  it.each([502, null])('offers another try when the request failed (%s)', async (status) => {
+    const refetch = jest.fn()
+    queries.useEstablishment.mockReturnValue({
+      isError: true,
+      error: status ? failure(status) : new TypeError('Network request failed'),
+      refetch,
+    })
+    const view = await render(<EstablishmentScreen />)
+    expect(
+      view.getByRole('header', { name: 'Não foi possível carregar este lugar' })
+    ).toBeOnTheScreen()
+    expect(view.queryByText(/não está mais disponível/)).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+})
 
 it('reserves an initial detail skeleton until the establishment resolves', async () => {
   queries.useEstablishment.mockReturnValue({ isPending: true })

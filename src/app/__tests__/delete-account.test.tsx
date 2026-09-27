@@ -69,3 +69,17 @@ it('stays readable while it cannot delete yet, and offers a way out', async () =
   expect(mockBack).toHaveBeenCalledTimes(1)
   expect(jest.requireMock('@/api/me').deleteAccount).not.toHaveBeenCalled()
 })
+
+it('says what a consumer loses in their own words, not the operation behind it (A54)', async () => {
+  const view = await render(
+    <QueryClientProvider client={new QueryClient()}>
+      <DeleteAccountScreen />
+    </QueryClientProvider>
+  )
+  expect(
+    view.getByText(
+      'Esta ação é permanente. Você perde o acesso à carteira e aos benefícios, e seus favoritos, lugares seguidos, interesses e roteiros são apagados.'
+    )
+  ).toBeOnTheScreen()
+  expect(view.queryByText(/operação/)).toBeNull()
+})

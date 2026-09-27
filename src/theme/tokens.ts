@@ -175,6 +175,15 @@ function withSemanticRoles<T extends (typeof basePalette)[keyof typeof basePalet
   } as const
 }
 
+/**
+ * A palette colour at an opacity, for the tinted borders of the web's status
+ * pills (`border-success/25`). The palette stores hex, so the alpha is explicit.
+ */
+export function withOpacity(hex: string, opacity: number): string {
+  const rgb = [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16))
+  return `rgba(${rgb.join(', ')}, ${opacity})`
+}
+
 export const palette = {
   light: withSemanticRoles(basePalette.light),
   dark: withSemanticRoles(basePalette.dark, darkSurfaces.surfaceRaised),

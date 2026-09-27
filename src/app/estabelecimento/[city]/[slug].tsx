@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useRef } from 'react'
 import { Linking, Pressable, StyleSheet, Text, View, type ScrollView } from 'react-native'
 import Animated from 'react-native-reanimated'
@@ -6,11 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
+import { ApiError } from '@/api/client'
 import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '@/catalog/contact-links'
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { Badge } from '@/components/badge'
 import { useCompactHeader } from '@/components/compact-header'
+import { EmptyState } from '@/components/empty-state'
 import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
@@ -26,6 +28,7 @@ import { useColors } from '@/theme/use-colors'
 
 export default function EstablishmentScreen() {
   const colors = useColors()
+  const router = useRouter()
   const params = useLocalSearchParams<{ city: string; slug: string; [HIGHLIGHT_PARAM]?: string }>()
   const { city, slug } = params
   const query = useEstablishment(city ?? null, slug ?? null)
@@ -49,13 +52,31 @@ export default function EstablishmentScreen() {
     )
   }
 
+  // A place that left the catalogue and a request that failed are different
+  // answers: the first leads back to Explorar, the second offers another try.
+  // Before, both said "não está disponível", with nothing to do but go back.
   if (query.isError || !page) {
+    const gone = query.error instanceof ApiError && query.error.status === 404
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <View style={[styles.state, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: '' }} />
-        <Text style={[styles.message, { color: colors.foreground }]}>
-          Este lugar não está disponível.
-        </Text>
+        {gone ? (
+          <EmptyState
+            testID="place-gone"
+            icon="storefront-outline"
+            title="Este lugar não está mais disponível"
+            text="Ele pode ter saído do catálogo, ou o link está incompleto."
+            action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
+          />
+        ) : (
+          <EmptyState
+            testID="place-failed"
+            icon="cloud-offline-outline"
+            title="Não foi possível carregar este lugar"
+            text="Confira a conexão e tente de novo."
+            action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+          />
+        )}
       </View>
     )
   }
@@ -313,6 +334,7 @@ const RATING_BLEED = (minTouch - 32) / 2
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { paddingBottom: spacing.xxl },
+  state: { flex: 1, justifyContent: 'center', padding: spacing.gutter },
   center: {
     alignItems: 'center',
     flex: 1,

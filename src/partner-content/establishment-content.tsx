@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { resolveMediaUrl } from '@/api/config'
 import type { PartnerContentItemKind, PartnerContentKind } from '@/api/partner-content'
 import { Button } from '@/components/button'
-import { COMPACT_CARD, CompactCard } from '@/components/compact-card'
+import { CompactCard, useCompactCardWidth } from '@/components/compact-card'
 import { DateTile } from '@/components/date-tile'
 import { RemoteImage } from '@/components/remote-image'
 import { SectionHeader } from '@/components/section-header'
@@ -110,6 +110,7 @@ export function EstablishmentPartnerContent({
   onHighlightLayout,
 }: EstablishmentPartnerContentProps) {
   const colors = useColors()
+  const cardWidth = useCompactCardWidth()
   const row = useRef<ScrollView>(null)
   const [open, setOpen] = useState<PublishedContentView | null>(null)
   const experiences = usePartnerContent(establishmentId, 'experiences')
@@ -156,7 +157,7 @@ export function EstablishmentPartnerContent({
           onContentSizeChange={() => {
             if (marked > 0) {
               row.current?.scrollTo({
-                x: marked * (COMPACT_CARD.width + FRAME * 2 + GAP),
+                x: marked * (cardWidth + FRAME * 2 + GAP),
                 animated: false,
               })
             }

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { ACCOUNT_DELETION_LITERAL, deleteAccount } from '@/api/me'
@@ -12,7 +12,7 @@ import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
 import { useSession } from '@/session/context'
-import { radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -67,7 +67,8 @@ export default function DeleteAccountScreen() {
             {...decorative}
           />
           <Text style={[styles.body, styles.warningText, { color: colors.foreground }]}>
-            Esta ação é permanente. Seus benefícios e o acesso à operação são encerrados.
+            Esta ação é permanente. Você perde o acesso à carteira e aos benefícios, e seus
+            favoritos, lugares seguidos, interesses e roteiros são apagados.
           </Text>
         </View>
 
@@ -98,35 +99,18 @@ export default function DeleteAccountScreen() {
           </Text>
         ) : null}
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Excluir permanentemente"
-          accessibilityState={{ disabled: !ready || remove.isPending }}
-          disabled={!ready || remove.isPending}
-          onPress={() => remove.mutate()}
-          style={({ pressed }) => [
-            styles.action,
-            {
-              // A disabled button keeps a readable label instead of fading out (audit A51).
-              backgroundColor: !ready || remove.isPending ? colors.muted : colors.destructive,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.actionLabel,
-              {
-                color:
-                  !ready || remove.isPending
-                    ? colors.mutedForeground
-                    : colors.destructiveForeground,
-              },
-            ]}
-          >
-            {remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
-          </Text>
-        </Pressable>
+        {/* The destructive pill of direction A; disabled, it keeps a readable label (A51). */}
+        <View style={styles.action}>
+          <Button
+            label={remove.isPending ? 'Excluindo…' : 'Excluir permanentemente'}
+            accessibilityLabel="Excluir permanentemente"
+            variant="destructive"
+            size={52}
+            fill
+            disabled={!ready || remove.isPending}
+            onPress={() => remove.mutate()}
+          />
+        </View>
         <Button label="Manter minha conta" variant="ghost" fill onPress={() => router.back()} />
       </KeyboardForm>
     </View>
@@ -145,12 +129,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   warningText: { flex: 1 },
-  action: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    justifyContent: 'center',
-    marginTop: spacing.sm,
-    minHeight: 52,
-  },
-  actionLabel: { ...typography.label, ...textWeight('700'), fontSize: 16 },
+  // A row, so the pill fills the column's width and not its height.
+  action: { flexDirection: 'row', marginTop: spacing.sm },
 })

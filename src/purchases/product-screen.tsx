@@ -1,8 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
-import { setStatusBarStyle } from 'expo-status-bar'
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useRef, useState, type ReactNode } from 'react'
 import {
   Platform,
   Pressable,
@@ -15,6 +14,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 
+import { useLoadingCopy } from '@/api/online'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
@@ -35,9 +35,12 @@ import {
   price,
   usageWindow,
 } from '@/purchases/components'
+import { blocksNewPurchase } from '@/purchases/order-state'
 import { productIdentity, productKind } from '@/purchases/products'
 import { clearIntent, purchaseIntent, readIntent } from '@/purchases/intent-store'
 import { usePurchaseEditions, usePurchaseScope, usePurchases } from '@/purchases/queries'
+import { useStackedLayout } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -67,12 +70,7 @@ export default function PurchaseProductScreen() {
 
   // The native bar and the band below it read as one navy plane; the band carries the
   // title, and hands it to the bar once it scrolls away (see `CompactTitle`).
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light')
-      return () => setStatusBarStyle('auto')
-    }, [])
-  )
+  useBandStatusBar()
   const chrome = (
     <Stack.Screen
       options={{
@@ -133,8 +131,12 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   const [titleSpan, setTitleSpan] = useState(TITLE_ESTIMATE)
   const header = useCompactHeader(titleSpan[0], titleSpan[1])
   const sending = useRef(false)
+  const loadingProduct = useLoadingCopy('Carregando produto…')
+  const consultingOrders = useLoadingCopy('Consultando seus pedidos…')
+  // Only an order that still holds the product; a cancelled or failed one is history.
   const existing = orders.data?.purchases.find(
-    (order) => order.edition_id === editionId && order.offer_id === offerId
+    (order) =>
+      order.edition_id === editionId && order.offer_id === offerId && blocksNewPurchase(order)
   )
   const prior = userId ? readIntent(userId, editionId, offerId) : null
 
@@ -220,7 +222,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       <>
         {strip}
         <Notice>
-          <Body>Carregando produto…</Body>
+          <Body>{loadingProduct}</Body>
         </Notice>
       </>
     )
@@ -310,7 +312,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
               <RetryPurchase error={orders.error} onRetry={() => void orders.refetch()} />
             </>
           ) : orders.isPending ? (
-            <Body>Consultando seus pedidos…</Body>
+            <Body>{consultingOrders}</Body>
           ) : prior || start.isError ? (
             <>
               <Body>{UNCONFIRMED}</Body>
@@ -530,6 +532,8 @@ function WhenToUse({
   onToggle: () => void
 }) {
   const colors = useColors()
+  // Two dates side by side break mid-number with large text; then each takes a row.
+  const stacked = useStackedLayout()
   const timeZone = product.city?.timezone ?? undefined
   const window = usageWindow(product.snapshot, timeZone)
   const offers = product.snapshot.offers
@@ -546,7 +550,7 @@ function WhenToUse({
   return (
     <View testID="purchase-when" style={styles.section}>
       <SectionTitle>Quando usar</SectionTitle>
-      <View style={styles.tiles}>
+      <View testID="purchase-dates" style={[styles.tiles, stacked && styles.tilesStacked]}>
         {(
           [
             ['Compre até', window.buyUntil],
@@ -557,6 +561,7 @@ function WhenToUse({
             key={label}
             style={[
               styles.dateTile,
+              stacked && styles.dateTileStacked,
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
@@ -735,7 +740,9 @@ const styles = StyleSheet.create({
   place: { ...typography.body, ...textWeight('700') },
   benefit: { ...typography.meta, ...textWeight('700') },
   tiles: { flexDirection: 'row', gap: 10 },
+  tilesStacked: { flexDirection: 'column' },
   dateTile: { borderRadius: 18, borderWidth: 1, flex: 1, gap: 2, padding: 14 },
+  dateTileStacked: { flex: 0 },
   tileLabel: typography.caption,
   tileValue: { ...typography.heading, fontFamily: typography.title.fontFamily },
   usesRow: { alignItems: 'center', columnGap: spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },

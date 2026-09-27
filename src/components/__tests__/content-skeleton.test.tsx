@@ -1,4 +1,7 @@
-import { render } from '@testing-library/react-native'
+import { onlineManager } from '@tanstack/react-query'
+import { act, render } from '@testing-library/react-native'
+import { AccessibilityInfo } from 'react-native'
+
 import { ContentSkeleton } from '../content-skeleton'
 import { palette } from '@/theme/tokens'
 
@@ -35,3 +38,25 @@ it.each(['light', 'dark'] as const)(
     }
   }
 )
+
+describe('offline', () => {
+  afterEach(() => onlineManager.setOnline(true))
+
+  it('says a paused first load waits for the connection, and fills in when it returns', async () => {
+    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
+    const spoken = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    onlineManager.setOnline(false)
+    const view = await render(<ContentSkeleton label="Carregando lugar" variant="catalog" />)
+
+    expect(view.getByRole('header', { name: 'Sem conexão com a internet' })).toBeOnTheScreen()
+    expect(view.getByText('O conteúdo aparece aqui assim que a conexão voltar.')).toBeOnTheScreen()
+    expect(view.queryByRole('progressbar')).toBeNull()
+    expect(spoken).toHaveBeenCalledWith(
+      'Sem conexão com a internet. O conteúdo aparece aqui assim que a conexão voltar.'
+    )
+
+    await act(async () => onlineManager.setOnline(true))
+    expect(view.queryByTestId('content-offline')).toBeNull()
+    expect(view.getByRole('progressbar', { name: 'Carregando lugar' })).toBeOnTheScreen()
+  })
+})

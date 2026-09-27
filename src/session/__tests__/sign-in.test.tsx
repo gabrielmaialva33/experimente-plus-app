@@ -8,7 +8,10 @@ import { palette } from '@/theme/tokens'
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: mockReplace }) }))
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+}))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),

@@ -13,6 +13,23 @@ export function orderState(order: Purchase): OrderState {
   return 'pending'
 }
 
+/**
+ * Whether an order still stands in the way of buying the same product again.
+ *
+ * The server refuses a new purchase while one is pending, paid or in review, or
+ * once it granted access; a cancelled or failed order without access leaves the
+ * product free to buy (`purchase_service`). Treating every past order as
+ * blocking left a cancelled Pix order as the product's only way forward.
+ */
+export function blocksNewPurchase(order: Purchase): boolean {
+  return (
+    order.status === 'pending' ||
+    order.status === 'paid' ||
+    order.status === 'review' ||
+    order.access_id != null
+  )
+}
+
 export const ORDER_COPY: Record<OrderState, { title: string; message: string }> = {
   pending: {
     title: 'Pedido pendente',

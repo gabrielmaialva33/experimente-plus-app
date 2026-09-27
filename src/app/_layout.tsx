@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useFontsReady } from '@/theme/fonts'
 import { navigationColors, stackSurfaceOptions } from '@/theme/navigation'
-import { useNavigationBarStyle } from '@/theme/system-bars'
+import { useNavigationBarStyle, useStatusBarFollowsTheme } from '@/theme/system-bars'
 import { useColors } from '@/theme/use-colors'
 
 import { createQueryClient, installQueryEnvironment } from '@/api/query-client'
@@ -57,6 +57,7 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors()
   const insets = useSafeAreaInsets()
   useNavigationBarStyle()
+  useStatusBarFollowsTheme()
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
   const screenLayout = ({ children }: { children: ReactElement }) =>
     fontsReady ? children : <View style={{ backgroundColor: colors.surfaceBase, flex: 1 }} />

@@ -6,6 +6,7 @@ import { Button } from '@/components/button'
 import { price, purchaseDay } from '@/purchases/components'
 import { productKey, productRoute } from '@/purchases/products'
 import { usePurchaseEditions } from '@/purchases/queries'
+import { useStackedLayout } from '@/theme/font-scale'
 import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -64,6 +65,7 @@ function BenefitTicket({
   onPress: () => void
 }) {
   const colors = useColors()
+  const stacked = useStackedLayout()
   const offer = product.snapshot.offers[0]
   const amount = price(product.amount_cents, product.currency)
   const terms = [
@@ -73,29 +75,50 @@ function BenefitTicket({
     .filter(Boolean)
     .join(' ')
 
+  const dashes = Array.from({ length: 9 }, (_, index) => (
+    <View
+      key={index}
+      style={[stacked ? styles.dashAcross : styles.dash, { backgroundColor: colors.ctaAccent }]}
+    />
+  ))
+  const notch = [styles.notch, { backgroundColor: colors.background }]
+
   return (
     <View
       accessibilityLabel="Benefício"
       testID={`benefit-${productKey(product)}`}
-      style={[styles.ticket, { backgroundColor: colors.ctaSoft }]}
+      style={[styles.ticket, stacked && styles.ticketStacked, { backgroundColor: colors.ctaSoft }]}
     >
-      <View style={styles.stub}>
+      <View style={[styles.stub, stacked && styles.stubStacked]}>
         <Text style={[styles.overline, { color: colors.ctaAccent }]}>BENEFÍCIO</Text>
         <Text style={[styles.title, { color: colors.foreground }]}>
           {offer?.title || product.name}
         </Text>
         {terms ? <Text style={[styles.terms, { color: colors.ctaAccent }]}>{terms}</Text> : null}
       </View>
-      <View
-        style={styles.perforation}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        {Array.from({ length: 9 }, (_, index) => (
-          <View key={index} style={[styles.dash, { backgroundColor: colors.ctaAccent }]} />
-        ))}
-      </View>
-      <View style={styles.side}>
+      {stacked ? (
+        // With large text the stub tears across: the price and its action take the
+        // full width below, so neither breaks mid-word in a narrow column.
+        <View
+          testID="benefit-cut"
+          style={styles.cut}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <View style={styles.cutDashes}>{dashes}</View>
+          <View style={[notch, styles.cutStart]} />
+          <View style={[notch, styles.cutEnd]} />
+        </View>
+      ) : (
+        <View
+          style={styles.perforation}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {dashes}
+        </View>
+      )}
+      <View style={stacked ? styles.sideStacked : styles.side}>
         <Text style={[styles.price, { color: colors.foreground }]}>{amount}</Text>
         {/* A row, so the button fills the stub's width and not its height. */}
         <View style={styles.action}>
@@ -110,8 +133,12 @@ function BenefitTicket({
         </View>
       </View>
       {/* The two bites of a ticket stub, cut in the page's own colour. */}
-      <View style={[styles.notch, styles.top, { backgroundColor: colors.background }]} />
-      <View style={[styles.notch, styles.bottom, { backgroundColor: colors.background }]} />
+      {stacked ? null : (
+        <>
+          <View style={[notch, styles.aside, styles.top]} />
+          <View style={[notch, styles.aside, styles.bottom]} />
+        </>
+      )}
     </View>
   )
 }
@@ -119,12 +146,31 @@ function BenefitTicket({
 const styles = StyleSheet.create({
   list: { gap: spacing.md },
   ticket: { borderRadius: radius.card, flexDirection: 'row', overflow: 'hidden' },
+  ticketStacked: { flexDirection: 'column' },
   stub: {
     flex: 1,
     gap: 6,
     paddingLeft: spacing.gutter,
     paddingRight: spacing.lg,
     paddingVertical: 18,
+  },
+  stubStacked: { flex: 0, paddingRight: spacing.gutter },
+  // The tear across a stacked ticket: a dashed line with a bite at each edge.
+  cut: { height: 2, justifyContent: 'center' },
+  cutDashes: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.gutter,
+  },
+  dashAcross: { borderRadius: 1, height: 2, opacity: 0.35, width: 6 },
+  cutStart: { left: -NOTCH / 2, top: 1 - NOTCH / 2 },
+  cutEnd: { right: -NOTCH / 2, top: 1 - NOTCH / 2 },
+  sideStacked: {
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingBottom: spacing.gutter,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.lg,
   },
   overline: typography.overline,
   title: { ...typography.title, fontSize: 22, lineHeight: 26 },
@@ -141,13 +187,8 @@ const styles = StyleSheet.create({
   },
   action: { alignSelf: 'stretch', flexDirection: 'row' },
   price: { ...typography.heading, ...displayWeight('800'), fontSize: 20 },
-  notch: {
-    borderRadius: NOTCH / 2,
-    height: NOTCH,
-    position: 'absolute',
-    right: SIDE - NOTCH / 2 + 1,
-    width: NOTCH,
-  },
+  notch: { borderRadius: NOTCH / 2, height: NOTCH, position: 'absolute', width: NOTCH },
+  aside: { right: SIDE - NOTCH / 2 + 1 },
   top: { top: -NOTCH / 2 },
   bottom: { bottom: -NOTCH / 2 },
 })

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { useLoadingCopy } from '@/api/online'
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { useAnnouncement } from '@/components/announce'
@@ -49,6 +50,7 @@ export default function PurchaseOrderScreen() {
   const [openingError, setOpeningError] = useState(false)
   const colors = useColors()
   useAnnouncement(openingError && OPENING_FAILED)
+  const consulting = useLoadingCopy('Consultando pedido…')
 
   const hasOrder = Boolean(order)
   const orderStatus = order?.status
@@ -65,7 +67,7 @@ export default function PurchaseOrderScreen() {
   if (query.isPending)
     return (
       <PurchasePage>
-        <PurchaseText>Consultando pedido…</PurchaseText>
+        <PurchaseText>{consulting}</PurchaseText>
       </PurchasePage>
     )
   if (query.isError || !order || !state)
@@ -213,7 +215,10 @@ function Step({ number, title, children }: { number: number; title: string; chil
   const colors = useColors()
   return (
     <View style={styles.step}>
-      <View style={[styles.stepNumber, { backgroundColor: colors.primarySoft }]}>
+      <View
+        testID={`order-step-${number}`}
+        style={[styles.stepNumber, { backgroundColor: colors.primarySoft }]}
+      >
         <Text style={[styles.stepDigit, { color: colors.primaryAccent }]}>{number}</Text>
       </View>
       <View style={styles.stepText}>
@@ -319,13 +324,16 @@ const styles = StyleSheet.create({
   codeText: { ...typography.meta, fontVariant: ['tabular-nums'] },
   actions: { gap: spacing.md },
   step: { flexDirection: 'row', gap: spacing.md },
-  // A floor, so a larger digit grows the circle instead of spilling out of it.
+  // A floor, so a larger digit grows the circle instead of spilling out of it. It
+  // keeps its own height at the top of the step, not the height of the step's text.
   stepNumber: {
     alignItems: 'center',
+    alignSelf: 'flex-start',
     borderRadius: radius.pill,
     justifyContent: 'center',
     minHeight: 28,
     minWidth: 28,
+    paddingHorizontal: spacing.xs,
   },
   stepDigit: { ...typography.label, ...textWeight('700') },
   stepText: { flex: 1, gap: 2 },

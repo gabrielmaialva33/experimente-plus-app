@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { setStatusBarStyle } from 'expo-status-bar'
+import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -16,6 +15,7 @@ import { useAnnouncement } from '@/components/announce'
 import { ChoiceRow } from '@/components/choice-row'
 import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
+import { EmptyState } from '@/components/empty-state'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
@@ -25,6 +25,7 @@ import { SectionHeader } from '@/components/section-header'
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useLineCap } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -54,12 +55,7 @@ export default function ExploreScreen() {
   const cityLines = useLineCap(1)
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light')
-      return () => setStatusBarStyle('auto')
-    }, [])
-  )
+  useBandStatusBar()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedTerm(term.trim().slice(0, MAX_TERM_LENGTH)), 350)
@@ -295,21 +291,27 @@ export default function ExploreScreen() {
     </View>
   )
 
+  // The action names what it does: a typed word is a search, not a filter. For the
+  // word alone it says where it leads, since the field's "×" is already "Limpar busca".
+  const clearLabel =
+    debouncedTerm && activeFilters.length
+      ? 'Limpar busca e filtros'
+      : debouncedTerm
+        ? 'Ver todos os lugares'
+        : 'Limpar filtros'
+
   const feedback = search.isPending ? (
     <ContentSkeleton label="Carregando lugares" variant="catalog" />
   ) : search.isError ? (
-    <View style={styles.feedback}>
-      <Text style={[styles.message, { color: colors.foreground }]}>
-        Não foi possível carregar agora.
-      </Text>
-      {/* Manual retry preserving the filters, per the retry contract. */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => search.refetch()}
-        style={styles.feedbackAction}
-      >
-        <Text style={[styles.action, { color: colors.primary }]}>Tentar de novo</Text>
-      </Pressable>
+    // The shared failure card of the other lists; the retry keeps the filters.
+    <View style={styles.failure}>
+      <EmptyState
+        testID="catalog-failed"
+        icon="cloud-offline-outline"
+        title="Não foi possível carregar os lugares"
+        text="Confira a conexão e tente de novo. A busca e os filtros continuam como estão."
+        action={{ label: 'Tentar de novo', onPress: () => void search.refetch() }}
+      />
     </View>
   ) : !results.length ? (
     <View testID="catalog-empty" style={styles.feedback}>
@@ -327,7 +329,7 @@ export default function ExploreScreen() {
       </Text>
       {hasFilters ? (
         <Pressable accessibilityRole="button" onPress={clearFilters} style={styles.feedbackAction}>
-          <Text style={[styles.action, { color: colors.primary }]}>Limpar filtros</Text>
+          <Text style={[styles.action, { color: colors.primary }]}>{clearLabel}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -458,9 +460,12 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   gutter: { paddingHorizontal: spacing.gutter },
+  // With large text the city pill wraps under the wordmark as a whole, instead of
+  // squeezing "Londrina" into a column of syllables beside it.
   brandRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
     justifyContent: 'space-between',
   },
@@ -492,6 +497,7 @@ const styles = StyleSheet.create({
   list: { paddingBottom: spacing.section },
   editorial: { gap: spacing.section, paddingTop: spacing.md },
   mapFeedback: { flexGrow: 1 },
+  failure: { paddingHorizontal: spacing.gutter, paddingTop: spacing.sm },
   feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
   feedbackAction: { justifyContent: 'center', minHeight: minTouch },
   message: { ...typography.body, textAlign: 'center' },

@@ -8,6 +8,7 @@ import { ApiError } from '@/api/client'
 import { palette } from '@/theme/tokens'
 
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(),
   Stack: { Screen: () => null },

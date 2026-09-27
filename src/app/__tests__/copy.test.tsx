@@ -24,7 +24,10 @@ jest.mock('@/session/context', () => ({
   useSession: () => ({ status: 'anonymous', refresh: jest.fn(), signOut: jest.fn() }),
 }))
 jest.mock('@/catalog/queries', () => ({ useCityAgenda: jest.fn() }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
+  useRouter: () => ({ push: jest.fn() }),
+}))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),

@@ -146,6 +146,25 @@ it('keeps compact cards the same size whether the title wraps or not', async () 
   ).toBe(2)
 })
 
+it.each([
+  [1, 220],
+  [1.3, 286],
+  [2, 352],
+])(
+  'widens every compact card of a row with the text, so a word fits a line (scale %s)',
+  async (scale, width) => {
+    await setFontScale(scale)
+    const view = await render(
+      <>
+        <CompactCard title="Café" onPress={jest.fn()} testID="short" />
+        <CompactCard title="Oficina — demonstração" onPress={jest.fn()} testID="long" />
+      </>
+    )
+    expect(view.getByTestId('short')).toHaveStyle({ width })
+    expect(view.getByTestId('long')).toHaveStyle({ width })
+  }
+)
+
 // At 200% a two-line cut hides most of a name: the card grows instead (a floor, not a box).
 it('lets a compact card grow instead of cutting its words at large text', async () => {
   const view = await render(
@@ -197,6 +216,36 @@ it.each(['success', 'warning', 'info', 'neutral', 'benefit'] as const)(
     const view = await render(<Badge label="Estado" tone={tone} testID="badge" />)
     expect(view.getByTestId('badge')).toHaveStyle({ borderRadius: radius.pill, minHeight: 30 })
     expect(view.getByText('Estado')).toBeOnTheScreen()
+  }
+)
+
+it.each(['light', 'dark'] as const)(
+  'edges every badge, so a neutral pill still reads as one on a card of its colour in %s',
+  async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(<Badge label="Pedido não concluído" tone="neutral" testID="badge" />)
+    expect(view.getByTestId('badge')).toHaveStyle({
+      backgroundColor: palette[mode].statusNeutral,
+      borderColor: palette[mode].statusNeutralBorder,
+      borderWidth: 1,
+    })
+    // In dark the neutral fill is the card itself; the edge is what draws the pill.
+    if (mode === 'dark') expect(palette.dark.statusNeutral).toBe(palette.dark.card)
+    expect(palette[mode].statusNeutralBorder).not.toBe(palette[mode].card)
+  }
+)
+
+it.each(['light', 'dark'] as const)(
+  'fills a strong date tile apart from the soft plane a card without a photo lays behind it, in %s',
+  async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(
+      <DateTile iso="2026-09-29T02:30:00Z" timeZone="America/Sao_Paulo" tone="strong" />
+    )
+    const tile = StyleSheet.flatten(view.getByTestId('date-tile').props.style)
+    expect(tile.backgroundColor).toBe(palette[mode].primary)
+    expect(tile.backgroundColor).not.toBe(palette[mode].primarySoft)
+    expect(view.getByText('28')).toHaveStyle({ color: palette[mode].primaryForeground })
   }
 )
 

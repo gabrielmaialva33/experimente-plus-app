@@ -6,14 +6,13 @@ Cliente móvel React Native/Expo do Experimente+, com descoberta pública, conta
 
 Antes de escrever código Expo, leia a documentação da versão exata usada no projeto: <https://docs.expo.dev/versions/v57.0.0/>. Não aplique exemplos de versões anteriores sem conferir APIs e compatibilidade com as dependências instaladas.
 
-Contratos canônicos no checkout backend:
+O contrato da API é o [OpenAPI](../experimente-plus/docs/openapi.yaml) do checkout backend, usado para gerar `src/api/schema.d.ts`. Se o backend não estiver ao lado, os tipos versionados permitem trabalhar no app; para mudar o contrato ou regenerá-los, obtenha o checkout canônico no caminho esperado pelo script. O [README](README.md) descreve setup, variáveis, build, CI, permissões e solução de problemas.
 
-- [Produto móvel](../experimente-plus/docs/product/17-aplicativo-movel-consumer-first.md): jornadas e estados.
-- [ADR 0022](../experimente-plus/docs/architecture/decisions/0022-contrato-api-movel-consumer-first.md): API, autenticação, capabilities e resgate.
-- [ADR 0023](../experimente-plus/docs/architecture/decisions/0023-stack-e-navegacao-do-cliente-movel.md): stack, navegação, persistência e identidade visual.
-- [OpenAPI](../experimente-plus/docs/openapi.yaml): contrato usado para gerar `src/api/schema.d.ts`.
+A especificação de produto do app (`docs/product/17-aplicativo-movel-consumer-first.md`) e os ADRs do backend foram removidos de propósito. Os números citados em comentários do código (ADR-0022, ADR-0023 e outros) são histórico; o que aqueles documentos fixavam para o app está resumido abaixo e nas seções seguintes:
 
-Se o backend não estiver ao lado, os tipos versionados permitem trabalhar no app; para mudar o contrato ou regenerá-los, obtenha o checkout canônico no caminho esperado pelo script. O README ainda contém instruções do template Expo: confira scripts, `mise.toml` e este guia antes de segui-las.
+- **Jornadas e estados (produto 17):** visitante explora sem login (lista e mapa, lugar, agenda, Concierge); consumidor tem conta, carteira, compra, apresentação por QR, histórico, favoritos, seguidos, roteiros, interesses e avaliações; parceiro valida e consulta utilizações. Toda tela tem estado de carregamento, vazio com caminho de saída, erro com nova tentativa e sem conexão. Leituras podem ter retry com backoff; regra de negócio nunca é repetida sozinha.
+- **API e sessão (ADR 0022):** JWT de acesso e refresh opaco com rotação única em voo; capabilities vêm de `GET /api/v1/me/context`; Validar e Histórico dependem de `partner.redemptions.validate`/`read`; resgate em prévia e confirmação explícita, idempotente pelo token, com validade dada pelo servidor.
+- **Stack, navegação e persistência (ADR 0023):** Expo com development build, Expo Router, TanStack Query, credenciais só no SecureStore e preferências no MMKV; abas compostas pela sessão (`Tabs.Protected`) só depois de o contexto resolver, com a splash cobrindo o carregamento; cidade é estado local de descoberta; identidade visual derivada dos tokens do web; Android construído localmente e distribuição/iOS por serviço remoto (EAS).
 
 ## Contratos de produto e segurança
 
@@ -31,19 +30,25 @@ Se o backend não estiver ao lado, os tipos versionados permitem trabalhar no ap
 
 Stack declarada: Expo SDK 57, React Native 0.86, React 19, Expo Router, TypeScript strict, TanStack Query, SecureStore e MMKV. `main` aponta para `expo-router/entry`.
 
-| Caminho               | Responsabilidade                                                  |
-| --------------------- | ----------------------------------------------------------------- |
-| `src/app/`            | Rotas Expo Router, layouts, abas e telas de detalhe               |
-| `src/api/`            | Cliente HTTP, sessão, endpoints, QueryClient e schema gerado      |
-| `src/session/`        | Provider de sessão, estados e composição por capabilities         |
-| `src/catalog/`        | Queries, filtros, cidade persistida, horários e contatos          |
-| `src/wallet/`         | Queries, tipos, comprovantes, histórico e parsing de apresentação |
-| `src/maps/`           | Renderizadores Google/MapLibre, configuração e pins               |
-| `src/analytics/`      | Eventos de descoberta                                             |
-| `src/components/`     | Componentes reutilizáveis                                         |
-| `src/theme/`          | Tokens visuais e seleção de cores                                 |
-| `src/**/__tests__/`   | Testes próximos aos domínios                                      |
-| `app.json`, `assets/` | Configuração Expo, plugins e assets                               |
+| Caminho                | Responsabilidade                                                  |
+| ---------------------- | ----------------------------------------------------------------- |
+| `src/app/`             | Rotas Expo Router, layouts, abas e telas de detalhe               |
+| `src/api/`             | Cliente HTTP, sessão, endpoints, QueryClient e schema gerado      |
+| `src/session/`         | Provider de sessão, estados e composição por capabilities         |
+| `src/catalog/`         | Queries, filtros, cidade persistida, horários e contatos          |
+| `src/wallet/`          | Queries, tipos, comprovantes, histórico e parsing de apresentação |
+| `src/purchases/`       | Produtos, compra, pedidos e intenção de compra persistida         |
+| `src/place/`           | Página do lugar: cabeçalho, ações, benefício, informações         |
+| `src/explorer/`        | Favoritos, seguidos, roteiros, interesses e "Para você"           |
+| `src/partner-content/` | Experiências, eventos e vitrine publicados pelo parceiro          |
+| `src/reviews/`         | Avaliações, fotos e denúncias                                     |
+| `src/concierge/`       | Assistente de descoberta ancorado no catálogo                     |
+| `src/maps/`            | Renderizadores Google/MapLibre, configuração e pins               |
+| `src/analytics/`       | Eventos de descoberta                                             |
+| `src/components/`      | Componentes reutilizáveis                                         |
+| `src/theme/`           | Tokens visuais e seleção de cores                                 |
+| `src/**/__tests__/`    | Testes próximos aos domínios                                      |
+| `app.json`, `assets/`  | Configuração Expo, plugins e assets                               |
 
 Use `@/*` para `src/*` e `@/assets/*` para `assets/*`, conforme `tsconfig.json`. Preserve nomes kebab-case, convenções especiais de rotas (`_layout.tsx`, `[param]`, grupos entre parênteses), componentes PascalCase e variáveis/funções camelCase. A formatação é do Prettier (`.prettierrc.json`, os mesmos valores do backend: sem ponto e vírgula, aspas simples, 100 colunas); rode `pnpm format` antes de commitar. Reformatações mecânicas entram em `.git-blame-ignore-revs`.
 
@@ -53,7 +58,9 @@ Abas: visitante tem Explorar/Entrar; consumidor tem Explorar/Carteira/Conta; par
 
 Use `src/theme/tokens.ts` e `useColors`; os tokens derivam de `../experimente-plus/inertia/css/app.css`. Preserve `primary` para marca/navegação, `cta` para conversão, estados semânticos e suporte claro/escuro. A paleta e os componentes do template Expo (`src/constants/theme.ts`, `ThemedText`, `ThemedView`) foram removidos; não os recrie nem crie outra paleta.
 
-Acessibilidade: controles têm `accessibilityRole`, nome em português quando o texto visível falta ou é ambíguo e `accessibilityState` para seleção, marcação, expansão e desabilitado; alvos de toque têm ao menos 44 dentro do próprio pai (no Android o `hitSlop` não passa da borda do pai). Mensagens que surgem após uma ação usam `useAnnouncement`/`announce` (`src/components/announce.ts`), sem `accessibilityLiveRegion` no mesmo texto. Ícones que só repetem o texto ao lado recebem `decorative`; imagens com significado recebem `accessible` e descrição. Limites de linha passam por `useLineCap` (`src/theme/font-scale.ts`) e caixas com texto usam `minHeight`, não altura fixa. Os pares de cor de texto estão em `src/theme/__tests__/contrast.test.ts`.
+Acessibilidade: controles têm `accessibilityRole`, nome em português quando o texto visível falta ou é ambíguo e `accessibilityState` para seleção, marcação, expansão e desabilitado; alvos de toque têm ao menos 44 dentro do próprio pai (no Android o `hitSlop` não passa da borda do pai). Mensagens que surgem após uma ação usam `useAnnouncement`/`announce` (`src/components/announce.ts`), sem `accessibilityLiveRegion` no mesmo texto. Ícones que só repetem o texto ao lado recebem `decorative`; imagens com significado recebem `accessible` e descrição. Limites de linha passam por `useLineCap` (`src/theme/font-scale.ts`) e caixas com texto usam `minHeight`, não altura fixa. Blocos lado a lado (preço e ação, duas datas, total e botão, título e ação de seção) empilham com `useStackedLayout` a partir do tamanho "Grande" do sistema (1.3); cartões de trilho horizontal usam `useCompactCardWidth`, que cresce com o texto. Os pares de cor de texto estão em `src/theme/__tests__/contrast.test.ts`.
+
+Estados: vazio e falha usam `EmptyState` com uma ação; carregamento usa `ContentSkeleton` ou `useLoadingCopy` (`src/api/online.ts`), que dizem "Sem conexão com a internet" enquanto o `onlineManager` estiver offline, porque o TanStack pausa a busca em vez de falhar; `usePullToRefresh` não gira sem conexão. Telas com a faixa azul sob a barra de status chamam `useBandStatusBar`. Links sem rota caem em `src/app/+not-found.tsx`.
 
 ## Ambiente e comandos
 
@@ -72,7 +79,7 @@ Execute na raiz deste repositório. `mise.toml` define Node 24, pnpm 11, Java Te
 | `pnpm lint`                      | `expo lint` com `eslint-config-expo` e a regra do Prettier; roda na CI      |
 | `pnpm format`                    | Formatar com Prettier (`pnpm format:check` só confere)                      |
 
-O app usa módulos nativos e `expo-dev-client`; valide com development build, especialmente câmera, mapas, SecureStore e MMKV. Android é construído localmente; o ADR prevê serviço remoto para iOS/distribuição. `eas.json` define os perfis `development`, `preview` e `production` e o envio às lojas; `app.config.ts` recusa build de produção sem URL de API e estilo de mapa de produção. O que falta para publicar depende do contratante e está em [`docs/store-submission.md`](docs/store-submission.md).
+O app usa módulos nativos e `expo-dev-client`; valide com development build, especialmente câmera, mapas, SecureStore e MMKV. Android é construído localmente; iOS e distribuição usam serviço remoto (EAS). `eas.json` define os perfis `development`, `preview` e `production` e o envio às lojas; `app.config.ts` recusa build de produção sem URL de API e estilo de mapa de produção. O que falta para publicar depende do contratante e está em [`docs/store-submission.md`](docs/store-submission.md).
 
 `android/`, `ios/` e `.expo/` são gerados e ignorados. Mudanças permanentes de configuração nativa devem partir de `app.json` e config plugins. Preserve customizações locais antes de qualquer regeneração limpa.
 
@@ -84,7 +91,7 @@ Não use `pnpm reset-project` como limpeza: o script do template move ou remove 
 
 As variáveis `EXPO_PUBLIC_*` entram no bundle e não guardam segredos. Não versione `.env`, credenciais de assinatura ou tokens. Use `resolveMediaUrl` para URLs relativas de mídia retornadas pela API.
 
-`EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` seleciona o renderizador Google; sem ela, o código usa MapLibre. Em homologação, defina no `.env` local `EXPO_PUBLIC_MAP_STYLE_URL=https://midia-experimente.mahina.fun/maps/norte-parana/style.json`: é a URL pública esperada, alias estável do basemap regional Protomaps servido do R2 próprio (ADR 0026 do backend, caminho A). Sem a variável, permanece o fallback `demotiles.maplibre.org`, cujo tileset termina no zoom 6 e não fornece detalhe de rua para a câmera inicial no zoom 11. MapLibre Native lê fontes `pmtiles://` diretamente; não adicione a biblioteca JavaScript `pmtiles`. Preserve os dois renderizadores e valide a configuração nativa de cada provedor.
+`EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` seleciona o renderizador Google; sem ela, o código usa MapLibre. Em homologação, defina no `.env` local `EXPO_PUBLIC_MAP_STYLE_URL=https://midia-experimente.mahina.fun/maps/norte-parana/style.json`: é a URL pública esperada, alias estável do basemap regional Protomaps servido do R2 próprio (caminho A da antiga ADR 0026 do backend). Sem a variável, permanece o fallback `demotiles.maplibre.org`, cujo tileset termina no zoom 6 e não fornece detalhe de rua para a câmera inicial no zoom 11. MapLibre Native lê fontes `pmtiles://` diretamente; não adicione a biblioteca JavaScript `pmtiles`. Preserve os dois renderizadores e valide a configuração nativa de cada provedor.
 
 A validação visual em Android e iOS reais ainda não foi feita e exige development build: zoom 11 a 15 nas três cidades, acentos nos rótulos e atribuição Protomaps/OpenStreetMap visível.
 

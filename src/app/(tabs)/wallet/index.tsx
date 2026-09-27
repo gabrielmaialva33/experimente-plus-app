@@ -1,7 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useFocusEffect, useRouter } from 'expo-router'
-import { setStatusBarStyle } from 'expo-status-bar'
-import { useCallback } from 'react'
+import { useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -20,6 +18,7 @@ import { orderState } from '@/purchases/order-state'
 import { usePurchases } from '@/purchases/queries'
 import { useSession } from '@/session/context'
 import { useLineCap } from '@/theme/font-scale'
+import { useBandStatusBar } from '@/theme/system-bars'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
@@ -44,12 +43,7 @@ export default function WalletScreen() {
   useAnnouncement(wallet.isError && 'Não foi possível atualizar a carteira')
 
   // The band runs under the status bar, so its icons turn light while the tab shows.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle('light')
-      return () => setStatusBarStyle('auto')
-    }, [])
-  )
+  useBandStatusBar()
 
   if (status !== 'authenticated') {
     return (

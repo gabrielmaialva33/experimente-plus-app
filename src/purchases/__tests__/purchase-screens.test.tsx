@@ -223,6 +223,35 @@ it('offers an existing pending order rather than a second charge', async () => {
   })
 })
 
+it.each(['cancelled', 'failed'] as const)(
+  'lets a %s order without access give way to a new purchase of the same product',
+  async (status) => {
+    api.createPurchase.mockResolvedValue({ id: 'c0ffee00-9cd5-4a48-9f32-731a11cbe7f1' })
+    queries.usePurchases.mockReturnValue({ data: { purchases: [{ ...pending, status }] } })
+    const view = await page(<EditionScreen />)
+    expect(view.queryByText(/Você já tem um pedido deste produto/)).toBeNull()
+    expect(view.queryByRole('button', { name: 'Acompanhar pedido' })).toBeNull()
+    await fireEvent.press(view.getByRole('radio', { name: 'Pix' }))
+    await fireEvent.press(view.getByRole('checkbox', { name: /^Li e aceito as condições/ }))
+    await fireEvent.press(view.getByRole('button', { name: 'Ir para o pagamento' }))
+    await waitFor(() => expect(api.createPurchase).toHaveBeenCalledTimes(1))
+  }
+)
+
+it('keeps following the open order when an older one of the same product was cancelled', async () => {
+  const cancelled = {
+    ...pending,
+    id: 'c0ffee00-0000-4a48-9f32-731a11cbe7f1',
+    status: 'cancelled' as const,
+  }
+  queries.usePurchases.mockReturnValue({ data: { purchases: [cancelled, pending] } })
+  const view = await page(<EditionScreen />)
+  await fireEvent.press(view.getByRole('button', { name: 'Acompanhar pedido' }))
+  expect(router.push).toHaveBeenCalledWith('/wallet/pedido/98b8ff53-9cd5-4a48-9f32-731a11cbe7f1', {
+    withAnchor: true,
+  })
+})
+
 it('can resume a persisted intention after restart even when the edition is omitted from the public catalog', async () => {
   const body: CreatePurchaseRequest = {
     edition_id: 2,
@@ -250,6 +279,17 @@ it('a timeout stays uncertain and does not retry automatically or open the walle
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
+it('draws each next step number as a circle at the top of its step, not a bar as tall as the text', async () => {
+  const view = await page(<OrderScreen />)
+  for (const step of [1, 2, 3]) {
+    expect(view.getByTestId(`order-step-${step}`)).toHaveStyle({
+      alignSelf: 'flex-start',
+      minHeight: 28,
+      minWidth: 28,
+    })
+  }
+})
+
 it('checkout returning successfully does not confirm payment or expose wallet access', async () => {
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
   const view = await page(<OrderScreen />)
@@ -257,6 +297,35 @@ it('checkout returning successfully does not confirm payment or expose wallet ac
   expect(view.getByText('Pedido pendente')).toBeOnTheScreen()
   expect(view.queryByRole('button', { name: 'Consultar carteira' })).toBeNull()
   expect(router.navigate).not.toHaveBeenCalled()
+})
+
+it('keeps the last answer on a failed refresh and says it may be old, never that it is empty', async () => {
+  const failed = { isError: true, error: new Error('502'), refetch: jest.fn() }
+  queries.usePurchaseEditions.mockReturnValue({ ...failed, data: { products: [edition] } })
+  queries.usePurchases.mockReturnValue({ ...failed, data: { purchases: [] } })
+  const view = await page(<EditionsScreen />)
+  expect(
+    view.getByText('Não foi possível atualizar os produtos. A lista abaixo é a da última consulta.')
+  ).toBeOnTheScreen()
+  expect(view.queryByText(/Os produtos não estão disponíveis agora/)).toBeNull()
+  expect(view.getByRole('button', { name: /Edição 2026/ })).toBeOnTheScreen()
+  expect(view.getByText(/Não foi possível atualizar os pedidos/)).toBeOnTheScreen()
+  // An unanswered refresh does not know there are no orders.
+  expect(view.queryByText('Você ainda não tem pedidos.')).toBeNull()
+})
+
+it('says a first load waits for the connection instead of loading forever', async () => {
+  const { onlineManager } = jest.requireActual('@tanstack/react-query')
+  queries.usePurchaseEditions.mockReturnValue({ isPending: true })
+  queries.usePurchases.mockReturnValue({ isPending: true })
+  onlineManager.setOnline(false)
+  try {
+    const view = await page(<EditionsScreen />)
+    expect(view.queryByText('Carregando produtos…')).toBeNull()
+    expect(view.getAllByText(/^Sem conexão com a internet\./)).toHaveLength(2)
+  } finally {
+    onlineManager.setOnline(true)
+  }
 })
 
 it('renders an empty public catalog as an empty state, while keeping existing orders accessible', async () => {

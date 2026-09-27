@@ -1,9 +1,19 @@
 import { StyleSheet, View } from 'react-native'
 
+import { OFFLINE_MESSAGE, OFFLINE_WAITING, useOnline } from '@/api/online'
+import { useAnnouncement } from '@/components/announce'
+import { EmptyState } from '@/components/empty-state'
 import { radius, spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-/** Fixed placeholders: no animation, private data, or speculative actions. */
+/**
+ * Fixed placeholders: no animation, private data, or speculative actions.
+ *
+ * Offline, a first load does not fail: the query layer pauses it until the
+ * connection returns. Bones that never fill would read as a hang, so the
+ * placeholder says what it is waiting for instead; the content replaces it by
+ * itself when the fetch resumes.
+ */
 export function ContentSkeleton({
   label,
   variant = 'list',
@@ -12,8 +22,23 @@ export function ContentSkeleton({
   variant?: 'list' | 'catalog' | 'detail' | 'presentation'
 }) {
   const colors = useColors()
+  const online = useOnline()
+  useAnnouncement(!online && `${OFFLINE_MESSAGE} ${OFFLINE_WAITING}`)
   const repeated = variant === 'list' || variant === 'catalog'
   const bone = { backgroundColor: colors.border, borderRadius: radius.sm }
+
+  if (!online) {
+    return (
+      <View style={[styles.page, { backgroundColor: colors.background }]}>
+        <EmptyState
+          testID="content-offline"
+          icon="cloud-offline-outline"
+          title={OFFLINE_MESSAGE.replace(/\.$/, '')}
+          text={OFFLINE_WAITING}
+        />
+      </View>
+    )
+  }
 
   return (
     <View

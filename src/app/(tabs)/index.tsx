@@ -26,7 +26,7 @@ import { SearchField } from '@/components/search-field'
 import { SectionHeader } from '@/components/section-header'
 import { ASK_ACTION_ROOM, DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
-import { useLineCap } from '@/theme/font-scale'
+import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -66,6 +66,9 @@ export default function ExploreScreen() {
     reveal: revealField,
   } = useKeyboardList(scrollFeedTo, ASK_ACTION_ROOM)
   const cityLines = useLineCap(1)
+  // With large text the Concierge's card puts its mark above the words, which then
+  // take the card's width instead of a column of one or two words beside two circles.
+  const stacked = useStackedLayout()
   // A phone's column, or a grid of places on a tablet and an unfolded phone.
   const { frame, columns, columnWidth } = useFeedLayout()
 
@@ -370,13 +373,14 @@ export default function ExploreScreen() {
         onPress={() => setAsking(true)}
         style={({ pressed }) => [
           styles.concierge,
+          stacked && styles.conciergeStacked,
           { backgroundColor: colors.primarySoft, opacity: pressed ? 0.9 : 1 },
         ]}
       >
         <View style={[styles.conciergeIcon, { backgroundColor: colors.primary }]}>
           <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primaryForeground} />
         </View>
-        <View style={styles.conciergeCopy}>
+        <View style={[styles.conciergeCopy, stacked && styles.conciergeCopyStacked]}>
           <Text style={[styles.conciergeTitle, { color: colors.primaryAccent }]}>
             Não sabe por onde começar?
           </Text>
@@ -384,9 +388,11 @@ export default function ExploreScreen() {
             Conte o que procura e o Concierge sugere lugares daqui.
           </Text>
         </View>
-        <View style={[styles.conciergeGo, { backgroundColor: colors.card }]}>
-          <Ionicons name="arrow-forward" size={20} color={colors.primaryAccent} />
-        </View>
+        {stacked ? null : (
+          <View style={[styles.conciergeGo, { backgroundColor: colors.card }]}>
+            <Ionicons name="arrow-forward" size={20} color={colors.primaryAccent} />
+          </View>
+        )}
       </Pressable>
     </View>
   )
@@ -557,7 +563,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 48,
   },
+  conciergeStacked: { alignItems: 'flex-start', flexDirection: 'column' },
   conciergeCopy: { flex: 1, gap: 2, minWidth: 0 },
+  // In a column, `flex: 1` would mean a zero height.
+  conciergeCopyStacked: { alignSelf: 'stretch', flex: 0 },
   conciergeTitle: { ...typography.label, ...textWeight('700'), fontSize: 16, lineHeight: 21 },
   conciergeText: typography.meta,
   conciergeGo: {

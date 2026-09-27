@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { useLoadingCopy } from '@/api/online'
 import type { Purchase, PurchaseProduct } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
@@ -28,6 +29,8 @@ export default function PurchaseEditionsScreen() {
   const editions = usePurchaseEditions()
   const orders = usePurchases()
   const refreshControl = usePullToRefresh(editions.refetch, orders.refetch)
+  const loadingProducts = useLoadingCopy('Carregando produtos…')
+  const loadingOrders = useLoadingCopy('Carregando pedidos…')
 
   return (
     <ScrollView
@@ -40,7 +43,7 @@ export default function PurchaseEditionsScreen() {
           title="Pacotes e vouchers"
           hint="Explorar lugares é livre. Comprar um pacote ou voucher é opcional."
         />
-        {editions.isPending ? <Note>Carregando produtos…</Note> : null}
+        {editions.isPending ? <Note>{loadingProducts}</Note> : null}
         {editions.isError ? (
           <>
             <Note>Os produtos não estão disponíveis agora. Você pode continuar explorando.</Note>
@@ -61,7 +64,7 @@ export default function PurchaseEditionsScreen() {
 
       <View style={styles.section}>
         <SectionHeader title="Meus pedidos" />
-        {orders.isPending ? <Note>Carregando pedidos…</Note> : null}
+        {orders.isPending ? <Note>{loadingOrders}</Note> : null}
         {orders.isError ? (
           <>
             <Note>

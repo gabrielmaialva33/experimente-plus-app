@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { useLoadingCopy } from '@/api/online'
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
 import { useAnnouncement } from '@/components/announce'
@@ -49,6 +50,7 @@ export default function PurchaseOrderScreen() {
   const [openingError, setOpeningError] = useState(false)
   const colors = useColors()
   useAnnouncement(openingError && OPENING_FAILED)
+  const consulting = useLoadingCopy('Consultando pedido…')
 
   const hasOrder = Boolean(order)
   const orderStatus = order?.status
@@ -65,7 +67,7 @@ export default function PurchaseOrderScreen() {
   if (query.isPending)
     return (
       <PurchasePage>
-        <PurchaseText>Consultando pedido…</PurchaseText>
+        <PurchaseText>{consulting}</PurchaseText>
       </PurchasePage>
     )
   if (query.isError || !order || !state)

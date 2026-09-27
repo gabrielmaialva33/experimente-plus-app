@@ -15,6 +15,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 
+import { useLoadingCopy } from '@/api/online'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
@@ -134,6 +135,8 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   const [titleSpan, setTitleSpan] = useState(TITLE_ESTIMATE)
   const header = useCompactHeader(titleSpan[0], titleSpan[1])
   const sending = useRef(false)
+  const loadingProduct = useLoadingCopy('Carregando produto…')
+  const consultingOrders = useLoadingCopy('Consultando seus pedidos…')
   // Only an order that still holds the product; a cancelled or failed one is history.
   const existing = orders.data?.purchases.find(
     (order) =>
@@ -223,7 +226,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       <>
         {strip}
         <Notice>
-          <Body>Carregando produto…</Body>
+          <Body>{loadingProduct}</Body>
         </Notice>
       </>
     )
@@ -313,7 +316,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
               <RetryPurchase error={orders.error} onRetry={() => void orders.refetch()} />
             </>
           ) : orders.isPending ? (
-            <Body>Consultando seus pedidos…</Body>
+            <Body>{consultingOrders}</Body>
           ) : prior || start.isError ? (
             <>
               <Body>{UNCONFIRMED}</Body>

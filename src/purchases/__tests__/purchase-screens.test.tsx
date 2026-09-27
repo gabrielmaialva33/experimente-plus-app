@@ -288,6 +288,20 @@ it('checkout returning successfully does not confirm payment or expose wallet ac
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
+it('says a first load waits for the connection instead of loading forever', async () => {
+  const { onlineManager } = jest.requireActual('@tanstack/react-query')
+  queries.usePurchaseEditions.mockReturnValue({ isPending: true })
+  queries.usePurchases.mockReturnValue({ isPending: true })
+  onlineManager.setOnline(false)
+  try {
+    const view = await page(<EditionsScreen />)
+    expect(view.queryByText('Carregando produtos…')).toBeNull()
+    expect(view.getAllByText(/^Sem conexão com a internet\./)).toHaveLength(2)
+  } finally {
+    onlineManager.setOnline(true)
+  }
+})
+
 it('renders an empty public catalog as an empty state, while keeping existing orders accessible', async () => {
   queries.usePurchaseEditions.mockReturnValue({ data: { editions: [], offers: [], products: [] } })
   queries.usePurchases.mockReturnValue({ data: { purchases: [pending] } })

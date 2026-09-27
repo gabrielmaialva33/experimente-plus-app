@@ -1,7 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render } from '@testing-library/react-native'
 import type { ReactElement } from 'react'
-import { ScrollView, Text, type RefreshControlProps } from 'react-native'
+import { AccessibilityInfo, ScrollView, Text, type RefreshControlProps } from 'react-native'
 
 import MyReviewsScreen from '@/app/conta/avaliacoes'
 import ItinerariesScreen from '@/app/roteiros/index'
@@ -97,6 +97,35 @@ it('refetches what the list shows and spins only until those answers arrive', as
   // A failed refetch shows as the query's own error; the spinner still stops.
   await act(async () => settle())
   expect(refreshAround(view, 'Lista').refreshing).toBe(false)
+})
+
+describe('without a connection', () => {
+  beforeEach(() => jest.clearAllMocks())
+  afterEach(() => onlineManager.setOnline(true))
+
+  it('does not start a pull the query layer would pause, and says why', async () => {
+    const spoken = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    onlineManager.setOnline(false)
+    const view = await render(<List />)
+
+    await act(async () => refreshAround(view, 'Lista').onRefresh?.())
+    expect(results).not.toHaveBeenCalled()
+    expect(orders).not.toHaveBeenCalled()
+    expect(refreshAround(view, 'Lista').refreshing).toBe(false)
+    expect(spoken).toHaveBeenCalledWith('Sem conexão com a internet. A lista continua como estava.')
+  })
+
+  it('lets go of the spinner when the connection drops during the pull', async () => {
+    const spoken = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    const view = await render(<List />)
+
+    await act(async () => refreshAround(view, 'Lista').onRefresh?.())
+    expect(refreshAround(view, 'Lista').refreshing).toBe(true)
+    // The paused refetch never settles; losing the connection is what ends the wait.
+    await act(async () => onlineManager.setOnline(false))
+    expect(refreshAround(view, 'Lista').refreshing).toBe(false)
+    expect(spoken).toHaveBeenCalledWith('Sem conexão com a internet. A lista continua como estava.')
+  })
 })
 
 describe('lists the server fills can be pulled to refresh', () => {

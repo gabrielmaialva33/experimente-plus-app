@@ -301,6 +301,8 @@ describe.each(['light', 'dark'] as const)('canonical foundation in %s', (scheme)
     expect(stack.contentStyle.backgroundColor).toBe(colors.surfaceBase)
     expect(stack.headerShadowVisible).toBe(false)
     expect(stack.headerTransparent).toBe(false)
+    // Titles in the display face, like every page title.
+    expect(stack.headerTitleStyle.fontFamily).toBe(typography.heading.fontFamily)
   })
 })
 

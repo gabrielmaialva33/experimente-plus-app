@@ -1,4 +1,4 @@
-import type { Colors } from './tokens'
+import { typography, type Colors } from './tokens'
 
 /** Native chrome participates in the same planes as React Native content. */
 export const navigationColors = (colors: Colors) => ({
@@ -16,7 +16,13 @@ export const screenHeaderOptions = (colors: Colors) => ({
   headerTitleAlign: 'left' as const,
   headerStyle: { backgroundColor: colors.surfaceBase },
   headerTintColor: colors.primary,
-  headerTitleStyle: { color: colors.foreground },
+  // The bar names the screen in the display face, as the page titles do; the
+  // platform's default face made "Criar conta" read as another app's header.
+  headerTitleStyle: {
+    color: colors.foreground,
+    fontFamily: typography.heading.fontFamily,
+    fontSize: 20,
+  },
   headerShadowVisible: false,
   headerTransparent: false,
 })

@@ -8,6 +8,7 @@ import { Avatar } from '@/components/avatar'
 import { useContentFrame } from '@/components/content-frame'
 import { ListGroup, ListRow } from '@/components/list-row'
 import { ScreenHeader } from '@/components/screen-header'
+import { openManual } from '@/help/manual'
 import { useSession } from '@/session/context'
 import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
@@ -19,8 +20,8 @@ const HEADER_OPTIONS = { headerShown: false }
 
 /**
  * The account hub (audit A23): who is signed in, then the person's own things,
- * preferences and the account itself, each one row that opens its screen.
- * Editing the profile has a screen of its own, so a hub is not a form.
+ * preferences, the manual and the account itself, each one row that opens its
+ * screen. Editing the profile has a screen of its own, so a hub is not a form.
  */
 export default function AccountScreen() {
   const colors = useColors()
@@ -123,6 +124,17 @@ export default function AccountScreen() {
               label="Cidade"
               value={citySlug ? city?.name : 'Nenhuma escolhida'}
               onPress={() => router.push('/conta/cidade')}
+            />
+          </ListGroup>
+
+          {/* The whole manual, in the browser: the one help that is not about a single screen. */}
+          <ListGroup>
+            <ListRow
+              icon="help-circle-outline"
+              label="Ajuda e manual"
+              external
+              onPress={() => void openManual()}
+              testID="account-manual"
             />
           </ListGroup>
 

@@ -12,6 +12,7 @@ import { useContentFrame } from '@/components/content-frame'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { ScreenHeader } from '@/components/screen-header'
 import { TextField } from '@/components/text-field'
+import { HelpLink } from '@/help/help-link'
 import { useSession } from '@/session/context'
 import { useBandStatusBar } from '@/theme/system-bars'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -180,6 +181,10 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
               purchase ? router.replace('/cadastro?origin=compra') : router.push('/cadastro')
             }
           />
+
+          {/* A visitor's way into the manual, under everything the tab is for. The purchase
+              step keeps to its task: the product it came from has its own help. */}
+          {purchase ? null : <HelpLink label="Como usar o app" align="center" />}
         </View>
       </KeyboardForm>
     </View>

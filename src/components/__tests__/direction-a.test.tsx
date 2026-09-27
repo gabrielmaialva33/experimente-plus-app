@@ -216,6 +216,20 @@ it.each(['light', 'dark'] as const)(
   }
 )
 
+it.each(['light', 'dark'] as const)(
+  'fills a strong date tile apart from the soft plane a card without a photo lays behind it, in %s',
+  async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    const view = await render(
+      <DateTile iso="2026-09-29T02:30:00Z" timeZone="America/Sao_Paulo" tone="strong" />
+    )
+    const tile = StyleSheet.flatten(view.getByTestId('date-tile').props.style)
+    expect(tile.backgroundColor).toBe(palette[mode].primary)
+    expect(tile.backgroundColor).not.toBe(palette[mode].primarySoft)
+    expect(view.getByText('28')).toHaveStyle({ color: palette[mode].primaryForeground })
+  }
+)
+
 it('keeps a fallback behind a compact card without a photo', async () => {
   const view = await render(
     <CompactCard

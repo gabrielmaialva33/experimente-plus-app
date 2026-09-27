@@ -33,9 +33,11 @@ export function DateTile({
   const colors = useColors()
   const value = parts(iso, timeZone)
   if (!value) return null
+  // Strong is the brand fill. Not `chrome`: in dark mode the band's colour is
+  // the very `primarySoft` a photo-less card lays behind the tile, which hid it.
   const appearance =
     tone === 'strong'
-      ? { background: colors.chrome, foreground: colors.chromeForeground }
+      ? { background: colors.primary, foreground: colors.primaryForeground }
       : { background: colors.primarySoft, foreground: colors.primaryAccent }
 
   return (

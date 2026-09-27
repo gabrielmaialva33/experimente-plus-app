@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
@@ -292,23 +292,14 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
           disabled={cancel.isPending}
           onPress={() => setConfirming(false)}
         />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: cancel.isPending }}
+        <Button
+          label={cancel.isPending ? 'Cancelando…' : 'Sim, cancelar pedido'}
+          accessibilityLabel="Sim, cancelar pedido"
+          variant="destructive"
+          size={44}
           disabled={cancel.isPending}
           onPress={() => cancel.mutate()}
-          style={({ pressed }) => [
-            styles.destructive,
-            {
-              backgroundColor: colors.destructive,
-              opacity: cancel.isPending ? 0.6 : pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.destructiveLabel, { color: colors.destructiveForeground }]}>
-            {cancel.isPending ? 'Cancelando…' : 'Sim, cancelar pedido'}
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   )
@@ -354,12 +345,4 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'flex-end',
   },
-  destructive: {
-    alignItems: 'center',
-    borderRadius: radius.pill,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: spacing.gutter,
-  },
-  destructiveLabel: { ...typography.label, ...textWeight('700') },
 })

@@ -5,7 +5,7 @@ import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
-export type ButtonVariant = 'primary' | 'cta' | 'outline' | 'ghost'
+export type ButtonVariant = 'primary' | 'cta' | 'outline' | 'ghost' | 'destructive'
 
 interface ButtonProps {
   label: string
@@ -57,6 +57,12 @@ export function Button({
         cta: { background: colors.cta, border: colors.cta, foreground: colors.ctaForeground },
         outline: { background: 'transparent', border: colors.primary, foreground: colors.primary },
         ghost: { background: 'transparent', border: 'transparent', foreground: colors.primary },
+        // Only for the confirming step of an action that cannot be undone.
+        destructive: {
+          background: colors.destructive,
+          border: colors.destructive,
+          foreground: colors.destructiveForeground,
+        },
       }[variant]
 
   return (

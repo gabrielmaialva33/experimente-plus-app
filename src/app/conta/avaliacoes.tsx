@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router'
+import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { announce } from '@/components/announce'
@@ -7,6 +8,7 @@ import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
+import type { PaginatedMyReviews } from '@/api/reviews'
 import { useDeleteReview, useMyReviews } from '@/reviews/queries'
 import { formatDate } from '@/reviews/review-card'
 import { Stars } from '@/reviews/stars'
@@ -41,7 +43,6 @@ export default function MyReviewsScreen() {
   const colors = useColors()
   const router = useRouter()
   const query = useMyReviews({ perPage: 20 })
-  const remove = useDeleteReview()
   const refreshControl = usePullToRefresh(query.refetch)
 
   if (query.isPending) {
@@ -74,52 +75,105 @@ export default function MyReviewsScreen() {
           />
         )
       }
-      renderItem={({ item }) => (
-        <View
-          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-          testID={`my-review-${item.id}`}
-        >
-          <View style={styles.header}>
-            <Stars rating={item.rating} />
-            <Badge label={statusLabel(item)} tone={statusTone(item)} />
-          </View>
+      renderItem={({ item }) => <MyReviewCard review={item} />}
+    />
+  )
+}
 
-          <Text style={[styles.date, { color: colors.mutedForeground }]}>
-            {formatDate(item.created_at)}
-            {item.edited_at ? ' · editada' : ''}
+/**
+ * One review of this person. Deleting cannot be undone, so it asks first, in
+ * the card, and says so when the server refuses; a deleted review keeps its
+ * status and no longer offers actions.
+ */
+type MyReview = PaginatedMyReviews['data'][number]
+
+function MyReviewCard({ review }: { review: MyReview }) {
+  const colors = useColors()
+  const router = useRouter()
+  const remove = useDeleteReview()
+  const [confirming, setConfirming] = useState(false)
+  const when = formatDate(review.created_at)
+  const archived = review.status === 'archived'
+
+  return (
+    <View
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      testID={`my-review-${review.id}`}
+    >
+      <View style={styles.header}>
+        <Stars rating={review.rating} />
+        <Badge label={statusLabel(review)} tone={statusTone(review)} />
+      </View>
+
+      <Text style={[styles.date, { color: colors.mutedForeground }]}>
+        {when}
+        {review.edited_at ? ' · editada' : ''}
+      </Text>
+
+      {review.comment ? (
+        <Text style={[styles.body, { color: colors.foreground }]}>{review.comment}</Text>
+      ) : null}
+
+      {archived ? null : confirming ? (
+        <View style={[styles.confirm, { backgroundColor: colors.destructiveSoft }]}>
+          <Text style={[styles.confirmTitle, { color: colors.foreground }]}>
+            Excluir esta avaliação?
           </Text>
-
-          {item.comment ? (
-            <Text style={[styles.body, { color: colors.foreground }]}>{item.comment}</Text>
+          <Text style={[styles.date, { color: colors.destructiveAccent }]}>
+            Ela sai da página do lugar, com as fotos. Não dá para desfazer.
+          </Text>
+          {remove.isError ? (
+            <Text accessibilityRole="alert" style={[styles.date, { color: colors.foreground }]}>
+              Não foi possível excluir agora. Tente de novo.
+            </Text>
           ) : null}
-
-          <View style={styles.actions}>
-            {/* Every card has the same two actions: each names the review it acts on. */}
+          <View style={styles.confirmActions}>
             <Button
-              label="Editar"
-              accessibilityLabel={`Editar avaliação de ${formatDate(item.created_at)}`}
-              icon="create-outline"
-              variant="outline"
+              label="Manter"
+              variant="ghost"
               size={44}
-              onPress={() => router.push(`/avaliar/editar/${item.id}`)}
+              disabled={remove.isPending}
+              onPress={() => setConfirming(false)}
             />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Excluir avaliação de ${formatDate(item.created_at)}`}
-              accessibilityState={{ disabled: remove.isPending }}
+            <Button
+              label={remove.isPending ? 'Excluindo…' : 'Sim, excluir'}
+              accessibilityLabel={`Sim, excluir avaliação de ${when}`}
+              variant="destructive"
+              size={44}
               disabled={remove.isPending}
               onPress={() =>
-                remove.mutate(item.id, { onSuccess: () => announce('Avaliação excluída.') })
+                remove.mutate(review.id, {
+                  onSuccess: () => announce('Avaliação excluída.'),
+                  onError: () => announce('Não foi possível excluir a avaliação agora.'),
+                })
               }
-              style={styles.delete}
-              testID={`delete-review-${item.id}`}
-            >
-              <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>Excluir</Text>
-            </Pressable>
+              testID={`confirm-delete-review-${review.id}`}
+            />
           </View>
         </View>
+      ) : (
+        <View style={styles.actions}>
+          {/* Every card has the same two actions: each names the review it acts on. */}
+          <Button
+            label="Editar"
+            accessibilityLabel={`Editar avaliação de ${when}`}
+            icon="create-outline"
+            variant="outline"
+            size={44}
+            onPress={() => router.push(`/avaliar/editar/${review.id}`)}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Excluir avaliação de ${when}`}
+            onPress={() => setConfirming(true)}
+            style={styles.delete}
+            testID={`delete-review-${review.id}`}
+          >
+            <Text style={[styles.deleteLabel, { color: colors.destructiveAccent }]}>Excluir</Text>
+          </Pressable>
+        </View>
       )}
-    />
+    </View>
   )
 }
 
@@ -150,5 +204,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   delete: { justifyContent: 'center', minHeight: minTouch, paddingHorizontal: spacing.md },
+  confirm: { borderRadius: radius.surface, gap: spacing.xs, padding: spacing.md },
+  confirmTitle: { ...typography.label, ...textWeight('700') },
+  confirmActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'flex-end',
+    paddingTop: spacing.xs,
+  },
   deleteLabel: { ...typography.label, ...textWeight('700') },
 })

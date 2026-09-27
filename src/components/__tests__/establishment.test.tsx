@@ -890,35 +890,7 @@ describe('place page in direction A', () => {
     expect(view.getByText('Cafés especiais.')).toBeOnTheScreen()
   })
 
-  it('opens on the event a link names: marks it and scrolls to it (A14)', async () => {
-    router.useLocalSearchParams.mockReturnValue({
-      city: 'londrina',
-      slug: 'cafe',
-      destaque: 'event-12',
-    })
-    content.usePartnerContent.mockImplementation((_id: number, kind: string) => ({
-      data: kind === 'events' ? [event(11), event(12)] : [],
-      isPending: false,
-      isError: false,
-    }))
-    const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
-    const view = await render(<EstablishmentScreen />)
-
-    expect(view.getByTestId('content-event-12')).toHaveStyle({ borderColor: palette.light.primary })
-    expect(view.getByTestId('content-event-11')).toHaveStyle({ borderColor: 'transparent' })
-    await fireEvent(view.getByTestId('place-body'), 'layout', {
-      nativeEvent: { layout: { y: 272 } },
-    })
-    await fireEvent(view.getByTestId('place-content'), 'layout', {
-      nativeEvent: { layout: { y: 900 } },
-    })
-    // Just below the compact bar (24 of status bar, a 60 row) with a 12 gap, not under it.
-    expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 900 - (24 + 60) - 12, animated: true })
-  })
-
-  // The item's section is the last one, under reviews and benefits that load on their own.
-  describe('while the page settles around a linked item', () => {
-    const scrollTo = () => (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+  describe('arriving from a link that names an item (A14)', () => {
     const arrive = async () => {
       router.useLocalSearchParams.mockReturnValue({
         city: 'londrina',
@@ -930,51 +902,40 @@ describe('place page in direction A', () => {
         isPending: false,
         isError: false,
       }))
-      const view = await render(<EstablishmentScreen />)
-      await fireEvent(view.getByTestId('place-body'), 'layout', {
-        nativeEvent: { layout: { y: 272 } },
-      })
-      await fireEvent(view.getByTestId('place-content'), 'layout', {
-        nativeEvent: { layout: { y: 1008 } },
-      })
-      return view
+      return render(<EstablishmentScreen />)
     }
+    const scrollTo = () => (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
 
-    it('follows the item when reviews arriving above push it down', async () => {
+    it('opens the item in its sheet and marks its card', async () => {
       const view = await arrive()
-      expect(scrollTo()).toHaveBeenLastCalledWith({ y: 272 + 1008 - 96, animated: true })
 
-      // The reviews load: the section moves a whole screen further down.
-      await fireEvent(view.getByTestId('place-content'), 'layout', {
-        nativeEvent: { layout: { y: 1666 } },
+      expect(view.getByTestId('content-sheet-event-12')).toBeOnTheScreen()
+      expect(view.queryByTestId('content-sheet-event-11')).toBeNull()
+      expect(view.getByTestId('content-event-12')).toHaveStyle({
+        borderColor: palette.light.primary,
       })
-      expect(scrollTo()).toHaveBeenLastCalledWith({ y: 272 + 1666 - 96, animated: true })
-
-      // A page that grows again asks once more, instead of keeping a clamped scroll.
-      scrollTo().mockClear()
-      await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
-      expect(scrollTo()).toHaveBeenCalledWith({ y: 272 + 1666 - 96, animated: true })
+      expect(view.getByTestId('content-event-11')).toHaveStyle({ borderColor: 'transparent' })
     })
 
-    it('leaves the page where the person takes it', async () => {
+    // Scrolling down to the card left the person at the foot of the place.
+    it('keeps the page at its top, under the sheet and after it closes', async () => {
       const view = await arrive()
-      await fireEvent(view.getByTestId('place-scroll'), 'touchStart')
-      scrollTo().mockClear()
-
-      await fireEvent(view.getByTestId('place-content'), 'layout', {
-        nativeEvent: { layout: { y: 1666 } },
-      })
-      await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
-      expect(scrollTo()).not.toHaveBeenCalled()
-    })
-
-    it('never moves a page opened without an item', async () => {
-      const view = await render(<EstablishmentScreen />)
       await fireEvent(view.getByTestId('place-body'), 'layout', {
         nativeEvent: { layout: { y: 272 } },
       })
       await fireEvent(view.getByTestId('place-scroll'), 'contentSizeChange', 411, 2400)
+
+      await fireEvent.press(view.getByRole('button', { name: 'Fechar' }))
+      expect(view.queryByTestId('content-sheet-event-12')).toBeNull()
       expect(scrollTo()).not.toHaveBeenCalled()
+    })
+
+    it('does not reopen the sheet once the person closed it', async () => {
+      const view = await arrive()
+      await fireEvent.press(view.getByRole('button', { name: 'Fechar' }))
+      await view.rerender(<EstablishmentScreen />)
+
+      expect(view.queryByTestId('content-sheet-event-12')).toBeNull()
     })
   })
 

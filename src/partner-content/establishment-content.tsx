@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -26,10 +26,8 @@ interface EstablishmentPartnerContentProps {
   establishmentName: string
   citySlug: string
   establishmentSlug: string
-  /** `experience-31`: the item a link asked to bring into view (audit A14). */
+  /** `experience-31`: the item a link asked to show (audit A14). */
   highlight?: string | null
-  /** Where, inside its parent, the section with that item sits. */
-  onHighlightLayout?: (y: number) => void
 }
 
 const KINDS: PartnerContentKind[] = ['experiences', 'events', 'showcase-items']
@@ -97,8 +95,11 @@ const coverOf = (item: PublishedContentView) =>
  * Each card keeps its heart in sight and puts share and report behind "⋯"
  * (A32); tapping it opens the whole item in a sheet.
  *
- * A link that names an item (A14) marks its card, brings the row to it and
- * tells the page where the section is, so the page can scroll there.
+ * A link that names an item (A14) opens it in the sheet, over the top of the
+ * place, and marks its card in the row. Scrolling the page down to the card
+ * instead left the person at the foot of the place, under the reviews, with
+ * the item as one small card among others; the sheet shows what they tapped,
+ * and closing it leaves the place where it starts.
  */
 export function EstablishmentPartnerContent({
   establishmentId,
@@ -107,7 +108,6 @@ export function EstablishmentPartnerContent({
   citySlug,
   establishmentSlug,
   highlight = null,
-  onHighlightLayout,
 }: EstablishmentPartnerContentProps) {
   const colors = useColors()
   const cardWidth = useCompactCardWidth()
@@ -129,19 +129,23 @@ export function EstablishmentPartnerContent({
   )
   const pending = experiences.isPending || events.isPending || showcase.isPending
   const marked = items.findIndex((item) => highlightKey(item.kind, item.id) === highlight)
+  const linked = marked >= 0 ? items[marked] : null
+
+  // Once per arrival: after the person closes it, the sheet stays closed.
+  const shown = useRef(false)
+  useEffect(() => {
+    if (linked && !shown.current) {
+      shown.current = true
+      setOpen(linked)
+    }
+  }, [linked])
 
   if (!pending && items.length === 0) return null
 
   const context = { establishmentName, citySlug, establishmentSlug }
 
   return (
-    <View
-      style={styles.section}
-      testID="place-content"
-      onLayout={(event) => {
-        if (marked >= 0) onHighlightLayout?.(event.nativeEvent.layout.y)
-      }}
-    >
+    <View style={styles.section} testID="place-content">
       <SectionHeader title="Para viver aqui" />
       {pending && items.length === 0 ? (
         <Text style={[styles.body, { color: colors.mutedForeground }]}>

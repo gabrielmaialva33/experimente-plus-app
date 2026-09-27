@@ -112,7 +112,7 @@ function Detail({
 }: {
   detail: EstablishmentDetail
   citySlug: string
-  /** An experience or event the link asked to bring into view (audit A14). */
+  /** An experience or event the link asked to show (audit A14). */
   highlight: string | null
   colors: ReturnType<typeof useColors>
 }) {
@@ -125,7 +125,6 @@ function Detail({
   const offsets = useRef({
     body: null as number | null,
     reviews: null as number | null,
-    highlight: null as number | null,
   })
   // Brought just below the compact bar, which covers the page's top by then.
   const scrollTo = (section: number | null) => {
@@ -134,19 +133,6 @@ function Detail({
       y: offsetBelowBar(offsets.current.body + section, insets.top),
       animated: true,
     })
-  }
-
-  /**
-   * The item a link names sits in the last section, under benefits and reviews
-   * that load on their own. A single scroll at the item's first layout landed
-   * where it was then: reviews arriving above pushed it a screen further down,
-   * and a page still short at that moment clamped the scroll at its end. So the
-   * page follows the item every time the layout moves it, until the person
-   * touches the page; from then on, where it is belongs to them.
-   */
-  const following = useRef(highlight !== null)
-  const followHighlight = () => {
-    if (following.current) scrollTo(offsets.current.highlight)
   }
 
   /**
@@ -240,10 +226,6 @@ function Detail({
         testID="place-scroll"
         onScroll={header.onScroll}
         scrollEventThrottle={16}
-        onContentSizeChange={followHighlight}
-        onTouchStart={() => {
-          following.current = false
-        }}
         contentContainerStyle={styles.page}
       >
         <PlaceHero detail={detail} />
@@ -253,7 +235,6 @@ function Detail({
           testID="place-body"
           onLayout={(event) => {
             offsets.current.body = event.nativeEvent.layout.y
-            followHighlight()
           }}
         >
           <View style={styles.header}>
@@ -294,6 +275,17 @@ function Detail({
             </Text>
           ) : null}
 
+          {/* What the place offers comes before how to reach it and what others said:
+              it is the reason to go, and where a link to one of its items arrives. */}
+          <EstablishmentPartnerContent
+            establishmentId={detail.id}
+            timeZone={detail.city.timezone}
+            establishmentName={detail.name}
+            citySlug={citySlug}
+            establishmentSlug={detail.slug}
+            highlight={highlight}
+          />
+
           <PracticalInfo detail={detail} contacts={secondaryActions} />
 
           {detail.attributes.some((attribute) => attribute.value === true) ? (
@@ -321,19 +313,6 @@ function Detail({
               summary={detail.reviews}
             />
           </View>
-
-          <EstablishmentPartnerContent
-            establishmentId={detail.id}
-            timeZone={detail.city.timezone}
-            establishmentName={detail.name}
-            citySlug={citySlug}
-            establishmentSlug={detail.slug}
-            highlight={highlight}
-            onHighlightLayout={(y) => {
-              offsets.current.highlight = y
-              followHighlight()
-            }}
-          />
         </View>
       </Animated.ScrollView>
     </View>

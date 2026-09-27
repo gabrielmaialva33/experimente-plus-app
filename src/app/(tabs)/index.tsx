@@ -101,14 +101,25 @@ export default function ExploreScreen() {
   const refreshControl = usePullToRefresh(search.refetch)
 
   // New criteria bring the results, right under the controls, back into view.
+  // While the person types, the search field stays above the keyboard: on a small
+  // phone, or with the city panel open, the top of the feed sits under it.
+  const keyboardShown = useRef(false)
+  useEffect(() => {
+    keyboardShown.current = keyboardInset > 0
+  }, [keyboardInset])
   const criteriaChanged = useRef(false)
   useEffect(() => {
     if (!criteriaChanged.current) {
       criteriaChanged.current = true
       return
     }
-    list.current?.scrollToOffset({ offset: 0, animated: true })
-  }, [params])
+    if (keyboardShown.current) {
+      list.current?.scrollToOffset({ offset: 0, animated: false })
+      revealField()
+    } else {
+      list.current?.scrollToOffset({ offset: 0, animated: true })
+    }
+  }, [params, revealField])
 
   const activeFilters = [
     category

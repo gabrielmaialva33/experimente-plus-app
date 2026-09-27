@@ -46,7 +46,7 @@ describe('what a sheet paints behind the navigation bar', () => {
 
   it('lays the navy plane under the white three-button bar of a light sheet', () => {
     expect(navigationBarPlane(48, 'light', navy)).toBe(navy)
-    expect(navigationBarPlane(48, null, navy)).toBe(navy)
+    expect(navigationBarPlane(48, 'unspecified', navy)).toBe(navy)
   })
 
   it('leaves the gesture bar and a dark sheet as they are', () => {

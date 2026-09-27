@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import type { PartnerContentItemKind, PartnerContentKind } from '@/api/partner-content'
+import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
 import { CompactCard, useCompactCardWidth } from '@/components/compact-card'
+import { useScreenFrame } from '@/components/content-frame'
 import { DateTile } from '@/components/date-tile'
 import { RemoteImage } from '@/components/remote-image'
 import { SectionHeader } from '@/components/section-header'
@@ -111,6 +112,8 @@ export function EstablishmentPartnerContent({
 }: EstablishmentPartnerContentProps) {
   const colors = useColors()
   const cardWidth = useCompactCardWidth()
+  // The row scrolls past the page's column to the window's edges; its first card lines up with the column.
+  const frame = useScreenFrame()
   const row = useRef<ScrollView>(null)
   const [open, setOpen] = useState<PublishedContentView | null>(null)
   const experiences = usePartnerContent(establishmentId, 'experiences')
@@ -156,8 +159,11 @@ export function EstablishmentPartnerContent({
           ref={row}
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.row}
-          contentContainerStyle={styles.rowContent}
+          style={{ marginLeft: -frame.left, marginRight: -frame.right }}
+          contentContainerStyle={[
+            styles.rowContent,
+            { paddingLeft: frame.left - FRAME, paddingRight: frame.right - FRAME },
+          ]}
           onContentSizeChange={() => {
             if (marked > 0) {
               row.current?.scrollTo({
@@ -237,7 +243,6 @@ function ContentSheet({
 }) {
   const colors = useColors()
   const router = useRouter()
-  const insets = useSafeAreaInsets()
   if (!item) return null
 
   const cover = coverOf(item)
@@ -248,99 +253,78 @@ function ContentSheet({
   const props = { kind: item.kind, id: item.id, title: item.title, ...context }
 
   return (
-    <Modal
-      visible
-      transparent
+    <BottomSheet
       animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent
-      navigationBarTranslucent
+      onClose={onClose}
+      closeLabel="Fechar"
+      maxHeight="88%"
+      style={{ backgroundColor: colors.background }}
     >
-      <View style={styles.root}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Fechar"
-          onPress={onClose}
-          style={[StyleSheet.absoluteFill, styles.scrim, { backgroundColor: colors.scrim }]}
-        />
-        <View
-          accessibilityViewIsModal
-          style={[styles.sheet, { backgroundColor: colors.background }]}
-        >
-          <ScrollView
-            // A modal draws under the system navigation bar; the last action stays above it.
-            contentContainerStyle={[
-              styles.sheetContent,
-              { paddingBottom: insets.bottom + spacing.xl },
-            ]}
-            testID={`content-sheet-${item.kind}-${item.id}`}
-          >
-            {cover ? (
-              <RemoteImage
-                source={{ uri: resolveMediaUrl(cover.url) }}
-                accessible={Boolean(cover.altText)}
-                accessibilityLabel={cover.altText}
-                style={styles.media}
-                contentFit="cover"
-                transition={150}
-              />
-            ) : null}
-            <View style={styles.copy}>
-              <Text style={[styles.overline, { color: colors.primaryAccent }]}>
-                {LABELS[item.kind]}
-              </Text>
-              <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
-                {item.title}
-              </Text>
-              {eventWindow ? (
-                <Text style={[styles.meta, { color: colors.primaryAccent }]}>{eventWindow}</Text>
-              ) : null}
-              {price ? (
-                <Text style={[styles.price, { color: colors.ctaAccent }]}>{price}</Text>
-              ) : null}
-            </View>
-            {item.description ? (
-              <Text style={[styles.body, { color: colors.foreground }]}>{item.description}</Text>
-            ) : null}
-            {cover?.caption ? (
-              <Text style={[styles.caption, { color: colors.mutedForeground }]}>
-                {cover.caption}
-              </Text>
-            ) : null}
-            <View style={styles.actions}>
-              <ContentFavorite {...props} testID={`sheet-favorite-${item.kind}-${item.id}`} />
-              {item.kind === 'showcase_item' ? null : (
-                <Button
-                  label="Compartilhar"
-                  icon="share-outline"
-                  variant="outline"
-                  size={44}
-                  onPress={() => void shareContent(props)}
-                />
-              )}
-              <Button
-                label="Denunciar"
-                variant="ghost"
-                size={44}
-                onPress={() => {
-                  onClose()
-                  router.push(reportHref(item.kind, item.id, item.title))
-                }}
-              />
-            </View>
-            <Button label="Fechar" variant="primary" size={48} fill onPress={onClose} />
-          </ScrollView>
+      <ScrollView
+        contentContainerStyle={styles.sheetContent}
+        testID={`content-sheet-${item.kind}-${item.id}`}
+      >
+        {cover ? (
+          <RemoteImage
+            source={{ uri: resolveMediaUrl(cover.url) }}
+            accessible={Boolean(cover.altText)}
+            accessibilityLabel={cover.altText}
+            style={styles.media}
+            contentFit="cover"
+            transition={150}
+          />
+        ) : null}
+        <View style={styles.copy}>
+          <Text style={[styles.overline, { color: colors.primaryAccent }]}>
+            {LABELS[item.kind]}
+          </Text>
+          <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
+            {item.title}
+          </Text>
+          {eventWindow ? (
+            <Text style={[styles.meta, { color: colors.primaryAccent }]}>{eventWindow}</Text>
+          ) : null}
+          {price ? <Text style={[styles.price, { color: colors.ctaAccent }]}>{price}</Text> : null}
         </View>
+        {item.description ? (
+          <Text style={[styles.body, { color: colors.foreground }]}>{item.description}</Text>
+        ) : null}
+        {cover?.caption ? (
+          <Text style={[styles.caption, { color: colors.mutedForeground }]}>{cover.caption}</Text>
+        ) : null}
+        <View style={styles.actions}>
+          <ContentFavorite {...props} testID={`sheet-favorite-${item.kind}-${item.id}`} />
+          {item.kind === 'showcase_item' ? null : (
+            <Button
+              label="Compartilhar"
+              icon="share-outline"
+              variant="outline"
+              size={44}
+              onPress={() => void shareContent(props)}
+            />
+          )}
+          <Button
+            label="Denunciar"
+            variant="ghost"
+            size={44}
+            onPress={() => {
+              onClose()
+              router.push(reportHref(item.kind, item.id, item.title))
+            }}
+          />
+        </View>
+      </ScrollView>
+      {/* Outside the scroll: however long the item, the way out stays in sight. */}
+      <View style={[styles.sheetFooter, { borderTopColor: colors.borderSubtle }]}>
+        <Button label="Fechar" variant="primary" size={48} fill onPress={onClose} />
       </View>
-    </Modal>
+    </BottomSheet>
   )
 }
 
 const styles = StyleSheet.create({
   section: { gap: spacing.md },
-  // The row runs to the screen's edge; the page's gutter is its first inset.
-  row: { marginHorizontal: -spacing.gutter },
-  rowContent: { gap: GAP, paddingHorizontal: spacing.gutter - FRAME },
+  rowContent: { gap: GAP },
   slot: { borderRadius: radius.card + FRAME, borderWidth: 2, padding: FRAME - 2 },
   overlay: {
     gap: spacing.sm,
@@ -348,15 +332,13 @@ const styles = StyleSheet.create({
     right: spacing.sm + FRAME,
     top: spacing.sm + FRAME,
   },
-  root: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { opacity: 0.45 },
-  sheet: {
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    maxHeight: '88%',
-    overflow: 'hidden',
+  sheetContent: { gap: spacing.lg, padding: spacing.gutter },
+  sheetFooter: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.md,
   },
-  sheetContent: { gap: spacing.lg, padding: spacing.gutter, paddingBottom: spacing.xxl },
   media: { borderRadius: radius.thumb, height: 190, width: '100%' },
   copy: { gap: spacing.xs },
   overline: typography.overline,

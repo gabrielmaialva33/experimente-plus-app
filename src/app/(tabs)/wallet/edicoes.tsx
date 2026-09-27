@@ -44,13 +44,18 @@ export default function PurchaseEditionsScreen() {
           hint="Explorar lugares é livre. Comprar um pacote ou voucher é opcional."
         />
         {editions.isPending ? <Note>{loadingProducts}</Note> : null}
+        {/* A failed refresh keeps the last answer on screen, and says it may be old
+            instead of calling the products it still lists unavailable. */}
         {editions.isError ? (
           <>
-            <Note>Os produtos não estão disponíveis agora. Você pode continuar explorando.</Note>
+            <Note>
+              {editions.data
+                ? 'Não foi possível atualizar os produtos. A lista abaixo é a da última consulta.'
+                : 'Os produtos não estão disponíveis agora. Você pode continuar explorando.'}
+            </Note>
             <RetryPurchase error={editions.error} onRetry={() => void editions.refetch()} />
           </>
-        ) : null}
-        {editions.data?.products.length === 0 ? (
+        ) : editions.data?.products.length === 0 ? (
           <Note>Nenhum produto disponível no momento.</Note>
         ) : null}
         {editions.data?.products.map((product) => (
@@ -68,12 +73,15 @@ export default function PurchaseEditionsScreen() {
         {orders.isError ? (
           <>
             <Note>
-              Não foi possível consultar os pedidos. Consulte antes de iniciar uma nova compra.
+              {orders.data
+                ? 'Não foi possível atualizar os pedidos. A lista abaixo pode estar desatualizada; consulte antes de iniciar uma nova compra.'
+                : 'Não foi possível consultar os pedidos. Consulte antes de iniciar uma nova compra.'}
             </Note>
             <RetryPurchase error={orders.error} onRetry={() => void orders.refetch()} />
           </>
+        ) : orders.data?.purchases.length === 0 ? (
+          <Note>Você ainda não tem pedidos.</Note>
         ) : null}
-        {orders.data?.purchases.length === 0 ? <Note>Você ainda não tem pedidos.</Note> : null}
         {orders.data?.purchases.map((order) => (
           <OrderRow
             key={order.id}

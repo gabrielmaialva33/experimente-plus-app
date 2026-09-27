@@ -288,6 +288,21 @@ it('checkout returning successfully does not confirm payment or expose wallet ac
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
+it('keeps the last answer on a failed refresh and says it may be old, never that it is empty', async () => {
+  const failed = { isError: true, error: new Error('502'), refetch: jest.fn() }
+  queries.usePurchaseEditions.mockReturnValue({ ...failed, data: { products: [edition] } })
+  queries.usePurchases.mockReturnValue({ ...failed, data: { purchases: [] } })
+  const view = await page(<EditionsScreen />)
+  expect(
+    view.getByText('Não foi possível atualizar os produtos. A lista abaixo é a da última consulta.')
+  ).toBeOnTheScreen()
+  expect(view.queryByText(/Os produtos não estão disponíveis agora/)).toBeNull()
+  expect(view.getByRole('button', { name: /Edição 2026/ })).toBeOnTheScreen()
+  expect(view.getByText(/Não foi possível atualizar os pedidos/)).toBeOnTheScreen()
+  // An unanswered refresh does not know there are no orders.
+  expect(view.queryByText('Você ainda não tem pedidos.')).toBeNull()
+})
+
 it('says a first load waits for the connection instead of loading forever', async () => {
   const { onlineManager } = jest.requireActual('@tanstack/react-query')
   queries.usePurchaseEditions.mockReturnValue({ isPending: true })

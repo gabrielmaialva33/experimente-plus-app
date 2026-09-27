@@ -80,14 +80,20 @@ const point = (longitude: number, latitude: number) => ({
   coordinates: [longitude, latitude],
 })
 
-/** What the native source reports for a press on its marks. */
+/**
+ * What the native source reports for a press on its marks. Like the native
+ * event, it bubbles on to the map's own press unless stopped.
+ */
 const press = async (
   view: Awaited<ReturnType<typeof render>>,
   features: unknown[],
   lngLat: [number, number]
 ) =>
   act(async () => {
-    view.getByTestId('places-source').props.onPress({ nativeEvent: { features, lngLat } })
+    let stopped = false
+    const event = { nativeEvent: { features, lngLat }, stopPropagation: () => (stopped = true) }
+    view.getByTestId('places-source').props.onPress(event)
+    if (!stopped) view.getByTestId('native-map').props.onPress?.(event)
   })
 
 beforeEach(() => {
@@ -182,6 +188,21 @@ it('opens exactly the place picked from a spot that holds several', async () => 
   await fireEvent.press(view.getByRole('button', { name: 'Casa de Petiscos, Bares' }))
   expect(onSelect).toHaveBeenCalledTimes(1)
   expect(onSelect).toHaveBeenCalledWith('casa-de-petiscos')
+})
+
+it('closes the list when the map around it is tapped', async () => {
+  const view = await render(
+    <MapLibreRenderer pins={[casa, atelie]} center={center} onSelect={jest.fn()} />
+  )
+  await press(
+    view,
+    [{ geometry: point(casa.longitude, casa.latitude), properties: { key: 'casa-de-petiscos' } }],
+    [casa.longitude, casa.latitude]
+  )
+  expect(view.getByText('2 lugares aqui')).toBeOnTheScreen()
+
+  await act(async () => view.getByTestId('native-map').props.onPress())
+  expect(view.queryByText('2 lugares aqui')).toBeNull()
 })
 
 it('zooms into a cluster until it splits', async () => {

@@ -7,10 +7,11 @@ import {
   type CameraRef,
   type GeoJSONSourceRef,
   type MapRef,
+  type PressEventWithFeatures,
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native'
 import { useMemo, useRef, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
 
 import { palette, radius, spacing, typography } from '@/theme/tokens'
@@ -124,9 +125,9 @@ export function MapLibreRenderer({ pins, center, onSelect, onShowList }: MapRend
     }
   }
 
-  const onPlacePress = (event: {
-    nativeEvent: { features: PressedFeature[]; lngLat: [number, number] }
-  }) => {
+  const onPlacePress = (event: NativeSyntheticEvent<PressEventWithFeatures>) => {
+    // The press bubbles to the map, whose own press closes the list this one may open.
+    event.stopPropagation()
     const target = pressedTarget(event.nativeEvent.features, event.nativeEvent.lngLat, groups)
     if (!target) return
     if (target.kind === 'place') onSelect(target.slug)

@@ -161,6 +161,8 @@ export function PlaceChrome({
           {
             backgroundColor: colors.surfaceBase,
             borderBottomColor: colors.borderSubtle,
+            paddingLeft: spacing.lg + insets.left,
+            paddingRight: spacing.lg + insets.right,
             paddingTop: insets.top + spacing.sm,
           },
           header.revealStyle,
@@ -180,7 +182,15 @@ export function PlaceChrome({
       <Animated.View
         pointerEvents={compact ? 'none' : 'box-none'}
         {...hiddenFromAccessibility(compact)}
-        style={[styles.floating, { top: insets.top + spacing.sm }, header.concealStyle]}
+        style={[
+          styles.floating,
+          {
+            left: spacing.lg + insets.left,
+            right: spacing.lg + insets.right,
+            top: insets.top + spacing.sm,
+          },
+          header.concealStyle,
+        ]}
       >
         {back('image')}
         <View style={styles.group}>
@@ -206,15 +216,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     paddingBottom: spacing.sm,
-    paddingHorizontal: spacing.lg,
   },
   title: { ...compactTitleText, flex: 1 },
-  floating: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    left: spacing.lg,
-    position: 'absolute',
-    right: spacing.lg,
-  },
+  // Clear of a side cutout in landscape, like the bar.
+  floating: { flexDirection: 'row', justifyContent: 'space-between', position: 'absolute' },
   group: { flexDirection: 'row', gap: spacing.sm },
 })

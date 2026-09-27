@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native'
 
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -14,6 +14,7 @@ interface ChoiceControlProps {
   fill?: boolean
   compact?: boolean
   onPress: () => void
+  onLayout?: (event: LayoutChangeEvent) => void
 }
 
 /** Selection has a fixed leading slot, so it never depends on color alone. */
@@ -28,6 +29,7 @@ export function ChoiceControl({
   fill = false,
   compact = false,
   onPress,
+  onLayout,
 }: ChoiceControlProps) {
   const colors = useColors()
   const borderWidth = selected ? 2 : StyleSheet.hairlineWidth
@@ -45,6 +47,7 @@ export function ChoiceControl({
       // The row reserves this space: 40 visible units, at least 48 for touch.
       hitSlop={compact ? { top: spacing.xs, bottom: spacing.xs } : undefined}
       onPress={onPress}
+      onLayout={onLayout}
       style={[
         styles.chip,
         compact && styles.compact,

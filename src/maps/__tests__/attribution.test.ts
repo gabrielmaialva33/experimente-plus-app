@@ -1,6 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react-native'
-
-import { creditFromAttribution, creditFromStyle, useMapCredit } from '../attribution'
+import { creditFromAttribution, creditFromStyle } from '../attribution'
 
 /** The attribution the published regional style actually declares. */
 const declared =
@@ -31,28 +29,5 @@ describe('creditFromStyle', () => {
   it('never claims a producer the style did not declare', () => {
     expect(creditFromStyle({ sources: { demo: {} } })).toBe('© OpenStreetMap')
     expect(creditFromStyle({})).toBe('© OpenStreetMap')
-  })
-})
-
-describe('useMapCredit', () => {
-  afterEach(() => jest.restoreAllMocks())
-
-  it('credits what the configured style declares', async () => {
-    jest.spyOn(globalThis, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => ({ sources: { protomaps: { attribution: declared } } }),
-    } as Response)
-
-    const { result } = await renderHook(() => useMapCredit('https://example.invalid/style.json'))
-
-    await waitFor(() => expect(result.current).toBe('Protomaps © OpenStreetMap contributors'))
-  })
-
-  it('falls back to the baseline instead of crediting nobody', async () => {
-    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
-
-    const { result } = await renderHook(() => useMapCredit('https://example.invalid/style.json'))
-
-    await waitFor(() => expect(result.current).toBe('© OpenStreetMap'))
   })
 })

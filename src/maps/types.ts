@@ -12,6 +12,8 @@ export interface MapRendererProps {
   pins: MapPin[]
   center: { latitude: number; longitude: number }
   onSelect: (slug: string) => void
+  /** Explorar's list of the same places: the way through for a screen reader. */
+  onShowList?: () => void
 }
 
 /** Only establishments the projection actually located can be drawn. */
@@ -73,3 +75,115 @@ export const groupPins = (pins: MapPin[]): MapPinGroup[] => {
 /** What a marker says out loud and on its label. */
 export const groupLabel = (group: MapPinGroup) =>
   group.pins.length === 1 ? group.pins[0].name : `${group.pins.length} lugares aqui`
+
+/** What each mark drawn by the map's own layers carries. */
+export type PlaceProperties = {
+  /** The group's key: the slug of its first place. */
+  key: string
+  /** What a lone place writes beside its dot. */
+  name: string
+  /** How many places the mark stands for; a cluster adds up its members'. */
+  places: number
+  /** The server's order: when labels crowd, the first results keep theirs. */
+  rank: number
+}
+
+export type PlaceFeature = {
+  type: 'Feature'
+  geometry: { type: 'Point'; coordinates: [longitude: number, latitude: number] }
+  properties: PlaceProperties
+}
+
+/** One point per group, for a map that clusters and labels on its own. */
+export const placeFeatures = (groups: MapPinGroup[]) => ({
+  type: 'FeatureCollection' as const,
+  features: groups.map((group, rank): PlaceFeature => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [group.longitude, group.latitude] },
+    properties: { key: group.key, name: groupLabel(group), places: group.pins.length, rank },
+  })),
+})
+
+/** A feature as the map hands it back from a press. */
+export interface PressedFeature {
+  geometry?: { type?: string; coordinates?: unknown } | null
+  properties?: Record<string, unknown> | null
+}
+
+/** What a press on the map's marks asks for. */
+export type MapTarget =
+  | { kind: 'place'; slug: string }
+  | { kind: 'spot'; group: MapPinGroup }
+  | { kind: 'cluster'; clusterId: number; center: [longitude: number, latitude: number] }
+
+const pointOf = (feature: PressedFeature): [number, number] | null => {
+  const coordinates = feature.geometry?.coordinates
+  return feature.geometry?.type === 'Point' &&
+    Array.isArray(coordinates) &&
+    typeof coordinates[0] === 'number' &&
+    typeof coordinates[1] === 'number'
+    ? [coordinates[0], coordinates[1]]
+    : null
+}
+
+/**
+ * The mark a press meant.
+ *
+ * A press reaches every mark within a finger's width, and a label reaches
+ * further than its dot, so two marks can answer one tap. The one whose point is
+ * closest to the finger is the one meant. A cluster asks to be opened; a place
+ * opens; a spot with several places lists them.
+ */
+export function pressedTarget(
+  features: PressedFeature[],
+  [longitude, latitude]: [number, number],
+  groups: MapPinGroup[]
+): MapTarget | null {
+  // Degrees of longitude shrink away from the equator; this keeps the comparison square.
+  const squeeze = Math.cos((latitude * Math.PI) / 180)
+  let best: { target: MapTarget; distance: number } | null = null
+
+  for (const feature of features) {
+    const point = pointOf(feature)
+    const properties = feature.properties ?? {}
+    if (!point) continue
+
+    let target: MapTarget | null = null
+    if (properties.cluster === true && typeof properties.cluster_id === 'number') {
+      target = { kind: 'cluster', clusterId: properties.cluster_id, center: point }
+    } else {
+      const group = groups.find((candidate) => candidate.key === properties.key)
+      if (group)
+        target =
+          group.pins.length === 1
+            ? { kind: 'place', slug: group.pins[0].slug }
+            : { kind: 'spot', group }
+    }
+    if (!target) continue
+
+    const distance = ((point[0] - longitude) * squeeze) ** 2 + (point[1] - latitude) ** 2
+    if (!best || distance < best.distance) best = { target, distance }
+  }
+
+  return best?.target ?? null
+}
+
+/**
+ * The places behind a cluster that cannot be split any further, as one spot
+ * the list can show. Leaves arrive as features that name their group.
+ */
+export function spotOfLeaves(
+  leaves: PressedFeature[],
+  center: [longitude: number, latitude: number],
+  groups: MapPinGroup[]
+): MapPinGroup | null {
+  const keys = new Set(leaves.map((leaf) => leaf.properties?.key))
+  const members = groups.filter((group) => keys.has(group.key))
+  if (members.length === 0) return null
+  return {
+    key: members.map((group) => group.key).join('+'),
+    longitude: center[0],
+    latitude: center[1],
+    pins: members.flatMap((group) => group.pins),
+  }
+}

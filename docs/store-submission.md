@@ -25,21 +25,23 @@ receber segredo versionado.
   `experimente-plus.mahina.fun` ou não usar https, e se
   `EXPO_PUBLIC_MAP_STYLE_URL` faltar ou for o estilo de demonstração.
 - **Permissões declaradas só para o que o app usa**, conferidas no Info.plist e
-  no manifesto resultantes (`npx expo config --type introspect`):
-  - **Câmera**, com um único texto que cobre os dois usos — ler o código do
-    benefício em Validar e fotografar o lugar na avaliação. O iOS guarda um só
-    texto para a câmera, e antes ficava o do plugin que rodasse por último,
-    descrevendo apenas metade do uso.
-  - **Fotos**, para escolher imagens da avaliação.
-  - **Microfone bloqueado.** O plugin do seletor de imagens declara
-    `RECORD_AUDIO` por padrão, e o app não grava vídeo nem áudio.
-  - **Face ID desligado.** O SecureStore declara a permissão por padrão, com
-    texto em inglês, e o app não usa biometria (o Anexo I item 13 só a admite
-    quando for definida).
+  no manifesto resultantes (`npx expo config --type introspect`) e travadas na
+  CI (`scripts/ci/verify-apk.py` falha se o APK pedir algo fora do conjunto
+  revisado):
+  - **Câmera**, só para ler o código do benefício em Validar. As fotos de uma
+    avaliação vêm da galeria, não da câmera.
+  - **Fotos** no iOS, para escolher imagens da avaliação. No Android elas vêm
+    do seletor do sistema, sem permissão de armazenamento ou de mídia.
+  - **Rede** (`INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`).
+  - **Bloqueadas em `android.blockedPermissions`**: localização, microfone,
+    armazenamento e mídia (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`,
+    `READ_MEDIA_*`), sobreposição de tela, biometria, vibração e o ID de
+    publicidade. O plugin do seletor de imagens declarava `RECORD_AUDIO` e o
+    SecureStore declarava Face ID, ambos por padrão, e o app não usa nenhum.
   - **Localização não é pedida**, porque o app não usa a posição do aparelho.
     Se o comportamento em falha de GPS (item 15) introduzir localização, a
     permissão entra no plugin `expo-maps` (`requestLocationPermission`)
-    junto com o texto de uso.
+    junto com o texto de uso, e na lista do `verify-apk.py`.
 - **Criptografia de exportação:** `ios.config.usesNonExemptEncryption: false`.
   O app só usa HTTPS e hash da plataforma, que é a categoria isenta. O
   contratante confirma a declaração como publicador.
@@ -98,11 +100,10 @@ repositório. **Nenhuma entra no `eas.json`.**
 
 ## Pendências fora do app
 
-- `READ_EXTERNAL_STORAGE` e `WRITE_EXTERNAL_STORAGE` vêm do manifesto da
-  própria biblioteca de seleção de imagens. Não foram bloqueadas: o autor do
-  plugin registra que não é claro se bloqueá-las é seguro em Android antigo, e
-  a escolha de fotos precisa funcionar ali. Conferir no formulário do Play e em
-  aparelho real antes de decidir.
+- A escolha de fotos sem permissão de armazenamento depende do seletor do
+  sistema, que existe em todo Android atual; conferir em um aparelho com
+  Android 12 ou anterior antes da primeira release, já que
+  `READ_EXTERNAL_STORAGE` está bloqueada.
 - `NSLocalNetworkUsageDescription` vem do `expo-dev-client` e tem texto em
   inglês. É o padrão dos apps Expo com dev client; se a revisão da Apple
   questionar, o caminho é excluir o dev client do build de produção.

@@ -8,6 +8,7 @@ import { Button } from '@/components/button'
 import { IconButton } from '@/components/icon-button'
 import { useSavedStatus, useToggleSaved } from '@/explorer/queries'
 import { useSession } from '@/session/context'
+import { useStackedLayout } from '@/theme/font-scale'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -40,6 +41,9 @@ export function PlaceActions({
   const follow = useToggleSaved('follows', establishmentId)
   const following = saved.data?.following === true
   const [explain, setExplain] = useState(false)
+  // With large text the action takes a line of its own and the icons follow under it:
+  // beside them its label broke in two ("Como / chegar"), or pushed them off the page.
+  const stacked = useStackedLayout()
   useAnnouncement(explain && FOLLOW_HINT)
 
   const requireSession = (action: () => void) => () => {
@@ -59,20 +63,15 @@ export function PlaceActions({
     }
   })
 
+  const main = primary ? (
+    <Button label={primary.label} icon={primary.icon} size={52} fill onPress={primary.onPress} />
+  ) : null
+
   return (
     <View style={styles.block}>
+      {stacked ? main : null}
       <View style={styles.row}>
-        {primary ? (
-          <View style={styles.primary}>
-            <Button
-              label={primary.label}
-              icon={primary.icon}
-              size={52}
-              fill
-              onPress={primary.onPress}
-            />
-          </View>
-        ) : null}
+        {!stacked && main ? <View style={styles.primary}>{main}</View> : null}
         <IconButton
           icon={following ? 'notifications' : 'notifications-outline'}
           accessibilityLabel={following ? `Deixar de seguir ${name}` : `Seguir ${name}`}
@@ -98,10 +97,9 @@ export function PlaceActions({
 
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
-  // The two icons wrap under the main action when the three no longer share a line:
-  // at large text or on a narrow phone, instead of running off the page's edge.
+  // On a phone narrower than the three, the icons wrap rather than run off the page.
   row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  // Grows over the rest of its line, and takes a line of its own when it must.
+  // Grows over the rest of its line.
   primary: { flexGrow: 1, flexShrink: 1 },
   hint: typography.meta,
 })

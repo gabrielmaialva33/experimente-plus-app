@@ -1,10 +1,11 @@
-import { act, render } from '@testing-library/react-native'
+import { act, render, within } from '@testing-library/react-native'
 import { Dimensions, StyleSheet, Text } from 'react-native'
 
 import { Button } from '@/components/button'
 import { StickyFooter } from '@/components/sticky-footer'
 import { SectionHeader } from '@/components/section-header'
 import { PlaceBenefits } from '@/place/benefit-ticket'
+import { PlaceActions } from '@/place/place-actions'
 import { ReviewCard } from '@/reviews/review-card'
 import { STACK_FROM_SCALE, useStackedLayout } from '@/theme/font-scale'
 
@@ -16,6 +17,14 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('@/purchases/queries', () => ({ usePurchaseEditions: jest.fn() }))
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@/session/context', () => ({ useSession: () => ({ status: 'anonymous' }) }))
+jest.mock('@/explorer/queries', () => ({
+  useSavedStatus: () => ({ data: undefined }),
+  useToggleSaved: () => ({ isPending: false, mutate: jest.fn() }),
+}))
+jest.mock('@/place/follow-hint', () => ({
+  followExplained: () => true,
+  markFollowExplained: jest.fn(),
+}))
 
 const purchases = jest.requireMock('@/purchases/queries') as { usePurchaseEditions: jest.Mock }
 
@@ -136,4 +145,32 @@ it.each([
     />
   )
   expect(style(view.getByTestId('section-header')).flexWrap).toBe(wrap)
+})
+
+describe("a place's main action", () => {
+  const actions = () =>
+    render(
+      <PlaceActions
+        establishmentId={7}
+        name="Ateliê do Café"
+        primary={{ label: 'Como chegar', icon: 'navigate-outline', onPress: jest.fn() }}
+      />
+    )
+
+  /** The row that holds the follow and itinerary buttons. */
+  const iconRow = (view: Awaited<ReturnType<typeof actions>>) =>
+    view.getByTestId('place-follow').parent as Parameters<typeof within>[0]
+
+  it('shares its line with the follow and itinerary buttons at the drawn size', async () => {
+    await setFontScale(1)
+    const view = await actions()
+    expect(within(iconRow(view)).getByRole('button', { name: 'Como chegar' })).toBeOnTheScreen()
+  })
+
+  it('takes a line of its own with large text, the buttons under it', async () => {
+    const view = await actions()
+    expect(view.getByRole('button', { name: 'Como chegar' })).toBeOnTheScreen()
+    expect(within(iconRow(view)).queryByRole('button', { name: 'Como chegar' })).toBeNull()
+    expect(within(iconRow(view)).getByTestId('place-itinerary')).toBeOnTheScreen()
+  })
 })

@@ -443,10 +443,11 @@ describe.each(['light', 'dark'] as const)('canonical status appearance in %s', (
         },
       }[mode]
       const expected = {
+        // The neutral status role: muted in light, the raised surface in dark.
         muted: {
-          backgroundColor: colors.muted,
-          color: colors.mutedForeground,
-          borderColor: colors.border,
+          backgroundColor: colors.statusNeutral,
+          color: colors.statusNeutralForeground,
+          borderColor: colors.statusNeutralBorder,
         },
         warning: {
           backgroundColor: colors.warningSoft,

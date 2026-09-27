@@ -105,7 +105,7 @@ const canonicalOklch = {
     primaryAccent: 'oklch(0.825784 0.081948 250.514)',
     secondary: 'oklch(0.254256 0.036457 274.849)',
     secondaryForeground: 'oklch(0.972339 0.004673 84.5636)',
-    muted: 'oklch(0.254256 0.036457 274.849)',
+    muted: 'oklch(0.222 0.0277 275.3)',
     mutedForeground: 'oklch(0.828324 0.024104 84.5932)',
     accent: 'oklch(0.331538 0.04734 250.976)',
     accentForeground: 'oklch(0.825784 0.081948 250.514)',
@@ -256,7 +256,7 @@ describe.each(['light', 'dark'] as const)('canonical foundation in %s', (scheme)
     }
     expect(colors.surfaceContext).toBe(colors.background)
     expect(colors.contextForeground).toBe(colors.foreground)
-    expect(colors.statusNeutral).toBe(colors.muted)
+    expect(colors.statusNeutral).toBe(scheme === 'light' ? colors.muted : colors.surfaceRaised)
     expect(colors.statusNeutralForeground).toBe(colors.mutedForeground)
     expect(colors.statusNeutralBorder).toBe(colors.border)
     expect(colors.choiceBackground).toBe(colors.card)

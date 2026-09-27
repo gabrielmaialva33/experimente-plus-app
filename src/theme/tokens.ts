@@ -97,7 +97,8 @@ const basePalette = {
     primaryAccent: '#9ecafa',
     secondary: '#1d2134',
     secondaryForeground: '#f7f6f2',
-    muted: '#1d2134',
+    // Below surfaceRaised, like the light muted under white (web --muted, oklch 0.222).
+    muted: '#171a28',
     mutedForeground: '#cec6b6',
     accent: '#23374d',
     accentForeground: '#9ecafa',
@@ -147,13 +148,20 @@ const basePalette = {
   },
 } as const
 
-/** Semantic aliases follow the web source; neutral status is still muted. */
-function withSemanticRoles<T extends (typeof basePalette)[keyof typeof basePalette]>(colors: T) {
+/**
+ * Semantic aliases follow the web source. Neutral status is muted in light; in dark,
+ * where muted now sits below the card, it keeps the raised surface, so it stays
+ * apart from absent content (web --status-neutral).
+ */
+function withSemanticRoles<T extends (typeof basePalette)[keyof typeof basePalette]>(
+  colors: T,
+  statusNeutral: string = colors.muted
+) {
   return {
     ...colors,
     surfaceContext: colors.background,
     contextForeground: colors.foreground,
-    statusNeutral: colors.muted,
+    statusNeutral,
     statusNeutralForeground: colors.mutedForeground,
     statusNeutralBorder: colors.border,
     choiceBackground: colors.card,
@@ -169,7 +177,7 @@ function withSemanticRoles<T extends (typeof basePalette)[keyof typeof basePalet
 
 export const palette = {
   light: withSemanticRoles(basePalette.light),
-  dark: withSemanticRoles(basePalette.dark),
+  dark: withSemanticRoles(basePalette.dark, darkSurfaces.surfaceRaised),
 } as const
 
 export type ColorScheme = keyof typeof palette

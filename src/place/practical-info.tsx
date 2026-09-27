@@ -5,6 +5,7 @@ import { AppState, Pressable, StyleSheet, Text, View } from 'react-native'
 import { cityWeekday, groupedSchedule, weekdayName } from '@/catalog/opening-hours'
 import type { EstablishmentDetail } from '@/catalog/types'
 import { decorative } from '@/components/decorative'
+import { useStackedLayout } from '@/theme/font-scale'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -207,11 +208,17 @@ function Row({
   action?: ReactNode
 }) {
   const colors = useColors()
+  // With large text the action goes under the lines it belongs to: beside them it
+  // squeezed the hours into a column of syllables ("prog/ramação").
+  const stacked = useStackedLayout()
   return (
     <View style={[styles.row, { borderTopColor: colors.borderSubtle }]}>
       <Ionicons name={icon} size={22} color={colors.primary} style={styles.icon} {...decorative} />
-      <View style={[styles.grow, styles.copy]}>{children}</View>
-      {action}
+      <View style={[styles.grow, styles.copy]}>
+        {children}
+        {stacked && action ? <View style={styles.actionBelow}>{action}</View> : null}
+      </View>
+      {!stacked && action ? <View style={styles.actionBeside}>{action}</View> : null}
     </View>
   )
 }
@@ -233,7 +240,9 @@ const styles = StyleSheet.create({
   copy: { gap: 2 },
   title: { ...typography.label, ...textWeight('700') },
   meta: typography.meta,
-  link: { alignSelf: 'center', justifyContent: 'center', minHeight: minTouch },
+  link: { justifyContent: 'center', minHeight: minTouch },
+  actionBeside: { alignSelf: 'center' },
+  actionBelow: { alignItems: 'flex-start' },
   linkLabel: { ...typography.meta, ...textWeight('700') },
   day: {
     borderColor: 'transparent',

@@ -63,13 +63,15 @@ export function PlaceActions({
     <View style={styles.block}>
       <View style={styles.row}>
         {primary ? (
-          <Button
-            label={primary.label}
-            icon={primary.icon}
-            size={52}
-            fill
-            onPress={primary.onPress}
-          />
+          <View style={styles.primary}>
+            <Button
+              label={primary.label}
+              icon={primary.icon}
+              size={52}
+              fill
+              onPress={primary.onPress}
+            />
+          </View>
         ) : null}
         <IconButton
           icon={following ? 'notifications' : 'notifications-outline'}
@@ -96,6 +98,10 @@ export function PlaceActions({
 
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
-  row: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  // The two icons wrap under the main action when the three no longer share a line:
+  // at large text or on a narrow phone, instead of running off the page's edge.
+  row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  // Grows over the rest of its line, and takes a line of its own when it must.
+  primary: { flexGrow: 1, flexShrink: 1 },
   hint: typography.meta,
 })

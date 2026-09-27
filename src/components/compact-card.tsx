@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useScreenFrame } from '@/components/content-frame'
 import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
 import { useLineCap, useScaledWidth } from '@/theme/font-scale'
@@ -10,8 +11,23 @@ import { useColors } from '@/theme/use-colors'
 
 export const COMPACT_CARD = { width: 220, height: 214, image: 124 } as const
 
-/** The width every card of a row shares at the current system text size. */
-export const useCompactCardWidth = () => useScaledWidth(COMPACT_CARD.width)
+/** The share of the column a card may take at most, so the next one still peeks in. */
+const MAX_COLUMN_SHARE = 0.86
+
+/**
+ * The width every card of a row shares at the current system text size. It
+ * grows with the text, but never past most of the column: at 200% on a narrow
+ * phone a card 1.6 times as wide ran off the screen with its own heart and "⋯".
+ */
+export function useCompactCardWidth() {
+  const scaled = useScaledWidth(COMPACT_CARD.width)
+  const { width } = useScreenFrame()
+  return compactCardWidth(scaled, width)
+}
+
+/** A row card's width: the scaled width, capped to a share of the column. */
+export const compactCardWidth = (scaled: number, columnWidth: number) =>
+  Math.min(scaled, Math.floor(columnWidth * MAX_COLUMN_SHARE))
 
 /**
  * A card of a horizontal row. Width is fixed and the title has two lines at

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 
 import { operatingStatus } from '@/catalog/operating-status'
 import type { EstablishmentSummary } from '@/catalog/types'
@@ -8,7 +8,7 @@ import { EstablishmentCover } from '@/components/establishment-cover'
 import { OperatingStatus } from '@/components/operating-status'
 import { ratingLabel as spokenRating } from '@/reviews/stars'
 import { useLineCap } from '@/theme/font-scale'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 interface Props {
@@ -16,6 +16,8 @@ interface Props {
   onPress: () => void
   /** A control drawn over the photo's top-right corner, such as a favourite. */
   accessory?: ReactNode
+  /** In a grid, `{ flex: 1 }`: the cards of a row share the tallest one's height. */
+  style?: StyleProp<ViewStyle>
 }
 
 /** "4,5 ★ (2)" — only when someone has rated the place. */
@@ -52,7 +54,7 @@ function cardLabel(establishment: EstablishmentSummary) {
  * the name is set in the display face. The seam under the photo stays, so a
  * photo edge never touches the text.
  */
-export function EstablishmentCard({ establishment, onPress, accessory }: Props) {
+export function EstablishmentCard({ establishment, onPress, accessory, style }: Props) {
   const colors = useColors()
   const oneLine = useLineCap(1)
   const twoLines = useLineCap(2)
@@ -76,11 +78,17 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
           borderColor: colors.borderSubtle,
           opacity: pressed ? 0.92 : 1,
         },
+        style,
       ]}
     >
       <View>
         <EstablishmentCover cover={establishment.cover} height={196} />
-        <View style={styles.status} pointerEvents="none">
+        {/* Held between both edges, so a long state at large text wraps inside the photo
+            instead of running out of the card; it keeps clear of the accessory. */}
+        <View
+          style={[styles.status, accessory ? styles.statusBesideAccessory : null]}
+          pointerEvents="none"
+        >
           <OperatingStatus
             establishment={{
               business_status: establishment.business_status,
@@ -115,6 +123,9 @@ export function EstablishmentCard({ establishment, onPress, accessory }: Props) 
   )
 }
 
+/** Where a control over the photo sits from its corner. */
+const ACCESSORY_INSET = spacing.sm + 2
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: radius.card,
@@ -122,8 +133,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     overflow: 'hidden',
   },
-  status: { left: spacing.md, position: 'absolute', top: spacing.md },
-  accessory: { position: 'absolute', right: spacing.sm + 2, top: spacing.sm + 2 },
+  status: { left: spacing.md, position: 'absolute', right: spacing.md, top: spacing.md },
+  statusBesideAccessory: { right: ACCESSORY_INSET + minTouch + spacing.sm },
+  accessory: { position: 'absolute', right: ACCESSORY_INSET, top: ACCESSORY_INSET },
   // A continuous seam plus an inset keeps any photo edge away from the text.
   body: {
     borderTopWidth: 1,

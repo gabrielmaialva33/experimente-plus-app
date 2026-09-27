@@ -11,6 +11,7 @@ import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { useSession } from '@/session/context'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -24,6 +25,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function DeleteAccountScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const { signOut } = useSession()
   const [password, setPassword] = useState('')
@@ -53,7 +55,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>
-      <KeyboardForm contentContainerStyle={styles.page}>
+      <KeyboardForm contentContainerStyle={[styles.page, frame.padding]}>
         <View
           style={[
             styles.warning,

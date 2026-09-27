@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
+import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
@@ -21,6 +22,7 @@ export function ReceiptScreen({
   load: () => Promise<Receipt>
 }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const receipt = useQuery({ queryKey, queryFn: load, retry: false })
 
   if (receipt.isPending) {
@@ -41,7 +43,10 @@ export function ReceiptScreen({
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       <View style={styles.head}>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
           Utilização registrada

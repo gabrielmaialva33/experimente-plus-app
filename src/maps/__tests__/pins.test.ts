@@ -1,6 +1,8 @@
 import {
   groupLabel,
   groupPins,
+  liftAboveCard,
+  MARK_CLEARANCE,
   placeFeatures,
   pressedTarget,
   spotOfLeaves,
@@ -181,5 +183,24 @@ describe('spotOfLeaves', () => {
 
   it('has nothing to list when the leaves name no known spot', () => {
     expect(spotOfLeaves([{ properties: { key: 'gone' } }], [0, 0], groups)).toBeNull()
+  })
+})
+
+describe('liftAboveCard', () => {
+  it('moves nothing when no card covers the map', () => {
+    expect(liftAboveCard(290, 300, 0)).toBe(0)
+  })
+
+  it('moves nothing when the mark already clears the card', () => {
+    expect(liftAboveCard(120 - MARK_CLEARANCE, 300, 180)).toBe(0)
+  })
+
+  it('raises a covered mark to the middle of what the card leaves', () => {
+    expect(liftAboveCard(260, 300, 180)).toBe(260 - 60)
+    expect(liftAboveCard(120 - MARK_CLEARANCE + 1, 300, 180)).toBe(120 - MARK_CLEARANCE + 1 - 60)
+  })
+
+  it('gives up on a card taller than the map', () => {
+    expect(liftAboveCard(100, 200, 220)).toBe(0)
   })
 })

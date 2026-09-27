@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
@@ -15,6 +15,7 @@ import { useAnnouncement } from '@/components/announce'
 import { ChoiceRow } from '@/components/choice-row'
 import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
+import { ContentFrameProvider, GRID_GAP, MEASURE, useFeedLayout } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
 import { EstablishmentCard } from '@/components/establishment-card'
 import { EstablishmentMap } from '@/components/establishment-map'
@@ -25,7 +26,7 @@ import { SearchField } from '@/components/search-field'
 import { SectionHeader } from '@/components/section-header'
 import { ASK_ACTION_ROOM, DiscoveryAssistant } from '@/concierge/discovery-assistant'
 import { ForYouRow } from '@/explorer/for-you-row'
-import { useLineCap } from '@/theme/font-scale'
+import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -65,6 +66,11 @@ export default function ExploreScreen() {
     reveal: revealField,
   } = useKeyboardList(scrollFeedTo, ASK_ACTION_ROOM)
   const cityLines = useLineCap(1)
+  // With large text the Concierge's card puts its mark above the words, which then
+  // take the card's width instead of a column of one or two words beside two circles.
+  const stacked = useStackedLayout()
+  // A phone's column, or a grid of places on a tablet and an unfolded phone.
+  const { frame, columns, columnWidth } = useFeedLayout()
 
   // The band runs under the status bar, so its icons stay light while Explorar is in front.
   useBandStatusBar()
@@ -95,14 +101,25 @@ export default function ExploreScreen() {
   const refreshControl = usePullToRefresh(search.refetch)
 
   // New criteria bring the results, right under the controls, back into view.
+  // While the person types, the search field stays above the keyboard: on a small
+  // phone, or with the city panel open, the top of the feed sits under it.
+  const keyboardShown = useRef(false)
+  useEffect(() => {
+    keyboardShown.current = keyboardInset > 0
+  }, [keyboardInset])
   const criteriaChanged = useRef(false)
   useEffect(() => {
     if (!criteriaChanged.current) {
       criteriaChanged.current = true
       return
     }
-    list.current?.scrollToOffset({ offset: 0, animated: true })
-  }, [params])
+    if (keyboardShown.current) {
+      list.current?.scrollToOffset({ offset: 0, animated: false })
+      revealField()
+    } else {
+      list.current?.scrollToOffset({ offset: 0, animated: true })
+    }
+  }, [params, revealField])
 
   const activeFilters = [
     category
@@ -235,7 +252,7 @@ export default function ExploreScreen() {
   // One filter state, shared by the list and the map.
   const filterControls = (
     <View style={styles.filters}>
-      <ChoiceRow label="Filtros" gutter={spacing.gutter}>
+      <ChoiceRow label="Filtros" gutter={frame}>
         {(maxWidth) => (
           <>
             <Chip
@@ -281,7 +298,7 @@ export default function ExploreScreen() {
   // browsing the city says nothing, since nothing was asked.
   useAnnouncement(hasFilters && count != null && !search.isFetching && resultsTitle)
   const resultsHeader = (
-    <View style={styles.resultsHeader}>
+    <View style={[styles.resultsHeader, frame.padding]}>
       <SectionHeader
         title={resultsTitle}
         hint={
@@ -317,7 +334,7 @@ export default function ExploreScreen() {
     <ContentSkeleton label="Carregando lugares" variant="catalog" />
   ) : search.isError ? (
     // The shared failure card of the other lists; the retry keeps the filters.
-    <View style={styles.failure}>
+    <View style={[styles.failure, frame.padding]}>
       <EmptyState
         testID="catalog-failed"
         icon="cloud-offline-outline"
@@ -359,7 +376,7 @@ export default function ExploreScreen() {
       onFieldMoved={revealField}
     />
   ) : (
-    <View style={styles.gutter}>
+    <View style={frame.padding}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Perguntar ao Concierge"
@@ -367,13 +384,14 @@ export default function ExploreScreen() {
         onPress={() => setAsking(true)}
         style={({ pressed }) => [
           styles.concierge,
+          stacked && styles.conciergeStacked,
           { backgroundColor: colors.primarySoft, opacity: pressed ? 0.9 : 1 },
         ]}
       >
         <View style={[styles.conciergeIcon, { backgroundColor: colors.primary }]}>
           <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.primaryForeground} />
         </View>
-        <View style={styles.conciergeCopy}>
+        <View style={[styles.conciergeCopy, stacked && styles.conciergeCopyStacked]}>
           <Text style={[styles.conciergeTitle, { color: colors.primaryAccent }]}>
             Não sabe por onde começar?
           </Text>
@@ -381,107 +399,121 @@ export default function ExploreScreen() {
             Conte o que procura e o Concierge sugere lugares daqui.
           </Text>
         </View>
-        <View style={[styles.conciergeGo, { backgroundColor: colors.card }]}>
-          <Ionicons name="arrow-forward" size={20} color={colors.primaryAccent} />
-        </View>
+        {stacked ? null : (
+          <View style={[styles.conciergeGo, { backgroundColor: colors.card }]}>
+            <Ionicons name="arrow-forward" size={20} color={colors.primaryAccent} />
+          </View>
+        )}
       </Pressable>
     </View>
   )
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
-      {view === 'map' ? (
-        // The map keeps the whole remaining height: nested in the scrolling feed it
-        // would lose vertical pans to the page on Android, so the feed stays in the list.
-        <View style={styles.fill}>
-          <ScreenHeader eyebrow={brand}>{searchField}</ScreenHeader>
-          {filterControls}
-          {resultsHeader}
-          {feedback ? (
-            <ScrollView
-              contentContainerStyle={styles.mapFeedback}
-              keyboardShouldPersistTaps="handled"
-            >
-              {feedback}
-            </ScrollView>
-          ) : (
-            <EstablishmentMap
-              establishments={results}
-              fallbackCenter={
-                city?.coordinates.latitude != null && city.coordinates.longitude != null
-                  ? { latitude: city.coordinates.latitude, longitude: city.coordinates.longitude }
-                  : null
-              }
-              onSelect={openEstablishment}
-              onShowList={() => setView('list')}
-            />
-          )}
-        </View>
-      ) : (
-        <View ref={feedFrame} style={styles.fill}>
-          {/* The band scrolls with the feed; the status bar keeps its colour. */}
-          <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
-          {/* One scroll for the whole feed: the band, the controls, the places and
-              the editorial rows move together, so no fixed block eats the phone. */}
-          <FlatList
-            ref={list}
-            style={styles.fill}
-            data={feedback ? [] : results}
-            keyExtractor={(item) => item.slug}
-            keyboardShouldPersistTaps="handled"
-            onScroll={onFeedScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={[
-              styles.list,
-              { paddingBottom: styles.list.paddingBottom + keyboardInset },
-            ]}
-            refreshControl={refreshControl}
-            ListHeaderComponent={
-              <>
-                <ScreenHeader
-                  insetTop={false}
-                  eyebrow={brand}
-                  title="O que você quer experimentar hoje?"
-                >
-                  {searchField}
-                </ScreenHeader>
-                {filterControls}
-                {resultsHeader}
-              </>
-            }
-            ListEmptyComponent={feedback}
-            // A search shows its results alone; the editorial rows come back with the browse.
-            ListFooterComponent={
-              hasFilters ? null : (
-                <View style={styles.editorial}>
-                  {/* The only personal piece of the feed; it reads the session itself. */}
-                  <ForYouRow citySlug={selectedCity} />
-                  {/* Bands already resolved in the city's timezone by the server. */}
-                  <CityAgenda citySlug={selectedCity} />
-                  {concierge}
-                </View>
-              )
-            }
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-            renderItem={({ item }) => (
-              <View style={styles.gutter}>
-                <EstablishmentCard
-                  establishment={item}
-                  onPress={() => openEstablishment(item.slug)}
-                />
-              </View>
+    // No safe-area padding at the sides: the band and the map run under a cutout in
+    // landscape, and the frame keeps the content itself clear of it.
+    <ContentFrameProvider frame={frame}>
+      <View style={{ backgroundColor: colors.background, flex: 1 }}>
+        {view === 'map' ? (
+          // The map keeps the whole remaining height: nested in the scrolling feed it
+          // would lose vertical pans to the page on Android, so the feed stays in the list.
+          <View style={styles.fill}>
+            <ScreenHeader eyebrow={brand}>{searchField}</ScreenHeader>
+            {filterControls}
+            {resultsHeader}
+            {feedback ? (
+              <ScrollView
+                contentContainerStyle={styles.mapFeedback}
+                keyboardShouldPersistTaps="handled"
+              >
+                {feedback}
+              </ScrollView>
+            ) : (
+              <EstablishmentMap
+                establishments={results}
+                fallbackCenter={
+                  city?.coordinates.latitude != null && city.coordinates.longitude != null
+                    ? { latitude: city.coordinates.latitude, longitude: city.coordinates.longitude }
+                    : null
+                }
+                onSelect={openEstablishment}
+                onShowList={() => setView('list')}
+              />
             )}
-          />
-        </View>
-      )}
-    </SafeAreaView>
+          </View>
+        ) : (
+          <View ref={feedFrame} style={styles.fill}>
+            {/* The band scrolls with the feed; the status bar keeps its colour. */}
+            <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
+            {/* One scroll for the whole feed: the band, the controls, the places and
+              the editorial rows move together, so no fixed block eats the phone. */}
+            <FlatList
+              ref={list}
+              // A list cannot change its columns in place: a new count (a rotation, a fold)
+              // lays it out afresh.
+              key={`columns-${columns}`}
+              numColumns={columns}
+              columnWrapperStyle={columns > 1 ? [styles.row, frame.padding] : undefined}
+              style={styles.fill}
+              data={feedback ? [] : results}
+              keyExtractor={(item) => item.slug}
+              keyboardShouldPersistTaps="handled"
+              onScroll={onFeedScroll}
+              scrollEventThrottle={16}
+              contentContainerStyle={[
+                styles.list,
+                { paddingBottom: styles.list.paddingBottom + keyboardInset },
+              ]}
+              refreshControl={refreshControl}
+              ListHeaderComponent={
+                <>
+                  <ScreenHeader
+                    insetTop={false}
+                    eyebrow={brand}
+                    title="O que você quer experimentar hoje?"
+                  >
+                    {searchField}
+                  </ScreenHeader>
+                  {filterControls}
+                  {resultsHeader}
+                </>
+              }
+              ListEmptyComponent={feedback}
+              // A search shows its results alone; the editorial rows come back with the browse.
+              ListFooterComponent={
+                hasFilters ? null : (
+                  <View style={styles.editorial}>
+                    {/* The only personal piece of the feed; it reads the session itself. */}
+                    <ForYouRow citySlug={selectedCity} />
+                    {/* Bands already resolved in the city's timezone by the server. */}
+                    <CityAgenda citySlug={selectedCity} />
+                    {concierge}
+                  </View>
+                )
+              }
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+              renderItem={({ item }) => (
+                <View style={columns > 1 ? { width: columnWidth } : frame.padding}>
+                  <EstablishmentCard
+                    establishment={item}
+                    onPress={() => openEstablishment(item.slug)}
+                    style={columns > 1 ? styles.gridCard : undefined}
+                  />
+                </View>
+              )}
+            />
+          </View>
+        )}
+      </View>
+    </ContentFrameProvider>
   )
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  gutter: { paddingHorizontal: spacing.gutter },
+  // The cards of a row share its height and the grid's gap.
+  row: { alignItems: 'stretch', gap: GRID_GAP },
+  gridCard: { flex: 1 },
   // With large text the city pill wraps under the wordmark as a whole, instead of
   // squeezing "Londrina" into a column of syllables beside it.
   brandRow: {
@@ -511,24 +543,28 @@ const styles = StyleSheet.create({
   },
   panelLabel: { ...typography.overline, paddingHorizontal: spacing.lg },
   filters: { paddingTop: spacing.sm },
-  resultsHeader: {
-    paddingBottom: spacing.sm,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: spacing.xs,
-  },
+  resultsHeader: { paddingBottom: spacing.sm, paddingTop: spacing.xs },
   list: { paddingBottom: spacing.section },
   editorial: { gap: spacing.section, paddingTop: spacing.md },
   mapFeedback: { flexGrow: 1 },
-  failure: { paddingHorizontal: spacing.gutter, paddingTop: spacing.sm },
-  feedback: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
+  failure: { paddingTop: spacing.sm },
+  feedback: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: spacing.md,
+    maxWidth: MEASURE.readable,
+    padding: spacing.xxl,
+  },
   feedbackAction: { justifyContent: 'center', minHeight: minTouch },
   message: { ...typography.body, textAlign: 'center' },
   action: { ...typography.label, ...textWeight('700') },
+  // A card of the feed, not a banner: on a wide window it keeps the readable measure.
   concierge: {
     alignItems: 'center',
     borderRadius: radius.card,
     flexDirection: 'row',
     gap: 14,
+    maxWidth: MEASURE.readable,
     padding: 18,
   },
   conciergeIcon: {
@@ -538,7 +574,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 48,
   },
+  conciergeStacked: { alignItems: 'flex-start', flexDirection: 'column' },
   conciergeCopy: { flex: 1, gap: 2, minWidth: 0 },
+  // In a column, `flex: 1` would mean a zero height.
+  conciergeCopyStacked: { alignSelf: 'stretch', flex: 0 },
   conciergeTitle: { ...typography.label, ...textWeight('700'), fontSize: 16, lineHeight: 21 },
   conciergeText: typography.meta,
   conciergeGo: {

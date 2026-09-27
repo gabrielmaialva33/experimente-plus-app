@@ -21,6 +21,8 @@ export interface MapRendererProps {
   onBackgroundPress?: () => void
   /** Explorar's list of the same places: the way through for a screen reader. */
   onShowList?: () => void
+  /** How much of the map's foot a card covers, in dp: the held place is kept above it. */
+  coveredBottom?: number
 }
 
 /** Only establishments the projection actually located can be drawn. */
@@ -193,4 +195,20 @@ export function spotOfLeaves(
     latitude: center[1],
     pins: members.flatMap((group) => group.pins),
   }
+}
+
+/** Room kept between a held mark and the card under it: the mark, its name and some air. */
+export const MARK_CLEARANCE = 40
+
+/**
+ * How far the camera moves down the view, in dp, for a held mark at `markY` to
+ * clear a card covering `covered` of a view `viewHeight` tall: none when it
+ * already does; otherwise the mark rises to the middle of what the card leaves.
+ * On a small phone or a tablet in landscape the map is short, and the card
+ * opened over the very place it names.
+ */
+export function liftAboveCard(markY: number, viewHeight: number, covered: number): number {
+  const visible = viewHeight - covered
+  if (covered <= 0 || visible <= 0 || markY <= visible - MARK_CLEARANCE) return 0
+  return markY - visible / 2
 }

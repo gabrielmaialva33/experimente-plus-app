@@ -12,6 +12,7 @@ import { IconButton } from '@/components/icon-button'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
+import { useContentFrame } from '@/components/content-frame'
 import { EstablishmentCardRow } from '@/explorer/establishment-card-row'
 import { moveStop } from '@/explorer/itinerary-order'
 import {
@@ -53,6 +54,7 @@ export default function ItineraryScreen() {
 
 function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const rename = useUpdateItinerary(itinerary.id)
   const reorder = useReorderItineraryStops(itinerary.id)
@@ -104,7 +106,7 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
   return (
     <KeyboardForm
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
     >
       <TextField
         label="Nome do roteiro"

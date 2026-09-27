@@ -7,6 +7,7 @@ import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
 import { ImagePicker, type SelectedImage } from '@/components/image-picker'
+import { useContentFrame } from '@/components/content-frame'
 import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
 import { StarsInput } from '@/reviews/stars'
 import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -26,6 +27,7 @@ const MAX_LENGTH = 4000
  */
 export default function WriteReviewScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   // `nome` is the place, so the form can say what is being reviewed (audit A45).
   const { establishmentId, nome } = useLocalSearchParams<{
@@ -86,7 +88,7 @@ export default function WriteReviewScreen() {
   return (
     <KeyboardForm
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
     >
       {nome ? <ReviewSubject name={nome} /> : null}
 

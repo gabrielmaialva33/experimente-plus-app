@@ -11,6 +11,7 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { SectionHeader } from '@/components/section-header'
+import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { cancelPurchase } from '@/purchases/cancel'
@@ -49,6 +50,7 @@ export default function PurchaseOrderScreen() {
   const state = order ? orderState(order) : null
   const [openingError, setOpeningError] = useState(false)
   const colors = useColors()
+  const frame = useContentFrame()
   useAnnouncement(openingError && OPENING_FAILED)
   const consulting = useLoadingCopy('Consultando pedido…')
 
@@ -87,7 +89,10 @@ export default function PurchaseOrderScreen() {
   const pending = state === 'pending'
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       <View
         style={[
           styles.card,

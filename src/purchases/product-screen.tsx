@@ -28,6 +28,7 @@ import {
 import { decorative } from '@/components/decorative'
 import { ScreenHeader } from '@/components/screen-header'
 import { StickyFooter } from '@/components/sticky-footer'
+import { useContentFrame } from '@/components/content-frame'
 import {
   ConditionsDetail,
   PurchaseAction,
@@ -102,16 +103,18 @@ export default function PurchaseProductScreen() {
 /** A state with nothing to buy yet: the band closes the header, the sentence says why. */
 function Notice({ children }: { children: ReactNode }) {
   const colors = useColors()
+  const frame = useContentFrame()
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
       <ScreenHeader insetTop={false} />
-      <View style={styles.content}>{children}</View>
+      <View style={[styles.content, frame.padding]}>{children}</View>
     </ScrollView>
   )
 }
 
 function Product({ editionId, offerId }: { editionId: number; offerId: number | null }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const client = useQueryClient()
   const { userId } = usePurchaseScope()
@@ -274,7 +277,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
         ) : (
           <ScreenHeader insetTop={false} />
         )}
-        <View style={styles.content}>
+        <View style={[styles.content, frame.padding]}>
           {product ? (
             <>
               {product.snapshot.description ? (
@@ -714,7 +717,7 @@ function Body({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { paddingBottom: spacing.xl },
-  content: { gap: spacing.xl, paddingHorizontal: spacing.gutter, paddingTop: 22 },
+  content: { gap: spacing.xl, paddingTop: 22 },
   lead: typography.body,
   kind: {
     alignItems: 'center',

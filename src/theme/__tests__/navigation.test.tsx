@@ -2,6 +2,7 @@ import { render } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
 
 import TabsLayout from '@/app/(tabs)/_layout'
+import { tabBarHeight } from '@/theme/navigation'
 import { palette } from '../tokens'
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
@@ -57,3 +58,19 @@ it.each(['light', 'dark'] as const)(
     ).toBe('compass-outline')
   }
 )
+
+describe('the tab bar at larger text', () => {
+  it('grows by what the label grows, over the system navigation bar', () => {
+    expect(tabBarHeight(1, 24)).toBe(49 + 24)
+    expect(tabBarHeight(0.85, 0)).toBe(49)
+    expect(tabBarHeight(1.3, 0)).toBe(49 + 5)
+    expect(tabBarHeight(2, 24)).toBe(49 + 16 + 24)
+  })
+
+  it('draws the bar at that height', async () => {
+    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette.light)
+    const view = await render(<TabsLayout />)
+    // React Native's Jest window reports 200% text and no insets.
+    expect(view.getByTestId('tabs')).toHaveStyle({ height: tabBarHeight(2, 0) })
+  })
+})

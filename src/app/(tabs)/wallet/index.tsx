@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Purchase } from '@/api/purchases'
 import { useAnnouncement } from '@/components/announce'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
+import { useContentFrame } from '@/components/content-frame'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
 import { LinkCard } from '@/components/link-card'
@@ -35,6 +36,7 @@ export default function WalletScreen() {
   const colors = useColors()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const frame = useContentFrame()
   const { status } = useSession()
   const wallet = useWallet()
   const orders = usePurchases()
@@ -68,7 +70,7 @@ export default function WalletScreen() {
   const openCatalog = () => router.push('/wallet/edicoes')
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <View style={{ backgroundColor: colors.background, flex: 1 }}>
       {/* The band scrolls with the page; the status bar keeps its colour. */}
       <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
       <ScrollView contentContainerStyle={styles.page} refreshControl={refreshControl}>
@@ -82,7 +84,7 @@ export default function WalletScreen() {
           }
         />
 
-        <View style={styles.content}>
+        <View style={[styles.content, frame.padding]}>
           {pending.length > 0 ? (
             <PendingOrders
               orders={pending}
@@ -212,7 +214,7 @@ export default function WalletScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -355,12 +357,17 @@ function BenefitTicket({
 
 function Centered({ children }: { children: React.ReactNode }) {
   const colors = useColors()
-  return <View style={[styles.center, { backgroundColor: colors.background }]}>{children}</View>
+  const frame = useContentFrame(undefined, spacing.xxl)
+  return (
+    <View style={[styles.center, frame.padding, { backgroundColor: colors.background }]}>
+      {children}
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.section },
-  content: { gap: spacing.section, paddingHorizontal: spacing.gutter, paddingTop: spacing.gutter },
+  content: { gap: spacing.section, paddingTop: spacing.gutter },
   center: {
     alignItems: 'center',
     flex: 1,

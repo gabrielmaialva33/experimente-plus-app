@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import type { PurchaseProduct } from '@/api/purchases'
 import { Button } from '@/components/button'
+import { useScreenFrame } from '@/components/content-frame'
 import { price, purchaseDay } from '@/purchases/components'
 import { productKey, productRoute } from '@/purchases/products'
 import { usePurchaseEditions } from '@/purchases/queries'
@@ -12,6 +13,16 @@ import { useColors } from '@/theme/use-colors'
 
 const SIDE = 136
 const NOTCH = 24
+/**
+ * The narrowest the terms may run beside the price: a long word of the title
+ * ("demonstração") still fits a line. On a 360 dp phone the side column left
+ * 146 for it and the title broke as "dem/onstração", so the ticket tears across.
+ */
+const MIN_TERMS_WIDTH = 200
+
+/** Whether a ticket in a column this wide stacks its price under its terms. */
+export const ticketStacks = (columnWidth: number, largeText: boolean) =>
+  largeText || columnWidth - SIDE < MIN_TERMS_WIDTH
 
 /**
  * The benefits sold for this place, each as a ticket (audit A11): what it is,
@@ -65,7 +76,7 @@ function BenefitTicket({
   onPress: () => void
 }) {
   const colors = useColors()
-  const stacked = useStackedLayout()
+  const stacked = ticketStacks(useScreenFrame().width, useStackedLayout())
   const offer = product.snapshot.offers[0]
   const amount = price(product.amount_cents, product.currency)
   const terms = [
@@ -97,8 +108,8 @@ function BenefitTicket({
         {terms ? <Text style={[styles.terms, { color: colors.ctaAccent }]}>{terms}</Text> : null}
       </View>
       {stacked ? (
-        // With large text the stub tears across: the price and its action take the
-        // full width below, so neither breaks mid-word in a narrow column.
+        // With large text or on a narrow phone the stub tears across: the price and its
+        // action take the full width below, so neither breaks mid-word in a narrow column.
         <View
           testID="benefit-cut"
           style={styles.cut}

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { askAssistant, type ConciergeReply } from '@/api/concierge'
 import { useAnnouncement } from '@/components/announce'
+import { MEASURE, useScreenFrame } from '@/components/content-frame'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { placeHref } from '@/place/links'
@@ -43,6 +44,8 @@ export function DiscoveryAssistant({
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
   const request = useRef<AbortController | null>(null)
+  // In the feed's column, at the measure of a text: an answer is read, not scanned.
+  const frame = useScreenFrame()
   const trimmed = question.trim()
   const canAsk = Boolean(citySlug) && trimmed.length >= 3 && !loading
   // Only the grounded references the server returned; never a place read out of
@@ -105,7 +108,11 @@ export function DiscoveryAssistant({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      style={[
+        styles.container,
+        { marginLeft: frame.left, marginRight: frame.right },
+        { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+      ]}
     >
       <View style={styles.copy}>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>Concierge</Text>
@@ -244,7 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     borderWidth: 1,
     gap: spacing.md,
-    marginHorizontal: spacing.gutter,
+    maxWidth: MEASURE.readable,
     padding: spacing.lg,
   },
   copy: { gap: spacing.xs },

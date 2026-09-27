@@ -2,13 +2,16 @@ import type { ReactNode } from 'react'
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { useScreenFrame } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
  * The header band of direction A: the brand plane at the top of a tab root,
  * rounded where it meets the content. It reserves the status bar itself, since
- * the screens that use it hide the native header.
+ * the screens that use it hide the native header. The band spans the window;
+ * what it holds keeps to the screen's column, so on a tablet the title and the
+ * search sit over the content they lead to.
  */
 export function ScreenHeader({
   title,
@@ -30,12 +33,14 @@ export function ScreenHeader({
 }) {
   const colors = useColors()
   const insets = useSafeAreaInsets()
+  const frame = useScreenFrame()
 
   return (
     <View
       testID="screen-header"
       style={[
         styles.band,
+        frame.padding,
         {
           backgroundColor: colors.chrome,
           paddingTop: (insetTop ? insets.top : 0) + spacing.gutter,
@@ -66,7 +71,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.sheet,
     gap: spacing.lg,
     paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.gutter,
   },
   title: { ...typography.display, fontSize: 28, lineHeight: 32 },
   subtitle: { ...typography.body, marginTop: -spacing.sm },

@@ -1,15 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs, useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useCities } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
 import { Avatar } from '@/components/avatar'
+import { useContentFrame } from '@/components/content-frame'
 import { ListGroup, ListRow } from '@/components/list-row'
 import { ScreenHeader } from '@/components/screen-header'
 import { useSession } from '@/session/context'
-import { useLineCap } from '@/theme/font-scale'
+import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
 import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -30,6 +30,10 @@ export default function AccountScreen() {
   const name = user?.full_name?.trim() || user?.username || 'Sua conta'
   const oneLine = useLineCap(1)
   const twoLines = useLineCap(2)
+  // With large text the avatar goes above the name: beside it the e-mail broke every
+  // few characters ("qa.appdevices / .179052317 / 2@example").
+  const stacked = useStackedLayout()
+  const frame = useContentFrame()
   useBandStatusBar()
 
   const citySlug = useSelectedCity()
@@ -41,13 +45,13 @@ export default function AccountScreen() {
   const operation = capabilities?.partner?.enabled === true ? context?.active_operation : null
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <View style={{ backgroundColor: colors.background, flex: 1 }}>
       <Tabs.Screen options={HEADER_OPTIONS} />
       <ScrollView contentContainerStyle={styles.page}>
         <ScreenHeader>
-          <View style={styles.identity}>
+          <View style={[styles.identity, stacked && styles.identityStacked]}>
             <Avatar name={user?.full_name || user?.username} tone="chrome" />
-            <View style={styles.who}>
+            <View style={[styles.who, stacked && styles.whoStacked]}>
               <Text
                 accessibilityRole="header"
                 numberOfLines={twoLines}
@@ -83,7 +87,7 @@ export default function AccountScreen() {
           </Pressable>
         </ScreenHeader>
 
-        <View style={styles.groups}>
+        <View style={[styles.groups, frame.padding]}>
           {/* Anexo I item 10 — the person's own relationship with the catalogue. */}
           <ListGroup title="Minhas coisas">
             <ListRow
@@ -133,14 +137,17 @@ export default function AccountScreen() {
           </ListGroup>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.xxl },
   identity: { alignItems: 'center', flexDirection: 'row', gap: spacing.lg },
+  identityStacked: { alignItems: 'flex-start', flexDirection: 'column', gap: spacing.md },
   who: { flex: 1, gap: 2 },
+  // In a column, `flex: 1` would mean a zero height.
+  whoStacked: { alignSelf: 'stretch', flex: 0 },
   name: { ...typography.title, fontSize: 24, lineHeight: 28 },
   email: typography.body,
   edit: {
@@ -153,5 +160,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.gutter,
   },
   editLabel: { ...typography.label, ...textWeight('700') },
-  groups: { gap: spacing.section, paddingHorizontal: spacing.gutter, paddingTop: spacing.xl },
+  groups: { gap: spacing.section, paddingTop: spacing.xl },
 })

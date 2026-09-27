@@ -36,3 +36,17 @@ export const stackSurfaceOptions = (colors: Colors, bottomInset = 0) => ({
   ...screenHeaderOptions(colors),
   contentStyle: { backgroundColor: colors.surfaceBase, paddingBottom: bottomInset },
 })
+
+/** React Navigation's tab bar: 49 over the system's navigation bar, drawn for the label at 100%. */
+const TAB_BAR_HEIGHT = 49
+export const TAB_LABEL = { fontSize: 12, lineHeight: 16 } as const
+
+/**
+ * The tab bar's height at a text size: what a larger label adds to the drawn
+ * one. With a fixed 49 the label at 200% sank into the gesture bar, its pill
+ * drawn across "Explorar".
+ */
+export function tabBarHeight(fontScale: number, bottomInset: number) {
+  const growth = Math.ceil(TAB_LABEL.lineHeight * (Math.max(fontScale, 1) - 1))
+  return TAB_BAR_HEIGHT + growth + bottomInset
+}

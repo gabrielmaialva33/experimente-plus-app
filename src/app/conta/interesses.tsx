@@ -10,6 +10,7 @@ import { Button } from '@/components/button'
 import { Checkbox } from '@/components/checkbox'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { useContentFrame } from '@/components/content-frame'
 import { interestOptions, selectionChanged } from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -65,6 +66,7 @@ function InterestsForm({
   save: ReturnType<typeof useReplaceInterests>
 }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const [selected, setSelected] = useState(
     () => new Set(chosen.map((interest) => interest.category.slug))
@@ -87,7 +89,10 @@ function InterestsForm({
     })
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       <Text style={[styles.lead, { color: colors.mutedForeground }]}>
         Marque o que você gosta de explorar. Usamos seus interesses no Para você, em Explorar.
       </Text>

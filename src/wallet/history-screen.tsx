@@ -6,6 +6,7 @@ import { Button } from '@/components/button'
 import { EmptyState } from '@/components/empty-state'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
+import { useContentFrame } from '@/components/content-frame'
 import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
@@ -32,6 +33,7 @@ export function HistoryScreen({
   receiptHref,
 }: Props) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const history = useQuery({ queryKey, queryFn: load })
   const refreshControl = usePullToRefresh(history.refetch)
@@ -59,7 +61,7 @@ export function HistoryScreen({
   return (
     <FlatList
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, frame.padding]}
       data={history.data?.redemptions ?? []}
       refreshControl={refreshControl}
       keyExtractor={(item) => item.receipt_code}

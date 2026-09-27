@@ -10,6 +10,7 @@ import { IconButton } from '@/components/icon-button'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { SectionHeader } from '@/components/section-header'
 import { UndoBar } from '@/components/undo-bar'
+import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -60,6 +61,7 @@ const COPY: Record<
  */
 export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: ReactElement }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const query = useSavedList(kind)
   const copy = COPY[kind]
@@ -76,7 +78,7 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
     <View style={[styles.fill, { backgroundColor: colors.background }]}>
       <FlatList
         style={styles.fill}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, frame.padding]}
         data={items}
         refreshControl={refreshControl}
         keyExtractor={(item) => String(item.id)}
@@ -124,7 +126,7 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
         )}
       />
       {removed ? (
-        <View style={styles.undo}>
+        <View style={[styles.undo, { left: frame.left, right: frame.right }]}>
           <UndoAction
             key={removed.id}
             kind={kind}
@@ -212,5 +214,5 @@ const styles = StyleSheet.create({
   header: { gap: spacing.sm },
   card: { borderRadius: radius.card, borderWidth: 1, padding: spacing.md },
   notice: typography.meta,
-  undo: { bottom: spacing.lg, left: spacing.gutter, position: 'absolute', right: spacing.gutter },
+  undo: { bottom: spacing.lg, position: 'absolute' },
 })

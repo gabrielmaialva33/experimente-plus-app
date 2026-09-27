@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
   fill: { alignSelf: 'stretch', flexGrow: 1 },
   center: { alignSelf: 'center' },
   end: { alignSelf: 'flex-end' },
-  label: { ...typography.label, ...textWeight('700'), flexShrink: 1 },
+  // A label that wraps at large text stays centred in its pill.
+  label: { ...typography.label, ...textWeight('700'), flexShrink: 1, textAlign: 'center' },
   large: { fontSize: 16 },
 })

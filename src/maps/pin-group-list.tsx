@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { useAnnouncement } from '@/components/announce'
+import { MEASURE, useContentFrame } from '@/components/content-frame'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -22,11 +23,19 @@ export function PinGroupList({
   const colors = useColors()
   const title = `${group.pins.length} lugares aqui`
   const lines = useLineCap(1)
+  // Like the card of a tapped place: a phone's measure, centred, clear of a side cutout.
+  const frame = useContentFrame(MEASURE.overlay, spacing.lg)
   // Opened by a tap on the map: the list is new, and says what it holds.
   useAnnouncement(`${group.pins.length} lugares neste ponto`)
 
   return (
-    <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.sheet,
+        { left: frame.left, right: frame.right },
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+    >
       <View style={styles.header}>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
           {title}
@@ -69,8 +78,6 @@ export function PinGroupList({
 const styles = StyleSheet.create({
   sheet: {
     position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
     bottom: spacing.xxl + spacing.lg,
     borderRadius: radius.surface,
     borderWidth: StyleSheet.hairlineWidth,

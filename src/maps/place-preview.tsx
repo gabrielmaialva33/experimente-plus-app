@@ -13,6 +13,8 @@ import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const THUMB = 88
+/** What the close button takes from the name's line: its 44 target and a little air. */
+const CLOSE_ROOM = 40
 
 /**
  * The place a tap picked on the map, held at its foot: a tap on a mark says
@@ -116,8 +118,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     padding: spacing.md,
-    // Room for the close button, so the name never runs under it.
-    paddingRight: spacing.md + 40,
   },
   thumb: {
     alignItems: 'center',
@@ -128,7 +128,15 @@ const styles = StyleSheet.create({
     width: THUMB,
   },
   copy: { flex: 1, gap: spacing.xs, minWidth: 0 },
-  name: { ...typography.label, ...textWeight('700'), fontSize: 16, lineHeight: 21 },
+  // Room for the close button beside the name only: the lines under it keep the card's
+  // width, so on a 360 dp phone the state no longer wraps inside its pill.
+  name: {
+    ...typography.label,
+    ...textWeight('700'),
+    fontSize: 16,
+    lineHeight: 21,
+    marginRight: CLOSE_ROOM,
+  },
   meta: typography.meta,
   status: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   close: { position: 'absolute', right: spacing.xs, top: spacing.xs },

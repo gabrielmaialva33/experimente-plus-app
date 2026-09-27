@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable, StyleSheet, Text } from 'react-native'
 
+import { BottomSheet } from '@/components/bottom-sheet'
 import { IconButton } from '@/components/icon-button'
 import { useLineCap } from '@/theme/font-scale'
-import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
+import { minTouch, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export interface ActionMenuItem {
@@ -41,7 +41,6 @@ export function ActionMenu({
   testID?: string
 }) {
   const colors = useColors()
-  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   const titleLines = useLineCap(2)
   const close = () => setOpen(false)
@@ -63,70 +62,48 @@ export function ActionMenu({
         tone={tone}
         testID={testID}
       />
-      <Modal
+      <BottomSheet
         visible={open}
-        transparent
-        animationType="fade"
-        onRequestClose={close}
-        statusBarTranslucent
-        navigationBarTranslucent
+        onClose={close}
+        closeLabel="Fechar opções"
+        style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
-        <View style={styles.root}>
+        {title ? (
+          <Text
+            numberOfLines={titleLines}
+            style={[styles.title, { color: colors.mutedForeground }]}
+          >
+            {title}
+          </Text>
+        ) : null}
+        {items.map((item) => (
           <Pressable
+            key={item.label}
             accessibilityRole="button"
-            accessibilityLabel="Fechar opções"
-            onPress={close}
-            style={[StyleSheet.absoluteFill, styles.scrim, { backgroundColor: colors.scrim }]}
-          />
-          <View
-            accessibilityViewIsModal
-            style={[
-              styles.sheet,
-              // A modal draws under the system navigation bar; its last row stays above it.
-              { paddingBottom: insets.bottom + spacing.lg },
-              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            accessibilityLabel={item.label}
+            onPress={() => choose(item)}
+            testID={item.testID}
+            style={({ pressed }) => [
+              styles.row,
+              { borderBottomColor: colors.borderSubtle, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            {title ? (
-              <Text
-                numberOfLines={titleLines}
-                style={[styles.title, { color: colors.mutedForeground }]}
-              >
-                {title}
-              </Text>
-            ) : null}
-            {items.map((item) => (
-              <Pressable
-                key={item.label}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-                onPress={() => choose(item)}
-                testID={item.testID}
-                style={({ pressed }) => [
-                  styles.row,
-                  { borderBottomColor: colors.borderSubtle, opacity: pressed ? 0.7 : 1 },
-                ]}
-              >
-                {item.icon ? <Ionicons name={item.icon} size={22} color={colors.primary} /> : null}
-                <Text style={[styles.label, { color: colors.foreground }]}>{item.label}</Text>
-              </Pressable>
-            ))}
-            <Pressable accessibilityRole="button" onPress={close} style={styles.cancel}>
-              <Text style={[styles.cancelLabel, { color: colors.primary }]}>Cancelar</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+            {item.icon ? <Ionicons name={item.icon} size={22} color={colors.primary} /> : null}
+            <Text style={[styles.label, { color: colors.foreground }]}>{item.label}</Text>
+          </Pressable>
+        ))}
+        <Pressable accessibilityRole="button" onPress={close} style={styles.cancel}>
+          <Text style={[styles.cancelLabel, { color: colors.primary }]}>Cancelar</Text>
+        </Pressable>
+      </BottomSheet>
     </>
   )
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { opacity: 0.45 },
+  // The sheet reserves the navigation bar; the cancel row keeps its own air above it.
   sheet: {
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+    borderBottomWidth: 0,
     borderWidth: 1,
     paddingHorizontal: spacing.gutter,
     paddingTop: spacing.lg,
@@ -143,6 +120,7 @@ const styles = StyleSheet.create({
   cancel: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.lg,
     marginTop: spacing.sm,
     minHeight: minTouch,
   },

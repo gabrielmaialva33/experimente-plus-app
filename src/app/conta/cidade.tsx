@@ -6,6 +6,7 @@ import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { useCities } from '@/catalog/queries'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { useContentFrame } from '@/components/content-frame'
 import { spacing, textWeight, typography, radius } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -16,6 +17,7 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function CityScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const selected = useSelectedCity()
   const cities = useCities()
@@ -39,7 +41,7 @@ export default function CityScreen() {
           />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.page}>
+        <ScrollView contentContainerStyle={[styles.page, frame.padding]}>
           <Text style={[styles.lead, { color: colors.mutedForeground }]}>
             Explorar abre nesta cidade. Você pode trocar quando quiser.
           </Text>

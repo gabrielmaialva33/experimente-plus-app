@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs } from 'expo-router'
-import { StyleSheet, type ColorValue } from 'react-native'
+import { StyleSheet, useWindowDimensions, type ColorValue } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { usePartnerAreas, useSession } from '@/session/context'
-import { screenHeaderOptions } from '@/theme/navigation'
+import { TAB_LABEL, screenHeaderOptions, tabBarHeight } from '@/theme/navigation'
 import { elevation, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -46,6 +47,8 @@ function icon(name: keyof typeof Ionicons.glyphMap) {
 
 export default function TabsLayout() {
   const colors = useColors()
+  const { fontScale } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
   const { status } = useSession()
   const { canValidate } = usePartnerAreas()
 
@@ -60,9 +63,10 @@ export default function TabsLayout() {
         tabBarActiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveBackgroundColor: colors.surfaceBase,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarLabelStyle: { ...textWeight('600'), fontSize: 12 },
+        tabBarLabelStyle: { ...textWeight('600'), ...TAB_LABEL },
         tabBarStyle: {
           ...elevation.raised,
+          height: tabBarHeight(fontScale, insets.bottom),
           backgroundColor: colors.surfaceBase,
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,

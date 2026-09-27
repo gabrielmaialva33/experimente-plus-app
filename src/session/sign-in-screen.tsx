@@ -2,12 +2,13 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { signIn } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { useContentFrame } from '@/components/content-frame'
 import { KeyboardForm } from '@/components/keyboard-form'
 import { ScreenHeader } from '@/components/screen-header'
 import { TextField } from '@/components/text-field'
@@ -32,6 +33,8 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
   const { status, refresh, signOut } = useSession()
   // As a tab it opens under the navy band; in the purchase flow the stack header is plain.
   useBandStatusBar(!purchase)
+  // The band spans the window; the fields keep the readable column, clear of a side cutout.
+  const frame = useContentFrame()
   const [uid, setUid] = useState('')
   const [password, setPassword] = useState('')
 
@@ -59,7 +62,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
       : router.push('/recuperar-senha')
 
   return (
-    <SafeAreaView edges={['left', 'right']} style={{ backgroundColor: colors.background, flex: 1 }}>
+    <View style={{ backgroundColor: colors.background, flex: 1 }}>
       {/* The band scrolls with the page; the status bar keeps its colour. */}
       {purchase ? null : <View style={{ backgroundColor: colors.chrome, height: insets.top }} />}
       <KeyboardForm contentContainerStyle={styles.page}>
@@ -70,7 +73,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
             subtitle="Sua carteira de benefícios, favoritos e roteiros ficam na conta. Explorar continua aberto sem login."
           />
         )}
-        <View style={styles.form}>
+        <View style={[styles.form, frame.padding]}>
           {/* A stored credential whose context could not load: discovery still
               works, and this is the escape from a half-loaded session. */}
           {status === 'unavailable' ? (
@@ -179,13 +182,13 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
           />
         </View>
       </KeyboardForm>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.xxl },
-  form: { gap: spacing.lg, padding: spacing.gutter },
+  form: { gap: spacing.lg, paddingVertical: spacing.gutter },
   intro: { gap: spacing.sm, paddingBottom: spacing.xs },
   title: typography.title,
   body: typography.body,

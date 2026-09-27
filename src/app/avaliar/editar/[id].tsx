@@ -8,6 +8,7 @@ import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ReviewSubject, failureMessage } from '@/app/avaliar/[establishmentId]'
 import type { Review } from '@/api/reviews'
 import { ImagePicker } from '@/components/image-picker'
+import { useContentFrame } from '@/components/content-frame'
 import {
   useAddReviewPhoto,
   useAuthorRules,
@@ -65,6 +66,7 @@ export default function EditReviewScreen() {
 
 function EditForm({ review, place }: { review: Review; place?: string }) {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const [rating, setRating] = useState(review.rating)
   const [comment, setComment] = useState(review.comment ?? '')
@@ -87,7 +89,7 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
   return (
     <KeyboardForm
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
     >
       {/* The header already says "Editar avaliação" (audit A45); the page names the place. */}
       {place ? <ReviewSubject name={place} /> : null}

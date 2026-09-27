@@ -10,10 +10,11 @@ import {
   type PressEventWithFeatures,
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native'
 import { useReducedMotion } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { minTouch, palette, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -22,6 +23,7 @@ import { mapStyleUrl } from './config'
 import { PinGroupList } from './pin-group-list'
 import {
   groupPins,
+  liftAboveCard,
   placeFeatures,
   pressedTarget,
   spotOfLeaves,
@@ -116,10 +118,13 @@ export function MapLibreRenderer({
   selected = null,
   onBackgroundPress,
   onShowList,
+  coveredBottom = 0,
 }: MapRendererProps) {
   const colors = useColors()
   const { credit, textFont } = useBasemap()
   const reduceMotion = useReducedMotion()
+  // The map runs under a side cutout in landscape; its own controls stay clear of it.
+  const { right: rightInset } = useSafeAreaInsets()
   const groups = useMemo(() => groupPins(pins), [pins])
   const places = useMemo(() => placeFeatures(groups), [groups])
   const [open, setOpen] = useState<MapPinGroup | null>(null)
@@ -128,6 +133,40 @@ export function MapLibreRenderer({
   const source = useRef<GeoJSONSourceRef>(null)
   // Once the person moves the map away from the city, one tap brings it back.
   const [moved, setMoved] = useState(false)
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null)
+
+  // A held place stays in sight: if the card at the foot covers its mark, the
+  // map slides it up into the part the card leaves. Once per place picked, the
+  // moment its card has a height: a later resize or rotation may find the map
+  // under another screen, where the native map answers nothing and logs an error.
+  const lifted = useRef<string | null>(null)
+  useEffect(() => {
+    if (!selected) {
+      lifted.current = null
+      return
+    }
+    const pin = pins.find((item) => item.slug === selected)
+    if (!pin || !size || coveredBottom <= 0 || lifted.current === selected) return
+    lifted.current = selected
+    let cancelled = false
+    const reveal = async () => {
+      try {
+        const point = await map.current?.project([pin.longitude, pin.latitude])
+        const lift = point ? liftAboveCard(point[1], size.height, coveredBottom) : 0
+        if (cancelled || lift === 0) return
+        const center = await map.current?.unproject([size.width / 2, size.height / 2 + lift])
+        if (!cancelled && center) {
+          camera.current?.easeTo({ center, duration: reduceMotion ? 0 : 350 })
+        }
+      } catch {
+        // A map still loading answers nothing; the card stays where it is.
+      }
+    }
+    void reveal()
+    return () => {
+      cancelled = true
+    }
+  }, [selected, pins, size, coveredBottom, reduceMotion])
   const recentre = () => {
     setMoved(false)
     camera.current?.easeTo({
@@ -169,7 +208,13 @@ export function MapLibreRenderer({
   const count = pins.length === 1 ? '1 lugar' : `${pins.length} lugares`
 
   return (
-    <View style={styles.map}>
+    <View
+      style={styles.map}
+      testID="map-frame"
+      onLayout={({ nativeEvent }) =>
+        setSize({ width: nativeEvent.layout.width, height: nativeEvent.layout.height })
+      }
+    >
       {/* The marks are drawn by the map, out of a screen reader's reach; Explorar's
           list holds the same places, so the map says so and leads there. */}
       <View
@@ -260,7 +305,7 @@ export function MapLibreRenderer({
           onPress={recentre}
           style={({ pressed }) => [
             styles.recentre,
-            { backgroundColor: paper, opacity: pressed ? 0.85 : 1 },
+            { backgroundColor: paper, opacity: pressed ? 0.85 : 1, right: spacing.md + rightInset },
           ]}
           testID="map-recentre"
         >
@@ -303,7 +348,6 @@ const styles = StyleSheet.create({
     minHeight: minTouch,
     paddingHorizontal: spacing.lg,
     position: 'absolute',
-    right: spacing.md,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.16,

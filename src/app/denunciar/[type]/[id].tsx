@@ -7,6 +7,7 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
+import { useContentFrame } from '@/components/content-frame'
 import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportAnonymously, useReportContent } from '@/reviews/queries'
@@ -114,6 +115,7 @@ export const reportableTarget = (value: string | undefined): ReportableTarget | 
  */
 export default function ReportContentScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   // `nome` names what is reported, so the form can say it (audit A45).
   const { type, id, nome } = useLocalSearchParams<{ type: string; id: string; nome?: string }>()
   const target = reportableTarget(type)
@@ -178,7 +180,7 @@ export default function ReportContentScreen() {
   return (
     <KeyboardForm
       style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.page}
+      contentContainerStyle={[styles.page, frame.padding]}
     >
       {/* The header says what the form does; the page names what it acts on. */}
       <Stack.Screen options={{ title: TITLES[target] }} />

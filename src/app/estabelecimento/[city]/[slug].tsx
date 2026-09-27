@@ -12,6 +12,7 @@ import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { Badge } from '@/components/badge'
 import { useCompactHeader } from '@/components/compact-header'
+import { MEASURE, useContentFrame } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
 import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
@@ -118,6 +119,8 @@ function Detail({
 }) {
   const { contacts, address } = detail
   const insets = useSafeAreaInsets()
+  // The photo spans the window; what the page says keeps to a readable column.
+  const frame = useContentFrame()
   const scroll = useRef<ScrollView>(null)
   // Once the photo scrolls away, a compact bar keeps back and the place's name on screen.
   const header = useCompactHeader(...placeBarRange(detail, insets.top))
@@ -231,7 +234,7 @@ function Detail({
         <PlaceHero detail={detail} />
 
         <View
-          style={[styles.body, { backgroundColor: colors.background }]}
+          style={[styles.body, frame.padding, { backgroundColor: colors.background }]}
           testID="place-body"
           onLayout={(event) => {
             offsets.current.body = event.nativeEvent.layout.y
@@ -328,9 +331,11 @@ const styles = StyleSheet.create({
   state: { flex: 1, justifyContent: 'center', padding: spacing.gutter },
   center: {
     alignItems: 'center',
+    alignSelf: 'center',
     flex: 1,
     gap: spacing.md,
     justifyContent: 'center',
+    maxWidth: MEASURE.readable,
     padding: spacing.xxl,
   },
   // The content rises over the photo on a sheet with rounded top corners.
@@ -339,7 +344,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.sheet,
     gap: spacing.section,
     marginTop: -radius.sheet,
-    paddingHorizontal: spacing.gutter,
     paddingTop: 22,
   },
   header: { gap: 10 },

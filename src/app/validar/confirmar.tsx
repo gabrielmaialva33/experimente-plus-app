@@ -9,6 +9,7 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
+import { useContentFrame } from '@/components/content-frame'
 import { ApiError } from '@/api/client'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -33,6 +34,7 @@ const UNAVAILABLE_PRESENTATION_MESSAGE =
  */
 export default function ConfirmRedemptionScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
   const router = useRouter()
   const { token: incomingToken } = useLocalSearchParams<{ token?: string }>()
   const token = useRef<string | undefined>(incomingToken)
@@ -133,7 +135,10 @@ export default function ConfirmRedemptionScreen() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       <View style={styles.head}>
         <Text accessibilityRole="header" style={[styles.heading, { color: colors.foreground }]}>
           Confirmar utilização
@@ -214,10 +219,14 @@ function Stopped({ children, onBack }: { children: string; onBack: () => void })
 
 function ReceiptView({ receipt, onDone }: { receipt: Receipt; onDone: () => void }) {
   const colors = useColors()
+  const frame = useContentFrame()
   useAnnouncement(`Utilização registrada. Comprovante ${receipt.receipt_code}.`)
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.page}>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.page, frame.padding]}
+    >
       <View style={styles.done}>
         <View style={[styles.mark, { backgroundColor: colors.successSoft }]} {...decorative}>
           <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />

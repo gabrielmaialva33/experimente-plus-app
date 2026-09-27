@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
 import { CompactCard } from '@/components/compact-card'
+import { GRID_GAP, useCardGrid, useScreenFrame } from '@/components/content-frame'
 import { DateTile } from '@/components/date-tile'
 import { SectionHeader } from '@/components/section-header'
 import { useLineCap } from '@/theme/font-scale'
@@ -61,10 +62,14 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
   const data = agenda.data
   const oneLine = useLineCap(1)
   const twoLines = useLineCap(2)
+  // The feed's column: on a wide window the day's events sit side by side, like the places above.
+  const frame = useScreenFrame()
+  const grid = useCardGrid()
+  const eventWidth = grid.columns > 1 ? grid.columnWidth : '100%'
 
   if (agenda.isPending && !data) {
     return (
-      <View style={styles.gutter}>
+      <View style={frame.padding}>
         <Text style={[styles.status, { color: colors.mutedForeground }]}>
           Carregando a agenda da cidade…
         </Text>
@@ -84,12 +89,12 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
 
   return (
     <View style={styles.section}>
-      <View style={styles.gutter}>
+      <View style={frame.padding}>
         <SectionHeader title={`Acontece em ${cityName}`} />
       </View>
 
       {data.isEmpty ? (
-        <Text style={[styles.status, styles.gutter, { color: colors.mutedForeground }]}>
+        <Text style={[styles.status, frame.padding, { color: colors.mutedForeground }]}>
           Nenhum evento ou novidade publicada em {cityName} por enquanto.
         </Text>
       ) : null}
@@ -100,7 +105,7 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
           <View
             key={band.key}
             testID={`agenda-band-${band.key}`}
-            style={[styles.band, styles.gutter]}
+            style={[styles.band, frame.padding]}
           >
             <Text
               accessibilityRole="header"
@@ -108,62 +113,68 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
             >
               {band.title}
             </Text>
-            {band.items.map((item) => {
-              // The tile carries the day, so the row itself only needs the hours.
-              const hours = formatAgendaWindow(item, timeZone, false)
-              const spoken = formatAgendaWindow(item, timeZone, band.withDate)
-              const meta = [hours, item.establishmentName].filter(Boolean).join(' · ')
+            <View style={styles.events}>
+              {band.items.map((item) => {
+                // The tile carries the day, so the row itself only needs the hours.
+                const hours = formatAgendaWindow(item, timeZone, false)
+                const spoken = formatAgendaWindow(item, timeZone, band.withDate)
+                const meta = [hours, item.establishmentName].filter(Boolean).join(' · ')
 
-              return (
-                <Pressable
-                  key={`${item.kind}-${item.id}`}
-                  testID={`agenda-card-${item.kind}-${item.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={[item.title, item.establishmentName, spoken]
-                    .filter(Boolean)
-                    .join(', ')}
-                  onPress={() => open(item)}
-                  style={({ pressed }) => [
-                    styles.event,
-                    {
-                      backgroundColor: colors.card,
-                      borderColor: colors.borderSubtle,
-                      opacity: pressed ? 0.92 : 1,
-                    },
-                  ]}
-                >
-                  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                    <DateTile
-                      iso={item.startsAt}
-                      timeZone={timeZone}
-                      tone={band.key === 'happening-today' ? 'strong' : 'soft'}
-                    />
-                  </View>
-                  <View style={styles.eventCopy}>
-                    <Text
-                      style={[styles.eventTitle, { color: colors.foreground }]}
-                      numberOfLines={twoLines}
+                return (
+                  <Pressable
+                    key={`${item.kind}-${item.id}`}
+                    testID={`agenda-card-${item.kind}-${item.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={[item.title, item.establishmentName, spoken]
+                      .filter(Boolean)
+                      .join(', ')}
+                    onPress={() => open(item)}
+                    style={({ pressed }) => [
+                      styles.event,
+                      {
+                        width: eventWidth,
+                        backgroundColor: colors.card,
+                        borderColor: colors.borderSubtle,
+                        opacity: pressed ? 0.92 : 1,
+                      },
+                    ]}
+                  >
+                    <View
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
                     >
-                      {item.title}
-                    </Text>
-                    {meta ? (
+                      <DateTile
+                        iso={item.startsAt}
+                        timeZone={timeZone}
+                        tone={band.key === 'happening-today' ? 'strong' : 'soft'}
+                      />
+                    </View>
+                    <View style={styles.eventCopy}>
                       <Text
-                        style={[styles.eventMeta, { color: colors.mutedForeground }]}
-                        numberOfLines={oneLine}
+                        style={[styles.eventTitle, { color: colors.foreground }]}
+                        numberOfLines={twoLines}
                       >
-                        {meta}
+                        {item.title}
                       </Text>
-                    ) : null}
-                  </View>
-                </Pressable>
-              )
-            })}
+                      {meta ? (
+                        <Text
+                          style={[styles.eventMeta, { color: colors.mutedForeground }]}
+                          numberOfLines={oneLine}
+                        >
+                          {meta}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                )
+              })}
+            </View>
           </View>
         ))}
 
       {data.newExperiences.length > 0 ? (
         <View testID="agenda-band-new-experiences" style={styles.band}>
-          <View style={styles.gutter}>
+          <View style={frame.padding}>
             <Text
               accessibilityRole="header"
               style={[styles.bandTitle, { color: colors.mutedForeground }]}
@@ -178,7 +189,7 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.row}
+            contentContainerStyle={[styles.row, frame.padding]}
           >
             {data.newExperiences.map((item) => (
               <CompactCard
@@ -204,12 +215,12 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.lg },
-  gutter: { paddingHorizontal: spacing.gutter },
   status: typography.meta,
   band: { gap: spacing.sm },
+  events: { columnGap: GRID_GAP, flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.sm },
   bandTitle: { ...typography.overline },
   bandHint: { ...typography.caption, marginTop: 2 },
-  row: { gap: spacing.md, paddingHorizontal: spacing.gutter },
+  row: { gap: spacing.md },
   event: {
     alignItems: 'center',
     borderRadius: radius.card,

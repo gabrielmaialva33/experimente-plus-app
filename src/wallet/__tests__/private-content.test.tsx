@@ -5,7 +5,9 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 import { Text } from 'react-native'
+import { apiBaseUrl } from '@/api/config'
 import PresentScreen from '@/app/carteira/apresentar'
 import ConfirmScreen from '@/app/validar/confirmar'
 import { SessionProvider, useSession } from '@/session/context'
@@ -46,6 +48,9 @@ jest.mock('@/api/me', () => ({
   })),
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 jest.mock('@/api/redemptions', () => ({
   previewRedemption: jest.fn(),
   confirmRedemption: jest.fn(),
@@ -495,6 +500,40 @@ it('retries a failed presentation from a button', async () => {
   expect(await view.findByLabelText('Código temporário do benefício')).toBeOnTheScreen()
   expect(api.createPresentation).toHaveBeenCalledTimes(2)
   expectNoPrivateCache(client)
+  await view.unmount()
+  client.clear()
+})
+
+// Under the instruction the code comes with, never between the person and the code.
+it('opens the manual on presenting a benefit from under the code', async () => {
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByLabelText('Código temporário do benefício')
+
+  await fireEvent.press(
+    view.getByRole('link', { name: 'Abrir o manual: como apresentar o benefício' })
+  )
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-carteira`,
+    expect.any(Object)
+  )
+  // Help never asks for a new code.
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
+  await view.unmount()
+  client.clear()
+})
+
+it('points a code that could not be generated to the troubleshooting section', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport') as typeof import('@/api/transport')
+  api.createPresentation.mockRejectedValueOnce(new ApiError(503, null))
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByRole('button', { name: 'Tentar de novo' })
+
+  await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-problemas`,
+    expect.any(Object)
+  )
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
   await view.unmount()
   client.clear()
 })

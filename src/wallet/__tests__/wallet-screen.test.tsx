@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, within } from '@testing-library/react-native'
+import * as WebBrowser from 'expo-web-browser'
 
+import { apiBaseUrl } from '@/api/config'
 import WalletScreen from '@/app/(tabs)/wallet'
 import { palette } from '@/theme/tokens'
 import type { Wallet } from '../types'
@@ -24,6 +26,9 @@ jest.mock('@/session/context', () => ({
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn() }))
 jest.mock('@/api/purchases', () => ({ listPurchases: jest.fn() }))
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}))
 
 const api = jest.requireMock('@/api/wallet') as { getWallet: jest.Mock }
 const purchases = jest.requireMock('@/api/purchases') as { listPurchases: jest.Mock }
@@ -95,6 +100,33 @@ it('gives the empty wallet an action to the benefits on sale', async () => {
   await fireEvent.press(action)
   expect(mockPush).toHaveBeenCalledWith('/wallet/edicoes')
   expect(view.queryByTestId('wallet-pending-orders')).toBeNull()
+})
+
+// Help sits in the band, beside the title, whatever the wallet holds.
+it('opens the manual on presenting a benefit from the band', async () => {
+  const view = await page()
+  await view.findByText('Sua carteira está vazia')
+  const help = view.getByRole('link', { name: 'Abrir o manual: como apresentar o benefício' })
+  expect(help).toHaveStyle({ backgroundColor: palette.light.chromeRaised })
+
+  await fireEvent.press(help)
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-carteira`,
+    expect.any(Object)
+  )
+})
+
+it('offers the troubleshooting section beside a failed refresh', async () => {
+  api.getWallet.mockRejectedValue(new Error('network'))
+  const view = await page()
+  expect(await view.findByText('Não foi possível atualizar a carteira')).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: 'Atualizar carteira' })).toBeOnTheScreen()
+
+  await fireEvent.press(view.getByRole('link', { name: 'Abrir o manual: problemas comuns' }))
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    `${apiBaseUrl}/manual#app-problemas`,
+    expect.any(Object)
+  )
 })
 
 // A28: one vocabulary — benefício, pacote da cidade, voucher; never "acesso" or "loja".

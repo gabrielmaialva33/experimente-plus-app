@@ -8,12 +8,15 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { useContentFrame } from '@/components/content-frame'
 import { decorative } from '@/components/decorative'
+import { HelpLink } from '@/help/help-link'
 import { usePartnerAreas } from '@/session/context'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { extractPresentationToken } from '@/wallet/presentation-token'
 
 const REJECTED = 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
+
+const VALIDATE_HELP = { topic: 'validate', label: 'Como validar' } as const
 
 /**
  * Partner scanner.
@@ -112,6 +115,12 @@ export default function ValidateScreen() {
           <Button label="Permitir câmera" icon="camera-outline" onPress={requestPermission} />
         )}
         <HistoryLink />
+        {/* Blocked, the question is the phone's settings, which the troubleshooting section walks through. */}
+        {blocked ? (
+          <HelpLink topic="troubleshooting" label="Como liberar a câmera" />
+        ) : (
+          <HelpLink {...VALIDATE_HELP} />
+        )}
       </Centered>
     )
   }
@@ -172,7 +181,11 @@ export default function ValidateScreen() {
             {rejected ? REJECTED : 'Aponte para o código que o cliente está mostrando.'}
           </Text>
         </View>
-        <HistoryLink />
+        {/* Secondary ways out share one line, so the viewfinder keeps its height. */}
+        <View style={styles.links}>
+          <HistoryLink />
+          <HelpLink {...VALIDATE_HELP} />
+        </View>
       </View>
     </View>
   )
@@ -252,6 +265,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   statusText: { ...typography.meta, ...textWeight('600'), flex: 1 },
+  links: { columnGap: spacing.lg, flexDirection: 'row', flexWrap: 'wrap' },
   center: {
     alignItems: 'center',
     flex: 1,

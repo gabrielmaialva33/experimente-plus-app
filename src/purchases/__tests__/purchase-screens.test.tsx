@@ -279,6 +279,17 @@ it('a timeout stays uncertain and does not retry automatically or open the walle
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
+it('draws each next step number as a circle at the top of its step, not a bar as tall as the text', async () => {
+  const view = await page(<OrderScreen />)
+  for (const step of [1, 2, 3]) {
+    expect(view.getByTestId(`order-step-${step}`)).toHaveStyle({
+      alignSelf: 'flex-start',
+      minHeight: 28,
+      minWidth: 28,
+    })
+  }
+})
+
 it('checkout returning successfully does not confirm payment or expose wallet access', async () => {
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
   const view = await page(<OrderScreen />)

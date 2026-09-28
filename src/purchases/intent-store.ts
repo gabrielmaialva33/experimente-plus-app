@@ -19,15 +19,37 @@ const slot = (userId: number, editionId: number, offerId: number | null = null) 
     offerId == null ? [apiBaseUrl, userId, editionId] : [apiBaseUrl, userId, editionId, offerId]
   )
 
-/** Only an opaque intent and quote identifiers; never payment instructions or credentials. */
+const isIntent = (value: unknown): value is Intent =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as Intent).key === 'string' &&
+  (value as Intent).key.length > 0 &&
+  typeof (value as Intent).body === 'object' &&
+  (value as Intent).body !== null
+
+/**
+ * Only an opaque intent and quote identifiers; never payment instructions or
+ * credentials. A slot that no longer reads as an intent (a partial write, an
+ * older shape) cannot be replayed as it was sent, so it is dropped instead of
+ * breaking the product screen on every render; the server still refuses a
+ * second order while one is open.
+ */
 export function readIntent(
   userId: number,
   editionId: number,
   offerId: number | null = null
 ): Intent | null {
-  const stored = storage.getString(slot(userId, editionId, offerId))
+  const key = slot(userId, editionId, offerId)
+  const stored = storage.getString(key)
   if (!stored) return null
-  return JSON.parse(stored) as Intent
+  try {
+    const intent: unknown = JSON.parse(stored)
+    if (isIntent(intent)) return intent
+  } catch {
+    // Falls through to discard the unreadable slot.
+  }
+  storage.remove(key)
+  return null
 }
 
 export function purchaseIntent(userId: number, body: IntentBody): Intent {

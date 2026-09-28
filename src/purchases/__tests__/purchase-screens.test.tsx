@@ -285,6 +285,58 @@ it('a timeout stays uncertain and does not retry automatically or open the walle
   expect(router.navigate).not.toHaveBeenCalled()
 })
 
+// The server refuses before creating anything under the key (quote changed, no
+// longer on sale, an order already open): replaying the same intent could only
+// be refused again, so it is dropped and the person starts from the product.
+it.each([400, 404, 409, 422])(
+  'drops a refused intent (%s), says nothing was charged and does not call it uncertain',
+  async (status) => {
+    const { ApiError } = jest.requireMock('@/api/client') as { ApiError: new () => Error }
+    api.createPurchase.mockRejectedValue(Object.assign(new ApiError(), { status }))
+    const view = await page(<EditionScreen />)
+    await fireEvent.press(view.getByRole('radio', { name: 'Pix' }))
+    await fireEvent.press(view.getByRole('checkbox', { name: /^Li e aceito as condições/ }))
+    await fireEvent.press(view.getByRole('button', { name: 'Ir para o pagamento' }))
+    expect(await view.findByText(/O pedido não foi criado e nada foi cobrado/)).toBeOnTheScreen()
+    expect(view.queryByText(/Isso não significa que o pagamento falhou/)).toBeNull()
+    expect(jest.requireMock('@/purchases/intent-store').clearIntent).toHaveBeenCalledWith(
+      1,
+      2,
+      null
+    )
+    // The product is offered again, never a replay of the refused request.
+    expect(view.getByRole('button', { name: 'Ir para o pagamento' })).toBeOnTheScreen()
+    expect(view.queryByRole('button', { name: 'Consultar novamente' })).toBeNull()
+    expect(api.createPurchase).toHaveBeenCalledTimes(1)
+    expect(router.replace).not.toHaveBeenCalled()
+  }
+)
+
+it('keeps an intent whose answer was lost, so its retry replays the same key', async () => {
+  const { ApiError } = jest.requireMock('@/api/client') as { ApiError: new () => Error }
+  api.createPurchase.mockRejectedValue(Object.assign(new ApiError(), { status: 503 }))
+  const view = await page(<EditionScreen />)
+  await fireEvent.press(view.getByRole('radio', { name: 'Pix' }))
+  await fireEvent.press(view.getByRole('checkbox', { name: /^Li e aceito as condições/ }))
+  await fireEvent.press(view.getByRole('button', { name: 'Ir para o pagamento' }))
+  expect(await view.findByText(/Isso não significa que o pagamento falhou/)).toBeOnTheScreen()
+  expect(jest.requireMock('@/purchases/intent-store').clearIntent).not.toHaveBeenCalled()
+})
+
+it('says an order that is not found is not found, not a connection failure', async () => {
+  const { ApiError } = jest.requireMock('@/api/client') as { ApiError: new () => Error }
+  queries.usePurchase.mockReturnValue({
+    isError: true,
+    error: Object.assign(new ApiError(), { status: 404 }),
+    refetch: jest.fn(),
+  })
+  const view = await page(<OrderScreen />)
+  expect(view.getByText('Este pedido não foi encontrado nesta conta.')).toBeOnTheScreen()
+  expect(view.queryByText(/falha de conexão/)).toBeNull()
+  await fireEvent.press(view.getByRole('button', { name: 'Meus pedidos' }))
+  expect(router.navigate).toHaveBeenCalledWith('/wallet/edicoes')
+})
+
 it('draws each next step number as a circle at the top of its step, not a bar as tall as the text', async () => {
   const view = await page(<OrderScreen />)
   for (const step of [1, 2, 3]) {

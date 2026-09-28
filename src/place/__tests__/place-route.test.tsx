@@ -1,5 +1,5 @@
-import { fireEvent, render, waitFor } from '@testing-library/react-native'
-import { AccessibilityInfo, Linking } from 'react-native'
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
+import { AccessibilityInfo, Dimensions, Linking, StyleSheet } from 'react-native'
 
 import EstablishmentScreen from '@/app/estabelecimento/[city]/[slug]'
 import type { EstablishmentDetail } from '@/catalog/types'
@@ -120,6 +120,15 @@ const detail: EstablishmentDetail = {
   updated_at: '',
 }
 
+/** The system text size; React Native's Jest setup reports 2 (200%). */
+const setFontScale = (fontScale: number) =>
+  act(() =>
+    Dimensions.set({
+      window: { ...Dimensions.get('window'), fontScale },
+      screen: { ...Dimensions.get('screen'), fontScale },
+    })
+  )
+
 const idleToggle = { mutate: jest.fn(), isPending: false, isError: false }
 
 beforeEach(() => {
@@ -199,6 +208,27 @@ describe('contacts', () => {
       openURL.mockRestore()
       announce.mockRestore()
     }
+  })
+})
+
+describe('opening hours', () => {
+  afterEach(() => setFontScale(2))
+
+  it('keeps a day and its hours on one line at the drawn size', async () => {
+    await setFontScale(1)
+    const view = await render(<EstablishmentScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Ver horários da semana' }))
+    const row = view.getByTestId('hours-Segunda a sexta')
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({ flexDirection: 'row' })
+    expect(view.getByText('11:00 às 15:00')).toHaveStyle({ flexShrink: 1 })
+  })
+
+  it('puts the hours under the day with large text', async () => {
+    await setFontScale(1.3)
+    const view = await render(<EstablishmentScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Ver horários da semana' }))
+    const row = view.getByTestId('hours-Segunda a sexta')
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({ flexDirection: 'column' })
   })
 })
 

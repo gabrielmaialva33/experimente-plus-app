@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { ACCOUNT_DELETION_LITERAL, deleteAccount } from '@/api/me'
-import { useAnnouncement } from '@/components/announce'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { KeyboardForm } from '@/components/keyboard-form'
@@ -38,6 +38,8 @@ export default function DeleteAccountScreen() {
     // form: left on screen, it offers to delete an account that no longer exists.
     onSuccess: async () => {
       await signOut()
+      // The screen goes with the account, so what happened is said.
+      announce('Conta excluída.')
       router.replace('/')
     },
   })

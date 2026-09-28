@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { useCities } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
+import { announce } from '@/components/announce'
 import { Avatar } from '@/components/avatar'
 import { useContentFrame } from '@/components/content-frame'
 import { ListGroup, ListRow } from '@/components/list-row'
@@ -44,6 +45,12 @@ export default function AccountScreen() {
   // The operation is a partner's working context; a consumer has nothing to do
   // with it and would only read an unexplained name (audit A54).
   const operation = capabilities?.partner?.enabled === true ? context?.active_operation : null
+
+  // The tabs change under the person once the session ends; the change is said.
+  const leave = async () => {
+    await signOut()
+    announce('Você saiu da conta.')
+  }
 
   return (
     <View style={{ backgroundColor: colors.background, flex: 1 }}>
@@ -139,7 +146,12 @@ export default function AccountScreen() {
           </ListGroup>
 
           <ListGroup title="Conta">
-            <ListRow icon="log-out-outline" label="Sair" chevron={false} onPress={signOut} />
+            <ListRow
+              icon="log-out-outline"
+              label="Sair"
+              chevron={false}
+              onPress={() => void leave()}
+            />
             <ListRow
               icon="trash-outline"
               label="Excluir conta"

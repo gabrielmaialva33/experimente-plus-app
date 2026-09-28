@@ -26,6 +26,7 @@ import {
   presentationEligibility,
 } from '@/wallet/financial-restriction'
 import { AccessGate } from '@/wallet/access-gate'
+import { useKeepAwakeWhileShown } from '@/wallet/keep-awake'
 
 /**
  * Seconds left until `deadline`. The clock starts when the code is drawn (the
@@ -240,6 +241,8 @@ function PresentScreen() {
 /**
  * The code, its countdown and the way to a new one. The countdown only reads the
  * deadline and never extends it; its end replaces the code and is announced.
+ * While the code itself is drawn, the screen stays on; the screen's other
+ * states (loading, refused, failed) never mount this, so they let it sleep.
  */
 function PresentationCode({
   presentation,
@@ -253,6 +256,9 @@ function PresentationCode({
   const colors = useColors()
   const remaining = useSecondsLeft(presentation.deadline)
   const expired = remaining === 0
+  // An image that could not be drawn is no code to scan: its sentence lets the phone sleep.
+  const [unreadable, setUnreadable] = useState(false)
+  useKeepAwakeWhileShown(!expired && !unreadable)
   // The countdown is silent; its end is not.
   useAnnouncement(expired && EXPIRED)
 
@@ -271,6 +277,7 @@ function PresentationCode({
           source={{ uri: presentation.qr_data_url }}
           style={qr.code}
           contentFit="contain"
+          onError={() => setUnreadable(true)}
           fallback={
             <View style={[styles.qrSlot, { backgroundColor: colors.muted }, qr.slot]}>
               <Text style={[styles.message, { color: colors.mutedForeground }]}>

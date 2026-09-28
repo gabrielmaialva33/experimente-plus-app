@@ -23,6 +23,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), setParams: jest.fn() }),
   useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: mockToken }),
   useFocusEffect: jest.fn(),
+  useIsFocused: () => true,
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
 jest.mock('react-native-safe-area-context', () => ({

@@ -24,6 +24,7 @@ const mockRouter = {
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ ...mockParams }),
   useRouter: () => mockRouter,
+  useIsFocused: () => true,
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
 jest.mock('@/theme/use-colors', () => ({

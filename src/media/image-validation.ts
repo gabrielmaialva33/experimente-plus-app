@@ -11,19 +11,6 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
 
 export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'] as const
 
-export const REJECTED_IMAGE_EXTENSIONS = [
-  '.heic',
-  '.heif',
-  '.svg',
-  '.gif',
-  '.mp4',
-  '.mov',
-  '.avi',
-  '.pdf',
-  '.doc',
-  '.docx',
-] as const
-
 export interface ImageAssetCandidate {
   uri: string
   fileName?: string | null

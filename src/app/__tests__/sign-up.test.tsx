@@ -1,6 +1,6 @@
 import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
-import { Linking } from 'react-native'
+import { AccessibilityInfo, Linking } from 'react-native'
 
 import SignUpScreen from '@/app/cadastro'
 import SignInScreen from '@/app/(tabs)/sign-in'
@@ -122,13 +122,32 @@ it('requires explicit consent, links both actual legal pages, normalizes optiona
   expect(view.queryByLabelText('Senha')).toBeNull()
 })
 
+/** Each field's error as the field is read: its hint, which the text under it repeats. */
+const fieldErrors = (view: Awaited<ReturnType<typeof page>>) =>
+  ['Nome completo', 'E-mail', 'Usuário (opcional)', 'Senha', 'Confirmar senha'].flatMap((label) => {
+    const hint = view.getByLabelText(label).props.accessibilityHint as string | undefined
+    return hint && hint !== 'Use pelo menos 8 caracteres.' ? [[label, hint]] : []
+  })
+
 it('explains every missing field and the consent on one press, without a request', async () => {
   const view = await page()
   await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
-  // Name, e-mail, password, confirmation and consent; the optional username is fine empty.
-  expect(view.getAllByRole('alert')).toHaveLength(5)
-  expect(view.getByLabelText('Nome completo').props.accessibilityHint).toBe(
-    'Informe seu nome, com até 255 caracteres.'
+  // Name, e-mail, password and confirmation on their fields; the optional username is fine empty.
+  expect(fieldErrors(view)).toEqual([
+    ['Nome completo', 'Informe seu nome, com até 255 caracteres.'],
+    ['E-mail', 'Informe um e-mail válido, com até 254 caracteres.'],
+    ['Senha', 'Use uma senha com pelo menos 8 caracteres.'],
+    ['Confirmar senha', 'As senhas precisam ser iguais.'],
+  ])
+  expect(view.getByText('Informe seu nome, com até 255 caracteres.')).toBeOnTheScreen()
+  // The consent sits outside the fields and keeps its own message.
+  expect(view.getByRole('alert')).toHaveTextContent(
+    'Leia e aceite os Termos de Uso e a Política de Privacidade.'
+  )
+  // The press is answered once, with where to look; the fields do not each speak up.
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledTimes(1)
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+    'Confira os campos indicados para concluir seu cadastro.'
   )
   expect(api.signUp).not.toHaveBeenCalled()
 })
@@ -192,7 +211,14 @@ it('shows local field errors without making a request', async () => {
   })
   await fireEvent.press(view.getByRole('checkbox', { name: consent }))
   await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
-  expect(view.getAllByRole('alert')).toHaveLength(5)
+  expect(fieldErrors(view).map(([label]) => label)).toEqual([
+    'Nome completo',
+    'E-mail',
+    'Usuário (opcional)',
+    'Senha',
+    'Confirmar senha',
+  ])
+  expect(view.queryByRole('alert')).toBeNull()
   expect(view.getByText('As senhas precisam ser iguais.')).toBeOnTheScreen()
   expect(api.signUp).not.toHaveBeenCalled()
 })

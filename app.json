@@ -14,7 +14,8 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "CFBundleDevelopmentRegion": "pt-BR"
+        "CFBundleDevelopmentRegion": "pt-BR",
+        "NSLocalNetworkUsageDescription": "O Experimente+ usa a rede local só nas versões de desenvolvimento, para se conectar ao computador em que o aplicativo é desenvolvido."
       }
     },
     "android": {

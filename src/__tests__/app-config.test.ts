@@ -72,3 +72,28 @@ describe('store build guard', () => {
     }
   })
 })
+
+describe('iOS usage strings', () => {
+  const { expo } = require('../../app.json') as {
+    expo: { ios: { infoPlist: Record<string, string> }; plugins: unknown[] }
+  }
+  const pluginStrings = expo.plugins.flatMap((plugin) =>
+    Array.isArray(plugin)
+      ? Object.entries(plugin[1] as Record<string, unknown>)
+          .filter(([key, value]) => /Permission$/.test(key) && typeof value === 'string')
+          .map(([key, value]) => [`${plugin[0]}.${key}`, value as string])
+      : []
+  )
+  const plistStrings = Object.entries(expo.ios.infoPlist).filter(([key]) =>
+    key.endsWith('UsageDescription')
+  )
+
+  it.each([...plistStrings, ...pluginStrings])('says %s in Portuguese', (_, text) => {
+    expect(text).toMatch(/^O Experimente\+ /)
+  })
+
+  // expo-dev-client fills the key only when it is empty, and in English otherwise.
+  it('names the local network use itself, ahead of the dev client default', () => {
+    expect(expo.ios.infoPlist.NSLocalNetworkUsageDescription).toMatch(/desenvolvimento/)
+  })
+})

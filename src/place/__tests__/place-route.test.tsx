@@ -163,6 +163,33 @@ describe('the route of a place', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith('/')
   })
 
+  // A permanently closed unit is a minimal historical page with the native header's
+  // back; it also leads to the places that are open, as the page of one that left does.
+  it('leads from a place closed for good to Explorar', async () => {
+    queries.useEstablishment.mockReturnValue({
+      data: {
+        slug: 'cafe',
+        name: 'Café da Praça',
+        city: { slug: 'londrina', name: 'Londrina', state_code: 'PR' },
+        business_status: 'permanently_closed',
+        historical: true,
+        message: 'Este lugar encerrou as atividades.',
+        published_at: '',
+        updated_at: '',
+      },
+      isPending: false,
+      isError: false,
+    })
+    const view = await render(<EstablishmentScreen />)
+    expect(view.getByRole('header', { name: 'Café da Praça' })).toBeOnTheScreen()
+    expect(view.getByText('Este lugar encerrou as atividades.')).toBeOnTheScreen()
+    const explore = view.getByRole('button', { name: 'Explorar lugares' })
+    expect(explore).toHaveStyle({ minHeight: 48 })
+    await fireEvent.press(explore)
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/')
+    expect(mockRouter.back).not.toHaveBeenCalled()
+  })
+
   it('reads the slugs as the public catalogue does: trimmed and lowercased', async () => {
     router.useLocalSearchParams.mockReturnValue({ city: ' Londrina', slug: 'CAFE' })
     await render(<EstablishmentScreen />)

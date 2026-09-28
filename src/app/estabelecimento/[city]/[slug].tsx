@@ -18,6 +18,7 @@ import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
 import { announce } from '@/components/announce'
 import { Badge } from '@/components/badge'
+import { Button } from '@/components/button'
 import { useCompactHeader } from '@/components/compact-header'
 import { MEASURE, useContentFrame } from '@/components/content-frame'
 import { EmptyState } from '@/components/empty-state'
@@ -101,6 +102,8 @@ export default function EstablishmentScreen() {
     )
   }
 
+  // A place that closed for good is not a dead end either: besides the header's
+  // back, it leads to the places that are open, as the one that left the catalogue does.
   if (isHistorical(page)) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -110,6 +113,12 @@ export default function EstablishmentScreen() {
         </Text>
         <OperatingStatus establishment={{ ...page, is_open_now: false }} />
         <Text style={[styles.message, { color: colors.mutedForeground }]}>{page.message}</Text>
+        <Button
+          label="Explorar lugares"
+          variant="outline"
+          align="center"
+          onPress={() => router.navigate('/')}
+        />
       </View>
     )
   }

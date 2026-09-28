@@ -55,13 +55,22 @@ export function PlaceActions({
     action()
   }
 
+  // Said, and remembered as said, only once the server took the follow: a first
+  // follow that failed is rolled back, and the next one still needs explaining.
   const toggleFollow = requireSession(() => {
     if (follow.isPending) return
-    follow.mutate(!following)
-    if (!following && !followExplained()) {
-      markFollowExplained()
-      setExplain(true)
-    }
+    const first = !following && !followExplained()
+    follow.mutate(
+      !following,
+      first
+        ? {
+            onSuccess: () => {
+              markFollowExplained()
+              setExplain(true)
+            },
+          }
+        : undefined
+    )
   })
 
   const main = primary ? (

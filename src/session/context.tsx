@@ -78,14 +78,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = subscribeSessionEvents((event) => {
       if (closing.current && event !== 'expired') return
-      if (event === 'context-invalidated' && (changing.current || revalidating.current)) return
+      if (event === 'context-invalidated') {
+        // A 403 refuses one request; it is not a change of person. The session
+        // keeps the state and the context the tabs and the open screens were
+        // composed from while the context is asked again, and the answer then
+        // applies what changed: Validar goes if the capability went, and a
+        // credential the server rejects still ends the session. Dropping to
+        // `loading` here swapped the tabs for a visitor's and sent the person
+        // to Explorar on every refusal.
+        if (changing.current || revalidating.current) return
+        revalidating.current = true
+        void load()
+        return
+      }
       if (event === 'operation-changing') changing.current = true
       if (event === 'operation-settled' || event === 'expired') changing.current = false
       generation.current += 1
       revalidating.current = false
       setContext(null)
       setStatus(event === 'expired' ? 'anonymous' : 'loading')
-      if (event === 'context-invalidated' || event === 'operation-settled') {
+      if (event === 'operation-settled') {
         revalidating.current = true
         void load()
       }
@@ -165,7 +177,8 @@ export function useSession(): SessionValue {
  *
  * While the context is loading every partner capability reads as false, so a
  * privileged area is mounted only after the server has granted it — never
- * rendered and then hidden. `partner.enabled` alone never composes navigation:
+ * rendered and then hidden. A revalidation after a 403 keeps the last answer
+ * until the next one arrives. `partner.enabled` alone never composes navigation:
  * ADR-0022 §3 requires the specific redemption capabilities.
  */
 export function usePartnerAreas() {

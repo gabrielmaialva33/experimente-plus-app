@@ -539,14 +539,14 @@ it('does not create a presentation if its eligibility read finishes after logout
   client.clear()
 })
 
-// A 403 sends the context back to loading. The screen stays mounted through the
-// reload, so the refused presentation is not asked for again on its own.
+// A 403 revalidates the session. The screen stays mounted through the reload,
+// so the refused presentation is not asked for again on its own.
 it('does not create a presentation again after a refusal revalidates the session', async () => {
   const { ApiError } = jest.requireActual('@/api/transport') as typeof import('@/api/transport')
   api.createPresentation.mockRejectedValue(new ApiError(403, null))
   const { view, client } = await mount(<PresentScreen />)
   expect(await view.findByText(/Não é possível apresentar este benefício agora/)).toBeOnTheScreen()
-  // The reload takes a round trip; while it is out the session reads `loading`.
+  // The reload takes a round trip; the session keeps its context while it is out.
   let reloaded!: () => void
   jest.requireMock('@/api/me').getContext.mockImplementationOnce(
     () =>

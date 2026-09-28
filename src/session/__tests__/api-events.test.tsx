@@ -90,7 +90,8 @@ it('propagates a real API 403 to capabilities without using the refresh token or
       })
     ).rejects.toMatchObject({ status: 403 })
   })
-  expect(view.getByText('loading:false')).toBeTruthy()
+  // The areas stay as they were while the context is asked again, then follow it.
+  expect(view.getByText('authenticated:true')).toBeTruthy()
   await act(async () => finish(json(200, context(false))))
   expect(view.getByText('authenticated:false')).toBeTruthy()
   expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([

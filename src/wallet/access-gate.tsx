@@ -44,12 +44,13 @@ export function useAccess(area: AccessArea): Access {
  * server still refuses on every endpoint; this keeps the request from leaving
  * and the screen from showing an area the actor does not have.
  *
- * A screen already open stays mounted while the session revalidates: any 403
- * sends the context back to `loading`, and remounting then would repeat the
- * refused request after every reload, in a loop. A reload that failed for want
- * of a connection (`unavailable`) is not a change of person either, as for the
- * cache guard. What the screen holds privately is hidden meanwhile by its own
- * guards (`usePrivateOperation`).
+ * A screen already open stays mounted while the session is undecided: a 403
+ * revalidates the context in place, but an operation switch or a sign-out
+ * passes through `loading`, and remounting then would repeat a refused request
+ * after every reload, in a loop. A reload that failed for want of a connection
+ * (`unavailable`) is not a change of person either, as for the cache guard.
+ * What the screen holds privately is hidden meanwhile by its own guards
+ * (`usePrivateOperation`).
  */
 export function AccessGate({
   area,

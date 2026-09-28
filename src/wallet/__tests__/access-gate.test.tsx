@@ -108,9 +108,9 @@ it('offers to try again when the session could not be confirmed', async () => {
   expect(wallet.listMyRedemptions).not.toHaveBeenCalled()
 })
 
-// Any 403 sends the context back to `loading`. A screen already open stays
-// mounted through the reload: remounting would repeat the refused request after
-// every reload, in a loop.
+// An operation switch or a sign-out passes through `loading`. A screen already
+// open stays mounted through the reload: remounting would repeat a refused
+// request after every reload, in a loop.
 it('keeps an open screen mounted while the session revalidates, without asking again', async () => {
   mockSession.status = 'authenticated'
   mockAreas.canReadHistory = true

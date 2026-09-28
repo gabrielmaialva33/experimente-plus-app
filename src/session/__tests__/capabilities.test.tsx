@@ -170,7 +170,9 @@ describe('partner area composition', () => {
 })
 
 describe('session events', () => {
-  it('removes capabilities immediately on 403, coalesces reloads and applies fresh context', async () => {
+  // A 403 is not a change of person: what the tabs and the open screens were
+  // composed from stays until the server answers, and the answer then applies.
+  it('keeps the areas through a 403 revalidation, coalesces reloads and applies fresh context', async () => {
     withContext({ partner: { redemptions: { validate: true, read: true } } })
     const view = await renderProbe()
     let finish!: (context: unknown) => void
@@ -184,8 +186,9 @@ describe('session events', () => {
       notifySessionEvent('context-invalidated')
       notifySessionEvent('context-invalidated')
     })
-    expect(view.getByText('validate:false')).toBeTruthy()
-    expect(view.getByText('status:loading')).toBeTruthy()
+    expect(view.getByText('status:authenticated')).toBeTruthy()
+    expect(view.getByText('validate:true')).toBeTruthy()
+    expect(view.getByText('history:true')).toBeTruthy()
     expect(me.getContext).toHaveBeenCalledTimes(2)
     await act(async () =>
       finish({

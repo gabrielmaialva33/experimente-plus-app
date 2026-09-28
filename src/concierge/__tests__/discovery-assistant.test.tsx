@@ -1,5 +1,8 @@
+import { onlineManager } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import { AccessibilityInfo } from 'react-native'
+
+import { palette } from '@/theme/tokens'
 
 import { DiscoveryAssistant } from '@/concierge/discovery-assistant'
 
@@ -82,4 +85,19 @@ it('does not claim personalisation the server did not apply', async () => {
 
   await waitFor(() => expect(api.askAssistant).toHaveBeenCalled())
   expect(view.queryByTestId('concierge-personalized')).toBeNull()
+})
+
+it('says a question asked offline never left, in the error colour of the app', async () => {
+  api.askAssistant.mockRejectedValue(new TypeError('Network request failed'))
+  onlineManager.setOnline(false)
+  try {
+    const view = await ask()
+    const message = await view.findByText(
+      'Sem conexão com a internet. Pergunte de novo quando a conexão voltar.'
+    )
+    expect(message).toHaveStyle({ color: palette.light.destructiveAccent })
+    expect(view.queryByText(/Tente novamente em instantes/)).toBeNull()
+  } finally {
+    onlineManager.setOnline(true)
+  }
 })

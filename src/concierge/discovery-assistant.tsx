@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { askAssistant, type ConciergeReply } from '@/api/concierge'
+import { isOnline, OFFLINE_MESSAGE } from '@/api/online'
 import { useAnnouncement } from '@/components/announce'
 import { MEASURE, useScreenFrame } from '@/components/content-frame'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
@@ -30,6 +31,8 @@ const MAX_QUESTION_LENGTH = 300
 /** The send button under the question and the gap above it: kept in sight with the field. */
 export const ASK_ACTION_ROOM = spacing.md + 48
 const FAILED = 'Não foi possível consultar agora. Tente novamente em instantes.'
+/** Offline the question never left: "em instantes" would promise what the network decides. */
+const OFFLINE = `${OFFLINE_MESSAGE} Pergunte de novo quando a conexão voltar.`
 
 export function DiscoveryAssistant({
   citySlug,
@@ -42,7 +45,7 @@ export function DiscoveryAssistant({
   const [question, setQuestion] = useState('')
   const [reply, setReply] = useState<ConciergeReply | null>(null)
   const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
   const request = useRef<AbortController | null>(null)
   // In the feed's column, at the measure of a text: an answer is read, not scanned.
   const frame = useScreenFrame()
@@ -65,7 +68,7 @@ export function DiscoveryAssistant({
       : null)
   // The answer arrives after the question: said once, the label and the reply,
   // while the suggestions stay below to be read one by one.
-  useAnnouncement(failed ? FAILED : reply && [answerLabel, answerText].filter(Boolean).join('. '))
+  useAnnouncement(failed ?? (reply && [answerLabel, answerText].filter(Boolean).join('. ')))
 
   const open = (view: ConciergeReferenceView) =>
     router.push(
@@ -86,7 +89,7 @@ export function DiscoveryAssistant({
     const controller = new AbortController()
     request.current = controller
     setLoading(true)
-    setFailed(false)
+    setFailed(null)
     setReply(null)
 
     try {
@@ -96,7 +99,7 @@ export function DiscoveryAssistant({
       }
     } catch {
       if (!controller.signal.aborted) {
-        setFailed(true)
+        setFailed(isOnline() ? FAILED : OFFLINE)
       }
     } finally {
       if (request.current === controller) {
@@ -170,7 +173,9 @@ export function DiscoveryAssistant({
         </Text>
       </Pressable>
 
-      {failed ? <Text style={[styles.help, { color: colors.destructive }]}>{FAILED}</Text> : null}
+      {failed ? (
+        <Text style={[styles.help, { color: colors.destructiveAccent }]}>{failed}</Text>
+      ) : null}
 
       {reply ? (
         <View style={[styles.answer, { backgroundColor: colors.primarySoft }]}>

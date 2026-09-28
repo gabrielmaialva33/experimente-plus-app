@@ -107,3 +107,39 @@ it('offers to try again when the session could not be confirmed', async () => {
   expect(mockSession.refresh).toHaveBeenCalled()
   expect(wallet.listMyRedemptions).not.toHaveBeenCalled()
 })
+
+// Any 403 sends the context back to `loading`. A screen already open stays
+// mounted through the reload: remounting would repeat the refused request after
+// every reload, in a loop.
+it('keeps an open screen mounted while the session revalidates, without asking again', async () => {
+  mockSession.status = 'authenticated'
+  mockAreas.canReadHistory = true
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
+  const tree = () => (
+    <QueryClientProvider client={client}>
+      <PartnerHistoryScreen />
+    </QueryClientProvider>
+  )
+  const view = await render(tree())
+  expect(await view.findByText('Nenhuma utilização registrada ainda')).toBeOnTheScreen()
+
+  mockSession.status = 'loading'
+  await view.rerender(tree())
+  expect(view.getByText('Nenhuma utilização registrada ainda')).toBeOnTheScreen()
+  // A reload that failed for want of a connection is not a change of person either.
+  mockSession.status = 'unavailable'
+  await view.rerender(tree())
+  expect(view.getByText('Nenhuma utilização registrada ainda')).toBeOnTheScreen()
+  mockSession.status = 'authenticated'
+  await view.rerender(tree())
+  expect(view.getByText('Nenhuma utilização registrada ainda')).toBeOnTheScreen()
+  expect(partner.listPartnerRedemptions).toHaveBeenCalledTimes(1)
+
+  // A decision closes it, and the next reading waits again before opening it.
+  mockSession.status = 'anonymous'
+  await view.rerender(tree())
+  expect(view.queryByText('Nenhuma utilização registrada ainda')).toBeNull()
+  mockSession.status = 'loading'
+  await view.rerender(tree())
+  expect(view.getByRole('progressbar', { name: 'Carregando histórico' })).toBeOnTheScreen()
+})

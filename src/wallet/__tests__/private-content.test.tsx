@@ -539,6 +539,30 @@ it('does not create a presentation if its eligibility read finishes after logout
   client.clear()
 })
 
+// A 403 sends the context back to loading. The screen stays mounted through the
+// reload, so the refused presentation is not asked for again on its own.
+it('does not create a presentation again after a refusal revalidates the session', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport') as typeof import('@/api/transport')
+  api.createPresentation.mockRejectedValue(new ApiError(403, null))
+  const { view, client } = await mount(<PresentScreen />)
+  expect(await view.findByText(/Não é possível apresentar este benefício agora/)).toBeOnTheScreen()
+  // The reload takes a round trip; while it is out the session reads `loading`.
+  let reloaded!: () => void
+  jest.requireMock('@/api/me').getContext.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        reloaded = () =>
+          resolve({ user: { id: 1 }, active_operation: { id: 1 }, capabilities: partner })
+      })
+  )
+  await act(async () => notifySessionEvent('context-invalidated'))
+  await act(async () => reloaded())
+  expect(await view.findByText(/Não é possível apresentar este benefício agora/)).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
+  await view.unmount()
+  client.clear()
+})
+
 // A code that could not be generated offers a real, reachable retry — not a bare
 // text link — and the retry asks the server for a new presentation.
 it('retries a failed presentation from a button', async () => {

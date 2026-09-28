@@ -1,4 +1,5 @@
-import { fireEvent, render, within } from '@testing-library/react-native'
+import { onlineManager } from '@tanstack/react-query'
+import { act, fireEvent, render, within } from '@testing-library/react-native'
 import { Dimensions } from 'react-native'
 
 import { CityAgenda } from '@/catalog/city-agenda'
@@ -102,4 +103,19 @@ it('keeps experiences in fixed-size cards and opens every item by its public ide
   expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/casa?destaque=experience-3')
   await fireEvent.press(view.getByTestId('agenda-card-event-1'))
   expect(mockPush).toHaveBeenLastCalledWith('/estabelecimento/londrina/atelie?destaque=event-1')
+})
+
+// Offline the request is paused rather than failed: "Carregando…" would never end.
+it('says what a paused agenda is waiting for while the device is offline', async () => {
+  catalog.useCityAgenda.mockReturnValue({ isPending: true, data: undefined })
+  const view = await render(<CityAgenda citySlug="londrina" />)
+  expect(view.getByText('Carregando a agenda da cidade…')).toBeOnTheScreen()
+
+  try {
+    await act(async () => onlineManager.setOnline(false))
+    expect(view.getByText(/^Sem conexão com a internet\./)).toBeOnTheScreen()
+    expect(view.queryByText('Carregando a agenda da cidade…')).toBeNull()
+  } finally {
+    await act(async () => onlineManager.setOnline(true))
+  }
 })

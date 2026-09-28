@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
+import { useLoadingCopy } from '@/api/online'
 import { CompactCard } from '@/components/compact-card'
 import { GRID_GAP, useCardGrid, useScreenFrame } from '@/components/content-frame'
 import { DateTile } from '@/components/date-tile'
@@ -66,13 +67,13 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
   const frame = useScreenFrame()
   const grid = useCardGrid()
   const eventWidth = grid.columns > 1 ? grid.columnWidth : '100%'
+  // Offline the request is paused, not failed: the line says what it waits for.
+  const loading = useLoadingCopy('Carregando a agenda da cidade…')
 
   if (agenda.isPending && !data) {
     return (
       <View style={frame.padding}>
-        <Text style={[styles.status, { color: colors.mutedForeground }]}>
-          Carregando a agenda da cidade…
-        </Text>
+        <Text style={[styles.status, { color: colors.mutedForeground }]}>{loading}</Text>
       </View>
     )
   }

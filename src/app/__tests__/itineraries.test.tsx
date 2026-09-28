@@ -1,7 +1,9 @@
 import { fireEvent, render } from '@testing-library/react-native'
+import { Dimensions } from 'react-native'
 
 import ItinerariesScreen from '@/app/roteiros/index'
 import AddToItineraryScreen from '@/app/roteiros/adicionar/[establishmentId]'
+import { contentFrame, MEASURE } from '@/components/content-frame'
 
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
@@ -113,6 +115,13 @@ describe('adding a place to an itinerary', () => {
     expect(mutate).toHaveBeenCalledWith({ id: 6, establishmentId: 9 }, expect.any(Object))
     expect(mockRouter.replace).not.toHaveBeenCalled()
     expect(view.getByRole('header', { name: 'Adicionado a Domingo no lago' })).toBeOnTheScreen()
+
+    // On a wide window the confirmation keeps to the readable column.
+    const column = contentFrame(Dimensions.get('window').width, MEASURE.readable)
+    expect(view.getByTestId('added').parent).toHaveStyle({
+      paddingLeft: column.left,
+      paddingRight: column.right,
+    })
 
     await fireEvent.press(view.getByRole('button', { name: 'Voltar ao lugar' }))
     expect(mockRouter.back).toHaveBeenCalledTimes(1)

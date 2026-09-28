@@ -114,7 +114,8 @@ export default function AddToItineraryScreen() {
 
   if (added) {
     return (
-      <View style={[styles.done, { backgroundColor: colors.background }]}>
+      // In the readable column: on a tablet the confirmation would otherwise span the window.
+      <View style={[styles.done, frame.padding, { backgroundColor: colors.background }]}>
         <View
           style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
           testID="added"

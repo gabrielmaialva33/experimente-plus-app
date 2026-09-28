@@ -3,7 +3,10 @@ import { act, render } from '@testing-library/react-native'
 import { HistoryScreen } from '../history-screen'
 import { ReceiptScreen } from '../receipt-screen'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+}))
+jest.mock('@/api/client', () => ({ ApiError: jest.requireActual('@/api/transport').ApiError }))
 
 it.each(['history', 'receipt'])(
   'keeps a stable, noninteractive skeleton until the initial %s read resolves',

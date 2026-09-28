@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter, type Href } from 'expo-router'
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import { FlatList, Pressable, StyleSheet, View } from 'react-native'
 
-import { Button } from '@/components/button'
+import { useAnnouncement } from '@/components/announce'
 import { EmptyState } from '@/components/empty-state'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useContentFrame } from '@/components/content-frame'
-import { spacing, typography } from '@/theme/tokens'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
+import { spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
-import type { History } from './types'
+import type { History, Receipt } from './types'
 
 interface Props {
   queryKey: readonly unknown[]
@@ -37,26 +38,27 @@ export function HistoryScreen({
   const router = useRouter()
   const history = useQuery({ queryKey, queryFn: load })
   const refreshControl = usePullToRefresh(history.refetch)
+  // A failed refresh keeps the receipts already listed; it is said, not drawn over them.
+  useAnnouncement(history.isError && history.data && 'Não foi possível atualizar o histórico.')
 
   if (history.isPending) {
     return <ContentSkeleton label="Carregando histórico" variant="list" />
   }
 
-  if (history.isError) {
+  if (history.isError && !history.data) {
     return (
-      <View style={[styles.center, styles.fill, { backgroundColor: colors.background }]}>
-        <Text style={[styles.message, { color: colors.foreground }]}>
-          Não foi possível carregar o histórico agora.
-        </Text>
-        <Button
-          label="Tentar de novo"
-          variant="outline"
-          icon="refresh"
-          onPress={() => void history.refetch()}
+      <View style={[styles.fill, frame.padding, { backgroundColor: colors.background }]}>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Não foi possível carregar o histórico agora"
+          action={{ label: 'Tentar de novo', onPress: () => void history.refetch() }}
+          help={TROUBLESHOOTING_HELP}
         />
       </View>
     )
   }
+
+  const open = (item: Receipt) => router.push(receiptHref(item.receipt_code))
 
   return (
     <FlatList
@@ -69,7 +71,7 @@ export function HistoryScreen({
         <Pressable
           accessibilityRole="button"
           accessibilityHint="Abre o comprovante"
-          onPress={() => router.push(receiptHref(item.receipt_code))}
+          onPress={() => open(item)}
           style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
         >
           <ReceiptCard receipt={item} compact />
@@ -94,7 +96,5 @@ export function HistoryScreen({
 
 const styles = StyleSheet.create({
   list: { padding: spacing.gutter },
-  fill: { flex: 1, justifyContent: 'center' },
-  center: { alignItems: 'center', gap: spacing.md, padding: spacing.xxl },
-  message: { ...typography.body, textAlign: 'center' },
+  fill: { flex: 1, justifyContent: 'center', paddingVertical: spacing.xxl },
 })

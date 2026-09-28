@@ -42,7 +42,8 @@ export default function WalletScreen() {
   const wallet = useWallet()
   const orders = usePurchases()
   const refreshControl = usePullToRefresh(wallet.refetch, orders.refetch)
-  // A refresh that failed leaves the old tickets on screen; this says they may be stale.
+  // A refresh that failed takes the tickets off screen until one succeeds (a ticket
+  // read before may be on hold by now); this says why they went.
   useAnnouncement(wallet.isError && 'Não foi possível atualizar a carteira')
 
   // The band runs under the status bar, so its icons turn light while the tab shows.

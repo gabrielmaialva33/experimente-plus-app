@@ -3,7 +3,7 @@ import { Text } from 'react-native'
 
 import { notifySessionEvent } from '@/api/session-events'
 
-import { SessionProvider, usePartnerAreas, useSession } from '../context'
+import { CONTEXT_TIMEOUT_MS, SessionProvider, usePartnerAreas, useSession } from '../context'
 
 jest.mock('@/api/session', () => ({
   readCredentials: jest.fn(),
@@ -106,6 +106,35 @@ describe('partner area composition', () => {
 
     expect(await view.findByText('status:unavailable')).toBeTruthy()
     expect(session.clearCredentials).not.toHaveBeenCalled()
+  })
+
+  // The splash waits for this read: one that never answered held the app behind it.
+  it('gives up on a context that does not answer in time, keeping the credential', async () => {
+    jest.useFakeTimers()
+    try {
+      session.readCredentials.mockResolvedValue({
+        accessToken: 'a',
+        refreshToken: 'r',
+        accessExpiresAt: Date.now() + 900_000,
+      })
+      let signal: AbortSignal | undefined
+      me.getContext.mockImplementation((given: AbortSignal) => {
+        signal = given
+        return new Promise(() => {})
+      })
+      const view = await renderProbe()
+
+      await act(async () => jest.advanceTimersByTimeAsync(CONTEXT_TIMEOUT_MS - 1))
+      expect(view.getByText('status:loading')).toBeTruthy()
+      expect(signal?.aborted).toBe(false)
+
+      await act(async () => jest.advanceTimersByTimeAsync(1))
+      expect(view.getByText('status:unavailable')).toBeTruthy()
+      expect(signal?.aborted).toBe(true)
+      expect(session.clearCredentials).not.toHaveBeenCalled()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('asks for the context again once the connection returns, keeping the credential', async () => {

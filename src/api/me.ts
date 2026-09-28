@@ -5,8 +5,8 @@ export type MobileContext = components['schemas']['MobileContext']
 export type MobileCapabilities = components['schemas']['MobileCapabilities']
 
 /** Authenticated bootstrap. Composes the UI; it never authorizes a request. */
-export const getContext = () =>
-  request<MobileContext>('/api/v1/me/context', { authenticated: true })
+export const getContext = (signal?: AbortSignal) =>
+  request<MobileContext>('/api/v1/me/context', { authenticated: true, signal })
 
 export type MobileUser = components['schemas']['MobileUser']
 

@@ -35,6 +35,34 @@ interface SessionValue {
 
 const SessionContext = createContext<SessionValue | null>(null)
 
+/**
+ * How long the context may take. The splash waits for this read at start-up,
+ * and a request that never answered (a captive portal, a dead link that still
+ * reads as connected) held the app behind it with no way out. Past this the
+ * session settles on `unavailable`, which keeps the credential and already
+ * offers a new attempt, on reconnection, on return to the app or by hand.
+ */
+export const CONTEXT_TIMEOUT_MS = 10_000
+
+/**
+ * The context, given up after `CONTEXT_TIMEOUT_MS`. Only its own request is
+ * aborted: a renewal it waits on belongs to the serialized session queue and
+ * runs to the end, since abandoning one the server may already have rotated
+ * would lose the pair. Settling by the clock, not by the abort, is what bounds
+ * the wait while such a renewal is still out.
+ */
+function readContext(): Promise<MobileContext> {
+  const controller = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort()
+      reject(new Error('context read timed out'))
+    }, CONTEXT_TIMEOUT_MS)
+  })
+  return Promise.race([getContext(controller.signal), expired]).finally(() => clearTimeout(timer))
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('loading')
   const [context, setContext] = useState<MobileContext | null>(null)
@@ -55,14 +83,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setStatus('anonymous')
         return
       }
-      const next = await getContext()
+      const next = await readContext()
       if (version !== generation.current) return
       setContext(next)
       setStatus('authenticated')
     } catch (error) {
       if (version !== generation.current) return
       setContext(null)
-      // Network/rule failures must not discard a still-valid refresh credential.
+      // Network/rule failures and timeouts must not discard a still-valid refresh credential.
       if (error instanceof SessionExpiredError) {
         // Credential disposal belongs to the serialized session layer, which
         // knows whether the rejected pair has already been replaced.

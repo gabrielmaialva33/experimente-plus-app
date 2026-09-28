@@ -7,7 +7,7 @@ import {
   SessionExpiredError,
   writeCredentials,
 } from '@/api/session'
-import { SessionProvider, usePartnerAreas, useSession } from '../context'
+import { CONTEXT_TIMEOUT_MS, SessionProvider, usePartnerAreas, useSession } from '../context'
 
 const mockStore = new Map<string, string>()
 jest.mock('expo-secure-store', () => ({
@@ -100,6 +100,49 @@ it('propagates a real API 403 to capabilities without using the refresh token or
     '/api/v1/me/context',
   ])
   await expect(readCredentials()).resolves.toMatchObject({ refreshToken: 'refresh-0' })
+})
+
+// Abandoning a renewal the server may already have rotated would lose the pair:
+// only the context read is given up, and the renewal it waited on still lands.
+it('stops waiting for a context stuck behind a renewal without aborting the renewal', async () => {
+  jest.useFakeTimers()
+  let finishRenewal!: (value: Response) => void
+  const signals = new Map<string, AbortSignal | null | undefined>()
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    const path = new URL(String(url)).pathname
+    // As fetch does, an aborted request never leaves.
+    if (init?.signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+    signals.set(path, init?.signal)
+    if (path === '/api/v1/me/context') return json(401)
+    return new Promise((resolve) => {
+      finishRenewal = resolve
+    })
+  })
+  try {
+    const view = await mount()
+    await act(async () => jest.advanceTimersByTimeAsync(CONTEXT_TIMEOUT_MS))
+    expect(view.getByText('unavailable:false')).toBeTruthy()
+    expect(signals.get('/api/v1/me/context')?.aborted).toBe(true)
+    expect(signals.get('/api/v1/sessions/refresh')).toBeUndefined()
+    await expect(readCredentials()).resolves.toMatchObject({ refreshToken: 'refresh-0' })
+
+    await act(async () =>
+      finishRenewal(
+        json(200, {
+          auth: {
+            access_token: 'access-1',
+            refresh_token: 'refresh-1',
+            token_type: 'Bearer',
+            expires_in: 900,
+            refresh_expires_in: 259200,
+          },
+        })
+      )
+    )
+    await expect(readCredentials()).resolves.toMatchObject({ refreshToken: 'refresh-1' })
+  } finally {
+    jest.useRealTimers()
+  }
 })
 
 it('does not loop or erase credentials when the reloaded context also returns 403', async () => {

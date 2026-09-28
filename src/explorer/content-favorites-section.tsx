@@ -3,9 +3,11 @@ import { useCallback, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import type { FavoriteContentPath } from '@/api/explorer'
+import { Button } from '@/components/button'
 import { IconButton } from '@/components/icon-button'
 import { SectionHeader } from '@/components/section-header'
 import { UndoBar } from '@/components/undo-bar'
+import { placeHref } from '@/place/links'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -29,7 +31,7 @@ function formatWindow(startsAt: string | null): string | null {
  * Favourited experiences and events, below the favourited places (audit A56:
  * the places are what a person comes back for).
  *
- * An item opens its establishment's page, where it is shown: there is no page
+ * An item opens its establishment's page on it (audit A14): there is no page
  * of its own to open. Unavailable ones — archived, ended, of a withdrawn
  * place — are counted in a sentence rather than left to look lost. A removal
  * can be undone from the bar that confirms it (audit A57).
@@ -49,7 +51,10 @@ export function ContentFavoritesSection() {
 
   const items = query.data?.data ?? []
   const unavailable = query.data?.unavailable ?? 0
-  if (query.isPending || (items.length === 0 && unavailable === 0 && !removed)) return null
+  // Left out, a list that failed would read as no favourites at all.
+  const failed = query.isError && !query.data
+  if (query.isPending || (items.length === 0 && unavailable === 0 && !removed && !failed))
+    return null
 
   return (
     <View style={styles.section} testID="content-favorites">
@@ -63,6 +68,14 @@ export function ContentFavoritesSection() {
             dismiss()
           }}
         />
+      ) : null}
+      {failed ? (
+        <View style={styles.failure} testID="content-favorites-failed">
+          <Text style={[styles.notice, { color: colors.mutedForeground }]}>
+            Não foi possível carregar suas experiências e eventos agora.
+          </Text>
+          <Button label="Tentar de novo" variant="outline" onPress={() => void query.refetch()} />
+        </View>
       ) : null}
       {unavailable > 0 ? (
         <Text
@@ -93,7 +106,11 @@ export function ContentFavoritesSection() {
               style={styles.copy}
               onPress={() =>
                 router.push(
-                  `/estabelecimento/${entry.content.establishment.city_slug}/${entry.content.establishment.slug}`
+                  placeHref(
+                    entry.content.establishment.city_slug,
+                    entry.content.establishment.slug,
+                    { kind: entry.content.kind, id: entry.content.id }
+                  )
                 )
               }
             >
@@ -114,8 +131,18 @@ export function ContentFavoritesSection() {
               accessibilityLabel={`Remover ${entry.content.title} dos favoritos`}
               onPress={() => {
                 if (toggle.isPending) return
-                toggle.mutate({ kind: path, id: entry.content.id, save: false })
-                setRemoved({ kind: path, id: entry.content.id, title: entry.content.title })
+                const id = entry.content.id
+                toggle.mutate(
+                  { kind: path, id, save: false },
+                  // Refused, the item stays listed: no "Desfazer" for it.
+                  {
+                    onError: () =>
+                      setRemoved((current) =>
+                        current?.kind === path && current.id === id ? null : current
+                      ),
+                  }
+                )
+                setRemoved({ kind: path, id, title: entry.content.title })
               }}
               testID={`unsave-content-${entry.content.kind}-${entry.content.id}`}
             />
@@ -129,6 +156,7 @@ export function ContentFavoritesSection() {
 const styles = StyleSheet.create({
   section: { gap: spacing.md, paddingTop: spacing.section },
   notice: typography.meta,
+  failure: { alignItems: 'flex-start', gap: spacing.sm },
   card: {
     alignItems: 'center',
     borderRadius: radius.card,

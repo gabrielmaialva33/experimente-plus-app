@@ -15,6 +15,8 @@ import { useContentFrame } from '@/components/content-frame'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
+import { placeHref } from '@/place/links'
+
 import { EstablishmentCardRow } from './establishment-card-row'
 import { useSavedList, useToggleSaved } from './queries'
 
@@ -25,6 +27,7 @@ const COPY: Record<
     emptyTitle: string
     empty: string
     icon: keyof typeof Ionicons.glyphMap
+    emptyIcon: keyof typeof Ionicons.glyphMap
     remove: string
     removed: string
   }
@@ -34,6 +37,7 @@ const COPY: Record<
     emptyTitle: 'Você ainda não tem lugares favoritos',
     empty: 'Toque no coração na página de um lugar para guardá-lo aqui.',
     icon: 'heart',
+    emptyIcon: 'heart-outline',
     remove: 'Remover dos favoritos',
     removed: 'removido dos favoritos.',
   },
@@ -42,6 +46,7 @@ const COPY: Record<
     emptyTitle: 'Você ainda não segue nenhum lugar',
     empty: 'Siga um lugar para acompanhar as novidades dele.',
     icon: 'notifications',
+    emptyIcon: 'notifications-outline',
     remove: 'Deixar de seguir',
     removed: 'deixou de ser seguido.',
   },
@@ -59,16 +64,34 @@ const COPY: Record<
  * `unavailable` is shown as a sentence, not hidden: a saved place that was
  * withdrawn is kept, and without this line the person would believe the app
  * lost it.
+ *
+ * `refetchFooter` is what a pull also asks again for the footer's own list.
  */
-export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: ReactElement }) {
+export function SavedListScreen({
+  kind,
+  footer,
+  refetchFooter,
+}: {
+  kind: SavedKind
+  footer?: ReactElement
+  refetchFooter?: () => Promise<unknown>
+}) {
   const colors = useColors()
   const frame = useContentFrame()
   const router = useRouter()
   const query = useSavedList(kind)
   const copy = COPY[kind]
-  const refreshControl = usePullToRefresh(query.refetch)
+  const refreshControl = usePullToRefresh(
+    ...(refetchFooter ? [query.refetch, refetchFooter] : [query.refetch])
+  )
   const [removed, setRemoved] = useState<EstablishmentCard | null>(null)
   const dismiss = useCallback(() => setRemoved(null), [])
+  // A removal the server refused leaves the place where it was: no "Desfazer" for it.
+  const kept = useCallback(
+    (card: EstablishmentCard) =>
+      setRemoved((current) => (current?.id === card.id ? null : current)),
+    []
+  )
 
   if (query.isPending) return <ContentSkeleton label={copy.loading} variant="catalog" />
 
@@ -109,7 +132,7 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
           ) : (
             // Audit A34: an empty list says what goes here and where to find it.
             <EmptyState
-              icon={`${copy.icon}-outline` as keyof typeof Ionicons.glyphMap}
+              icon={copy.emptyIcon}
               title={copy.emptyTitle}
               text={copy.empty}
               action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
@@ -124,6 +147,7 @@ export function SavedListScreen({ kind, footer }: { kind: SavedKind; footer?: Re
             removeLabel={copy.remove}
             card={item.establishment}
             onRemoved={setRemoved}
+            onKept={kept}
           />
         )}
       />
@@ -148,12 +172,14 @@ function SavedRow({
   removeLabel,
   card,
   onRemoved,
+  onKept,
 }: {
   kind: SavedKind
   icon: keyof typeof Ionicons.glyphMap
   removeLabel: string
   card: EstablishmentCard
   onRemoved: (card: EstablishmentCard) => void
+  onKept: (card: EstablishmentCard) => void
 }) {
   const colors = useColors()
   const router = useRouter()
@@ -166,7 +192,7 @@ function SavedRow({
     >
       <EstablishmentCardRow
         card={card}
-        onPress={() => router.push(`/estabelecimento/${card.city_slug}/${card.slug}`)}
+        onPress={() => router.push(placeHref(card.city_slug, card.slug))}
         trailing={
           <IconButton
             icon={icon}
@@ -174,7 +200,7 @@ function SavedRow({
             accessibilityLabel={`${removeLabel}: ${card.name}`}
             onPress={() => {
               if (toggle.isPending) return
-              toggle.mutate(false)
+              toggle.mutate(false, { onError: () => onKept(card) })
               onRemoved(card)
             }}
             testID={`unsave-${card.id}`}

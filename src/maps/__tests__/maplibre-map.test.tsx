@@ -48,9 +48,9 @@ jest.mock('@maplibre/maplibre-react-native', () => {
     },
   }
 })
-jest.mock('@/maps/basemap', () => ({
-  useBasemap: () => ({ credit: '© OpenStreetMap', textFont: ['Noto Sans Medium'] }),
-}))
+// Held in state by the real hook, so the same object from one render to the next.
+const mockBasemap = { credit: '© OpenStreetMap', textFont: ['Noto Sans Medium'] }
+jest.mock('@/maps/basemap', () => ({ useBasemap: () => mockBasemap }))
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 
 const theme = jest.requireMock('@/theme/use-colors') as { useColors: jest.Mock }
@@ -375,6 +375,47 @@ it('offers to bring the city back once the person moves the map', async () => {
     expect.objectContaining({ center: [center.longitude, center.latitude], zoom: 11 })
   )
   expect(view.queryByTestId('map-recentre')).toBeNull()
+})
+
+// Each new style object is a native restyle of the layer: they follow their inputs only.
+it('keeps the places and their layers as they were while only the map itself moves', async () => {
+  const view = await render(
+    <MapLibreRenderer
+      pins={[casa, forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+      selected="forno-e-fermento"
+    />
+  )
+  const data = view.getByTestId('places-source').props.data
+  const { layout, paint, filter } = mockLayers.places
+  const clusters = mockLayers['place-clusters'].layout
+
+  await act(async () =>
+    view
+      .getByTestId('native-map')
+      .props.onRegionDidChange({ nativeEvent: { userInteraction: true } })
+  )
+  expect(view.getByTestId('map-recentre')).toBeOnTheScreen()
+
+  expect(view.getByTestId('places-source').props.data).toBe(data)
+  expect(mockLayers.places.layout).toBe(layout)
+  expect(mockLayers.places.paint).toBe(paint)
+  expect(mockLayers.places.filter).toBe(filter)
+  expect(mockLayers['place-clusters'].layout).toBe(clusters)
+
+  // Holding another place is a new style: that one does change.
+  await view.rerender(
+    <MapLibreRenderer
+      pins={[casa, forno]}
+      center={center}
+      onSelect={jest.fn()}
+      onOpen={jest.fn()}
+      selected="casa-de-petiscos"
+    />
+  )
+  expect(mockLayers.places.layout).not.toBe(layout)
 })
 
 describe('a held place under the card at the foot', () => {

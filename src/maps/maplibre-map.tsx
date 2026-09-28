@@ -60,7 +60,28 @@ const INITIAL_ZOOM = 11
 const ink = palette.light.primary
 const paper = palette.light.primaryForeground
 
+const placePaint = {
+  'icon-color': ink,
+  'icon-halo-color': paper,
+  'icon-halo-width': 2,
+  'text-color': ink,
+  'text-halo-color': paper,
+  'text-halo-width': 1.5,
+  'text-halo-blur': 0.5,
+} as const
+
+const clusterPaint = {
+  'icon-color': ink,
+  'icon-halo-color': paper,
+  'icon-halo-width': 2.5,
+  'text-color': paper,
+} as const
+
 type SymbolLayout = NonNullable<SymbolLayerSpecification['layout']>
+
+/** A lone place, and a cluster of several: what each layer draws. */
+const PLACE_FILTER: SymbolLayerSpecification['filter'] = ['==', ['get', 'places'], 1]
+const CLUSTER_FILTER: SymbolLayerSpecification['filter'] = ['>', ['get', 'places'], 1]
 
 const clusterLayout = (textFont: string[]): SymbolLayout => ({
   'icon-image': 'map-place',
@@ -127,6 +148,10 @@ export function MapLibreRenderer({
   const { right: rightInset } = useSafeAreaInsets()
   const groups = useMemo(() => groupPins(pins), [pins])
   const places = useMemo(() => placeFeatures(groups), [groups])
+  // New style objects on every render would restyle the layers natively each time
+  // the map's own state moves (a list opened, the map dragged): they follow their inputs.
+  const placeStyle = useMemo(() => placeLayout(textFont, selected), [textFont, selected])
+  const clusterStyle = useMemo(() => clusterLayout(textFont), [textFont])
   const [open, setOpen] = useState<MapPinGroup | null>(null)
   const map = useRef<MapRef>(null)
   const camera = useRef<CameraRef>(null)
@@ -259,29 +284,16 @@ export function MapLibreRenderer({
             <Layer
               id="places"
               type="symbol"
-              filter={['==', ['get', 'places'], 1]}
-              layout={placeLayout(textFont, selected)}
-              paint={{
-                'icon-color': ink,
-                'icon-halo-color': paper,
-                'icon-halo-width': 2,
-                'text-color': ink,
-                'text-halo-color': paper,
-                'text-halo-width': 1.5,
-                'text-halo-blur': 0.5,
-              }}
+              filter={PLACE_FILTER}
+              layout={placeStyle}
+              paint={placePaint}
             />
             <Layer
               id="place-clusters"
               type="symbol"
-              filter={['>', ['get', 'places'], 1]}
-              layout={clusterLayout(textFont)}
-              paint={{
-                'icon-color': ink,
-                'icon-halo-color': paper,
-                'icon-halo-width': 2.5,
-                'text-color': paper,
-              }}
+              filter={CLUSTER_FILTER}
+              layout={clusterStyle}
+              paint={clusterPaint}
             />
           </GeoJSONSource>
         </Map>

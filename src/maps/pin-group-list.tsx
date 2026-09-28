@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { useAnnouncement } from '@/components/announce'
 import { MEASURE, useContentFrame } from '@/components/content-frame'
@@ -30,6 +30,7 @@ export function PinGroupList({
 
   return (
     <View
+      testID="pin-group-list"
       style={[
         styles.sheet,
         { left: frame.left, right: frame.right },
@@ -50,27 +51,31 @@ export function PinGroupList({
           <Text style={[styles.closeLabel, { color: colors.primary }]}>Fechar</Text>
         </Pressable>
       </View>
-      {group.pins.map((pin) => (
-        <Pressable
-          key={pin.slug}
-          accessibilityRole="button"
-          accessibilityLabel={[pin.name, pin.category].filter(Boolean).join(', ')}
-          onPress={() => onSelect(pin.slug)}
-          style={[styles.row, { borderTopColor: colors.border }]}
-        >
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={lines}>
-            {pin.name}
-          </Text>
-          {pin.category ? (
-            <Text
-              style={[styles.category, { color: colors.mutedForeground }]}
-              numberOfLines={lines}
-            >
-              {pin.category}
+      {/* A shopping centre holds more places than a short map has room for: past the
+          sheet's ceiling the list scrolls instead of running off the top of the map. */}
+      <ScrollView style={styles.rows} testID="pin-group-rows">
+        {group.pins.map((pin) => (
+          <Pressable
+            key={pin.slug}
+            accessibilityRole="button"
+            accessibilityLabel={[pin.name, pin.category].filter(Boolean).join(', ')}
+            onPress={() => onSelect(pin.slug)}
+            style={[styles.row, { borderTopColor: colors.border }]}
+          >
+            <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={lines}>
+              {pin.name}
             </Text>
-          ) : null}
-        </Pressable>
-      ))}
+            {pin.category ? (
+              <Text
+                style={[styles.category, { color: colors.mutedForeground }]}
+                numberOfLines={lines}
+              >
+                {pin.category}
+              </Text>
+            ) : null}
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   )
 }
@@ -79,11 +84,13 @@ const styles = StyleSheet.create({
   sheet: {
     position: 'absolute',
     bottom: spacing.xxl + spacing.lg,
+    maxHeight: '70%',
     borderRadius: radius.surface,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
   },
+  rows: { flexGrow: 0, flexShrink: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

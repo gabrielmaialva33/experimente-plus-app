@@ -184,6 +184,18 @@ describe('a pair the device still held', () => {
     expect(call(fetchMock, 1).init.body).toBe(JSON.stringify({ refresh_token: 'old-refresh' }))
   })
 
+  it('does not fail the sign-in when the stored pair cannot be read to revoke it', async () => {
+    const SecureStore = jest.requireMock('expo-secure-store') as { getItemAsync: jest.Mock }
+    SecureStore.getItemAsync.mockRejectedValueOnce(new Error('keychain locked'))
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(signedIn), { status: 200 }))
+
+    await expect(signIn('ana', 'test-password')).resolves.toMatchObject({ id: 1 })
+    expect(mockStore.get('ep.refresh_token')).toBe('test-refresh')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it('leaves nothing to revoke when the device held no pair', async () => {
     const fetchMock = jest
       .spyOn(globalThis, 'fetch')

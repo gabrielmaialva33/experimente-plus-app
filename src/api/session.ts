@@ -132,7 +132,9 @@ export async function writeCredentials(credentials: Credentials): Promise<void> 
  * dropped even when the keystore refuses the new one, so it is revoked then too.
  */
 export async function replaceCredentials(next: Credentials): Promise<void> {
-  const previous = await readCredentials()
+  // Finding the old pair is part of the best effort: a keystore that cannot be
+  // read now must not fail a sign-in the server has already accepted.
+  const previous = await readCredentials().catch(() => null)
   try {
     await writeCredentials(next)
   } finally {

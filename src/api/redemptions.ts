@@ -32,8 +32,11 @@ export const confirmRedemption = (token: string, signal?: AbortSignal) =>
     body: { token },
   })
 
+/** The code comes from the route, so from a link: it stays one path segment. */
 export const getPartnerReceipt = (receiptCode: string) =>
-  request<Receipt>(`/api/v1/benefit-redemptions/${receiptCode}`, { authenticated: true })
+  request<Receipt>(`/api/v1/benefit-redemptions/${encodeURIComponent(receiptCode)}`, {
+    authenticated: true,
+  })
 
 export const listPartnerRedemptions = () =>
   request<History>('/api/v1/benefit-redemptions', { authenticated: true })

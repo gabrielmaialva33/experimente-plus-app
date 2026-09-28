@@ -195,7 +195,12 @@ async function renewCredentials(): Promise<Credentials> {
       sensitive: true,
       body: { refresh_token: refreshToken },
     })
-    if (response.status === 401) throw new SessionExpiredError()
+    // A 422 is a refusal like a 401. The body is canonical JSON this function
+    // builds itself, so the one field the server can find invalid is the stored
+    // token: not canonical, left unconsumed and refused the same way on every
+    // attempt. A 400 (a body that did not parse) is not: `JSON.stringify` escapes
+    // any token, so it points at what carried the request, and the pair stays.
+    if (response.status === 401 || response.status === 422) throw new SessionExpiredError()
     if (!response.ok) {
       if (response.status === 403) notifySessionEvent('context-invalidated')
       throw await responseError(response, true)

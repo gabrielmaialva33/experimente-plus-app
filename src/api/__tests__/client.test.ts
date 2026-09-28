@@ -125,22 +125,35 @@ it.each(['30', 'Mon, 14 Sep 2026 17:00:30 GMT'])(
   }
 )
 
-it.each([403, 422, 429])(
-  'preserves refresh HTTP %s as a nonretryable API error',
-  async (status) => {
-    const { request } = require('../client') as typeof import('../client')
-    const fetchMock = jest
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(response(401))
-      .mockResolvedValueOnce(response(status, {}, { 'Retry-After': '40' }))
-    await expect(request('/private', { authenticated: true })).rejects.toMatchObject({
-      status,
-      retryAfterSeconds: status === 429 ? 40 : undefined,
-    })
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(mockStore.get('ep.refresh_token')).toBe('refresh-0')
-  }
-)
+// A refresh 422 refuses the stored token itself (the body is canonical JSON the
+// app built): like a 401, it ends the session, still without a replay.
+it('ends the session without a replay when the refresh token is refused as malformed (422)', async () => {
+  const { request } = require('../client') as typeof import('../client')
+  const { SessionExpiredError } = require('../session') as typeof import('../session')
+  const fetchMock = jest
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(response(401))
+    .mockResolvedValueOnce(response(422, { errors: [{ field: 'refresh_token' }] }))
+  await expect(request('/private', { authenticated: true })).rejects.toBeInstanceOf(
+    SessionExpiredError
+  )
+  expect(fetchMock).toHaveBeenCalledTimes(2)
+  expect(mockStore.has('ep.refresh_token')).toBe(false)
+})
+
+it.each([403, 429])('preserves refresh HTTP %s as a nonretryable API error', async (status) => {
+  const { request } = require('../client') as typeof import('../client')
+  const fetchMock = jest
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(response(401))
+    .mockResolvedValueOnce(response(status, {}, { 'Retry-After': '40' }))
+  await expect(request('/private', { authenticated: true })).rejects.toMatchObject({
+    status,
+    retryAfterSeconds: status === 429 ? 40 : undefined,
+  })
+  expect(fetchMock).toHaveBeenCalledTimes(2)
+  expect(mockStore.get('ep.refresh_token')).toBe('refresh-0')
+})
 
 it('uses no-store for private presentation and validation requests, keeping the same token on manual retry', async () => {
   const { confirmRedemption } = require('../redemptions') as typeof import('../redemptions')

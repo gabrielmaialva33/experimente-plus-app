@@ -22,11 +22,12 @@ jest.mock('@/session/cache-guard', () => ({ SessionCacheGuard: () => null }))
 jest.mock('@/session/context', () => ({
   SessionProvider: ({ children }: { children: ReactNode }) => children,
   useSession: () => mockSession.current,
+  usePartnerAreas: () => ({ canValidate: false, canReadHistory: false }),
 }))
 jest.mock('expo-router', () => ({
   Stack: Object.assign(
     jest.fn(() => null),
-    { Screen: () => null }
+    { Screen: () => null, Protected: () => null }
   ),
   ThemeProvider: ({ children }: { children: ReactNode }) => children,
   DarkTheme: { colors: {} },

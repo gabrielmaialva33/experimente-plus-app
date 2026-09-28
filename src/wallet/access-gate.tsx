@@ -36,21 +36,38 @@ export function useAccess(area: AccessArea): Access {
 }
 
 /**
+ * Whether what `area` guards may be mounted now: it opens once the session
+ * grants the area and closes only on a decision.
+ *
+ * Nothing opens while the session is undecided, but what is already open stays
+ * open: a 403 revalidates the context in place, while an operation switch or a
+ * sign-out passes through `loading`, and closing then would repeat a refused
+ * request after every reload, in a loop. A reload that failed for want of a
+ * connection (`unavailable`) is not a change of person either, as for the cache
+ * guard. A decision (signed out, capability gone) closes it.
+ *
+ * The root navigator guards its private routes with it and `AccessGate` its
+ * screens, so both layers open and close on the same rule.
+ */
+export function useAreaOpen(area: AccessArea): boolean {
+  const access = useAccess(area)
+  const undecided = access === 'loading' || access === 'unavailable'
+  const [open, setOpen] = useState(false)
+  if (access === 'allowed' && !open) setOpen(true)
+  if (access !== 'allowed' && !undecided && open) setOpen(false)
+  return access === 'allowed' || (undecided && open)
+}
+
+/**
  * Mounts `children` only once the session grants `area`.
  *
- * The tabs already compose Carteira and Validar from the session, but the
- * screens stacked above them (the presentation, the confirmation, both
- * histories and their receipts) are routes a link can open on its own. The
- * server still refuses on every endpoint; this keeps the request from leaving
- * and the screen from showing an area the actor does not have.
- *
- * A screen already open stays mounted while the session is undecided: a 403
- * revalidates the context in place, but an operation switch or a sign-out
- * passes through `loading`, and remounting then would repeat a refused request
- * after every reload, in a loop. A reload that failed for want of a connection
- * (`unavailable`) is not a change of person either, as for the cache guard.
- * What the screen holds privately is hidden meanwhile by its own guards
- * (`usePrivateOperation`).
+ * The root navigator already leaves out the private routes the session does
+ * not grant, which also closes them to a link. This is the second layer, on the
+ * screen itself: the server still refuses on every endpoint, and this keeps the
+ * request from leaving and the screen from showing an area the actor does not
+ * have, whatever route led there. It follows `useAreaOpen`: an open screen stays
+ * mounted while the session is undecided, and what it holds privately is hidden
+ * meanwhile by its own guards (`usePrivateOperation`).
  */
 export function AccessGate({
   area,
@@ -63,13 +80,9 @@ export function AccessGate({
   children: ReactNode
 }) {
   const access = useAccess(area)
-  // Whether `children` are mounted now: they open once allowed and close only on a decision.
-  const undecided = access === 'loading' || access === 'unavailable'
-  const [open, setOpen] = useState(false)
-  if (access === 'allowed' && !open) setOpen(true)
-  if (access !== 'allowed' && !undecided && open) setOpen(false)
+  const open = useAreaOpen(area)
 
-  if (access === 'allowed' || (undecided && open)) return children
+  if (access === 'allowed' || open) return children
   if (access === 'loading') return <ContentSkeleton label={loadingLabel} variant="detail" />
   return <AccessBlocked access={access} area={area} />
 }

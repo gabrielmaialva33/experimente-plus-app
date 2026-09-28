@@ -64,7 +64,10 @@ it.each(['light', 'dark'] as const)(
       headerTitleAlign: 'left',
       headerStyle: { backgroundColor: palette[mode].surfaceBase },
     })
-    const rootScreens = screens(root.children)
+    // Private routes sit in `Stack.Protected` groups; each of their screens is checked too.
+    const rootScreens = screens(root.children).flatMap((screen) =>
+      screen.props.name ? [screen] : screens(screen.props.children)
+    )
     expect(
       rootScreens.find((screen) => screen.props.name === '(tabs)')?.props.options.headerShown
     ).toBe(false)

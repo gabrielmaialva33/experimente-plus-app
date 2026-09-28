@@ -13,6 +13,7 @@ import { useColors } from '@/theme/use-colors'
 import { createQueryClient, installQueryEnvironment } from '@/api/query-client'
 import { SessionCacheGuard } from '@/session/cache-guard'
 import { SessionProvider, useSession } from '@/session/context'
+import { useAreaOpen } from '@/wallet/access-gate'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -51,6 +52,16 @@ function SplashGate({ fontsReady }: { fontsReady: boolean }) {
  * navigator. Android measures a text once, with whatever face it has at the
  * time, and keeps that measure after the real face arrives: a screen drawn
  * before the fonts would keep its words clipped to the width of the system face.
+ *
+ * The private screens stacked above the tabs are composed from the session as
+ * the tabs are (ADR-0023 §2): `Stack.Protected` leaves a route out while its
+ * guard is false, so no link opens it, and drops it from the history when the
+ * guard turns. The account's screens need a session; Validar's confirmation
+ * needs `partner.redemptions.validate`, and the partner history and its receipts
+ * `partner.redemptions.read`. Every guard is false until the context resolves,
+ * under the splash, and follows `useAreaOpen`: a revalidation or a reload that
+ * failed for want of a connection leaves an open screen where it is, and only a
+ * decision closes it. `AccessGate` repeats the rule on the screens themselves.
  */
 function Shell({ fontsReady }: { fontsReady: boolean }) {
   const colorScheme = useColorScheme()
@@ -58,6 +69,9 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
   const insets = useSafeAreaInsets()
   useNavigationBarStyle()
   useStatusBarFollowsTheme()
+  const signedIn = useAreaOpen('account')
+  const validates = useAreaOpen('validate')
+  const readsHistory = useAreaOpen('history')
   const baseTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme
   const screenLayout = ({ children }: { children: ReactElement }) =>
     fontsReady ? children : <View style={{ backgroundColor: colors.surfaceBase, flex: 1 }} />
@@ -73,41 +87,10 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="compra/[id]" options={{ title: 'Comprar benefício' }} />
         <Stack.Screen name="compra/entrar" options={{ title: 'Entrar' }} />
         <Stack.Screen name="estabelecimento/[city]/[slug]" options={{ title: 'Lugar' }} />
-        <Stack.Screen
-          name="carteira/apresentar"
-          options={{ headerShown: true, title: 'Apresentar benefício' }}
-        />
-        <Stack.Screen
-          name="validar/confirmar"
-          options={{ headerShown: true, title: 'Validar benefício' }}
-        />
-        <Stack.Screen
-          name="carteira/historico"
-          options={{ headerShown: true, title: 'Meus usos' }}
-        />
-        <Stack.Screen
-          name="carteira/comprovante/[code]"
-          options={{ headerShown: true, title: 'Comprovante' }}
-        />
-        <Stack.Screen
-          name="validar/historico"
-          options={{ headerShown: true, title: 'Utilizações' }}
-        />
-        <Stack.Screen
-          name="validar/comprovante/[code]"
-          options={{ headerShown: true, title: 'Comprovante' }}
-        />
-        <Stack.Screen
-          name="conta/excluir"
-          options={{ headerShown: true, title: 'Excluir conta' }}
-        />
-        <Stack.Screen name="conta/avaliacoes" options={{ title: 'Minhas avaliações' }} />
         <Stack.Screen name="conta/favoritos" options={{ title: 'Favoritos' }} />
         <Stack.Screen name="conta/seguindo" options={{ title: 'Seguindo' }} />
         <Stack.Screen name="conta/interesses" options={{ title: 'Interesses' }} />
         <Stack.Screen name="avaliacoes/[establishmentId]" options={{ title: 'Avaliações' }} />
-        <Stack.Screen name="avaliar/[establishmentId]" options={{ title: 'Avaliar' }} />
-        <Stack.Screen name="avaliar/editar/[id]" options={{ title: 'Editar avaliação' }} />
         <Stack.Screen name="denunciar/[type]/[id]" options={{ title: 'Denunciar' }} />
         <Stack.Screen name="roteiros/index" options={{ title: 'Roteiros' }} />
         <Stack.Screen name="roteiros/[id]" options={{ title: 'Roteiro' }} />
@@ -115,6 +98,47 @@ function Shell({ fontsReady }: { fontsReady: boolean }) {
           name="roteiros/adicionar/[establishmentId]"
           options={{ title: 'Adicionar ao roteiro' }}
         />
+
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen
+            name="carteira/apresentar"
+            options={{ headerShown: true, title: 'Apresentar benefício' }}
+          />
+          <Stack.Screen
+            name="carteira/historico"
+            options={{ headerShown: true, title: 'Meus usos' }}
+          />
+          <Stack.Screen
+            name="carteira/comprovante/[code]"
+            options={{ headerShown: true, title: 'Comprovante' }}
+          />
+          <Stack.Screen name="conta/perfil" options={{ title: 'Editar perfil' }} />
+          <Stack.Screen
+            name="conta/excluir"
+            options={{ headerShown: true, title: 'Excluir conta' }}
+          />
+          <Stack.Screen name="conta/avaliacoes" options={{ title: 'Minhas avaliações' }} />
+          <Stack.Screen name="avaliar/[establishmentId]" options={{ title: 'Avaliar' }} />
+          <Stack.Screen name="avaliar/editar/[id]" options={{ title: 'Editar avaliação' }} />
+        </Stack.Protected>
+
+        <Stack.Protected guard={validates}>
+          <Stack.Screen
+            name="validar/confirmar"
+            options={{ headerShown: true, title: 'Validar benefício' }}
+          />
+        </Stack.Protected>
+
+        <Stack.Protected guard={readsHistory}>
+          <Stack.Screen
+            name="validar/historico"
+            options={{ headerShown: true, title: 'Utilizações' }}
+          />
+          <Stack.Screen
+            name="validar/comprovante/[code]"
+            options={{ headerShown: true, title: 'Comprovante' }}
+          />
+        </Stack.Protected>
       </Stack>
     </ThemeProvider>
   )

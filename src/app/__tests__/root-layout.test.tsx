@@ -18,11 +18,12 @@ jest.mock('@/api/query-client', () => ({
 jest.mock('@/session/context', () => ({
   SessionProvider: ({ children }: { children: ReactNode }) => children,
   useSession: () => ({ status: 'anonymous' }),
+  usePartnerAreas: () => ({ canValidate: false, canReadHistory: false }),
 }))
 jest.mock('expo-router', () => {
   const Stack = Object.assign(
     jest.fn(() => null),
-    { Screen: () => null }
+    { Screen: () => null, Protected: () => null }
   )
   return {
     Stack,

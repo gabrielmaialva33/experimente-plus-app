@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { EstablishmentDetail } from '@/catalog/types'
 import { ActionMenu, type ActionMenuItem } from '@/components/action-menu'
-import { useAnnouncement } from '@/components/announce'
 import {
   compactTitleText,
   hiddenFromAccessibility,
@@ -99,13 +98,6 @@ export function PlaceChrome({
   const favorite = useToggleSaved('favorites', detail.id)
   const favorited = saved.data?.favorited === true
   const { compact } = header
-  // The heart is rolled back when the server refuses; the person hears why.
-  useAnnouncement(
-    favorite.isError &&
-      (favorite.variables
-        ? `Não foi possível favoritar ${detail.name} agora.`
-        : `Não foi possível remover ${detail.name} dos favoritos agora.`)
-  )
 
   const share = () => {
     const url = publicEstablishmentUrl(citySlug, detail.slug)

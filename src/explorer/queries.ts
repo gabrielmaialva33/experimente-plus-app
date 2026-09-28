@@ -25,6 +25,7 @@ import {
   type SavedKind,
   type SavedStatus,
 } from '@/api/explorer'
+import { announce } from '@/components/announce'
 
 export const explorerKeys = {
   all: ['explorer'] as const,
@@ -59,6 +60,22 @@ export const useSavedStatus = (establishmentId: number | null, signedIn: boolean
   })
 
 /**
+ * What a toggle the server refused says once it is rolled back. Said from the
+ * mutation itself, so it is heard even when the button that asked is gone, as
+ * the "Desfazer" of a removal is by the time the server answers.
+ */
+export function toggleFailure(kind: SavedKind | 'content', save: boolean): string {
+  if (kind === 'follows') {
+    return save
+      ? 'Não foi possível seguir o lugar agora.'
+      : 'Não foi possível deixar de seguir o lugar agora.'
+  }
+  return save
+    ? 'Não foi possível favoritar agora.'
+    : 'Não foi possível remover dos favoritos agora.'
+}
+
+/**
  * Favourite and follow toggle optimistically, because the button is the whole
  * interaction and waiting a round trip to fill a heart reads as broken.
  *
@@ -84,9 +101,10 @@ export const useToggleSaved = (kind: SavedKind, establishmentId: number) => {
       })
       return { previous }
     },
-    onError: (_error, _save, context) => {
+    onError: (_error, save, context) => {
       if (context?.previous) client.setQueryData(key, context.previous)
       else client.removeQueries({ queryKey: key })
+      announce(toggleFailure(kind, save))
     },
     onSuccess: (status) => {
       client.setQueryData(key, status)
@@ -226,8 +244,9 @@ export const useToggleSavedContent = () => {
       }
       return { previous }
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, { save }, context) => {
       if (context?.previous) client.setQueryData(explorerKeys.savedContent, context.previous)
+      announce(toggleFailure('content', save))
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: explorerKeys.savedContent })

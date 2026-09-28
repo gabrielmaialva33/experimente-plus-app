@@ -44,13 +44,8 @@ export function PlaceActions({
   // With large text the action takes a line of its own and the icons follow under it:
   // beside them its label broke in two ("Como / chegar"), or pushed them off the page.
   const stacked = useStackedLayout()
-  // A failed toggle is rolled back with the bell; the person hears why it went back.
-  const failure = follow.isError
-    ? follow.variables
-      ? `Não foi possível seguir ${name} agora.`
-      : `Não foi possível deixar de seguir ${name} agora.`
-    : null
-  useAnnouncement(failure ?? (explain && FOLLOW_HINT))
+  // A refused follow is rolled back and said by the mutation; the hint would be wrong.
+  useAnnouncement(explain && !follow.isError && FOLLOW_HINT)
 
   const requireSession = (action: () => void) => () => {
     if (!signedIn) {

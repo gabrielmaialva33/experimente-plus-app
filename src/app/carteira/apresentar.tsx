@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
@@ -26,6 +26,8 @@ import {
   presentationEligibility,
 } from '@/wallet/financial-restriction'
 import { AccessGate } from '@/wallet/access-gate'
+import { spentBenefit, usedAt, type SpentBenefit } from '@/wallet/benefit-use'
+import { useKeepAwakeWhileShown } from '@/wallet/keep-awake'
 
 /**
  * Seconds left until `deadline`. The clock starts when the code is drawn (the
@@ -80,6 +82,8 @@ function PresentScreen() {
   const eligibility = wallet.data
     ? presentationEligibility(wallet.data, Number(accessId), Number(offerId))
     : null
+  // The partner confirmed a use: the next poll of the wallet marks the benefit spent.
+  const spent = wallet.data ? spentBenefit(wallet.data, Number(accessId), Number(offerId)) : null
 
   const create = useCallback(
     () => mutatePresentation({ accessId: Number(accessId), offerId: Number(offerId) }),
@@ -107,6 +111,9 @@ function PresentScreen() {
       </Stopped>
     )
   }
+
+  // The good end of a presentation, not a refusal: it says so, and leads to the receipt.
+  if (spent) return <Used benefit={spent} />
 
   const refused =
     presentation.error instanceof ApiError &&
@@ -240,6 +247,8 @@ function PresentScreen() {
 /**
  * The code, its countdown and the way to a new one. The countdown only reads the
  * deadline and never extends it; its end replaces the code and is announced.
+ * While the code itself is drawn, the screen stays on; the screen's other
+ * states (loading, used, refused, failed) never mount this, so they let it sleep.
  */
 function PresentationCode({
   presentation,
@@ -253,6 +262,9 @@ function PresentationCode({
   const colors = useColors()
   const remaining = useSecondsLeft(presentation.deadline)
   const expired = remaining === 0
+  // An image that could not be drawn is no code to scan: its sentence lets the phone sleep.
+  const [unreadable, setUnreadable] = useState(false)
+  useKeepAwakeWhileShown(!expired && !unreadable)
   // The countdown is silent; its end is not.
   useAnnouncement(expired && EXPIRED)
 
@@ -271,6 +283,7 @@ function PresentationCode({
           source={{ uri: presentation.qr_data_url }}
           style={qr.code}
           contentFit="contain"
+          onError={() => setUnreadable(true)}
           fallback={
             <View style={[styles.qrSlot, { backgroundColor: colors.muted }, qr.slot]}>
               <Text style={[styles.message, { color: colors.mutedForeground }]}>
@@ -350,6 +363,68 @@ function Stopped({
   )
 }
 
+/**
+ * The benefit was used. Most often the partner has just confirmed it while the
+ * code was on screen and the wallet's poll brought the use; a link to a benefit
+ * already spent lands here too. It replaces the code the person was holding up,
+ * so it is said, and it leads to the receipt of that use. A server that does
+ * not name the receipt gets the list of uses instead, never a guess.
+ */
+function Used({ benefit }: { benefit: SpentBenefit }) {
+  const colors = useColors()
+  const router = useRouter()
+  const frame = useContentFrame(undefined, spacing.xxl)
+  const { latest } = benefit
+  const when = latest ? usedAt(latest.redeemedAt, benefit.timeZone) : null
+  useAnnouncement(when ? `Benefício utilizado em ${when}.` : 'Benefício utilizado.')
+
+  return (
+    <ScrollView
+      testID="presentation-used"
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={[styles.used, frame.padding]}
+    >
+      <View style={[styles.stoppedIcon, { backgroundColor: colors.successSoft }]} {...decorative}>
+        <Ionicons name="checkmark-done" size={28} color={colors.successAccent} />
+      </View>
+      <Text accessibilityRole="header" style={[styles.usedTitle, { color: colors.foreground }]}>
+        Benefício utilizado
+      </Text>
+      <Text style={[styles.message, { color: colors.mutedForeground }]}>
+        {`${benefit.title} · ${benefit.place}`}
+      </Text>
+      {when ? (
+        <Text style={[styles.usedWhen, { color: colors.foreground }]}>{`Usado em ${when}`}</Text>
+      ) : null}
+      {latest ? (
+        <Button
+          label="Ver comprovante"
+          icon="receipt-outline"
+          align="center"
+          onPress={() =>
+            router.push({
+              pathname: '/carteira/comprovante/[code]',
+              params: { code: latest.receiptCode },
+            })
+          }
+        />
+      ) : (
+        <>
+          <Text style={[styles.message, { color: colors.mutedForeground }]}>
+            O comprovante fica guardado em Meus usos.
+          </Text>
+          <Button
+            label="Ver histórico"
+            icon="receipt-outline"
+            align="center"
+            onPress={() => router.push('/carteira/historico')}
+          />
+        </>
+      )}
+    </ScrollView>
+  )
+}
+
 const NOTCH = 24
 /** The code's drawn size: sharp to a partner's camera, with room around it on a phone. */
 const QR_SIZE = 248
@@ -412,6 +487,16 @@ const styles = StyleSheet.create({
   },
   countdown: { ...typography.label, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   message: { ...typography.body, textAlign: 'center' },
+  // Scrolls with large text; centred while it fits.
+  used: {
+    alignItems: 'center',
+    flexGrow: 1,
+    gap: spacing.md,
+    justifyContent: 'center',
+    padding: spacing.xxl,
+  },
+  usedTitle: { ...typography.title, textAlign: 'center' },
+  usedWhen: { ...typography.body, ...textWeight('600'), textAlign: 'center' },
   stoppedIcon: {
     alignItems: 'center',
     borderRadius: radius.pill,

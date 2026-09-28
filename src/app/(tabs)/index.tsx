@@ -201,9 +201,12 @@ export default function ExploreScreen() {
     ),
   ].filter(Boolean)
   const hasFilters = debouncedTerm !== '' || activeFilters.length > 0
+  // Undoes what narrowed the results: the searched word with the filters, or the filters alone.
   const clearFilters = () => {
-    setTerm('')
-    setDebouncedTerm('')
+    if (debouncedTerm) {
+      setTerm('')
+      setDebouncedTerm('')
+    }
     setCategory(undefined)
     setOpenNow(false)
     setAttributes([])
@@ -427,6 +430,22 @@ export default function ExploreScreen() {
       : debouncedTerm
         ? 'Ver todos os lugares'
         : 'Limpar filtros'
+  // What was asked, then what to try: a word can be misspelt, a filter can be one too many.
+  const noMatch = [
+    [
+      'Nenhum lugar',
+      debouncedTerm ? `para “${debouncedTerm}”` : null,
+      `em ${cityName}`,
+      activeFilters.length ? `com os filtros: ${activeFilters.join(', ')}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ') + '.',
+    debouncedTerm && activeFilters.length
+      ? 'Tente outra palavra ou menos filtros.'
+      : debouncedTerm
+        ? 'Confira a grafia ou tente outra palavra.'
+        : 'Tire um filtro para ver mais lugares.',
+  ].join(' ')
 
   const feedback = cityless ? (
     <View style={[styles.failure, frame.padding]}>
@@ -463,25 +482,22 @@ export default function ExploreScreen() {
         help={TROUBLESHOOTING_HELP}
       />
     </View>
+  ) : !results.length && hasFilters ? (
+    // The shared empty card of the other lists; its one action undoes what narrowed the search.
+    <View testID="catalog-empty" style={[styles.failure, frame.padding]}>
+      <EmptyState
+        icon="search-outline"
+        title="Nada encontrado"
+        text={noMatch}
+        action={{ label: clearLabel, onPress: clearFilters }}
+      />
+    </View>
   ) : !results.length ? (
     <View testID="catalog-empty" style={styles.feedback}>
       <Text style={[styles.message, { color: colors.foreground }]}>
-        {hasFilters
-          ? [
-              'Nada encontrado',
-              debouncedTerm ? `para “${debouncedTerm}”` : null,
-              `em ${cityName}`,
-              activeFilters.length ? `com os filtros: ${activeFilters.join(', ')}` : null,
-            ]
-              .filter(Boolean)
-              .join(' ') + '.'
-          : `Ainda não há lugares publicados em ${cityName}.`}
+        {`Ainda não há lugares publicados em ${cityName}.`}
       </Text>
-      {hasFilters ? (
-        <Pressable accessibilityRole="button" onPress={clearFilters} style={styles.feedbackAction}>
-          <Text style={[styles.action, { color: colors.primary }]}>{clearLabel}</Text>
-        </Pressable>
-      ) : (published?.length ?? 0) > 1 ? (
+      {(published?.length ?? 0) > 1 ? (
         // A city with nothing published yet is not a dead end: the others are one tap away.
         <Pressable accessibilityRole="button" onPress={chooseCity} style={styles.feedbackAction}>
           <Text style={[styles.action, { color: colors.primary }]}>Trocar cidade</Text>

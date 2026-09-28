@@ -235,8 +235,9 @@ Nunca coloque segredo, token ou credencial nelas. As URLs de homologação abaix
 
 ## Rodar no emulador ou no aparelho
 
-O app usa módulos nativos (câmera, mapas, SecureStore, MMKV) e `expo-dev-client`, então **não roda
-no Expo Go**: ele precisa de um development build instalado.
+O app usa módulos nativos (câmera, mapas, SecureStore, MMKV, `expo-keep-awake`) e
+`expo-dev-client`, então **não roda no Expo Go**: ele precisa de um development build instalado. Um
+módulo nativo novo só funciona num development build compilado depois dele.
 
 ```bash
 # 1. Gera android/ a partir de app.json e dos config plugins
@@ -287,7 +288,8 @@ Não use como limpeza.
 Os testes ficam em `__tests__/` ao lado de cada domínio (`*.test.ts`/`*.test.tsx`) e usam o preset
 `jest-expo` com React Native Testing Library. `jest.setup.js` aplica o mock oficial de
 `react-native-safe-area-context`; `jest.resolver.js` deixa o Reanimated rodar com sua implementação
-JavaScript. Serviços nativos (SecureStore, MMKV, câmera, mapas) são simulados nos próprios testes.
+JavaScript. Serviços nativos (SecureStore, MMKV, câmera, mapas, tela acesa) são simulados nos
+próprios testes.
 
 Antes de um commit, o mesmo que a CI roda:
 
@@ -359,6 +361,9 @@ O app pede só o que usa, e a CI impede que uma dependência acrescente outra co
 | iOS        | Rede local (`NSLocalNetworkUsageDescription`)           | Só no development build, para achar o Metro           |
 
 - Fotos no Android vêm do seletor do sistema, sem permissão de armazenamento ou mídia.
+- A tela fica acesa enquanto o QR de um benefício aparece (`expo-keep-awake`, com tag própria, em
+  `src/wallet/keep-awake.ts`): no Android é a flag `FLAG_KEEP_SCREEN_ON` da janela, no iOS o
+  `isIdleTimerDisabled`. Nenhuma das duas é permissão, e o brilho não muda.
 - `android.blockedPermissions` em [`app.json`](app.json) remove o que as bibliotecas declaram por
   padrão: localização, microfone, armazenamento e mídia, sobreposição de tela, biometria,
   **vibração** (o app não usa haptics) e o ID de publicidade. O Face ID do SecureStore e o

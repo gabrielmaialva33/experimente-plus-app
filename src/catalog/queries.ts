@@ -17,7 +17,11 @@ export const catalogKeys = {
   cities: ['catalog', 'cities'] as const,
   categories: (city: string) => ['catalog', 'categories', city] as const,
   filters: (city: string) => ['catalog', 'filters', city] as const,
+  /** Every search, whatever its city and filters. */
+  searches: ['catalog', 'search'] as const,
   search: (city: string, params: SearchParams) => ['catalog', 'search', city, params] as const,
+  /** Every place page. */
+  establishments: ['catalog', 'establishment'] as const,
   establishment: (city: string, slug: string) => ['catalog', 'establishment', city, slug] as const,
   agenda: (city: string) => ['catalog', 'agenda', city] as const,
 }

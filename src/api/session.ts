@@ -121,6 +121,44 @@ export async function writeCredentials(credentials: Credentials): Promise<void> 
   }
 }
 
+/**
+ * Stores a pair a sign-in or a registration issued in place of the one the
+ * device held, and revokes that one on the server.
+ *
+ * Signing in over a stored pair, as from the notice of a session that could
+ * not load, used to overwrite it and leave its refresh token valid for its
+ * whole lifetime. The revocation is best effort and never awaited: the new
+ * session does not wait on it or fail because of it. The pair it replaced is
+ * dropped even when the keystore refuses the new one, so it is revoked then too.
+ */
+export async function replaceCredentials(next: Credentials): Promise<void> {
+  const previous = await readCredentials()
+  try {
+    await writeCredentials(next)
+  } finally {
+    if (previous && previous.refreshToken !== next.refreshToken) {
+      void revokeReplacedToken(previous.refreshToken)
+    }
+  }
+}
+
+/**
+ * Logout needs only the refresh token and revokes the chain rotated from it, so
+ * a rotation of the old pair still in flight is revoked with it. Nothing else is
+ * sent: no access token, and never the pair that replaced it.
+ */
+async function revokeReplacedToken(refreshToken: string): Promise<void> {
+  try {
+    await send('/api/v1/sessions/logout', {
+      method: 'POST',
+      sensitive: true,
+      body: { refresh_token: refreshToken },
+    })
+  } catch {
+    // Best effort: a token that was not revoked still expires on its own.
+  }
+}
+
 export async function clearCredentials(): Promise<void> {
   cache = null
   await Promise.all([

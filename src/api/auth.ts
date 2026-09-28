@@ -3,7 +3,7 @@ import type { components, operations } from './schema'
 import {
   endSession,
   credentialsFromPayload,
-  writeCredentials,
+  replaceCredentials,
   type AuthTokensPayload,
 } from './session'
 
@@ -18,14 +18,17 @@ interface SignInResponse {
 export type SignUpRequest = operations['signUp']['requestBody']['content']['application/json']
 export type SignUpResponse = components['schemas']['SignUpResponse']
 
-/** Registration issues the same credential pair as sign-in; never log its payload. */
+/**
+ * Registration issues the same credential pair as sign-in; never log its
+ * payload. Like sign-in, it replaces and revokes a pair the device still held.
+ */
 export async function signUp(body: SignUpRequest): Promise<SignUpResponse> {
   const result = await request<SignUpResponse>('/api/v1/sessions/sign-up', {
     method: 'POST',
     body,
     sensitive: true,
   })
-  await writeCredentials(credentialsFromPayload(result.auth))
+  await replaceCredentials(credentialsFromPayload(result.auth))
   return result
 }
 
@@ -45,7 +48,9 @@ export function forgotPassword(body: ForgotPasswordRequest): Promise<ForgotPassw
 
 /**
  * Signs in and persists the pair in the platform keystore. The response is the
- * only place the refresh token is ever handled in memory.
+ * only place the refresh token is ever handled in memory. A pair the device
+ * still held (a session that could not load) is replaced and revoked, best
+ * effort: only once this sign-in succeeded, so a refused password keeps it.
  */
 export async function signIn(uid: string, password: string): Promise<SignInResponse> {
   const result = await request<SignInResponse>('/api/v1/sessions/sign-in', {
@@ -54,7 +59,7 @@ export async function signIn(uid: string, password: string): Promise<SignInRespo
     sensitive: true,
   })
 
-  await writeCredentials(credentialsFromPayload(result.auth))
+  await replaceCredentials(credentialsFromPayload(result.auth))
   return result
 }
 

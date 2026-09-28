@@ -174,6 +174,34 @@ describe('refreshSession', () => {
     await expect(readCredentials()).resolves.toMatchObject({ accessToken: 'access-renewed' })
   })
 
+  it('ends the session when the renewed pair cannot be stored', async () => {
+    // The server has already revoked the parent pair; keeping the interface signed
+    // in would leave every private screen failing with no way back but signing out.
+    seedSession()
+    const { refreshSession, readCredentials, SessionExpiredError } = loadSession()
+    const { subscribeSessionEvents } =
+      require('../session-events') as typeof import('../session-events')
+    const SecureStore = jest.requireMock('expo-secure-store') as { setItemAsync: jest.Mock }
+    SecureStore.setItemAsync.mockRejectedValueOnce(new Error('keychain refused'))
+    const events: string[] = []
+    const unsubscribe = subscribeSessionEvents((event) => events.push(event))
+
+    globalThis.fetch = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ auth: payload('renewed') }),
+    })) as unknown as typeof fetch
+
+    try {
+      await expect(refreshSession()).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(events).toEqual(['expired'])
+      await expect(readCredentials()).resolves.toBeNull()
+      expect(mockStore.size).toBe(0)
+    } finally {
+      unsubscribe()
+    }
+  })
+
   it('ends the session when the server rejects the refresh token', async () => {
     seedSession()
     const { refreshSession, readCredentials, SessionExpiredError } = loadSession()

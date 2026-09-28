@@ -9,6 +9,7 @@ import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
 import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
+import { defaultCity } from '@/catalog/default-city'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { useAnnouncement } from '@/components/announce'
@@ -82,24 +83,58 @@ export default function ExploreScreen() {
   }, [term])
 
   const cities = useCities()
+  const published = cities.data
 
-  // The first published city becomes the default until someone chooses one.
+  // The first published city becomes the default until someone chooses one, and
+  // takes the place of a remembered city that is no longer published: asked for,
+  // that one answers 404, and the feed would offer a retry that never succeeds.
   useEffect(() => {
-    if (!selectedCity && cities.data?.length) {
-      selectCity(cities.data[0].slug)
-    }
-  }, [selectedCity, cities.data])
+    const fallback = defaultCity(selectedCity, published)
+    if (fallback) selectCity(fallback)
+  }, [selectedCity, published])
 
   const categories = useCategories(selectedCity)
   const filters = useFilters(selectedCity)
 
+  // Categories and facets are the city's own. One chosen in another city that
+  // this one does not offer would narrow the results with no chip to undo it,
+  // so it goes once the city's own list is known; the ones both offer stay. The
+  // search already leaves it out on that render, before the state catches up,
+  // so a switch of city costs no request against the anonymous limit.
+  const offeredCategories = categories.data?.categories
+  const offeredAttributes = filters.data?.attributes
+  const liveCategory =
+    category && offeredCategories && !offeredCategories.some(({ slug }) => slug === category)
+      ? undefined
+      : category
+  const liveAttributes = useMemo(() => {
+    const kept = offeredAttributes
+      ? attributes.filter((key) => offeredAttributes.some((item) => item.key === key))
+      : attributes
+    // The same array when nothing goes, so the search's criteria keep their identity.
+    return kept.length === attributes.length ? attributes : kept
+  }, [attributes, offeredAttributes])
+  // Adjusted while rendering, as React advises for state derived from new data:
+  // switching back to the first city does not bring the dropped filter back.
+  if (liveCategory !== category) setCategory(liveCategory)
+  if (liveAttributes !== attributes) setAttributes(liveAttributes)
+
   const params = useMemo<SearchParams>(
-    () => ({ q: debouncedTerm || undefined, category, openNow, attributes }),
-    [debouncedTerm, category, openNow, attributes]
+    () => ({
+      q: debouncedTerm || undefined,
+      category: liveCategory,
+      openNow,
+      attributes: liveAttributes,
+    }),
+    [debouncedTerm, liveCategory, openNow, liveAttributes]
   )
-  const search = useSearch(selectedCity, params)
+  // Without a city to search in (the list of cities failed, or none is published),
+  // the feed waits on the cities instead of a search that has nothing to ask.
+  const noCities = published?.length === 0
+  const cityless = noCities || (!selectedCity && cities.isError)
+  const search = useSearch(noCities ? null : selectedCity, params)
   // A pull asks again for the results alone: one request against the anonymous limit.
-  const refreshControl = usePullToRefresh(search.refetch)
+  const refreshControl = usePullToRefresh(cityless ? cities.refetch : search.refetch)
 
   // New criteria bring the results, right under the controls, back into view.
   // While the person types, the search field stays above the keyboard: on a small
@@ -123,11 +158,11 @@ export default function ExploreScreen() {
   }, [params, revealField])
 
   const activeFilters = [
-    category
-      ? (categories.data?.categories.find((item) => item.slug === category)?.name ?? category)
+    liveCategory
+      ? (offeredCategories?.find((item) => item.slug === liveCategory)?.name ?? liveCategory)
       : null,
     openNow ? 'Aberto agora' : null,
-    ...attributes.map(
+    ...liveAttributes.map(
       (key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key
     ),
   ].filter(Boolean)
@@ -138,6 +173,12 @@ export default function ExploreScreen() {
     setCategory(undefined)
     setOpenNow(false)
     setAttributes([])
+  }
+
+  // The cities open in the band at the top of the feed, brought back into view.
+  const chooseCity = () => {
+    setChoosingCity(true)
+    list.current?.scrollToOffset({ offset: 0, animated: true })
   }
 
   const toggleAttribute = (key: string) =>
@@ -331,7 +372,28 @@ export default function ExploreScreen() {
         ? 'Ver todos os lugares'
         : 'Limpar filtros'
 
-  const feedback = search.isPending ? (
+  const feedback = cityless ? (
+    <View style={[styles.failure, frame.padding]}>
+      {noCities ? (
+        <EmptyState
+          testID="cities-empty"
+          icon="location-outline"
+          title="Nenhuma cidade publicada ainda"
+          text="Os lugares aparecem aqui assim que a primeira cidade for publicada."
+          action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
+        />
+      ) : (
+        <EmptyState
+          testID="cities-failed"
+          icon="cloud-offline-outline"
+          title="Não foi possível carregar as cidades"
+          text="Confira a conexão e tente de novo."
+          action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
+          help={TROUBLESHOOTING_HELP}
+        />
+      )}
+    </View>
+  ) : search.isPending ? (
     <ContentSkeleton label="Carregando lugares" variant="catalog" />
   ) : search.isError ? (
     // The shared failure card of the other lists; the retry keeps the filters.
@@ -362,6 +424,11 @@ export default function ExploreScreen() {
       {hasFilters ? (
         <Pressable accessibilityRole="button" onPress={clearFilters} style={styles.feedbackAction}>
           <Text style={[styles.action, { color: colors.primary }]}>{clearLabel}</Text>
+        </Pressable>
+      ) : (published?.length ?? 0) > 1 ? (
+        // A city with nothing published yet is not a dead end: the others are one tap away.
+        <Pressable accessibilityRole="button" onPress={chooseCity} style={styles.feedbackAction}>
+          <Text style={[styles.action, { color: colors.primary }]}>Trocar cidade</Text>
         </Pressable>
       ) : null}
     </View>

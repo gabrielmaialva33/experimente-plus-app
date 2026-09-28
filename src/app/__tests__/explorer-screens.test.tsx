@@ -332,6 +332,48 @@ describe('interests', () => {
     cityStore.useSelectedCity.mockReturnValue('londrina')
   })
 
+  // Saving replaces the whole set: a form without the saved one would erase it.
+  it('offers another try instead of an empty form when the interests fail to load', async () => {
+    const refetch = jest.fn()
+    queries.useInterests.mockReturnValue({ isPending: false, isError: true, refetch })
+    catalog.useCategories.mockReturnValue({
+      isPending: false,
+      data: { categories: [{ slug: 'cafes', name: 'Cafés' }] },
+    })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.queryByTestId('interest-cafes')).toBeNull()
+    expect(view.queryByTestId('save-interests')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers another try when the city’s categories fail to load', async () => {
+    const refetch = jest.fn()
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, isError: true, refetch })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.queryByTestId('save-interests')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('leads to another city when this one has no categories yet', async () => {
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, data: { categories: [] } })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(
+      view.getByRole('header', { name: 'Ainda não há categorias nesta cidade' })
+    ).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Escolher outra cidade' }))
+    expect(mockPush).toHaveBeenCalledWith('/conta/cidade')
+  })
+
   it('does not offer to save when nothing changed', async () => {
     queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
     catalog.useCategories.mockReturnValue({

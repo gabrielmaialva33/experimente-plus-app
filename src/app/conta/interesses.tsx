@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/empty-state'
 import { useContentFrame } from '@/components/content-frame'
 import { interestOptions, selectionChanged } from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -38,6 +39,13 @@ export default function InterestsScreen() {
     return <ContentSkeleton label="Carregando interesses" variant="catalog" />
   }
 
+  // Saving replaces the whole set. A form drawn without the saved one would show
+  // every box empty, and one tap on "Salvar" would erase what the person chose.
+  const failed = interests.isError && !interests.data
+  if (failed || (city && categories.isError && !categories.data)) {
+    return <Failure onRetry={() => void (failed ? interests.refetch() : categories.refetch())} />
+  }
+
   return (
     <InterestsForm
       // Remounts once the server's set arrives, so local state starts from it
@@ -46,9 +54,25 @@ export default function InterestsScreen() {
       chosen={interests.data?.data ?? []}
       cityCategories={categories.data?.categories ?? []}
       hasCity={Boolean(city)}
-      failed={interests.isError}
       save={save}
     />
+  )
+}
+
+function Failure({ onRetry }: { onRetry: () => void }) {
+  const colors = useColors()
+  const frame = useContentFrame()
+  return (
+    <View style={[styles.page, frame.padding, { backgroundColor: colors.background, flex: 1 }]}>
+      <EmptyState
+        testID="interests-failed"
+        icon="cloud-offline-outline"
+        title="Não foi possível carregar seus interesses agora"
+        text="Confira a conexão e tente de novo."
+        action={{ label: 'Tentar de novo', onPress: onRetry }}
+        help={TROUBLESHOOTING_HELP}
+      />
+    </View>
   )
 }
 
@@ -56,13 +80,11 @@ function InterestsForm({
   chosen,
   cityCategories,
   hasCity,
-  failed,
   save,
 }: {
   chosen: Interest[]
   cityCategories: { slug: string; name: string }[]
   hasCity: boolean
-  failed: boolean
   save: ReturnType<typeof useReplaceInterests>
 }) {
   const colors = useColors()
@@ -97,13 +119,7 @@ function InterestsForm({
         Marque o que você gosta de explorar. Usamos seus interesses no Para você, em Explorar.
       </Text>
 
-      {failed ? (
-        <Text accessibilityRole="alert" style={[styles.lead, { color: colors.destructiveAccent }]}>
-          Não foi possível carregar seus interesses agora.
-        </Text>
-      ) : null}
-
-      {!hasCity && options.length === 0 ? <ChooseCity /> : null}
+      {options.length === 0 ? <ChooseCity hasCity={hasCity} /> : null}
 
       {options.length > 0 ? (
         <View
@@ -162,10 +178,20 @@ function InterestsForm({
   )
 }
 
-/** Categories are a city's; without one there is nothing to choose from yet. */
-function ChooseCity() {
+/**
+ * Categories are a city's: without one there is nothing to choose from yet, and
+ * a city with none published yet leads to another.
+ */
+function ChooseCity({ hasCity }: { hasCity: boolean }) {
   const router = useRouter()
-  return (
+  return hasCity ? (
+    <EmptyState
+      icon="location-outline"
+      title="Ainda não há categorias nesta cidade"
+      text="Elas aparecem conforme os lugares são publicados. Você pode escolher outra cidade."
+      action={{ label: 'Escolher outra cidade', onPress: () => router.push('/conta/cidade') }}
+    />
+  ) : (
     <EmptyState
       icon="location-outline"
       title="Escolha uma cidade"

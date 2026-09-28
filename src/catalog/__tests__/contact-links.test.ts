@@ -1,4 +1,4 @@
-import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '../contact-links'
+import { brazilianWhatsApp, dialable, instagramProfile, mailto, webAddress } from '../contact-links'
 
 describe('brazilianWhatsApp', () => {
   it('prefixes 55 only for a national-length number', () => {
@@ -56,5 +56,25 @@ describe('instagramProfile', () => {
     expect(instagramProfile('https://example.com/casa')).toBeNull()
     expect(instagramProfile('casa de petiscos')).toBeNull()
     expect(instagramProfile('')).toBeNull()
+  })
+})
+
+describe('webAddress', () => {
+  it('opens an http(s) address as the partner typed it', () => {
+    expect(webAddress(' https://cafe.com.br/cardapio?dia=1 ')).toBe(
+      'https://cafe.com.br/cardapio?dia=1'
+    )
+    expect(webAddress('http://cafe.com.br')).toBe('http://cafe.com.br')
+    expect(webAddress('HTTPS://CAFE.COM.BR')).toBe('HTTPS://CAFE.COM.BR')
+  })
+
+  it('opens nothing the server would refuse to redirect to', () => {
+    expect(webAddress(null)).toBeNull()
+    expect(webAddress('')).toBeNull()
+    expect(webAddress('www.cafe.com.br')).toBeNull()
+    expect(webAddress('https://')).toBeNull()
+    expect(webAddress('javascript:alert(1)')).toBeNull()
+    expect(webAddress('intent://scan#Intent;end')).toBeNull()
+    expect(webAddress('tel:4333334444')).toBeNull()
   })
 })

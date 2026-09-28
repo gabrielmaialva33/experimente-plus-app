@@ -10,6 +10,25 @@ export const HIGHLIGHT_PARAM = 'destaque'
 export const highlightKey = (kind: PartnerContentItemKind, id: number) => `${kind}-${id}`
 
 /**
+ * A city or establishment slug read from a route, as the public catalogue reads
+ * it (`CatalogService.requireSlug`): trimmed, lowercased, and letters and digits
+ * joined by single hyphens. Anything else — a repeated parameter, a path, a
+ * query string smuggled into a link — is no slug, and is never put in a request.
+ */
+export function publicSlug(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const slug = value.trim().toLowerCase()
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? slug : null
+}
+
+/** The item a place link names, when it has the shape `highlightKey` gives it. */
+export function highlightParam(value: unknown): string | null {
+  return typeof value === 'string' && /^(?:experience|event|showcase_item)-\d+$/.test(value)
+    ? value
+    : null
+}
+
+/**
  * A place page, optionally brought to one of its items.
  *
  * Experiences and events have no page of their own: they live on their place's

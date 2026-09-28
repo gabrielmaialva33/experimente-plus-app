@@ -7,9 +7,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { track } from '@/analytics/events'
 import { ApiError } from '@/api/client'
-import { brazilianWhatsApp, dialable, instagramProfile, mailto } from '@/catalog/contact-links'
+import {
+  brazilianWhatsApp,
+  dialable,
+  instagramProfile,
+  mailto,
+  webAddress,
+} from '@/catalog/contact-links'
 import { useEstablishment } from '@/catalog/queries'
 import { isHistorical, type EstablishmentDetail } from '@/catalog/types'
+import { announce } from '@/components/announce'
 import { Badge } from '@/components/badge'
 import { useCompactHeader } from '@/components/compact-header'
 import { MEASURE, useContentFrame } from '@/components/content-frame'
@@ -19,7 +26,7 @@ import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
 import { PlaceBenefits } from '@/place/benefit-ticket'
-import { HIGHLIGHT_PARAM } from '@/place/links'
+import { HIGHLIGHT_PARAM, highlightParam, publicSlug } from '@/place/links'
 import { PlaceActions } from '@/place/place-actions'
 import { PlaceChrome, PlaceHero, offsetBelowBar, placeBarRange } from '@/place/place-hero'
 import { PracticalInfo, type ContactAction } from '@/place/practical-info'
@@ -32,20 +39,30 @@ export default function EstablishmentScreen() {
   const colors = useColors()
   const router = useRouter()
   const params = useLocalSearchParams<{ city: string; slug: string; [HIGHLIGHT_PARAM]?: string }>()
-  const { city, slug } = params
-  const query = useEstablishment(city ?? null, slug ?? null)
+  // A link is outside input: only the slugs the public catalogue accepts reach a request.
+  const city = publicSlug(params.city)
+  const slug = publicSlug(params.slug)
+  const query = useEstablishment(city, slug)
   const page = query.data
 
-  // A view is a qualified discovery action and is measured on arrival.
+  // A view is a qualified discovery action and is measured on arrival, once:
+  // a refetch that brings a changed page is the same visit.
+  const viewed = useRef<string | null>(null)
   useEffect(() => {
-    if (page && city && slug) {
+    const place = `${city}/${slug}`
+    if (page && city && slug && viewed.current !== place) {
+      viewed.current = place
       track('establishment_view', { city_slug: city, establishment_slug: slug })
     }
   }, [page, city, slug])
 
+  // A malformed link names no place: it is answered as one that left the
+  // catalogue, without asking the server (a disabled query would wait forever).
+  const malformed = !city || !slug
+
   // The header names the place or stays empty — never the generic "Lugar"
   // (audit A40). A place that loads draws its own chrome over the photo.
-  if (query.isPending) {
+  if (!malformed && query.isPending) {
     return (
       <>
         <Stack.Screen options={{ title: '' }} />
@@ -57,8 +74,8 @@ export default function EstablishmentScreen() {
   // A place that left the catalogue and a request that failed are different
   // answers: the first leads back to Explorar, the second offers another try.
   // Before, both said "não está disponível", with nothing to do but go back.
-  if (query.isError || !page) {
-    const gone = query.error instanceof ApiError && query.error.status === 404
+  if (malformed || query.isError || !page) {
+    const gone = malformed || (query.error instanceof ApiError && query.error.status === 404)
     return (
       <View style={[styles.state, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ title: '' }} />
@@ -101,7 +118,7 @@ export default function EstablishmentScreen() {
     <Detail
       detail={page}
       citySlug={city}
-      highlight={params[HIGHLIGHT_PARAM] ?? null}
+      highlight={highlightParam(params[HIGHLIGHT_PARAM])}
       colors={colors}
     />
   )
@@ -148,72 +165,69 @@ function Detail({
    * on a device it would bounce the person through a browser before reaching
    * WhatsApp or the map.
    */
+  // A device may have nothing to open a link with — no dialler on a tablet, no
+  // mail app — and the promise rejects: the person hears why nothing happened.
+  const launch = (url: string, label: string) =>
+    Linking.openURL(url).catch(() => announce(`Não foi possível abrir ${label} neste aparelho.`))
+
   const open = (
     event: Parameters<typeof track>[0],
-    url: string | null | undefined
+    url: string | null | undefined,
+    label: string
   ): (() => void) | undefined => {
     if (!url) return undefined
 
     return () => {
       track(event, { city_slug: citySlug, establishment_slug: detail.slug })
-      void Linking.openURL(url)
+      void launch(url, label)
     }
   }
 
   // The analytics contract has no e-mail or Instagram event; these open untracked
   // rather than inventing one the server would refuse.
-  const openUntracked = (url: string | null): (() => void) | undefined =>
-    url ? () => void Linking.openURL(url) : undefined
+  const openUntracked = (url: string | null, label: string): (() => void) | undefined =>
+    url ? () => void launch(url, label) : undefined
 
   const routeUrl =
     address.latitude != null && address.longitude != null
       ? `https://www.google.com/maps/dir/?api=1&destination=${address.latitude},${address.longitude}`
       : null
 
-  const actions = [
+  const whatsapp = brazilianWhatsApp(contacts.whatsapp)
+  const phone = dialable(contacts.phone)
+  const candidates: (Omit<ContactAction, 'onPress'> & { onPress?: () => void })[] = [
     {
       label: 'Como chegar',
-      icon: 'navigate-outline' as const,
-      onPress: open('route_click', routeUrl),
+      icon: 'navigate-outline',
+      onPress: open('route_click', routeUrl, 'o mapa'),
     },
     {
       label: 'WhatsApp',
-      icon: 'logo-whatsapp' as const,
-      onPress: open(
-        'whatsapp_click',
-        (() => {
-          const number = brazilianWhatsApp(contacts.whatsapp)
-          return number && `https://wa.me/${number}`
-        })()
-      ),
+      icon: 'logo-whatsapp',
+      onPress: open('whatsapp_click', whatsapp && `https://wa.me/${whatsapp}`, 'o WhatsApp'),
     },
     {
       label: 'Ligar',
-      icon: 'call-outline' as const,
-      onPress: open(
-        'phone_click',
-        (() => {
-          const number = dialable(contacts.phone)
-          return number && `tel:${number}`
-        })()
-      ),
+      icon: 'call-outline',
+      onPress: open('phone_click', phone && `tel:${phone}`, 'a ligação'),
     },
     {
       label: 'Site',
-      icon: 'globe-outline' as const,
-      onPress: open('website_click', contacts.website),
+      icon: 'globe-outline',
+      onPress: open('website_click', webAddress(contacts.website), 'o site'),
     },
     {
       label: 'E-mail',
-      icon: 'mail-outline' as const,
-      onPress: openUntracked(mailto(contacts.email)),
+      icon: 'mail-outline',
+      onPress: openUntracked(mailto(contacts.email), 'o e-mail'),
     },
     {
       label: 'Instagram',
-      icon: 'logo-instagram' as const,
-      onPress: openUntracked(instagramProfile(contacts.instagram)),
+      icon: 'logo-instagram',
+      onPress: openUntracked(instagramProfile(contacts.instagram), 'o Instagram'),
     },
-  ].filter((action) => action.onPress !== undefined) as ContactAction[]
+  ]
+  const actions = candidates.filter((action): action is ContactAction => Boolean(action.onPress))
   // Visiting is the primary discovery conversion. Without coordinates, promote
   // the first available contact rather than offering an unusable route; the
   // rest are rows of the practical block.
@@ -300,7 +314,7 @@ function Detail({
                 {detail.attributes
                   .filter((attribute) => attribute.value === true)
                   .map((attribute) => (
-                    <Badge key={attribute.name} label={attribute.name} />
+                    <Badge key={attribute.key} label={attribute.name} />
                   ))}
               </View>
             </View>

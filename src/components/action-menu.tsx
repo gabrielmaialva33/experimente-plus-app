@@ -49,7 +49,9 @@ export function ActionMenu({
 
   const choose = (item: ActionMenuItem) => {
     const result = item.onPress()
-    if (result instanceof Promise) void result.finally(close)
+    // A share sheet the system could not show rejects: the options close all the
+    // same, and the rejection stops here instead of surfacing as an unhandled one.
+    if (result instanceof Promise) void result.then(close, close)
     else close()
   }
 

@@ -25,6 +25,7 @@ import {
   FINANCIAL_RESTRICTION_MESSAGE,
   presentationEligibility,
 } from '@/wallet/financial-restriction'
+import { AccessGate } from '@/wallet/access-gate'
 
 /**
  * Seconds left until `deadline`. The clock starts when the code is drawn (the
@@ -61,7 +62,15 @@ const WALLET_HELP = { topic: 'wallet', label: 'Como apresentar o benefício' } a
  * that dies in five minutes and is revalidated on the server at preview and at
  * confirmation does not depend on the secrecy of the image.
  */
-export default function PresentScreen() {
+export default function PresentRoute() {
+  return (
+    <AccessGate area="account" loadingLabel="Gerando apresentação">
+      <PresentScreen />
+    </AccessGate>
+  )
+}
+
+function PresentScreen() {
   const colors = useColors()
   const frame = useContentFrame()
   const { accessId, offerId } = useLocalSearchParams<{ accessId: string; offerId: string }>()

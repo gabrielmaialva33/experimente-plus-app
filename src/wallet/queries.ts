@@ -13,6 +13,14 @@ export type ShownPresentation = Presentation & { deadline: number }
 
 export const walletKeys = {
   wallet: ['wallet'] as const,
+  redemptions: ['wallet', 'redemptions'] as const,
+  receipt: (code: string) => ['wallet', 'receipt', code] as const,
+}
+
+/** The partner's side: the history of uses and each receipt in it. */
+export const partnerKeys = {
+  redemptions: ['partner', 'redemptions'] as const,
+  receipt: (code: string) => ['partner', 'receipt', code] as const,
 }
 
 export const useWallet = (refetchInterval?: number) => {

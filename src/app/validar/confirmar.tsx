@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef } from 'react'
-import { focusManager, onlineManager } from '@tanstack/react-query'
+import { focusManager, onlineManager, useQueryClient } from '@tanstack/react-query'
 import { usePrivateOperation } from '@/wallet/use-private-operation'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -11,9 +11,13 @@ import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
 import { useContentFrame } from '@/components/content-frame'
 import { ApiError } from '@/api/client'
+import { OFFLINE_MESSAGE, useOnline } from '@/api/online'
 import { confirmRedemption, previewRedemption } from '@/api/redemptions'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { AccessBlocked, useAccess } from '@/wallet/access-gate'
+import { isPresentationToken } from '@/wallet/presentation-token'
+import { partnerKeys } from '@/wallet/queries'
 import type { Receipt } from '@/wallet/types'
 
 const NOT_COMPLETED =
@@ -23,6 +27,28 @@ const NEW_PRESENTATION_MESSAGE = 'Este código não vale mais. Peça ao cliente 
 // that a new code can bypass a benefit restriction or expose the raw error.
 const UNAVAILABLE_PRESENTATION_MESSAGE =
   'Não foi possível validar esta apresentação. Peça ao cliente para consultar a carteira e gerar um novo código, se o benefício estiver disponível.'
+
+/**
+ * What a refused presentation tells the partner, by the status the server kept
+ * (`classifyBenefitRedemptionFailure`): the same at the preview and at the
+ * confirmation. Null when the status is not a refusal of the presentation — a
+ * network failure, a 5xx, a 429 — which a new attempt may resolve.
+ */
+function refusal(status: number): string | null {
+  switch (status) {
+    case 404:
+    case 422:
+      return NEW_PRESENTATION_MESSAGE
+    case 403:
+      return 'Sua conta não pode validar este benefício.'
+    case 400:
+      return UNAVAILABLE_PRESENTATION_MESSAGE
+    case 409:
+      return 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
+    default:
+      return null
+  }
+}
 
 /**
  * Preview and confirmation.
@@ -36,8 +62,17 @@ export default function ConfirmRedemptionScreen() {
   const colors = useColors()
   const frame = useContentFrame()
   const router = useRouter()
+  const client = useQueryClient()
+  const online = useOnline()
+  // Validar depends on `partner.redemptions.validate`; a link can open this route
+  // on its own, so nothing is asked of the server before the session grants it.
+  const access = useAccess('validate')
+  const allowed = access === 'allowed'
   const { token: incomingToken } = useLocalSearchParams<{ token?: string }>()
-  const token = useRef<string | undefined>(incomingToken)
+  // Only a token the scanner could have handed over: anything else is refused as a stale code.
+  const token = useRef<string | undefined>(
+    isPresentationToken(incomingToken) ? incomingToken : undefined
+  )
   const started = useRef(false)
   const confirmationStarted = useRef(false)
   const clearToken = () => {
@@ -54,7 +89,10 @@ export default function ConfirmRedemptionScreen() {
   const confirm = usePrivateOperation(
     async (_: void, signal) => {
       if (!token.current) throw new ApiError(422, null)
-      return confirmRedemption(token.current, signal)
+      const receipt = await confirmRedemption(token.current, signal)
+      // The history may be cached from before this use; the receipt itself is never cached.
+      if (!signal.aborted) void client.invalidateQueries({ queryKey: partnerKeys.redemptions })
+      return receipt
     },
     { onDispose: clearToken }
   )
@@ -69,14 +107,14 @@ export default function ConfirmRedemptionScreen() {
   useAnnouncement(confirm.isError && !confirm.data && NOT_COMPLETED)
 
   useEffect(() => {
-    if (previewReady && !started.current) {
+    if (previewReady && allowed && !started.current) {
       started.current = true
       mutatePreview()
     }
-  }, [previewReady, mutatePreview])
+  }, [previewReady, allowed, mutatePreview])
 
   useEffect(() => {
-    if (!previewReady) return
+    if (!previewReady || !allowed) return
     const repeat = (available: boolean) => {
       // After confirmation starts, preserve the original nonce and its retry
       // even if the preview would now be expired or already redeemed.
@@ -88,7 +126,13 @@ export default function ConfirmRedemptionScreen() {
       removeFocus()
       removeOnline()
     }
-  }, [previewReady, mutatePreview])
+  }, [previewReady, allowed, mutatePreview])
+
+  if (access === 'loading') {
+    return <ContentSkeleton label="Carregando apresentação" variant="detail" />
+  }
+
+  if (!allowed) return <AccessBlocked access={access} area="validate" />
 
   if (confirm.data) {
     return <ReceiptView receipt={confirm.data} onDone={() => router.back()} />
@@ -99,19 +143,15 @@ export default function ConfirmRedemptionScreen() {
   }
 
   if (preview.isError) {
-    const status = preview.error instanceof ApiError ? preview.error.status : 0
-
+    const refused = refusal(preview.error instanceof ApiError ? preview.error.status : 0)
+    // A preview is a read: when it did not reach an answer, asking again is safe.
+    // Offline it also asks again by itself once the connection returns.
     return (
-      <Stopped onBack={() => router.back()}>
-        {status === 404 || status === 422
-          ? NEW_PRESENTATION_MESSAGE
-          : status === 403
-            ? 'Sua conta não pode validar este benefício.'
-            : status === 400
-              ? UNAVAILABLE_PRESENTATION_MESSAGE
-              : status === 409
-                ? 'Este benefício está indisponível para novos usos. Peça ao cliente para consultar a carteira.'
-                : 'Não foi possível ler este código agora.'}
+      <Stopped onBack={() => router.back()} retry={refused ? undefined : () => mutatePreview()}>
+        {refused ??
+          (online
+            ? 'Não foi possível ler este código agora.'
+            : `${OFFLINE_MESSAGE} A prévia volta sozinha quando a conexão voltar.`)}
       </Stopped>
     )
   }
@@ -119,19 +159,10 @@ export default function ConfirmRedemptionScreen() {
   if (!preview.data) return null
 
   const { holder, benefit } = preview.data
-  const confirmationStatus = confirm.error instanceof ApiError ? confirm.error.status : 0
-  const refused = [400, 403, 409, 422].includes(confirmationStatus)
+  const refused = refusal(confirm.error instanceof ApiError ? confirm.error.status : 0)
 
   if (refused) {
-    return (
-      <Stopped onBack={() => router.back()}>
-        {confirmationStatus === 400
-          ? UNAVAILABLE_PRESENTATION_MESSAGE
-          : confirmationStatus === 422
-            ? NEW_PRESENTATION_MESSAGE
-            : 'Este benefício não está disponível para novos usos. Peça ao cliente para consultar a carteira.'}
-      </Stopped>
-    )
+    return <Stopped onBack={() => router.back()}>{refused}</Stopped>
   }
 
   return (
@@ -202,8 +233,19 @@ export default function ConfirmRedemptionScreen() {
   )
 }
 
-/** A presentation that cannot be validated: the reason in one sentence and the way back to the reader. */
-function Stopped({ children, onBack }: { children: string; onBack: () => void }) {
+/**
+ * A presentation that cannot be validated: the reason in one sentence and the
+ * way back to the reader, after a new attempt when one may succeed.
+ */
+function Stopped({
+  children,
+  onBack,
+  retry,
+}: {
+  children: string
+  onBack: () => void
+  retry?: () => void
+}) {
   const colors = useColors()
   useAnnouncement(children)
   return (
@@ -212,6 +254,7 @@ function Stopped({ children, onBack }: { children: string; onBack: () => void })
         <Ionicons name="alert-circle-outline" size={28} color={colors.warningAccent} />
       </View>
       <Text style={[styles.message, { color: colors.foreground }]}>{children}</Text>
+      {retry ? <Button label="Tentar de novo" icon="refresh" onPress={retry} /> : null}
       <Button label="Voltar ao leitor" variant="outline" icon="scan-outline" onPress={onBack} />
     </View>
   )

@@ -1,15 +1,16 @@
 import { useLocalSearchParams } from 'expo-router'
 
 import { getMyReceipt } from '@/api/wallet'
+import { AccessGate } from '@/wallet/access-gate'
+import { walletKeys } from '@/wallet/queries'
 import { ReceiptScreen } from '@/wallet/receipt-screen'
 
 export default function WalletReceiptScreen() {
   const { code } = useLocalSearchParams<{ code: string }>()
 
   return (
-    <ReceiptScreen
-      queryKey={['wallet', 'receipt', code]}
-      load={() => getMyReceipt(code as string)}
-    />
+    <AccessGate area="account" loadingLabel="Carregando comprovante">
+      <ReceiptScreen queryKey={walletKeys.receipt(code)} load={() => getMyReceipt(code)} />
+    </AccessGate>
   )
 }

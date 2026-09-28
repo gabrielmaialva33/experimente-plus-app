@@ -28,3 +28,11 @@ export function extractPresentationToken(scanned: string): string | null {
     return null
   }
 }
+
+/**
+ * Whether `value` is a bare token, as the scanner hands it to the confirmation.
+ * A link that opens the confirmation on its own is held to the same shape, so
+ * whatever it carries never reaches the API unless it could be a token.
+ */
+export const isPresentationToken = (value: unknown): value is string =>
+  typeof value === 'string' && TOKEN_SHAPE.test(value)

@@ -40,11 +40,12 @@ jest.mock('expo-secure-store', () => ({
   },
 }))
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => true }) }))
+const partner = { partner: { redemptions: { validate: true, read: true } } }
 jest.mock('@/api/me', () => ({
   getContext: jest.fn(async () => ({
     user: { id: 1 },
     active_operation: { id: 1 },
-    capabilities: {},
+    capabilities: { partner: { redemptions: { validate: true, read: true } } },
   })),
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
@@ -64,7 +65,8 @@ const redemption = jest.requireMock('@/api/redemptions') as {
   previewRedemption: jest.Mock
   confirmRedemption: jest.Mock
 }
-const token = 'private-presentation-token'
+// Shaped like a real token: the confirmation refuses anything a scanner could not hand over.
+const token = `private${'p'.repeat(13)}.${'t'.repeat(43)}`
 const qr = 'data:image/png;base64,PRIVATE_QR'
 const validationUrl = `https://example.com/validate?token=${token}`
 const benefit = {
@@ -213,7 +215,7 @@ beforeEach(async () => {
   jest.requireMock('@/api/me').getContext.mockResolvedValue({
     user: { id: 1 },
     active_operation: { id: 1 },
-    capabilities: {},
+    capabilities: partner,
   })
   mockParams.accessId = '1'
   mockParams.offerId = '2'
@@ -504,7 +506,7 @@ it('cannot revive the previous token after logout and a new authenticated sessio
   jest.requireMock('@/api/me').getContext.mockResolvedValue({
     user: { id: 2 },
     active_operation: { id: 2 },
-    capabilities: {},
+    capabilities: partner,
   })
   await fireEvent.press(view.getByText('Refresh session'))
   await act(async () => {

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { resolveMediaUrl } from '@/api/config'
+import { useLoadingCopy } from '@/api/online'
 import type { PartnerContentItemKind, PartnerContentKind } from '@/api/partner-content'
 import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
@@ -119,6 +120,8 @@ export function EstablishmentPartnerContent({
   const experiences = usePartnerContent(establishmentId, 'experiences')
   const events = usePartnerContent(establishmentId, 'events')
   const showcase = usePartnerContent(establishmentId, 'showcase-items')
+  // Offline the requests are paused, not failed: the line says what it waits for.
+  const loading = useLoadingCopy('Carregando experiências e novidades…')
   const queryByKind = {
     experiences,
     events,
@@ -151,9 +154,7 @@ export function EstablishmentPartnerContent({
     <View style={styles.section} testID="place-content">
       <SectionHeader title="Para viver aqui" />
       {pending && items.length === 0 ? (
-        <Text style={[styles.body, { color: colors.mutedForeground }]}>
-          Carregando experiências e novidades…
-        </Text>
+        <Text style={[styles.body, { color: colors.mutedForeground }]}>{loading}</Text>
       ) : (
         <ScrollView
           ref={row}

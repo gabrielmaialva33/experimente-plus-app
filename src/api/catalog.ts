@@ -40,20 +40,29 @@ const query = (params: SearchParams): string => {
   return serialized ? `?${serialized}` : ''
 }
 
+/**
+ * A slug as one path segment. Slugs reach here from routes, and so from deep
+ * links: encoded, a `/`, `..` or `?` in one stays inside its segment instead of
+ * steering the request to another path of the API.
+ */
+const segment = encodeURIComponent
+
 export const listCities = () => request<City[]>('/api/v1/catalog/cities')
 
 export const listCategories = (citySlug: string) =>
-  request<CityCategories>(`/api/v1/catalog/cities/${citySlug}/categories`)
+  request<CityCategories>(`/api/v1/catalog/cities/${segment(citySlug)}/categories`)
 
 /** Filter facets actually present in the city, so chips are never hardcoded. */
 export const listFilters = (citySlug: string) =>
-  request<Filters>(`/api/v1/catalog/cities/${citySlug}/filters`)
+  request<Filters>(`/api/v1/catalog/cities/${segment(citySlug)}/filters`)
 
 /** Feeds both the list and the map: the projection carries coordinates. */
 export const searchEstablishments = (citySlug: string, params: SearchParams = {}) =>
-  request<SearchResult>(`/api/v1/catalog/cities/${citySlug}/establishments${query(params)}`)
+  request<SearchResult>(
+    `/api/v1/catalog/cities/${segment(citySlug)}/establishments${query(params)}`
+  )
 
 export const getEstablishment = (citySlug: string, establishmentSlug: string) =>
   request<EstablishmentDetail>(
-    `/api/v1/catalog/cities/${citySlug}/establishments/${establishmentSlug}`
+    `/api/v1/catalog/cities/${segment(citySlug)}/establishments/${segment(establishmentSlug)}`
   )

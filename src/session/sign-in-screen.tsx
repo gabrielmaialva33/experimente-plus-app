@@ -47,13 +47,19 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
     onSuccess: () => refresh(),
   })
 
-  const message =
-    mutation.error instanceof ApiError && mutation.error.status === 400
+  const refusal = mutation.error instanceof ApiError ? mutation.error.status : null
+  // The server allows five attempts per quarter hour, and the transport holds new
+  // ones until Retry-After: "not now" alone would invite a retry that cannot work.
+  const message = !mutation.isError
+    ? null
+    : refusal === 400
       ? 'Dados de acesso incorretos.'
-      : mutation.isError
-        ? 'Não foi possível entrar agora.'
-        : null
+      : refusal === 429
+        ? 'Muitas tentativas de acesso. Aguarde alguns minutos antes de tentar novamente.'
+        : 'Não foi possível entrar agora.'
   useAnnouncement(message)
+  // Blank space is not an identifier: the server would only answer 422.
+  const ready = uid.trim() !== '' && password !== ''
 
   // Recovery asks for an e-mail; one already typed here is not asked twice (audit A59).
   const typedEmail = uid.trim().includes('@') ? uid.trim() : null
@@ -129,7 +135,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
             autoComplete="current-password"
             textContentType="password"
             onSubmitEditing={() => {
-              if (uid && password && !mutation.isPending) mutation.mutate()
+              if (ready && !mutation.isPending) mutation.mutate()
             }}
           />
 
@@ -158,7 +164,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
             accessibilityLabel="Entrar"
             size={52}
             fill
-            disabled={mutation.isPending || !uid || !password}
+            disabled={mutation.isPending || !ready}
             onPress={() => mutation.mutate()}
           />
 

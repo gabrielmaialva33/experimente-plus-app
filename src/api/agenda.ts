@@ -69,4 +69,4 @@ export interface CityAgendaResponse {
 
 /** One request per city: the whole agenda arrives together, with no waterfall. */
 export const getCityAgenda = (citySlug: string) =>
-  publicRequest<CityAgendaResponse>(`/api/v1/catalog/cities/${citySlug}/agenda`)
+  publicRequest<CityAgendaResponse>(`/api/v1/catalog/cities/${encodeURIComponent(citySlug)}/agenda`)

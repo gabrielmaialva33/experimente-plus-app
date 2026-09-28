@@ -158,10 +158,9 @@ async function consumeCredentials(
   consume: (refreshToken: string) => Promise<AuthTokensPayload>
 ): Promise<Credentials> {
   const current = await currentCredentials()
+  let next: Credentials
   try {
-    const next = credentialsFromPayload(await consume(current.refreshToken))
-    await writeCredentials(next)
-    return next
+    next = credentialsFromPayload(await consume(current.refreshToken))
   } catch (error) {
     if (error instanceof SessionExpiredError) {
       await clearCredentials()
@@ -169,6 +168,17 @@ async function consumeCredentials(
     }
     throw error
   }
+  try {
+    await writeCredentials(next)
+  } catch {
+    // The server revoked the parent pair when it minted this one, and the keystore
+    // refused the child, which `writeCredentials` has already dropped. Nothing stored
+    // can continue the session, so it ends here rather than leaving the interface
+    // signed in over requests that can only fail.
+    notifySessionEvent('expired')
+    throw new SessionExpiredError()
+  }
+  return next
 }
 
 /** Each callback consumes the latest pair inside the queue, never at enqueue time. */

@@ -260,19 +260,33 @@ it('explains a 400 without retrying or authenticating', async () => {
 
 it('explains the auth rate limit and waits for Retry-After without automatic replay', async () => {
   jest.useFakeTimers()
-  api.signUp.mockRejectedValue(new ApiError(429, {}, 3))
-  const view = await page()
-  await fill(view)
-  await fireEvent.press(view.getByRole('checkbox', { name: consent }))
-  await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
-  expect(view.getByText(/Muitas tentativas de cadastro/)).toBeOnTheScreen()
-  expect(view.getByText('Tente novamente em 3s.')).toBeOnTheScreen()
-  expect(view.getByRole('button', { name: 'Criar conta' })).toBeDisabled()
-  await act(async () => {
-    jest.advanceTimersByTime(3000)
-  })
-  expect(view.getByRole('button', { name: 'Criar conta' })).toBeEnabled()
-  expect(api.signUp).toHaveBeenCalledTimes(1)
+  const setIntervalSpy = jest.spyOn(globalThis, 'setInterval')
+  const clearIntervalSpy = jest.spyOn(globalThis, 'clearInterval')
+  try {
+    api.signUp.mockRejectedValue(new ApiError(429, {}, 3))
+    const view = await page()
+    await fill(view)
+    await fireEvent.press(view.getByRole('checkbox', { name: consent }))
+    await fireEvent.press(view.getByRole('button', { name: 'Criar conta' }))
+    expect(view.getByText(/Muitas tentativas de cadastro/)).toBeOnTheScreen()
+    expect(view.getByText('Tente novamente em 3s.')).toBeOnTheScreen()
+    expect(view.getByRole('button', { name: 'Criar conta' })).toBeDisabled()
+    const countdown =
+      setIntervalSpy.mock.results[
+        setIntervalSpy.mock.calls.findIndex(([, delay]) => delay === 1000)
+      ]?.value
+    expect(countdown).toBeDefined()
+    await act(async () => {
+      jest.advanceTimersByTime(3000)
+    })
+    expect(view.getByRole('button', { name: 'Criar conta' })).toBeEnabled()
+    expect(api.signUp).toHaveBeenCalledTimes(1)
+    // The countdown lets go of its interval once the wait is over, not at unmount.
+    expect(clearIntervalSpy).toHaveBeenCalledWith(countdown)
+  } finally {
+    setIntervalSpy.mockRestore()
+    clearIntervalSpy.mockRestore()
+  }
 })
 
 it('does not resend a successful registration if context loading fails', async () => {

@@ -81,6 +81,32 @@ it('says why the sign-in was refused', async () => {
   )
 })
 
+// Five attempts per quarter hour: "not now" alone invites a retry the transport refuses.
+it('says to wait when sign-in is rate limited, without retrying', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport')
+  auth.signIn.mockRejectedValue(new ApiError(429, null, 600))
+  const view = await page()
+  await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), 'ana')
+  await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
+
+  await fireEvent.press(view.getByRole('button', { name: 'Entrar' }))
+
+  expect(await view.findByRole('alert')).toHaveTextContent(
+    'Muitas tentativas de acesso. Aguarde alguns minutos antes de tentar novamente.'
+  )
+  expect(auth.signIn).toHaveBeenCalledTimes(1)
+})
+
+it('does not send an identifier made of blank space', async () => {
+  const view = await page()
+  await fireEvent.changeText(view.getByLabelText('E-mail ou usuário'), '   ')
+  await fireEvent.changeText(view.getByLabelText('Senha'), 'test-password')
+
+  expect(view.getByRole('button', { name: 'Entrar' })).toBeDisabled()
+  await fireEvent(view.getByLabelText('Senha'), 'submitEditing')
+  expect(auth.signIn).not.toHaveBeenCalled()
+})
+
 it('lets the password be shown before it is sent', async () => {
   const view = await page()
   const password = view.getByLabelText('Senha')

@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto'
 
-import { apiUrl } from '@/api/config'
+import { publicRequest } from '@/api/public'
 
 /**
  * Discovery analytics.
@@ -40,13 +40,14 @@ const FLUSH_DELAY = 2000
 let queue: AnalyticsEvent[] = []
 let timer: ReturnType<typeof setTimeout> | null = null
 
+/**
+ * Through the public transport, like the rest of discovery: no credential is
+ * attached, and a `429` holds every later batch until its `Retry-After` has
+ * passed instead of posting one every few seconds into the limit.
+ */
 async function post(events: AnalyticsEvent[]): Promise<void> {
   try {
-    await fetch(apiUrl('/api/v1/analytics/events'), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'accept': 'application/json' },
-      body: JSON.stringify({ events }),
-    })
+    await publicRequest('/api/v1/analytics/events', { method: 'POST', body: { events } })
   } catch {
     // Measurement must never break discovery. A dropped batch is acceptable;
     // a crashed screen is not.

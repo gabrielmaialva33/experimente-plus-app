@@ -12,16 +12,18 @@ import { SessionExpiredError } from './session'
  */
 export function installQueryEnvironment(): () => void {
   onlineManager.setEventListener((setOnline) => {
-    let initialised = false
+    // Set by the first event, and by teardown: a first reading that arrives after
+    // either is stale and must not overwrite what is known now.
+    let settled = false
 
     const subscription = Network.addNetworkStateListener((state) => {
-      initialised = true
+      settled = true
       setOnline(!!state.isConnected)
     })
 
     Network.getNetworkStateAsync()
       .then((state) => {
-        if (!initialised) {
+        if (!settled) {
           setOnline(!!state.isConnected)
         }
       })
@@ -29,7 +31,11 @@ export function installQueryEnvironment(): () => void {
         // Some platforms reject this call; the listener still governs.
       })
 
-    return subscription.remove
+    // onlineManager runs this when the listener is replaced or its last subscriber leaves.
+    return () => {
+      settled = true
+      subscription.remove()
+    }
   })
 
   const onAppStateChange = (status: AppStateStatus) => {

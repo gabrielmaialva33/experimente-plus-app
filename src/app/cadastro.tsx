@@ -62,8 +62,12 @@ export default function SignUpScreen() {
 
   useEffect(() => {
     if (!retryUntil) return
-    const update = () => setWaiting(Math.max(0, Math.ceil((retryUntil - Date.now()) / 1000)))
-    const timer = setInterval(update, 1000)
+    // Stops at zero, like password recovery's: nothing is left to count once the wait is over.
+    const timer = setInterval(() => {
+      const left = Math.max(0, Math.ceil((retryUntil - Date.now()) / 1000))
+      setWaiting(left)
+      if (!left) clearInterval(timer)
+    }, 1000)
     return () => clearInterval(timer)
   }, [retryUntil])
 

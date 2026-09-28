@@ -17,5 +17,8 @@ export const createPresentation = (accessId: number, offerId: number, signal?: A
 export const listMyRedemptions = () =>
   request<History>('/api/v1/me/benefits/redemptions', { authenticated: true })
 
+/** The code comes from the route, so from a link: it stays one path segment. */
 export const getMyReceipt = (receiptCode: string) =>
-  request<Receipt>(`/api/v1/me/benefits/redemptions/${receiptCode}`, { authenticated: true })
+  request<Receipt>(`/api/v1/me/benefits/redemptions/${encodeURIComponent(receiptCode)}`, {
+    authenticated: true,
+  })

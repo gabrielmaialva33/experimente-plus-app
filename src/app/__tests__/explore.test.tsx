@@ -3,7 +3,7 @@ import * as WebBrowser from 'expo-web-browser'
 
 import { Dimensions, FlatList, ScrollView, StyleSheet } from 'react-native'
 import { apiBaseUrl } from '@/api/config'
-import { minTouch, spacing } from '@/theme/tokens'
+import { minTouch, palette, spacing } from '@/theme/tokens'
 
 import ExploreScreen from '@/app/(tabs)/index'
 import { feedLayout } from '@/components/content-frame'
@@ -136,7 +136,7 @@ it('keeps all discovery filters when switching between list and map', async () =
   await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
   expect(
     view.getByText(
-      'Nada encontrado para “café” em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi.'
+      'Nenhum lugar para “café” em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi. Tente outra palavra ou menos filtros.'
     )
   ).toBeOnTheScreen()
   // The map offers the way back from the same place, and nothing else changes.
@@ -309,7 +309,11 @@ it.each(['list', 'map'])(
         jest.advanceTimersByTime(350)
       })
       if (mode === 'map') await fireEvent.press(view.getByRole('button', { name: 'Ver no mapa' }))
-      expect(view.getByText('Nada encontrado para “pizzaria” em Londrina.')).toBeOnTheScreen()
+      expect(
+        view.getByText(
+          'Nenhum lugar para “pizzaria” em Londrina. Confira a grafia ou tente outra palavra.'
+        )
+      ).toBeOnTheScreen()
       // A typed word is a search: the action says so, and clears it.
       expect(view.queryByRole('button', { name: 'Limpar filtros' })).toBeNull()
       await fireEvent.press(view.getByRole('button', { name: 'Ver todos os lugares' }))
@@ -354,7 +358,9 @@ it('names active category and attribute filters and clears them together', async
   await fireEvent.press(view.getByRole('button', { name: 'Aberto agora' }))
   await fireEvent.press(view.getByRole('button', { name: 'Wi-Fi' }))
   expect(
-    view.getByText('Nada encontrado em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi.')
+    view.getByText(
+      'Nenhum lugar em Londrina com os filtros: Cafés, Aberto agora, Wi-Fi. Tire um filtro para ver mais lugares.'
+    )
   ).toBeOnTheScreen()
   await fireEvent.press(view.getByRole('button', { name: 'Limpar filtros' }))
   expect(queries.useSearch).toHaveBeenLastCalledWith('londrina', {
@@ -382,6 +388,40 @@ it('names the clear action after what is set: a search, filters or both', async 
   } finally {
     jest.useRealTimers()
   }
+})
+
+// A search that finds nothing is the shared empty card, not a loose sentence and a text link.
+it('answers a search without results with the standard empty state and its one action', async () => {
+  jest.useFakeTimers()
+  try {
+    const view = await render(<ExploreScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Cafés' }))
+    const empty = within(view.getByTestId('catalog-empty'))
+    expect(empty.getByRole('header', { name: 'Nada encontrado' })).toBeOnTheScreen()
+    expect(empty.getAllByRole('button')).toHaveLength(1)
+    // The outline pill of every empty state, at least 48 high.
+    expect(empty.getByRole('button', { name: 'Limpar filtros' })).toHaveStyle({
+      borderColor: palette.light.primary,
+      minHeight: 48,
+    })
+    expect(view.queryByRole('button', { name: 'Trocar cidade' })).toBeNull()
+
+    // Without a searched word the action clears the filters alone: a word still being
+    // typed stays in the field.
+    await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'caf')
+    await fireEvent.press(empty.getByRole('button', { name: 'Limpar filtros' }))
+    expect(view.getByPlaceholderText('Buscar lugares')).toHaveDisplayValue('caf')
+    expect(view.getByRole('button', { name: 'Cafés', selected: false })).toBeOnTheScreen()
+  } finally {
+    jest.useRealTimers()
+  }
+})
+
+it('keeps "Trocar cidade" for a city with nothing published, outside the empty card', async () => {
+  const view = await render(<ExploreScreen />)
+  expect(view.getByText('Ainda não há lugares publicados em Londrina.')).toBeOnTheScreen()
+  expect(view.queryByRole('header', { name: 'Nada encontrado' })).toBeNull()
+  expect(view.getByRole('button', { name: 'Trocar cidade' })).toBeOnTheScreen()
 })
 
 it('offers another try on a failed search, in the shared failure card', async () => {

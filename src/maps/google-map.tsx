@@ -31,7 +31,13 @@ export function GoogleMapRenderer({ pins, center, onSelect, onOpen }: MapRendere
     else setOpen(group)
   }
 
-  const cameraPosition = { coordinates: center, zoom: 12 }
+  // The native view recentres on a new camera position: one made on every render
+  // brought the camera back to the city each time a place was held or a list opened.
+  const { latitude, longitude } = center
+  const cameraPosition = useMemo(
+    () => ({ coordinates: { latitude, longitude }, zoom: 12 }),
+    [latitude, longitude]
+  )
   const MapView = Platform.OS === 'ios' ? AppleMaps.View : GoogleMaps.View
 
   return (

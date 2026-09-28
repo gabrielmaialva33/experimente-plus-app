@@ -33,13 +33,24 @@ export default function CityScreen() {
       <Stack.Screen options={{ title: 'Cidade' }} />
       {cities.isPending ? (
         <ContentSkeleton label="Carregando cidades" variant="catalog" />
-      ) : cities.isError ? (
+      ) : cities.isError && !cities.data ? (
         <View style={styles.page}>
           <EmptyState
             icon="cloud-offline-outline"
             title="Não foi possível carregar as cidades"
             action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
             help={TROUBLESHOOTING_HELP}
+          />
+        </View>
+      ) : !cities.data?.length ? (
+        // An empty radio group would be a list with nothing to choose and no way on.
+        <View style={styles.page}>
+          <EmptyState
+            testID="cities-empty"
+            icon="location-outline"
+            title="Nenhuma cidade publicada ainda"
+            text="As cidades aparecem aqui assim que a primeira for publicada."
+            action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
           />
         </View>
       ) : (
@@ -55,7 +66,7 @@ export default function CityScreen() {
               { backgroundColor: colors.card, borderColor: colors.borderSubtle },
             ]}
           >
-            {(cities.data ?? []).map((city) => {
+            {cities.data.map((city) => {
               const checked = city.slug === selected
               return (
                 <Pressable

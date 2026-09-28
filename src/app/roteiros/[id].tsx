@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-import type { Itinerary } from '@/api/explorer'
+import { ApiError } from '@/api/client'
+import type { EstablishmentCard, Itinerary } from '@/api/explorer'
+import { useLoadingCopy } from '@/api/online'
 import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -14,7 +16,9 @@ import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
 import { useContentFrame } from '@/components/content-frame'
 import { EstablishmentCardRow } from '@/explorer/establishment-card-row'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { moveStop } from '@/explorer/itinerary-order'
+import { placeHref } from '@/place/links'
 import {
   useAddItineraryStop,
   useDeleteItinerary,
@@ -31,12 +35,33 @@ export default function ItineraryScreen() {
   const colors = useColors()
   const router = useRouter()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const itineraryId = Number(id)
-  const query = useItinerary(Number.isInteger(itineraryId) && itineraryId > 0 ? itineraryId : null)
+  // Only a positive integer names an itinerary. Anything else is answered as not
+  // found at once: the query it leaves disabled would stay pending for ever.
+  const itineraryId = typeof id === 'string' && /^[1-9]\d*$/.test(id) ? Number(id) : null
+  const query = useItinerary(itineraryId)
 
-  if (query.isPending) return <ContentSkeleton label="Carregando roteiro" variant="catalog" />
+  if (itineraryId !== null && query.isPending) {
+    return <ContentSkeleton label="Carregando roteiro" variant="catalog" />
+  }
 
-  if (!query.data) {
+  // A request that failed is not an itinerary that is gone: it gets another try.
+  const gone = query.error instanceof ApiError && query.error.status === 404
+  if (itineraryId !== null && query.isError && !query.data && !gone) {
+    return (
+      <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
+        <EmptyState
+          testID="itinerary-failed"
+          icon="cloud-offline-outline"
+          title="Não foi possível carregar este roteiro"
+          text="Confira a conexão e tente de novo."
+          action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+          help={TROUBLESHOOTING_HELP}
+        />
+      </View>
+    )
+  }
+
+  if (itineraryId === null || !query.data) {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
         <EmptyState
@@ -65,6 +90,8 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const stopIds = itinerary.stops.map((stop) => stop.id)
+  const openPlace = (place: EstablishmentCard) => () =>
+    router.push(placeHref(place.city_slug, place.slug))
   const busy = reorder.isPending || remove.isPending
 
   // Audit A26: the name is kept when the field is left, as a label would be;
@@ -88,6 +115,8 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       })
   }
 
+  const deleteFailure = destroy.isError ? 'Não foi possível excluir o roteiro agora.' : null
+
   const nameStatus = rename.isPending
     ? 'Salvando…'
     : rename.isError
@@ -96,11 +125,12 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
         ? 'Nome salvo.'
         : null
   useAnnouncement(
-    rename.isError
-      ? 'Não foi possível salvar o nome agora.'
-      : reorder.isError || remove.isError
-        ? 'Não foi possível alterar o roteiro agora.'
-        : nameStatus === 'Nome salvo.' && nameStatus
+    deleteFailure ??
+      (rename.isError
+        ? 'Não foi possível salvar o nome agora.'
+        : reorder.isError || remove.isError
+          ? 'Não foi possível alterar o roteiro agora.'
+          : nameStatus === 'Nome salvo.' && nameStatus)
   )
 
   return (
@@ -159,11 +189,7 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
               {stop.establishment ? (
                 <EstablishmentCardRow
                   card={stop.establishment}
-                  onPress={() =>
-                    router.push(
-                      `/estabelecimento/${stop.establishment!.city_slug}/${stop.establishment!.slug}`
-                    )
-                  }
+                  onPress={openPlace(stop.establishment)}
                 />
               ) : (
                 // The stop is kept even though the place left the catalogue: removing
@@ -236,6 +262,15 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
           <Text style={[styles.body, { color: colors.foreground }]}>
             Excluir este roteiro e todas as paradas? Isso não pode ser desfeito.
           </Text>
+          {deleteFailure ? (
+            <Text
+              accessibilityRole="alert"
+              style={[styles.body, { color: colors.destructiveAccent }]}
+              testID="delete-itinerary-failure"
+            >
+              {deleteFailure}
+            </Text>
+          ) : null}
           <View style={styles.confirm}>
             <Button label="Cancelar" variant="ghost" onPress={() => setConfirmingDelete(false)} />
             <Pressable
@@ -280,6 +315,7 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
   const router = useRouter()
   const favorites = useSavedList('favorites')
   const add = useAddItineraryStop()
+  const loading = useLoadingCopy('Carregando seus favoritos…')
 
   useAnnouncement(add.isError && 'Não foi possível adicionar agora.')
 
@@ -298,14 +334,23 @@ function AddFromFavorites({ itinerary, onClose }: { itinerary: Itinerary; onClos
         action={{ label: 'Fechar', onPress: onClose }}
       />
       {favorites.isPending ? (
-        <Text style={[styles.body, { color: colors.mutedForeground }]}>
-          Carregando seus favoritos…
-        </Text>
+        <Text style={[styles.body, { color: colors.mutedForeground }]}>{loading}</Text>
+      ) : favorites.isError && !favorites.data ? (
+        <>
+          <Text style={[styles.body, { color: colors.mutedForeground }]}>
+            Não foi possível carregar seus favoritos agora.
+          </Text>
+          <Button
+            label="Tentar de novo"
+            variant="outline"
+            onPress={() => void favorites.refetch()}
+            testID="retry-favorites"
+          />
+        </>
       ) : candidates.length === 0 ? (
         <Text style={[styles.body, { color: colors.mutedForeground }]}>
-          {favorites.isError
-            ? 'Não foi possível carregar seus favoritos agora.'
-            : 'Nenhum favorito para adicionar. Encontre lugares em Explorar e toque em Roteiro na página deles.'}
+          Nenhum favorito para adicionar. Encontre lugares em Explorar e toque em Roteiro na página
+          deles.
         </Text>
       ) : (
         candidates.map((entry) => (

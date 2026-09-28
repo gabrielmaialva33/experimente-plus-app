@@ -1,7 +1,9 @@
 import { fireEvent, render } from '@testing-library/react-native'
+import { Dimensions } from 'react-native'
 
 import ItinerariesScreen from '@/app/roteiros/index'
 import AddToItineraryScreen from '@/app/roteiros/adicionar/[establishmentId]'
+import { contentFrame, MEASURE } from '@/components/content-frame'
 
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')
@@ -12,7 +14,7 @@ jest.mock('@/theme/use-colors', () => ({
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), navigate: jest.fn() }
 jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
-  useLocalSearchParams: () => ({ establishmentId: '9' }),
+  useLocalSearchParams: jest.fn(() => ({ establishmentId: '9' })),
 }))
 jest.mock('@/explorer/queries', () => ({
   useItineraries: jest.fn(),
@@ -21,6 +23,7 @@ jest.mock('@/explorer/queries', () => ({
 }))
 
 const queries = jest.requireMock('@/explorer/queries') as Record<string, jest.Mock>
+const router = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
 
 const idle = (overrides = {}) => ({
   mutate: jest.fn(),
@@ -113,6 +116,13 @@ describe('adding a place to an itinerary', () => {
     expect(mockRouter.replace).not.toHaveBeenCalled()
     expect(view.getByRole('header', { name: 'Adicionado a Domingo no lago' })).toBeOnTheScreen()
 
+    // On a wide window the confirmation keeps to the readable column.
+    const column = contentFrame(Dimensions.get('window').width, MEASURE.readable)
+    expect(view.getByTestId('added').parent).toHaveStyle({
+      paddingLeft: column.left,
+      paddingRight: column.right,
+    })
+
     await fireEvent.press(view.getByRole('button', { name: 'Voltar ao lugar' }))
     expect(mockRouter.back).toHaveBeenCalledTimes(1)
     await fireEvent.press(view.getByRole('button', { name: 'Ver roteiro' }))
@@ -132,5 +142,55 @@ describe('adding a place to an itinerary', () => {
 
     expect(add).toHaveBeenCalledWith({ id: 8, establishmentId: 9 }, expect.any(Object))
     expect(view.getByRole('header', { name: 'Adicionado a Feriado' })).toBeOnTheScreen()
+  })
+
+  it.each(['abc', '0', '9.5', ''])(
+    'sends nothing for a link that names no place (%s)',
+    async (establishmentId) => {
+      router.useLocalSearchParams.mockReturnValueOnce({ establishmentId })
+      const add = jest.fn()
+      queries.useAddItineraryStop.mockReturnValue(idle({ mutate: add }))
+      const view = await render(<AddToItineraryScreen />)
+
+      expect(view.getByRole('header', { name: 'Este lugar não foi encontrado' })).toBeOnTheScreen()
+      expect(view.queryByRole('button', { name: /^Adicionar a / })).toBeNull()
+      await fireEvent.press(view.getByRole('button', { name: 'Explorar lugares' }))
+      expect(mockRouter.navigate).toHaveBeenCalledWith('/')
+      expect(add).not.toHaveBeenCalled()
+    }
+  )
+
+  it('offers another try when the itineraries could not be loaded', async () => {
+    const refetch = jest.fn()
+    queries.useItineraries.mockReturnValue({
+      isPending: false,
+      isError: true,
+      data: undefined,
+      refetch,
+    })
+    const view = await render(<AddToItineraryScreen />)
+
+    // Without the list, a new one would be the only choice, and likely a twin.
+    expect(view.queryByLabelText('Nome do novo roteiro')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not create a twin when adding to the new itinerary fails', async () => {
+    // The itinerary is created; adding the place to it does not go through.
+    const add = jest.fn()
+    const create = jest.fn((_body, options) => options.onSuccess({ id: 8, name: 'Feriado' }))
+    queries.useAddItineraryStop.mockReturnValue(idle({ mutate: add }))
+    queries.useCreateItinerary.mockReturnValue(idle({ mutate: create }))
+    const view = await render(<AddToItineraryScreen />)
+
+    await fireEvent.press(view.getByRole('button', { name: 'Novo roteiro' }))
+    await fireEvent.changeText(view.getByLabelText('Nome do novo roteiro'), 'Feriado')
+    await fireEvent.press(view.getByRole('button', { name: 'Criar e adicionar' }))
+
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(add).toHaveBeenCalledWith({ id: 8, establishmentId: 9 }, expect.any(Object))
+    expect(view.queryByLabelText('Nome do novo roteiro')).toBeNull()
+    expect(view.queryByRole('button', { name: 'Criar e adicionar' })).toBeNull()
   })
 })

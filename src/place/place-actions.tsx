@@ -44,7 +44,8 @@ export function PlaceActions({
   // With large text the action takes a line of its own and the icons follow under it:
   // beside them its label broke in two ("Como / chegar"), or pushed them off the page.
   const stacked = useStackedLayout()
-  useAnnouncement(explain && FOLLOW_HINT)
+  // A refused follow is rolled back and said by the mutation; the hint would be wrong.
+  useAnnouncement(explain && !follow.isError && FOLLOW_HINT)
 
   const requireSession = (action: () => void) => () => {
     if (!signedIn) {
@@ -86,7 +87,7 @@ export function PlaceActions({
           testID="place-itinerary"
         />
       </View>
-      {explain ? (
+      {explain && !follow.isError ? (
         <Text style={[styles.hint, { color: colors.mutedForeground }]} testID="follow-hint">
           {FOLLOW_HINT}
         </Text>

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -9,6 +9,7 @@ import { track } from '@/analytics/events'
 import type { SearchParams } from '@/api/catalog'
 import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
+import { defaultCity } from '@/catalog/default-city'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { useAnnouncement } from '@/components/announce'
@@ -36,6 +37,40 @@ import { useColors } from '@/theme/use-colors'
 const MAX_TERM_LENGTH = 120
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
+
+const placeKey = (item: EstablishmentSummary) => item.slug
+
+/** An impression counts once most of a card is on screen. */
+const VIEWABILITY = { itemVisiblePercentThreshold: 60 }
+
+/**
+ * One place of the feed: a grid cell `width` wide, or the phone's column between
+ * `left` and `right`. Memoised, with a stable `renderItem`, so typing in the
+ * search or opening the cities does not redraw the cards already on screen.
+ */
+const PlaceCell = memo(function PlaceCell({
+  establishment,
+  width,
+  left,
+  right,
+  onOpen,
+}: {
+  establishment: EstablishmentSummary
+  width: number | null
+  left: number
+  right: number
+  onOpen: (slug: string) => void
+}) {
+  return (
+    <View style={width != null ? { width } : { paddingLeft: left, paddingRight: right }}>
+      <EstablishmentCard
+        establishment={establishment}
+        onPress={() => onOpen(establishment.slug)}
+        style={width != null ? styles.gridCard : undefined}
+      />
+    </View>
+  )
+})
 
 export default function ExploreScreen() {
   const colors = useColors()
@@ -82,24 +117,58 @@ export default function ExploreScreen() {
   }, [term])
 
   const cities = useCities()
+  const published = cities.data
 
-  // The first published city becomes the default until someone chooses one.
+  // The first published city becomes the default until someone chooses one, and
+  // takes the place of a remembered city that is no longer published: asked for,
+  // that one answers 404, and the feed would offer a retry that never succeeds.
   useEffect(() => {
-    if (!selectedCity && cities.data?.length) {
-      selectCity(cities.data[0].slug)
-    }
-  }, [selectedCity, cities.data])
+    const fallback = defaultCity(selectedCity, published)
+    if (fallback) selectCity(fallback)
+  }, [selectedCity, published])
 
   const categories = useCategories(selectedCity)
   const filters = useFilters(selectedCity)
 
+  // Categories and facets are the city's own. One chosen in another city that
+  // this one does not offer would narrow the results with no chip to undo it,
+  // so it goes once the city's own list is known; the ones both offer stay. The
+  // search already leaves it out on that render, before the state catches up,
+  // so a switch of city costs no request against the anonymous limit.
+  const offeredCategories = categories.data?.categories
+  const offeredAttributes = filters.data?.attributes
+  const liveCategory =
+    category && offeredCategories && !offeredCategories.some(({ slug }) => slug === category)
+      ? undefined
+      : category
+  const liveAttributes = useMemo(() => {
+    const kept = offeredAttributes
+      ? attributes.filter((key) => offeredAttributes.some((item) => item.key === key))
+      : attributes
+    // The same array when nothing goes, so the search's criteria keep their identity.
+    return kept.length === attributes.length ? attributes : kept
+  }, [attributes, offeredAttributes])
+  // Adjusted while rendering, as React advises for state derived from new data:
+  // switching back to the first city does not bring the dropped filter back.
+  if (liveCategory !== category) setCategory(liveCategory)
+  if (liveAttributes !== attributes) setAttributes(liveAttributes)
+
   const params = useMemo<SearchParams>(
-    () => ({ q: debouncedTerm || undefined, category, openNow, attributes }),
-    [debouncedTerm, category, openNow, attributes]
+    () => ({
+      q: debouncedTerm || undefined,
+      category: liveCategory,
+      openNow,
+      attributes: liveAttributes,
+    }),
+    [debouncedTerm, liveCategory, openNow, liveAttributes]
   )
-  const search = useSearch(selectedCity, params)
+  // Without a city to search in (the list of cities failed, or none is published),
+  // the feed waits on the cities instead of a search that has nothing to ask.
+  const noCities = published?.length === 0
+  const cityless = noCities || (!selectedCity && cities.isError)
+  const search = useSearch(noCities ? null : selectedCity, params)
   // A pull asks again for the results alone: one request against the anonymous limit.
-  const refreshControl = usePullToRefresh(search.refetch)
+  const refreshControl = usePullToRefresh(cityless ? cities.refetch : search.refetch)
 
   // New criteria bring the results, right under the controls, back into view.
   // While the person types, the search field stays above the keyboard: on a small
@@ -123,11 +192,11 @@ export default function ExploreScreen() {
   }, [params, revealField])
 
   const activeFilters = [
-    category
-      ? (categories.data?.categories.find((item) => item.slug === category)?.name ?? category)
+    liveCategory
+      ? (offeredCategories?.find((item) => item.slug === liveCategory)?.name ?? liveCategory)
       : null,
     openNow ? 'Aberto agora' : null,
-    ...attributes.map(
+    ...liveAttributes.map(
       (key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key
     ),
   ].filter(Boolean)
@@ -138,6 +207,12 @@ export default function ExploreScreen() {
     setCategory(undefined)
     setOpenNow(false)
     setAttributes([])
+  }
+
+  // The cities open in the band at the top of the feed, brought back into view.
+  const chooseCity = () => {
+    setChoosingCity(true)
+    list.current?.scrollToOffset({ offset: 0, animated: true })
   }
 
   const toggleAttribute = (key: string) =>
@@ -153,17 +228,18 @@ export default function ExploreScreen() {
     selectedCityRef.current = selectedCity
   }, [selectedCity])
 
-  // A result impression is only counted once per establishment per session.
+  // A result impression is only counted once per establishment per session. A slug
+  // is unique within its city only, so the city is part of what was seen.
   const seen = useRef(new Set<string>())
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: { key: string }[] }) => {
+      const city = selectedCityRef.current
+      if (!city) return
       viewableItems.forEach(({ key }) => {
-        if (!selectedCityRef.current || seen.current.has(key)) return
-        seen.current.add(key)
-        track('catalog_impression', {
-          city_slug: selectedCityRef.current,
-          establishment_slug: key,
-        })
+        const place = `${city}/${key}`
+        if (seen.current.has(place)) return
+        seen.current.add(place)
+        track('catalog_impression', { city_slug: city, establishment_slug: key })
       })
     },
     []
@@ -180,6 +256,27 @@ export default function ExploreScreen() {
   const openEstablishment = useCallback(
     (slug: string) => router.push(`/estabelecimento/${selectedCity}/${slug}`),
     [router, selectedCity]
+  )
+
+  // Stable while nothing about the grid changes: a new `renderItem` or row style
+  // would redraw every card on screen at each letter typed in the search.
+  const grid = columns > 1
+  const { left: frameLeft, right: frameRight } = frame
+  const columnWrapperStyle = useMemo(
+    () => (grid ? [styles.row, { paddingLeft: frameLeft, paddingRight: frameRight }] : undefined),
+    [grid, frameLeft, frameRight]
+  )
+  const renderPlace = useCallback(
+    ({ item }: { item: EstablishmentSummary }) => (
+      <PlaceCell
+        establishment={item}
+        width={grid ? columnWidth : null}
+        left={frameLeft}
+        right={frameRight}
+        onOpen={openEstablishment}
+      />
+    ),
+    [grid, columnWidth, frameLeft, frameRight, openEstablishment]
   )
 
   const results = search.data?.organic ?? []
@@ -331,7 +428,28 @@ export default function ExploreScreen() {
         ? 'Ver todos os lugares'
         : 'Limpar filtros'
 
-  const feedback = search.isPending ? (
+  const feedback = cityless ? (
+    <View style={[styles.failure, frame.padding]}>
+      {noCities ? (
+        <EmptyState
+          testID="cities-empty"
+          icon="location-outline"
+          title="Nenhuma cidade publicada ainda"
+          text="Os lugares aparecem aqui assim que a primeira cidade for publicada."
+          action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
+        />
+      ) : (
+        <EmptyState
+          testID="cities-failed"
+          icon="cloud-offline-outline"
+          title="Não foi possível carregar as cidades"
+          text="Confira a conexão e tente de novo."
+          action={{ label: 'Tentar de novo', onPress: () => void cities.refetch() }}
+          help={TROUBLESHOOTING_HELP}
+        />
+      )}
+    </View>
+  ) : search.isPending ? (
     <ContentSkeleton label="Carregando lugares" variant="catalog" />
   ) : search.isError ? (
     // The shared failure card of the other lists; the retry keeps the filters.
@@ -362,6 +480,11 @@ export default function ExploreScreen() {
       {hasFilters ? (
         <Pressable accessibilityRole="button" onPress={clearFilters} style={styles.feedbackAction}>
           <Text style={[styles.action, { color: colors.primary }]}>{clearLabel}</Text>
+        </Pressable>
+      ) : (published?.length ?? 0) > 1 ? (
+        // A city with nothing published yet is not a dead end: the others are one tap away.
+        <Pressable accessibilityRole="button" onPress={chooseCity} style={styles.feedbackAction}>
+          <Text style={[styles.action, { color: colors.primary }]}>Trocar cidade</Text>
         </Pressable>
       ) : null}
     </View>
@@ -454,10 +577,10 @@ export default function ExploreScreen() {
               // lays it out afresh.
               key={`columns-${columns}`}
               numColumns={columns}
-              columnWrapperStyle={columns > 1 ? [styles.row, frame.padding] : undefined}
+              columnWrapperStyle={columnWrapperStyle}
               style={styles.fill}
               data={feedback ? [] : results}
-              keyExtractor={(item) => item.slug}
+              keyExtractor={placeKey}
               keyboardShouldPersistTaps="handled"
               onScroll={onFeedScroll}
               scrollEventThrottle={16}
@@ -493,16 +616,8 @@ export default function ExploreScreen() {
                 )
               }
               onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-              renderItem={({ item }) => (
-                <View style={columns > 1 ? { width: columnWidth } : frame.padding}>
-                  <EstablishmentCard
-                    establishment={item}
-                    onPress={() => openEstablishment(item.slug)}
-                    style={columns > 1 ? styles.gridCard : undefined}
-                  />
-                </View>
-              )}
+              viewabilityConfig={VIEWABILITY}
+              renderItem={renderPlace}
             />
           </View>
         )}

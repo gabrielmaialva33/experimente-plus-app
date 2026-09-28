@@ -28,6 +28,17 @@ export const mailto = (value: string | null): string | null => {
 }
 
 /**
+ * Mirrors the server's rule for the website redirect (`AnalyticsRedirectService`):
+ * the field is free text, and only an http(s) address with a host opens. A bare
+ * "www.casa.com.br" or any other scheme opens nothing, rather than a broken link
+ * or whichever app claims that scheme.
+ */
+export const webAddress = (value: string | null): string | null => {
+  const address = value?.trim()
+  return address && /^https?:\/\/[^\s/?#]+(?:[/?#].*)?$/i.test(address) ? address : null
+}
+
+/**
  * Partners type "@casa", "casa" or paste the profile link; all three open the
  * same profile. A value that is not an Instagram handle opens nothing rather
  * than an arbitrary address.

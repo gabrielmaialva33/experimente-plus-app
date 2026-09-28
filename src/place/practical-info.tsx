@@ -105,6 +105,9 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
   const colors = useColors()
   const [week, setWeek] = useState(false)
   const today = useCityToday(detail.city.timezone)
+  // With large text a day's hours go under its name: beside it, a split day
+  // ("11:00 às 15:00 e 18:00 às 23:00") squeezed "Segunda a sexta" into syllables.
+  const stacked = useStackedLayout()
 
   if (detail.availability_type === 'appointment_only') {
     return (
@@ -162,6 +165,7 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
                 testID={`hours-${group.label}`}
                 style={[
                   styles.day,
+                  stacked && styles.dayStacked,
                   current && {
                     backgroundColor: colors.temporalEmphasis,
                     borderColor: colors.temporalEmphasisBorder,
@@ -180,6 +184,7 @@ function Hours({ detail }: { detail: EstablishmentDetail }) {
                 <Text
                   style={[
                     styles.meta,
+                    !stacked && styles.dayHours,
                     { color: current ? colors.temporalEmphasisForeground : colors.mutedForeground },
                   ]}
                 >
@@ -255,5 +260,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
   },
+  dayStacked: { flexDirection: 'column', gap: 0 },
   dayLabel: { ...typography.meta, ...textWeight('600'), flexShrink: 1 },
+  // Beside the day, the hours keep to their own side of the line and wrap there.
+  dayHours: { flexShrink: 1, textAlign: 'right' },
 })

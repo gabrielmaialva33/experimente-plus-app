@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native'
+import { act, fireEvent, render } from '@testing-library/react-native'
 import { AccessibilityInfo } from 'react-native'
 
 import InterestsScreen from '@/app/conta/interesses'
@@ -142,12 +142,59 @@ describe('favourites', () => {
     await fireEvent.press(
       view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' })
     )
-    expect(mutate).toHaveBeenLastCalledWith(false)
+    expect(mutate).toHaveBeenLastCalledWith(false, expect.any(Object))
     expect(view.getByRole('alert')).toHaveTextContent(/Ateliê do Café removido dos favoritos/)
 
     await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
     expect(mutate).toHaveBeenLastCalledWith(true)
     expect(view.queryByTestId('undo-bar')).toBeNull()
+  })
+
+  it('takes the "Desfazer" away when the server refuses the removal', async () => {
+    const mutate = jest.fn()
+    queries.useToggleSaved.mockReturnValue(idle({ mutate }))
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        data: [
+          { id: 1, establishment: card(7, 'Ateliê do Café'), created_at: '2026-09-23T12:00:00Z' },
+        ],
+        unavailable: 0,
+      },
+    })
+
+    const view = await render(<FavoritesScreen />)
+    await fireEvent.press(
+      view.getByRole('button', { name: 'Remover dos favoritos: Ateliê do Café' })
+    )
+    expect(view.getByTestId('undo-bar')).toBeOnTheScreen()
+    await act(async () => mutate.mock.calls[0][1].onError(new Error('refused')))
+    expect(view.queryByTestId('undo-bar')).toBeNull()
+    expect(view.getByText('Ateliê do Café')).toBeOnTheScreen()
+  })
+
+  it('asks again for the experiences and events on a pull', async () => {
+    const places = jest.fn(() => Promise.resolve())
+    const content = jest.fn(() => Promise.resolve())
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [], unavailable: 0 },
+      refetch: places,
+    })
+    queries.useSavedContent.mockReturnValue({
+      isPending: false,
+      data: { data: [], unavailable: 0 },
+      refetch: content,
+    })
+
+    const view = await render(<FavoritesScreen />)
+    let scroll = view.getByRole('header', { name: 'Lugares' }).parent
+    while (scroll && scroll.type !== 'RCTScrollView') scroll = scroll.parent
+    await act(async () => scroll?.props.refreshControl.props.onRefresh())
+    expect(places).toHaveBeenCalledTimes(1)
+    expect(content).toHaveBeenCalledTimes(1)
   })
 
   // Audit A34: an empty list is not a dead end.
@@ -207,8 +254,9 @@ describe('content favourites', () => {
     const headers = view.getAllByRole('header').map((header) => header.props.children)
     expect(headers.indexOf('Lugares')).toBeLessThan(headers.indexOf('Experiências e eventos'))
     expect(view.getByTestId('content-unavailable').props.children).toMatch(/^1 item salvo/)
+    // The place opens on the item itself (audit A14), not at its top.
     await fireEvent.press(view.getByLabelText('Noite de jazz, Ateliê do Café'))
-    expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7')
+    expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-7?destaque=event-21')
   })
 
   it('removes a content favourite under its route kind', async () => {
@@ -240,9 +288,24 @@ describe('content favourites', () => {
     const view = await render(<FavoritesScreen />)
     await fireEvent.press(view.getByTestId('unsave-content-experience-31'))
 
-    expect(mutate).toHaveBeenCalledWith({ kind: 'experiences', id: 31, save: false })
+    expect(mutate).toHaveBeenCalledWith(
+      { kind: 'experiences', id: 31, save: false },
+      expect.any(Object)
+    )
     await fireEvent.press(view.getByRole('button', { name: 'Desfazer' }))
     expect(mutate).toHaveBeenLastCalledWith({ kind: 'experiences', id: 31, save: true })
+  })
+
+  it('says the experiences and events could not load, instead of leaving them out', async () => {
+    savedPlaces()
+    const refetch = jest.fn()
+    queries.useSavedContent.mockReturnValue({ isPending: false, isError: true, refetch })
+
+    const view = await render(<FavoritesScreen />)
+
+    expect(view.getByTestId('content-favorites-failed')).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -330,6 +393,48 @@ describe('interests', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/conta/cidade')
     cityStore.useSelectedCity.mockReturnValue('londrina')
+  })
+
+  // Saving replaces the whole set: a form without the saved one would erase it.
+  it('offers another try instead of an empty form when the interests fail to load', async () => {
+    const refetch = jest.fn()
+    queries.useInterests.mockReturnValue({ isPending: false, isError: true, refetch })
+    catalog.useCategories.mockReturnValue({
+      isPending: false,
+      data: { categories: [{ slug: 'cafes', name: 'Cafés' }] },
+    })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.queryByTestId('interest-cafes')).toBeNull()
+    expect(view.queryByTestId('save-interests')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers another try when the city’s categories fail to load', async () => {
+    const refetch = jest.fn()
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, isError: true, refetch })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(view.queryByTestId('save-interests')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('leads to another city when this one has no categories yet', async () => {
+    queries.useInterests.mockReturnValue({ isPending: false, isError: false, data: { data: [] } })
+    catalog.useCategories.mockReturnValue({ isPending: false, data: { categories: [] } })
+
+    const view = await render(<InterestsScreen />)
+
+    expect(
+      view.getByRole('header', { name: 'Ainda não há categorias nesta cidade' })
+    ).toBeOnTheScreen()
+    await fireEvent.press(view.getByRole('button', { name: 'Escolher outra cidade' }))
+    expect(mockPush).toHaveBeenCalledWith('/conta/cidade')
   })
 
   it('does not offer to save when nothing changed', async () => {
@@ -467,6 +572,70 @@ describe('itinerary', () => {
     expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
       'Sorveteria da Praça adicionado ao roteiro.'
     )
+  })
+
+  it.each(['abc', '0', '5.5', '-5'])(
+    'answers a malformed id (%s) as not found, never as an endless skeleton',
+    async (id) => {
+      router.useLocalSearchParams.mockReturnValue({ id })
+      // The query an invalid id leaves disabled is pending for ever.
+      queries.useItinerary.mockReturnValue({ isPending: true, data: undefined })
+
+      const view = await render(<ItineraryScreen />)
+
+      expect(queries.useItinerary).toHaveBeenCalledWith(null)
+      expect(view.queryByRole('progressbar')).toBeNull()
+      expect(view.getByText('Este roteiro não foi encontrado')).toBeTruthy()
+    }
+  )
+
+  it('offers another try when the itinerary could not be loaded', async () => {
+    const refetch = jest.fn()
+    queries.useItinerary.mockReturnValue({
+      isPending: false,
+      isError: true,
+      error: new TypeError('Network request failed'),
+      data: undefined,
+      refetch,
+    })
+
+    const view = await render(<ItineraryScreen />)
+
+    expect(view.queryByText('Este roteiro não foi encontrado')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('says so when deleting the itinerary fails, keeping the confirmation', async () => {
+    queries.useDeleteItinerary.mockReturnValue(idle({ isError: true }))
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByTestId('delete-itinerary'))
+
+    expect(view.getByTestId('delete-itinerary-failure')).toHaveTextContent(
+      'Não foi possível excluir o roteiro agora.'
+    )
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Não foi possível excluir o roteiro agora.'
+    )
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('offers another try when the favourites to add could not be loaded', async () => {
+    const refetch = jest.fn()
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: true,
+      data: undefined,
+      refetch,
+    })
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar lugar' }))
+
+    expect(view.getByText('Não foi possível carregar seus favoritos agora.')).toBeTruthy()
+    await fireEvent.press(view.getByTestId('retry-favorites'))
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 
   it('says so when the itinerary is not the caller’s or does not exist', async () => {

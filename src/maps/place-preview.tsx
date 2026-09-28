@@ -9,7 +9,7 @@ import { IconButton } from '@/components/icon-button'
 import { OperatingStatus } from '@/components/operating-status'
 import { RemoteImage } from '@/components/remote-image'
 import { useLineCap } from '@/theme/font-scale'
-import { radius, spacing, textWeight, typography } from '@/theme/tokens'
+import { palette, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const THUMB = 88
@@ -108,7 +108,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 6,
     overflow: 'hidden',
-    shadowColor: '#000000',
+    // The same near-black in either theme: a shadow over the map, never a surface.
+    shadowColor: palette.light.scrim,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 12,

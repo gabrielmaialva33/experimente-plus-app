@@ -10,7 +10,7 @@ import { GoogleMapRenderer } from '@/maps/google-map'
 import { MapLibreRenderer } from '@/maps/maplibre-map'
 import { PlacePreview } from '@/maps/place-preview'
 import { toPins } from '@/maps/types'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { palette, radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 interface Props {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   // Above the map's credit line and its logo, which stay in sight.
   preview: { bottom: PREVIEW_BOTTOM, position: 'absolute' },
   help: {
-    backgroundColor: '#ffffff',
+    backgroundColor: palette.light.surfaceRaised,
     borderRadius: radius.pill,
     elevation: 4,
     position: 'absolute',

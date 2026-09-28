@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet } from 'react-native'
 
-import { minTouch, radius } from '@/theme/tokens'
+import { minTouch, palette, radius } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 interface IconButtonProps {
@@ -30,7 +30,12 @@ export function IconButton({
   const colors = useColors()
   const appearance = {
     surface: { background: colors.card, border: colors.borderSubtle, foreground: colors.primary },
-    image: { background: '#ffffff', border: '#ffffff', foreground: '#13467c' },
+    // Over a photo, in either theme: the light card and the brand navy, like the map's controls.
+    image: {
+      background: palette.light.surfaceRaised,
+      border: palette.light.surfaceRaised,
+      foreground: palette.light.primary,
+    },
     chrome: {
       background: colors.chromeRaised,
       border: colors.chromeRaised,

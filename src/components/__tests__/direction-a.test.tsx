@@ -75,6 +75,25 @@ it('draws icon buttons as 44-unit circles that say what they do', async () => {
   })
 })
 
+// A photo is no lighter in the dark theme: the control over it keeps the light card.
+it('keeps an icon button over a photo white with the brand navy in either theme', async () => {
+  theme.useColors.mockReturnValue(palette.dark)
+  const view = await render(
+    <IconButton
+      icon="share-outline"
+      accessibilityLabel="Compartilhar"
+      tone="image"
+      onPress={jest.fn()}
+    />
+  )
+  expect(view.getByRole('button', { name: 'Compartilhar' })).toHaveStyle({
+    backgroundColor: '#ffffff',
+    borderColor: '#ffffff',
+  })
+  // Ionicons is mocked as the host element `Icon`.
+  expect(JSON.stringify(view.toJSON())).toContain('"color":"#13467c"')
+})
+
 it('offers a clear control only once there is a term, and it empties the field', async () => {
   const change = jest.fn()
   const view = await render(

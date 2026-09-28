@@ -12,6 +12,7 @@ import { RetryPurchase, price, usageWindow } from '@/purchases/components'
 import { productKey, productLabel, productRoute } from '@/purchases/products'
 import { ORDER_COPY, orderState, type OrderState } from '@/purchases/order-state'
 import { usePurchaseEditions, usePurchases } from '@/purchases/queries'
+import { useStackedLayout } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -102,6 +103,7 @@ export default function PurchaseEditionsScreen() {
  */
 function ProductCard({ product, onPress }: { product: PurchaseProduct; onPress: () => void }) {
   const colors = useColors()
+  const stacked = useStackedLayout()
   const offers = product.snapshot.offers
   const amount = price(product.amount_cents, product.currency)
   const window = usageWindow(product.snapshot, product.city?.timezone ?? undefined)
@@ -141,7 +143,10 @@ function ProductCard({ product, onPress }: { product: PurchaseProduct; onPress: 
           Use até {window.useUntil}
         </Text>
       </View>
-      <View style={styles.footer}>
+      <View
+        testID={`product-footer-${productKey(product)}`}
+        style={[styles.footer, stacked && styles.footerStacked]}
+      >
         <Text style={[styles.price, { color: colors.foreground }]}>{amount}</Text>
         <View style={styles.go}>
           <Text style={[styles.goLabel, { color: colors.primary }]}>Ver detalhes</Text>
@@ -196,15 +201,19 @@ const styles = StyleSheet.create({
   name: typography.heading,
   line: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   meta: { ...typography.meta, flex: 1 },
-  // "Ver detalhes" goes under the price when the two no longer share a line (at large
-  // text they ran into each other and past the card's edge).
+  // Price and "Ver detalhes" share a line at the drawn size. From the "Large" text step
+  // they stack, instead of wrapping wherever the amount happens to end.
   footer: {
     alignItems: 'center',
     columnGap: spacing.md,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginTop: spacing.sm,
+  },
+  footerStacked: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
   },
   price: { ...typography.title, fontSize: 22, lineHeight: 26 },
   go: { alignItems: 'center', flexDirection: 'row', gap: 2, minHeight: 44 },

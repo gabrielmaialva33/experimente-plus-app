@@ -341,6 +341,55 @@ it('uses expires_at, expires without extension, and requests a NEW presentation 
   client.clear()
 })
 
+// A phone whose clock runs behind the server's would read expires_at as later
+// than it is: the countdown is capped by the duration the server gave.
+it('never counts past the server deadline when the device clock runs behind', async () => {
+  jest.useFakeTimers()
+  api.createPresentation.mockImplementation(async () => ({
+    ...presentation(),
+    expires_at: new Date(Date.now() + 600_000).toISOString(),
+    expires_in_seconds: 300,
+  }))
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByLabelText('Código temporário do benefício')
+  expect(view.getByText('Válido por 5:00')).toBeTruthy()
+  expect(view.getByLabelText('Válido por 5 minutos')).toBeTruthy()
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(300_100)
+  })
+  expect(view.getByText('Expirado')).toBeTruthy()
+  expect(view.queryByLabelText('Código temporário do benefício')).toBeNull()
+  await view.unmount()
+  client.clear()
+})
+
+// The wallet is polled while the code shows, so a hold can take it away; the
+// poll itself must not blank the code in front of the partner's camera.
+it('keeps the code on screen while the wallet is polled in the background', async () => {
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByLabelText('Código temporário do benefício')
+  let finish!: (value: Wallet) => void
+  api.getWallet.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      })
+  )
+  await act(async () => {
+    void client.invalidateQueries({ queryKey: ['wallet'] })
+    // The query layer tells observers on the next macrotask.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  })
+  expect(client.isFetching({ queryKey: ['wallet'] })).toBe(1)
+  expect(view.getByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(view.queryByRole('progressbar')).toBeNull()
+  await act(async () => finish(wallet))
+  expect(view.getByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
+  await view.unmount()
+  client.clear()
+})
+
 it.each(['focus', 'reconnect'])(
   'repeats preview with the same token on %s, retaining the current preview until the response',
   async (trigger) => {

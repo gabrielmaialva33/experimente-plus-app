@@ -200,11 +200,22 @@ it('explains a held presentation through the manual’s wallet section', async (
   expect(api.createPresentation).not.toHaveBeenCalled()
 })
 
-it('does not create a presentation when the fresh wallet cannot be read', async () => {
+it('does not create a presentation when the fresh wallet cannot be read, and offers to check again', async () => {
   api.getWallet.mockRejectedValue(new Error('offline'))
   const view = await page(<PresentScreen />)
-  expect(await view.findByText(/Não é possível apresentar/)).toBeOnTheScreen()
+  expect(await view.findByText(/Não foi possível conferir o benefício agora/)).toBeOnTheScreen()
   expect(api.createPresentation).not.toHaveBeenCalled()
+
+  // A failed read says nothing about the benefit: once it reads, the code is made.
+  api.getWallet.mockResolvedValue(wallet)
+  api.createPresentation.mockResolvedValue({
+    expires_at: new Date(Date.now() + 300_000).toISOString(),
+    qr_data_url: 'data:image/png;base64,test',
+    benefit: { offer_title: 'Benefício', establishment_name: 'Café', terms: null },
+  })
+  await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+  expect(await view.findByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
 })
 
 it('removes an already displayed code when a fresh wallet reports a hold', async () => {

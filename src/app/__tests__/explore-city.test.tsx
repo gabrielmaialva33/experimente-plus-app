@@ -1,4 +1,5 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native'
+import { FlatList } from 'react-native'
 
 import ExploreScreen from '@/app/(tabs)/index'
 
@@ -235,4 +236,41 @@ it('does not redraw the cards on screen while the person types', async () => {
   await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'caf')
   await fireEvent.press(view.getByRole('button', { name: 'Cidade: Londrina. Trocar cidade' }))
   expect(mockCardRenders).toHaveLength(drawn)
+})
+
+// Establishment slugs are unique within a city only (`tenant, city, slug`).
+it('counts an impression once per place, telling apart same-named places of two cities', async () => {
+  const { track } = jest.requireMock('@/analytics/events') as { track: jest.Mock }
+  const original = FlatList.prototype.render
+  let feed: FlatList['props'] | null = null
+  const spy = jest.spyOn(FlatList.prototype, 'render').mockImplementation(function (
+    this: FlatList
+  ) {
+    feed = this.props
+    return original.call(this)
+  })
+  try {
+    const view = await render(<ExploreScreen />)
+    const seen = (slug: string) =>
+      act(async () =>
+        feed?.onViewableItemsChanged?.({
+          viewableItems: [{ key: slug, item: null, index: 0, isViewable: true }],
+          changed: [],
+        })
+      )
+
+    await seen('centro')
+    await seen('centro')
+    cityStore.useSelectedCity.mockReturnValue('cambe')
+    await view.rerender(<ExploreScreen />)
+    await seen('centro')
+
+    const impressions = track.mock.calls.filter(([type]) => type === 'catalog_impression')
+    expect(impressions).toEqual([
+      ['catalog_impression', { city_slug: 'londrina', establishment_slug: 'centro' }],
+      ['catalog_impression', { city_slug: 'cambe', establishment_slug: 'centro' }],
+    ])
+  } finally {
+    spy.mockRestore()
+  }
 })

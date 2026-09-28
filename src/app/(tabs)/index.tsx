@@ -228,17 +228,18 @@ export default function ExploreScreen() {
     selectedCityRef.current = selectedCity
   }, [selectedCity])
 
-  // A result impression is only counted once per establishment per session.
+  // A result impression is only counted once per establishment per session. A slug
+  // is unique within its city only, so the city is part of what was seen.
   const seen = useRef(new Set<string>())
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: { key: string }[] }) => {
+      const city = selectedCityRef.current
+      if (!city) return
       viewableItems.forEach(({ key }) => {
-        if (!selectedCityRef.current || seen.current.has(key)) return
-        seen.current.add(key)
-        track('catalog_impression', {
-          city_slug: selectedCityRef.current,
-          establishment_slug: key,
-        })
+        const place = `${city}/${key}`
+        if (seen.current.has(place)) return
+        seen.current.add(place)
+        track('catalog_impression', { city_slug: city, establishment_slug: key })
       })
     },
     []

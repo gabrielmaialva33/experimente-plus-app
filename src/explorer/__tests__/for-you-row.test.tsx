@@ -175,4 +175,6 @@ it('asks again once the interests are saved', async () => {
   })
 
   await waitFor(() => expect(api.listForYou).toHaveBeenCalledTimes(2))
+  // The refetch lands after the call: let it settle inside act.
+  await act(async () => {})
 })

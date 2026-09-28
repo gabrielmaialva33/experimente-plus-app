@@ -15,6 +15,8 @@ import { useColors } from '@/theme/use-colors'
 import { extractPresentationToken } from '@/wallet/presentation-token'
 
 const REJECTED = 'Este código não é uma apresentação válida. Peça um novo ao cliente.'
+const CAMERA_FAILED =
+  'Não foi possível abrir a câmera. Feche outros aplicativos que a estejam usando e tente de novo.'
 
 const VALIDATE_HELP = { topic: 'validate', label: 'Como validar' } as const
 
@@ -33,9 +35,14 @@ export default function ValidateScreen() {
   const [permission, requestPermission, getPermission] = useCameraPermissions()
   const [rejected, setRejected] = useState(false)
   const [active, setActive] = useState(false)
+  // A camera that could not start (in use elsewhere, a driver failure) says so
+  // instead of leaving a black viewfinder; each new attempt mounts a new view.
+  const [cameraFailed, setCameraFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const handled = useRef(false)
+  const status = cameraFailed ? CAMERA_FAILED : rejected ? REJECTED : null
   // The status box below is a live region Android speaks as it changes; iOS is told here.
-  useAnnouncement(rejected && REJECTED, { spokenByLiveRegion: true })
+  useAnnouncement(status, { spokenByLiveRegion: true })
 
   // Coming back from the system settings: read the camera permission again.
   useEffect(() => {
@@ -52,6 +59,7 @@ export default function ValidateScreen() {
     useCallback(() => {
       handled.current = false
       setRejected(false)
+      setCameraFailed(false)
       setActive(true)
       return () => setActive(false)
     }, [])
@@ -131,12 +139,14 @@ export default function ValidateScreen() {
       <View style={styles.viewfinder}>
         {/* Unmounted when the screen loses focus: a camera running behind a
             pushed screen keeps scanning and keeps costing battery. */}
-        {active ? (
+        {active && !cameraFailed ? (
           <CameraView
+            key={attempt}
             style={styles.camera}
             facing="back"
             barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
             onBarcodeScanned={onScanned}
+            onMountError={() => setCameraFailed(true)}
           />
         ) : (
           <View style={styles.camera} />
@@ -150,7 +160,7 @@ export default function ValidateScreen() {
           <View
             style={[
               styles.frame,
-              { borderColor: rejected ? colors.warning : colors.chromeForeground },
+              { borderColor: status ? colors.warning : colors.chromeForeground },
             ]}
           />
         </View>
@@ -163,24 +173,36 @@ export default function ValidateScreen() {
           accessibilityLiveRegion="polite"
           style={[
             styles.status,
-            { backgroundColor: rejected ? colors.warningSoft : colors.primarySoft },
+            { backgroundColor: status ? colors.warningSoft : colors.primarySoft },
           ]}
         >
           <Ionicons
-            name={rejected ? 'alert-circle-outline' : 'scan-outline'}
+            name={status ? 'alert-circle-outline' : 'scan-outline'}
             size={20}
-            color={rejected ? colors.warningAccent : colors.primaryAccent}
+            color={status ? colors.warningAccent : colors.primaryAccent}
             {...decorative}
           />
           <Text
             style={[
               styles.statusText,
-              { color: rejected ? colors.warningAccent : colors.primaryAccent },
+              { color: status ? colors.warningAccent : colors.primaryAccent },
             ]}
           >
-            {rejected ? REJECTED : 'Aponte para o código que o cliente está mostrando.'}
+            {status ?? 'Aponte para o código que o cliente está mostrando.'}
           </Text>
         </View>
+        {cameraFailed ? (
+          <Button
+            label="Tentar de novo"
+            variant="outline"
+            size={44}
+            icon="refresh"
+            onPress={() => {
+              setCameraFailed(false)
+              setAttempt((value) => value + 1)
+            }}
+          />
+        ) : null}
         {/* Secondary ways out share one line, so the viewfinder keeps its height. */}
         <View style={styles.links}>
           <HistoryLink />

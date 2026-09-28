@@ -216,3 +216,23 @@ describe('filters across cities', () => {
     )
   })
 })
+
+it('does not redraw the cards on screen while the person types', async () => {
+  queries.useSearch.mockReturnValue({
+    data: {
+      organic: [
+        { slug: 'cafe', name: 'Café da Praça', address: {}, business_status: 'open' },
+        { slug: 'bar', name: 'Bar do Centro', address: {}, business_status: 'open' },
+      ],
+      meta: { total: 2 },
+    },
+    refetch: jest.fn(),
+  })
+  const view = await render(<ExploreScreen />)
+  expect(view.getByText('Café da Praça')).toBeOnTheScreen()
+  const drawn = mockCardRenders.length
+
+  await fireEvent.changeText(view.getByPlaceholderText('Buscar lugares'), 'caf')
+  await fireEvent.press(view.getByRole('button', { name: 'Cidade: Londrina. Trocar cidade' }))
+  expect(mockCardRenders).toHaveLength(drawn)
+})

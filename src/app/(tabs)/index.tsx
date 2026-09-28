@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRouter } from 'expo-router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -37,6 +37,40 @@ import { useColors } from '@/theme/use-colors'
 const MAX_TERM_LENGTH = 120
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
+
+const placeKey = (item: EstablishmentSummary) => item.slug
+
+/** An impression counts once most of a card is on screen. */
+const VIEWABILITY = { itemVisiblePercentThreshold: 60 }
+
+/**
+ * One place of the feed: a grid cell `width` wide, or the phone's column between
+ * `left` and `right`. Memoised, with a stable `renderItem`, so typing in the
+ * search or opening the cities does not redraw the cards already on screen.
+ */
+const PlaceCell = memo(function PlaceCell({
+  establishment,
+  width,
+  left,
+  right,
+  onOpen,
+}: {
+  establishment: EstablishmentSummary
+  width: number | null
+  left: number
+  right: number
+  onOpen: (slug: string) => void
+}) {
+  return (
+    <View style={width != null ? { width } : { paddingLeft: left, paddingRight: right }}>
+      <EstablishmentCard
+        establishment={establishment}
+        onPress={() => onOpen(establishment.slug)}
+        style={width != null ? styles.gridCard : undefined}
+      />
+    </View>
+  )
+})
 
 export default function ExploreScreen() {
   const colors = useColors()
@@ -221,6 +255,27 @@ export default function ExploreScreen() {
   const openEstablishment = useCallback(
     (slug: string) => router.push(`/estabelecimento/${selectedCity}/${slug}`),
     [router, selectedCity]
+  )
+
+  // Stable while nothing about the grid changes: a new `renderItem` or row style
+  // would redraw every card on screen at each letter typed in the search.
+  const grid = columns > 1
+  const { left: frameLeft, right: frameRight } = frame
+  const columnWrapperStyle = useMemo(
+    () => (grid ? [styles.row, { paddingLeft: frameLeft, paddingRight: frameRight }] : undefined),
+    [grid, frameLeft, frameRight]
+  )
+  const renderPlace = useCallback(
+    ({ item }: { item: EstablishmentSummary }) => (
+      <PlaceCell
+        establishment={item}
+        width={grid ? columnWidth : null}
+        left={frameLeft}
+        right={frameRight}
+        onOpen={openEstablishment}
+      />
+    ),
+    [grid, columnWidth, frameLeft, frameRight, openEstablishment]
   )
 
   const results = search.data?.organic ?? []
@@ -521,10 +576,10 @@ export default function ExploreScreen() {
               // lays it out afresh.
               key={`columns-${columns}`}
               numColumns={columns}
-              columnWrapperStyle={columns > 1 ? [styles.row, frame.padding] : undefined}
+              columnWrapperStyle={columnWrapperStyle}
               style={styles.fill}
               data={feedback ? [] : results}
-              keyExtractor={(item) => item.slug}
+              keyExtractor={placeKey}
               keyboardShouldPersistTaps="handled"
               onScroll={onFeedScroll}
               scrollEventThrottle={16}
@@ -560,16 +615,8 @@ export default function ExploreScreen() {
                 )
               }
               onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-              renderItem={({ item }) => (
-                <View style={columns > 1 ? { width: columnWidth } : frame.padding}>
-                  <EstablishmentCard
-                    establishment={item}
-                    onPress={() => openEstablishment(item.slug)}
-                    style={columns > 1 ? styles.gridCard : undefined}
-                  />
-                </View>
-              )}
+              viewabilityConfig={VIEWABILITY}
+              renderItem={renderPlace}
             />
           </View>
         )}

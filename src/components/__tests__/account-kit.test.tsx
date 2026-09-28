@@ -17,6 +17,8 @@ beforeEach(() => theme.useColors.mockReturnValue(palette.light))
 
 describe('TextField', () => {
   it('keeps its label while typing and puts the error on the field', async () => {
+    const announced = AccessibilityInfo.announceForAccessibility as jest.Mock
+    announced.mockClear()
     const change = jest.fn()
     const view = await render(
       <TextField
@@ -28,8 +30,14 @@ describe('TextField', () => {
     )
     expect(view.getByText('E-mail')).toBeOnTheScreen()
     const input = view.getByLabelText('E-mail')
+    // Read with the field it concerns, and drawn under it in the error colour.
     expect(input.props.accessibilityHint).toBe('Informe um e-mail válido.')
-    expect(view.getByRole('alert')).toHaveTextContent('Informe um e-mail válido.')
+    const message = view.getByText('Informe um e-mail válido.')
+    expect(message).toHaveStyle({ color: palette.light.destructiveAccent })
+    // The screen that set it says it once; the text itself is no second announcement.
+    expect(view.queryByRole('alert')).toBeNull()
+    expect(message.props.accessibilityLiveRegion).toBeUndefined()
+    expect(announced).not.toHaveBeenCalled()
     await fireEvent.changeText(input, 'ana@example.com')
     expect(change).toHaveBeenCalledWith('ana@example.com')
   })

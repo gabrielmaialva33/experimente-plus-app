@@ -5,7 +5,7 @@ import type {
   PurchaseProduct,
 } from '@/api/purchases'
 import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, waitFor, within } from '@testing-library/react-native'
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import { Linking } from 'react-native'
 
@@ -374,6 +374,8 @@ it('keeps the last answer on a failed refresh and says it may be old, never that
 
 it('says a first load waits for the connection instead of loading forever', async () => {
   const { onlineManager } = jest.requireActual('@tanstack/react-query')
+  // Coming back online re-renders the screen: outside `act`, React warned about it.
+  const reactWarning = jest.spyOn(console, 'error')
   queries.usePurchaseEditions.mockReturnValue({ isPending: true })
   queries.usePurchases.mockReturnValue({ isPending: true })
   onlineManager.setOnline(false)
@@ -381,9 +383,17 @@ it('says a first load waits for the connection instead of loading forever', asyn
     const view = await page(<EditionsScreen />)
     expect(view.queryByText('Carregando produtos…')).toBeNull()
     expect(view.getAllByText(/^Sem conexão com a internet\./)).toHaveLength(2)
+
+    // Back online, the same first load reads as loading again.
+    await act(async () => onlineManager.setOnline(true))
+    expect(view.getByText('Carregando produtos…')).toBeOnTheScreen()
+    expect(view.getByText('Carregando pedidos…')).toBeOnTheScreen()
+    expect(view.queryByText(/^Sem conexão com a internet\./)).toBeNull()
   } finally {
+    // Only a test that failed before coming back online leaves anything to restore.
     onlineManager.setOnline(true)
   }
+  expect(reactWarning).not.toHaveBeenCalled()
 })
 
 it('renders an empty public catalog as an empty state, while keeping existing orders accessible', async () => {

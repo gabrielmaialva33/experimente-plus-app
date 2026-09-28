@@ -35,6 +35,34 @@ interface SessionValue {
 
 const SessionContext = createContext<SessionValue | null>(null)
 
+/**
+ * How long the context may take. The splash waits for this read at start-up,
+ * and a request that never answered (a captive portal, a dead link that still
+ * reads as connected) held the app behind it with no way out. Past this the
+ * session settles on `unavailable`, which keeps the credential and already
+ * offers a new attempt, on reconnection, on return to the app or by hand.
+ */
+export const CONTEXT_TIMEOUT_MS = 10_000
+
+/**
+ * The context, given up after `CONTEXT_TIMEOUT_MS`. Only its own request is
+ * aborted: a renewal it waits on belongs to the serialized session queue and
+ * runs to the end, since abandoning one the server may already have rotated
+ * would lose the pair. Settling by the clock, not by the abort, is what bounds
+ * the wait while such a renewal is still out.
+ */
+function readContext(): Promise<MobileContext> {
+  const controller = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort()
+      reject(new Error('context read timed out'))
+    }, CONTEXT_TIMEOUT_MS)
+  })
+  return Promise.race([getContext(controller.signal), expired]).finally(() => clearTimeout(timer))
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('loading')
   const [context, setContext] = useState<MobileContext | null>(null)
@@ -55,14 +83,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setStatus('anonymous')
         return
       }
-      const next = await getContext()
+      const next = await readContext()
       if (version !== generation.current) return
       setContext(next)
       setStatus('authenticated')
     } catch (error) {
       if (version !== generation.current) return
       setContext(null)
-      // Network/rule failures must not discard a still-valid refresh credential.
+      // Network/rule failures and timeouts must not discard a still-valid refresh credential.
       if (error instanceof SessionExpiredError) {
         // Credential disposal belongs to the serialized session layer, which
         // knows whether the rejected pair has already been replaced.
@@ -78,14 +106,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = subscribeSessionEvents((event) => {
       if (closing.current && event !== 'expired') return
-      if (event === 'context-invalidated' && (changing.current || revalidating.current)) return
+      if (event === 'context-invalidated') {
+        // A 403 refuses one request; it is not a change of person. The session
+        // keeps the state and the context the tabs and the open screens were
+        // composed from while the context is asked again, and the answer then
+        // applies what changed: Validar goes if the capability went, and a
+        // credential the server rejects still ends the session. Dropping to
+        // `loading` here swapped the tabs for a visitor's and sent the person
+        // to Explorar on every refusal.
+        if (changing.current || revalidating.current) return
+        revalidating.current = true
+        void load()
+        return
+      }
       if (event === 'operation-changing') changing.current = true
       if (event === 'operation-settled' || event === 'expired') changing.current = false
       generation.current += 1
       revalidating.current = false
       setContext(null)
       setStatus(event === 'expired' ? 'anonymous' : 'loading')
-      if (event === 'context-invalidated' || event === 'operation-settled') {
+      if (event === 'operation-settled') {
         revalidating.current = true
         void load()
       }
@@ -165,7 +205,8 @@ export function useSession(): SessionValue {
  *
  * While the context is loading every partner capability reads as false, so a
  * privileged area is mounted only after the server has granted it — never
- * rendered and then hidden. `partner.enabled` alone never composes navigation:
+ * rendered and then hidden. A revalidation after a 403 keeps the last answer
+ * until the next one arrives. `partner.enabled` alone never composes navigation:
  * ADR-0022 §3 requires the specific redemption capabilities.
  */
 export function usePartnerAreas() {

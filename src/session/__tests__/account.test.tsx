@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import type { ReactElement } from 'react'
+import { AccessibilityInfo } from 'react-native'
 
 import { palette } from '@/theme/tokens'
 import type { MobileUser } from '@/api/me'
@@ -240,7 +241,13 @@ describe('profile editing', () => {
     expect(view.getByLabelText('Nome').props.accessibilityHint).toBe(
       'Informe seu nome, com até 255 caracteres.'
     )
-    expect(view.getByRole('alert')).toHaveTextContent('Informe seu nome, com até 255 caracteres.')
+    // Under the field, and said once: by the screen, not again by an alert on the text.
+    expect(view.getByText('Informe seu nome, com até 255 caracteres.')).toBeOnTheScreen()
+    expect(view.queryByRole('alert')).toBeNull()
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledTimes(1)
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Informe seu nome, com até 255 caracteres.'
+    )
     expect(api.request).not.toHaveBeenCalled()
   })
 
@@ -280,7 +287,12 @@ describe('profile editing', () => {
     await fireEvent.changeText(view.getByLabelText('Usuário'), '.ana')
     await fireEvent.press(view.getByRole('button', { name: 'Salvar alterações' }))
 
-    expect(view.getByRole('alert')).toHaveTextContent(/Comece com letra ou número/)
+    expect(view.getByText(/Comece com letra ou número/)).toBeOnTheScreen()
+    expect(view.getByLabelText('Usuário').props.accessibilityHint).toMatch(
+      /Comece com letra ou número/
+    )
+    expect(view.queryByRole('alert')).toBeNull()
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledTimes(1)
     expect(api.request).not.toHaveBeenCalled()
   })
 

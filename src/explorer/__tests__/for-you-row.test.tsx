@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Dimensions } from 'react-native'
 import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
@@ -70,6 +70,11 @@ function wrapper(client: QueryClient) {
 
 const renderRow = (client = newClient()) =>
   render(<ForYouRow citySlug="londrina" />, { wrapper: wrapper(client) })
+
+// The query layer tells its observers on a timer by default, after `act` has
+// returned; telling them at once keeps every update of the row inside it.
+beforeAll(() => notifyManager.setScheduler((notify) => notify()))
+afterAll(() => notifyManager.setScheduler((notify) => setTimeout(notify, 0)))
 
 beforeEach(() => {
   jest.clearAllMocks()

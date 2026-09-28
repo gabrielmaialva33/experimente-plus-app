@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -66,14 +66,23 @@ export function contentFrame(
   }
 }
 
-/** `contentFrame` for the current window and its safe area. */
+/**
+ * `contentFrame` for the current window and its safe area.
+ *
+ * The same object for as long as the numbers it is made of stay the same: it
+ * goes into styles, a context value and effect dependencies, and a new one on
+ * every render would undo the memoization of everything downstream.
+ */
 export function useContentFrame(
   max: number = MEASURE.readable,
   gutter: number = spacing.gutter
 ): ContentFrame {
   const { width } = useWindowDimensions()
   const { left, right } = useSafeAreaInsets()
-  return contentFrame(width, max, { left, right }, gutter)
+  return useMemo(
+    () => contentFrame(width, max, { left, right }, gutter),
+    [width, max, left, right, gutter]
+  )
 }
 
 const FrameContext = createContext<ContentFrame | null>(null)
@@ -128,11 +137,11 @@ export function cardGrid(width: number, fontScale: number): CardGrid {
   return { columns, columnWidth: Math.floor((width - GRID_GAP * (columns - 1)) / columns) }
 }
 
-/** `cardGrid` for the column of the screen this piece is drawn in. */
+/** `cardGrid` for the column of the screen this piece is drawn in; stable like the frame. */
 export function useCardGrid(): CardGrid {
   const { width } = useScreenFrame()
   const { fontScale } = useWindowDimensions()
-  return cardGrid(width, fontScale)
+  return useMemo(() => cardGrid(width, fontScale), [width, fontScale])
 }
 
 export interface FeedLayout extends CardGrid {
@@ -162,9 +171,17 @@ export function feedLayout(
   return { frame, ...cardGrid(frame.width, fontScale) }
 }
 
-/** `feedLayout` for the current window, text size and safe area. */
+/**
+ * `feedLayout` for the current window, text size and safe area. The same
+ * object, frame included, while those stay the same: Explorar hands the frame
+ * to its whole feed through `ContentFrameProvider`, and a new one on every
+ * render would render every consumer of it again.
+ */
 export function useFeedLayout(): FeedLayout {
   const { width, fontScale } = useWindowDimensions()
   const { left, right } = useSafeAreaInsets()
-  return feedLayout(width, fontScale, { left, right })
+  return useMemo(
+    () => feedLayout(width, fontScale, { left, right }),
+    [width, fontScale, left, right]
+  )
 }

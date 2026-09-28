@@ -17,6 +17,7 @@ jest.mock('react-native-mmkv', () => ({
 }))
 
 let signUp: typeof import('../auth').signUp
+let signIn: typeof import('../auth').signIn
 
 const body: SignUpRequest = {
   full_name: 'Ana Silva',
@@ -51,6 +52,7 @@ beforeEach(() => {
   mockStore.clear()
   jest.clearAllMocks()
   signUp = require('../auth').signUp
+  signIn = require('../auth').signIn
 })
 afterEach(() => jest.restoreAllMocks())
 
@@ -103,4 +105,103 @@ it('does not retry or store credentials after a network failure', async () => {
   await expect(signUp(body)).rejects.toThrow('offline')
   expect(fetchMock).toHaveBeenCalledTimes(1)
   expect(mockStore.size).toBe(0)
+})
+
+describe('a pair the device still held', () => {
+  const signedIn = {
+    id: 1,
+    full_name: 'Ana Silva',
+    email: 'ana@example.com',
+    username: null,
+    auth: response.auth,
+  }
+  const holdPreviousPair = () => {
+    mockStore.set('ep.access_token', 'old-access')
+    mockStore.set('ep.refresh_token', 'old-refresh')
+    mockStore.set('ep.access_expires_at', '1')
+  }
+  const call = (fetchMock: jest.SpyInstance, index: number) => {
+    const [url, init] = fetchMock.mock.calls[index] as [string, RequestInit]
+    return { url, init, headers: init.headers as Record<string, string> }
+  }
+
+  // Signing in from the notice of a session that could not load overwrote the
+  // stored pair and left its refresh token valid for its whole lifetime.
+  it('is revoked once a sign-in replaces it, with nothing of the new pair and without waiting', async () => {
+    holdPreviousPair()
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(signedIn), { status: 200 }))
+      // The revocation never answers: the new session does not wait for it.
+      .mockImplementationOnce(() => new Promise(() => {}))
+
+    await expect(signIn('ana', 'test-password')).resolves.toMatchObject({ id: 1 })
+
+    expect(mockStore.get('ep.access_token')).toBe('test-access')
+    expect(mockStore.get('ep.refresh_token')).toBe('test-refresh')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const revoke = call(fetchMock, 1)
+    expect(revoke.url).toBe(apiUrl('/api/v1/sessions/logout'))
+    expect(revoke.init.method).toBe('POST')
+    expect(revoke.init.body).toBe(JSON.stringify({ refresh_token: 'old-refresh' }))
+    expect(revoke.headers).not.toHaveProperty('authorization')
+    expect(JSON.stringify(revoke.init)).not.toMatch(/test-access|test-refresh/)
+  })
+
+  it('does not hold up or fail the sign-in when the revocation fails', async () => {
+    holdPreviousPair()
+    jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(signedIn), { status: 200 }))
+      .mockRejectedValueOnce(new TypeError('offline'))
+
+    await expect(signIn('ana', 'test-password')).resolves.toMatchObject({ id: 1 })
+    expect(mockStore.get('ep.refresh_token')).toBe('test-refresh')
+  })
+
+  it('is kept, and nothing is revoked, when the sign-in is refused', async () => {
+    holdPreviousPair()
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ errors: [] }), { status: 400 }))
+
+    await expect(signIn('ana', 'wrong-password')).rejects.toMatchObject({ status: 400 })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(mockStore.get('ep.refresh_token')).toBe('old-refresh')
+  })
+
+  it('is revoked when a registration replaces it too', async () => {
+    holdPreviousPair()
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(response), { status: 201 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+    await signUp(body)
+
+    expect(mockStore.get('ep.refresh_token')).toBe('test-refresh')
+    expect(call(fetchMock, 1).url).toBe(apiUrl('/api/v1/sessions/logout'))
+    expect(call(fetchMock, 1).init.body).toBe(JSON.stringify({ refresh_token: 'old-refresh' }))
+  })
+
+  it('does not fail the sign-in when the stored pair cannot be read to revoke it', async () => {
+    const SecureStore = jest.requireMock('expo-secure-store') as { getItemAsync: jest.Mock }
+    SecureStore.getItemAsync.mockRejectedValueOnce(new Error('keychain locked'))
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(signedIn), { status: 200 }))
+
+    await expect(signIn('ana', 'test-password')).resolves.toMatchObject({ id: 1 })
+    expect(mockStore.get('ep.refresh_token')).toBe('test-refresh')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves nothing to revoke when the device held no pair', async () => {
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(signedIn), { status: 200 }))
+
+    await signIn('ana', 'test-password')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
 })

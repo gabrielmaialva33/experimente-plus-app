@@ -1,3 +1,4 @@
+import { notifyManager } from '@tanstack/react-query'
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 
 import DeleteAccountScreen from '@/app/conta/excluir'
@@ -17,6 +18,11 @@ jest.mock('@/api/me', () => ({
 }))
 
 const { QueryClient, QueryClientProvider } = jest.requireActual('@tanstack/react-query')
+
+// The query layer tells its observers on a timer by default, after `act` has
+// returned; telling them at once keeps the mutation's last update inside it.
+beforeAll(() => notifyManager.setScheduler((notify) => notify()))
+afterAll(() => notifyManager.setScheduler((notify) => setTimeout(notify, 0)))
 
 beforeEach(() => jest.clearAllMocks())
 

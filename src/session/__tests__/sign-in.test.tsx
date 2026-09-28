@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import { AccessibilityInfo } from 'react-native'
@@ -37,6 +37,11 @@ const page = (purchase = false) =>
       <SignInScreen purchase={purchase} />
     </QueryClientProvider>
   )
+
+// The query layer tells its observers on a timer by default, after `act` has
+// returned; telling them at once keeps the mutation's last update inside it.
+beforeAll(() => notifyManager.setScheduler((notify) => notify()))
+afterAll(() => notifyManager.setScheduler((notify) => setTimeout(notify, 0)))
 
 beforeEach(() => {
   jest.clearAllMocks()

@@ -991,15 +991,23 @@ describe('place page in direction A', () => {
     expect(scrollTo).toHaveBeenCalledWith({ y: 272 + 862 - 96, animated: true })
   })
 
-  it('says once what following gives (A27)', async () => {
+  const FOLLOW_HINT = 'Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.'
+  /** What the follow button's press handed the mutation: the value and its callbacks. */
+  const lastFollow = () =>
+    mockToggle.mock.calls.at(-1) as [boolean, { onSuccess?: () => void } | undefined]
+
+  it('says once what following gives, once the server took the follow (A27)', async () => {
     session.useSession.mockReturnValue({ status: 'authenticated' })
     const view = await render(<EstablishmentScreen />)
     await fireEvent.press(view.getByRole('button', { name: 'Seguir Café da Praça' }))
-    expect(mockToggle).toHaveBeenCalledWith(true)
-    expect(
-      view.getByText('Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.')
-    ).toBeOnTheScreen()
-    expect(hint.markFollowExplained).toHaveBeenCalled()
+    expect(lastFollow()[0]).toBe(true)
+    // Nothing is said or remembered while the follow may still fail.
+    expect(view.queryByText(FOLLOW_HINT)).toBeNull()
+    expect(hint.markFollowExplained).not.toHaveBeenCalled()
+
+    await act(async () => lastFollow()[1]?.onSuccess?.())
+    expect(view.getByText(FOLLOW_HINT)).toBeOnTheScreen()
+    expect(hint.markFollowExplained).toHaveBeenCalledTimes(1)
 
     // Another place, another visit: already said, so not said again.
     await view.unmount()
@@ -1007,8 +1015,25 @@ describe('place page in direction A', () => {
     const again = await render(<EstablishmentScreen />)
     await fireEvent.press(again.getByRole('button', { name: 'Seguir Café da Praça' }))
     expect(mockToggle).toHaveBeenCalledTimes(2)
-    expect(
-      again.queryByText('Você segue este lugar. Ele fica na sua lista Seguindo, em Conta.')
-    ).toBeNull()
+    expect(lastFollow()).toEqual([true, undefined])
+    expect(again.queryByText(FOLLOW_HINT)).toBeNull()
+  })
+
+  // The flag used to be saved on the press: a first follow that failed left the
+  // place unfollowed and the explanation spent.
+  it('keeps the explanation for the next follow when the first one fails', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    const view = await render(<EstablishmentScreen />)
+    const follow = () => view.getByRole('button', { name: 'Seguir Café da Praça' })
+
+    // The mutation rolls the follow back and says why; its success never comes.
+    await fireEvent.press(follow())
+    expect(hint.markFollowExplained).not.toHaveBeenCalled()
+    expect(view.queryByText(FOLLOW_HINT)).toBeNull()
+
+    await fireEvent.press(follow())
+    await act(async () => lastFollow()[1]?.onSuccess?.())
+    expect(hint.markFollowExplained).toHaveBeenCalledTimes(1)
+    expect(view.getByText(FOLLOW_HINT)).toBeOnTheScreen()
   })
 })

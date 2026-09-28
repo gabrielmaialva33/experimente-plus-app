@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import {
   createReview,
@@ -16,6 +16,7 @@ import {
   type ReviewPage,
   type UpdateReview,
 } from '@/api/reviews'
+import { catalogKeys } from '@/catalog/queries'
 import { anonymousReportToken } from '@/reviews/anonymous-token'
 
 export const reviewKeys = {
@@ -36,14 +37,29 @@ export const useMyReviews = (params: ReviewPage = {}) =>
   useQuery({ queryKey: reviewKeys.mine(params), queryFn: () => listMyReviews(params) })
 
 /**
+ * A place's public average and count travel with the catalogue: on its page
+ * and on every search that lists it (Explorar's list and map). The server
+ * recomputes them in the same transaction that writes, edits or removes a
+ * review, whether or not moderation lets the review show. Which searches hold
+ * the place is not known here, so every one is marked stale; only those on
+ * screen are fetched again, the rest when they are next opened.
+ */
+const invalidateRatings = (client: QueryClient) => {
+  void client.invalidateQueries({ queryKey: catalogKeys.establishments })
+  void client.invalidateQueries({ queryKey: catalogKeys.searches })
+}
+
+/**
  * Writing invalidates both listings: the author's own and the establishment's.
+ * A review itself (not a photo) also changes the place's rating.
  *
  * The server decides whether what was written is published or held for
  * moderation, so nothing is written into the cache by hand — the refetch is
  * what tells the truth about the status the review ended up with.
  */
 const useReviewWrite = <TVariables, TResult>(
-  mutationFn: (variables: TVariables) => Promise<TResult>
+  mutationFn: (variables: TVariables) => Promise<TResult>,
+  { rating }: { rating: boolean }
 ) => {
   const client = useQueryClient()
 
@@ -53,16 +69,19 @@ const useReviewWrite = <TVariables, TResult>(
     mutationFn,
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['reviews'] })
+      if (rating) invalidateRatings(client)
     },
   })
 }
 
-export const useCreateReview = () => useReviewWrite((body: CreateReview) => createReview(body))
+export const useCreateReview = () =>
+  useReviewWrite((body: CreateReview) => createReview(body), { rating: true })
 
 export const useUpdateReview = (id: number) =>
-  useReviewWrite((body: UpdateReview) => updateReview(id, body))
+  useReviewWrite((body: UpdateReview) => updateReview(id, body), { rating: true })
 
-export const useDeleteReview = () => useReviewWrite((id: number) => deleteReview(id))
+export const useDeleteReview = () =>
+  useReviewWrite((id: number) => deleteReview(id), { rating: true })
 
 /** A report changes no listing, so it invalidates nothing; it returns a protocol. */
 export const useReportContent = () =>
@@ -108,12 +127,13 @@ export const useCreateReviewWithPhotos = () => {
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ['reviews'] })
+      invalidateRatings(client)
     },
   })
 }
 
 export const useAddReviewPhoto = (reviewId: number) =>
-  useReviewWrite((photo: PhotoUpload) => uploadReviewPhoto(reviewId, photo))
+  useReviewWrite((photo: PhotoUpload) => uploadReviewPhoto(reviewId, photo), { rating: false })
 
 export const useRemoveReviewPhoto = (reviewId: number) =>
-  useReviewWrite((photoId: number) => deleteReviewPhoto(reviewId, photoId))
+  useReviewWrite((photoId: number) => deleteReviewPhoto(reviewId, photoId), { rating: false })

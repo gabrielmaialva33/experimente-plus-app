@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native'
+import { act, render, renderHook } from '@testing-library/react-native'
 import { Dimensions, Text } from 'react-native'
 
 import {
@@ -8,6 +8,9 @@ import {
   contentFrame,
   feedLayout,
   gridColumns,
+  useCardGrid,
+  useContentFrame,
+  useFeedLayout,
   useScreenFrame,
 } from '@/components/content-frame'
 import { spacing } from '@/theme/tokens'
@@ -124,5 +127,49 @@ describe('useScreenFrame', () => {
     const frame = contentFrame(width, MEASURE.readable)
     const view = await render(<Probe />)
     expect(view.getByTestId('frame')).toHaveTextContent(`${frame.left}/${frame.width}`)
+  })
+})
+
+// The frames go into styles, a context value and effect dependencies: a new
+// object on every render undid the memoization of everything downstream.
+describe('frame hooks', () => {
+  const initial = { window: Dimensions.get('window'), screen: Dimensions.get('screen') }
+  afterEach(() => act(() => Dimensions.set(initial)))
+
+  const resize = (width: number) =>
+    act(() =>
+      Dimensions.set({ window: { ...initial.window, width }, screen: { ...initial.screen, width } })
+    )
+
+  it.each([
+    ['useContentFrame', useContentFrame],
+    ['useFeedLayout', useFeedLayout],
+    ['useCardGrid', useCardGrid],
+  ])('%s keeps the same value while the window stays the same', async (_, useFrame) => {
+    const { result, rerender } = await renderHook(() => useFrame())
+    const first = result.current
+    await rerender({})
+    await rerender({})
+    expect(result.current).toBe(first)
+  })
+
+  it('makes a new content frame, and only then, when the window changes', async () => {
+    const { result, rerender } = await renderHook(() => useContentFrame())
+    const phone = result.current
+    await resize(TABLET_LANDSCAPE)
+    expect(result.current).not.toBe(phone)
+    expect(result.current).toEqual(contentFrame(TABLET_LANDSCAPE, MEASURE.readable))
+    const tablet = result.current
+    await rerender({})
+    expect(result.current).toBe(tablet)
+  })
+
+  it('lays the feed again, frame included, when the window changes', async () => {
+    const { result } = await renderHook(() => useFeedLayout())
+    const phone = result.current
+    await resize(TABLET_LANDSCAPE)
+    const { fontScale } = Dimensions.get('window')
+    expect(result.current).toEqual(feedLayout(TABLET_LANDSCAPE, fontScale))
+    expect(result.current.frame).not.toBe(phone.frame)
   })
 })

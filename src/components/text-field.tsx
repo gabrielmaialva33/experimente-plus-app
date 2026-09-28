@@ -15,6 +15,13 @@ type FieldInputProps = Omit<
  * A form field of direction A. The label stays above the field while typing
  * (a placeholder that vanishes is not a label, audit A36), the error sits on the
  * field it belongs to, and a password can be shown before it is sent.
+ *
+ * The error is shown under the field and carried by the field itself, as its
+ * hint, so it is heard with the field it concerns. It is neither an alert nor a
+ * live region: the screen that sets it after an action says it, once, through
+ * `announce`/`useAnnouncement`. An alert role on the same words is a second
+ * announcement where the platform honours it (a live region on the web) and a
+ * stray "alert" read with the text everywhere else.
  */
 export function TextField({
   label,
@@ -77,12 +84,7 @@ export function TextField({
         ) : null}
       </View>
       {error ? (
-        <Text
-          accessibilityRole="alert"
-          style={[styles.message, { color: colors.destructiveAccent }]}
-        >
-          {error}
-        </Text>
+        <Text style={[styles.message, { color: colors.destructiveAccent }]}>{error}</Text>
       ) : hint ? (
         <Text style={[styles.message, { color: colors.mutedForeground }]}>{hint}</Text>
       ) : null}

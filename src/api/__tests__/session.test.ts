@@ -215,4 +215,48 @@ describe('refreshSession', () => {
     await expect(refreshSession()).rejects.toBeInstanceOf(SessionExpiredError)
     await expect(readCredentials()).resolves.toBeNull()
   })
+
+  // The body is canonical JSON the app built, so a 422 can only be the stored
+  // token itself: not canonical, and refused the same way on every attempt.
+  it('ends the session when the server finds the stored refresh token malformed (422)', async () => {
+    seedSession()
+    const { refreshSession, readCredentials, SessionExpiredError } = loadSession()
+    const { subscribeSessionEvents } =
+      require('../session-events') as typeof import('../session-events')
+    const events: string[] = []
+    const unsubscribe = subscribeSessionEvents((event) => events.push(event))
+
+    globalThis.fetch = jest.fn(async () => ({
+      ok: false,
+      status: 422,
+      headers: new Headers(),
+      text: async () => JSON.stringify({ errors: [{ field: 'refresh_token', rule: 'regex' }] }),
+    })) as unknown as typeof fetch
+
+    try {
+      await expect(refreshSession()).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(events).toEqual(['expired'])
+      await expect(readCredentials()).resolves.toBeNull()
+      expect(mockStore.size).toBe(0)
+    } finally {
+      unsubscribe()
+    }
+  })
+
+  // A body that did not parse cannot come from the token (JSON.stringify escapes
+  // any string): the pair was not consumed and stays usable.
+  it('keeps the pair when the refresh body did not parse (400)', async () => {
+    seedSession()
+    const { refreshSession, readCredentials } = loadSession()
+
+    globalThis.fetch = jest.fn(async () => ({
+      ok: false,
+      status: 400,
+      headers: new Headers(),
+      text: async () => JSON.stringify({ status: 400, message: 'Malformed JSON request body' }),
+    })) as unknown as typeof fetch
+
+    await expect(refreshSession()).rejects.toMatchObject({ status: 400 })
+    await expect(readCredentials()).resolves.toMatchObject({ refreshToken: 'refresh-0' })
+  })
 })

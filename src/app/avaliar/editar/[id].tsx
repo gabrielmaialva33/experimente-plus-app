@@ -2,13 +2,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { useAnnouncement } from '@/components/announce'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { ContentSkeleton } from '@/components/content-skeleton'
+import { EmptyState } from '@/components/empty-state'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ReviewSubject, failureMessage } from '@/app/avaliar/[establishmentId]'
 import type { Review } from '@/api/reviews'
 import { ImagePicker } from '@/components/image-picker'
 import { useContentFrame } from '@/components/content-frame'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import {
   useAddReviewPhoto,
   useAuthorRules,
@@ -31,6 +34,8 @@ import { useColors } from '@/theme/use-colors'
  */
 export default function EditReviewScreen() {
   const colors = useColors()
+  const frame = useContentFrame()
+  const router = useRouter()
   const { id, nome } = useLocalSearchParams<{ id: string; nome?: string }>()
   const reviewId = Number(id)
 
@@ -41,19 +46,27 @@ export default function EditReviewScreen() {
   const review = mine.data?.data.find((item) => item.id === reviewId)
 
   if (mine.isPending) {
-    return (
-      <View style={[styles.page, { backgroundColor: colors.background }]}>
-        <Text style={[styles.body, { color: colors.mutedForeground }]}>Carregando…</Text>
-      </View>
-    )
+    return <ContentSkeleton label="Carregando sua avaliação" variant="detail" />
   }
 
   if (!review) {
+    // A list that did not load says nothing about the review; one that loaded without it does.
     return (
-      <View style={[styles.page, { backgroundColor: colors.background }]}>
-        <Text style={[styles.body, { color: colors.foreground }]}>
-          Esta avaliação não está mais disponível.
-        </Text>
+      <View style={[styles.center, frame.padding, { backgroundColor: colors.background }]}>
+        {mine.isError ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Não foi possível carregar sua avaliação agora"
+            action={{ label: 'Tentar de novo', onPress: () => void mine.refetch() }}
+            help={TROUBLESHOOTING_HELP}
+          />
+        ) : (
+          <EmptyState
+            icon="star-outline"
+            title="Esta avaliação não está mais disponível"
+            action={{ label: 'Voltar', onPress: () => router.back() }}
+          />
+        )}
       </View>
     )
   }
@@ -164,7 +177,17 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
         onPress={() =>
           update.mutate(
             { rating, comment: comment.trim() || null },
-            { onSuccess: () => router.back() }
+            {
+              onSuccess: (saved) => {
+                // The form closes on success, so the outcome is said.
+                announce(
+                  saved.status === 'published'
+                    ? 'Avaliação atualizada.'
+                    : 'Avaliação atualizada. Por enquanto ela não aparece no lugar.'
+                )
+                router.back()
+              },
+            }
           )
         }
         testID="edit-submit"
@@ -175,6 +198,7 @@ function EditForm({ review, place }: { review: Review; place?: string }) {
 
 const styles = StyleSheet.create({
   page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
+  center: { flex: 1, justifyContent: 'center', paddingVertical: spacing.xxl },
   card: {
     alignItems: 'center',
     borderWidth: 1,

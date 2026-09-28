@@ -209,7 +209,19 @@ it('refuses a type it does not know instead of reporting a review with that numb
 
   expect(view.getByTestId('report-unsupported')).toBeTruthy()
   expect(view.queryByTestId('report-submit')).toBeNull()
+  expect(view.getByRole('button', { name: 'Voltar' })).toBeOnTheScreen()
   expect(mutate).not.toHaveBeenCalled()
+})
+
+// The reason is what is being sent: it cannot change under a report on its way.
+it('holds the reasons still while a report is being sent', async () => {
+  queries.useReportContent.mockReturnValue(idle({ isPending: true }))
+
+  const view = await render(<ReportContentScreen />)
+
+  expect(view.getByTestId('reason-spam').props.accessibilityState).toMatchObject({
+    disabled: true,
+  })
 })
 
 it('reports partner content under its own kind', async () => {
@@ -287,7 +299,7 @@ it('sends the chosen photos with the review, up to the operation limit', async (
 
 it('keeps the published review and says which photos did not go', async () => {
   queries.useCreateReviewWithPhotos.mockReturnValue(
-    idle({ isSuccess: true, data: { review: { id: 1 }, failed: 2 } })
+    idle({ isSuccess: true, data: { review: { id: 1, status: 'published' }, failed: 2 } })
   )
 
   const view = await render(<WriteReviewScreen />)
@@ -296,6 +308,32 @@ it('keeps the published review and says which photos did not go', async () => {
   expect(view.getByTestId('review-photos-failed').props.children[0]).toBe(
     '2 fotos não puderam ser enviadas.'
   )
+})
+
+// A rule of the operation can hold a new review out of public view at once:
+// "publicada" is said only when it is.
+it('does not call a review held by a rule published', async () => {
+  queries.useCreateReviewWithPhotos.mockReturnValue(
+    idle({ isSuccess: true, data: { review: { id: 1, status: 'hidden' }, failed: 1 } })
+  )
+
+  const view = await render(<WriteReviewScreen />)
+
+  expect(view.getByText('Avaliação enviada, em análise')).toBeTruthy()
+  expect(view.queryByText('Avaliação publicada')).toBeNull()
+})
+
+// The form closes on success, so what happened is said before it goes.
+it('announces the review it sent before going back', async () => {
+  const { AccessibilityInfo } = jest.requireActual('react-native')
+  const mutate = jest.fn((_body, options) =>
+    options.onSuccess({ review: { id: 1, status: 'published' }, failed: 0 })
+  )
+  queries.useCreateReviewWithPhotos.mockReturnValue(idle({ mutate }))
+  const view = await render(<WriteReviewScreen />)
+  await fireEvent.press(view.getByTestId('star-4'))
+  await fireEvent.press(view.getByTestId('review-submit'))
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Avaliação publicada.')
 })
 
 it('lets a visitor report anonymously, and says so', async () => {
@@ -401,9 +439,10 @@ it('offers a place only the reasons that fit a place, each with a visible radio 
   })
 
   await fireEvent.press(view.getByTestId('reason-spam'))
-  expect(view.getByTestId('reason-spam').props.accessibilityState).toEqual({
+  expect(view.getByTestId('reason-spam').props.accessibilityState).toMatchObject({
     selected: true,
     checked: true,
+    disabled: false,
   })
   expect(view.getByTestId('reason-spam-radio')).toHaveStyle({ borderColor: palette.light.primary })
 })

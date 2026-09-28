@@ -83,9 +83,19 @@ export function EstablishmentReviews({
       )}
 
       {query.isError ? (
-        <Text style={[styles.count, { color: colors.mutedForeground }]}>
-          Não foi possível carregar as avaliações agora.
-        </Text>
+        <View style={styles.failure}>
+          <Text style={[styles.count, { color: colors.mutedForeground }]}>
+            Não foi possível carregar as avaliações agora.
+          </Text>
+          <Button
+            label="Tentar de novo"
+            accessibilityLabel="Tentar carregar as avaliações de novo"
+            variant="ghost"
+            size={44}
+            icon="refresh"
+            onPress={() => void query.refetch()}
+          />
+        </View>
       ) : null}
 
       {/* Reporting needs no session: a visitor files it anonymously. Up to the
@@ -120,4 +130,5 @@ const styles = StyleSheet.create({
   score: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   average: { ...typography.label, ...textWeight('700') },
   count: typography.meta,
+  failure: { gap: spacing.xs },
 })

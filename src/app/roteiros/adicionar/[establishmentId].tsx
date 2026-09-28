@@ -8,10 +8,12 @@ import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { decorative } from '@/components/decorative'
+import { EmptyState } from '@/components/empty-state'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
 import { useContentFrame } from '@/components/content-frame'
 import { useAddItineraryStop, useCreateItinerary, useItineraries } from '@/explorer/queries'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -28,7 +30,11 @@ export default function AddToItineraryScreen() {
   const frame = useContentFrame()
   const router = useRouter()
   const { establishmentId } = useLocalSearchParams<{ establishmentId: string }>()
-  const target = Number(establishmentId)
+  // Only a positive integer names a place; anything else would reach the server as NaN.
+  const target =
+    typeof establishmentId === 'string' && /^[1-9]\d*$/.test(establishmentId)
+      ? Number(establishmentId)
+      : null
   const itineraries = useItineraries()
   const add = useAddItineraryStop()
   const create = useCreateItinerary()
@@ -45,8 +51,37 @@ export default function AddToItineraryScreen() {
         : null
   useAnnouncement(added ? `Adicionado a ${added.name}` : failure)
 
+  if (target === null) {
+    return (
+      <View style={[styles.done, { backgroundColor: colors.background }]}>
+        <EmptyState
+          testID="add-unknown-place"
+          icon="storefront-outline"
+          title="Este lugar não foi encontrado"
+          text="O link está incompleto. Abra o lugar em Explorar e toque em Roteiro."
+          action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
+        />
+      </View>
+    )
+  }
+
   if (itineraries.isPending) {
     return <ContentSkeleton label="Carregando seus roteiros" variant="catalog" />
+  }
+
+  // Without the list the person would not see the itinerary they meant, and make another.
+  if (itineraries.isError && !itineraries.data) {
+    return (
+      <View style={[styles.done, { backgroundColor: colors.background }]}>
+        <EmptyState
+          testID="itineraries-failed"
+          icon="cloud-offline-outline"
+          title="Não foi possível carregar seus roteiros agora"
+          action={{ label: 'Tentar de novo', onPress: () => void itineraries.refetch() }}
+          help={TROUBLESHOOTING_HELP}
+        />
+      </View>
+    )
   }
 
   // The person came from a place and stays with it (audit A25): the confirmation
@@ -57,10 +92,21 @@ export default function AddToItineraryScreen() {
       { onSuccess: () => setAdded({ id: itinerary.id, name: itinerary.name }) }
     )
 
+  // Once created, the itinerary is one of the list: if adding to it fails, the
+  // person tries again on it there, and a second tap cannot make a twin.
   const createAndAdd = () => {
     const trimmed = name.trim()
     if (!trimmed) return
-    create.mutate({ name: trimmed }, { onSuccess: (itinerary) => addTo(itinerary) })
+    create.mutate(
+      { name: trimmed },
+      {
+        onSuccess: (itinerary) => {
+          setName('')
+          setComposing(false)
+          addTo(itinerary)
+        },
+      }
+    )
   }
 
   const busy = add.isPending || create.isPending

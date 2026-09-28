@@ -469,6 +469,70 @@ describe('itinerary', () => {
     )
   })
 
+  it.each(['abc', '0', '5.5', '-5'])(
+    'answers a malformed id (%s) as not found, never as an endless skeleton',
+    async (id) => {
+      router.useLocalSearchParams.mockReturnValue({ id })
+      // The query an invalid id leaves disabled is pending for ever.
+      queries.useItinerary.mockReturnValue({ isPending: true, data: undefined })
+
+      const view = await render(<ItineraryScreen />)
+
+      expect(queries.useItinerary).toHaveBeenCalledWith(null)
+      expect(view.queryByRole('progressbar')).toBeNull()
+      expect(view.getByText('Este roteiro não foi encontrado')).toBeTruthy()
+    }
+  )
+
+  it('offers another try when the itinerary could not be loaded', async () => {
+    const refetch = jest.fn()
+    queries.useItinerary.mockReturnValue({
+      isPending: false,
+      isError: true,
+      error: new TypeError('Network request failed'),
+      data: undefined,
+      refetch,
+    })
+
+    const view = await render(<ItineraryScreen />)
+
+    expect(view.queryByText('Este roteiro não foi encontrado')).toBeNull()
+    await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('says so when deleting the itinerary fails, keeping the confirmation', async () => {
+    queries.useDeleteItinerary.mockReturnValue(idle({ isError: true }))
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByTestId('delete-itinerary'))
+
+    expect(view.getByTestId('delete-itinerary-failure')).toHaveTextContent(
+      'Não foi possível excluir o roteiro agora.'
+    )
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Não foi possível excluir o roteiro agora.'
+    )
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('offers another try when the favourites to add could not be loaded', async () => {
+    const refetch = jest.fn()
+    queries.useSavedList.mockReturnValue({
+      isPending: false,
+      isError: true,
+      data: undefined,
+      refetch,
+    })
+
+    const view = await render(<ItineraryScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Adicionar lugar' }))
+
+    expect(view.getByText('Não foi possível carregar seus favoritos agora.')).toBeTruthy()
+    await fireEvent.press(view.getByTestId('retry-favorites'))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
   it('says so when the itinerary is not the caller’s or does not exist', async () => {
     queries.useItinerary.mockReturnValue({ isPending: false, data: undefined })
 

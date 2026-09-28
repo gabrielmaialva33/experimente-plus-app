@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     minHeight: minTouch,
     paddingHorizontal: spacing.lg,
     position: 'absolute',
-    shadowColor: '#000000',
+    shadowColor: palette.light.scrim,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.16,
     shadowRadius: 6,

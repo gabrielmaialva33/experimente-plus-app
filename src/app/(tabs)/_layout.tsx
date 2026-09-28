@@ -25,7 +25,10 @@ import { useColors } from '@/theme/use-colors'
  * triggers changes at runtime, which is exactly what capability-driven
  * navigation does on sign-in.
  */
-function icon(name: keyof typeof Ionicons.glyphMap) {
+type IconName = keyof typeof Ionicons.glyphMap
+
+/** The outline at rest and the filled glyph when selected, both checked against the icon set. */
+function icon(outline: IconName, filled: IconName) {
   return function TabBarIcon({
     color,
     size,
@@ -35,13 +38,7 @@ function icon(name: keyof typeof Ionicons.glyphMap) {
     size: number
     focused: boolean
   }) {
-    return (
-      <Ionicons
-        name={focused ? (name.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : name}
-        color={color as string}
-        size={size}
-      />
-    )
+    return <Ionicons name={focused ? filled : outline} color={color} size={size} />
   }
 }
 
@@ -76,27 +73,35 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         // Explorar draws its own header band, which also reserves the status bar.
-        options={{ title: 'Explorar', headerShown: false, tabBarIcon: icon('compass-outline') }}
+        options={{
+          title: 'Explorar',
+          headerShown: false,
+          tabBarIcon: icon('compass-outline', 'compass'),
+        }}
       />
 
       <Tabs.Protected guard={authenticated}>
         <Tabs.Screen
           name="wallet"
-          options={{ title: 'Carteira', headerShown: false, tabBarIcon: icon('ticket-outline') }}
+          options={{
+            title: 'Carteira',
+            headerShown: false,
+            tabBarIcon: icon('ticket-outline', 'ticket'),
+          }}
         />
       </Tabs.Protected>
 
       <Tabs.Protected guard={canValidate}>
         <Tabs.Screen
           name="validate"
-          options={{ title: 'Validar', tabBarIcon: icon('scan-outline') }}
+          options={{ title: 'Validar', tabBarIcon: icon('scan-outline', 'scan') }}
         />
       </Tabs.Protected>
 
       <Tabs.Protected guard={authenticated}>
         <Tabs.Screen
           name="account"
-          options={{ title: 'Conta', tabBarIcon: icon('person-outline') }}
+          options={{ title: 'Conta', tabBarIcon: icon('person-outline', 'person') }}
         />
       </Tabs.Protected>
 
@@ -104,7 +109,11 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="sign-in"
           // Like Carteira and Conta, Entrar draws its own navy band.
-          options={{ title: 'Entrar', headerShown: false, tabBarIcon: icon('log-in-outline') }}
+          options={{
+            title: 'Entrar',
+            headerShown: false,
+            tabBarIcon: icon('log-in-outline', 'log-in'),
+          }}
         />
       </Tabs.Protected>
     </Tabs>

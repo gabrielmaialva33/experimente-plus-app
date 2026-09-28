@@ -251,3 +251,36 @@ it('names what the place offers once each, by its key', async () => {
     error.mockRestore()
   }
 })
+
+describe('a toggle the server refuses', () => {
+  it('says the follow did not go through, instead of saying where it went', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    saved.useToggleSaved.mockImplementation((kind: string) =>
+      kind === 'follows' ? { ...idleToggle, isError: true, variables: true } : idleToggle
+    )
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    try {
+      const view = await render(<EstablishmentScreen />)
+      expect(announce).toHaveBeenCalledWith('Não foi possível seguir Café da Praça agora.')
+      expect(view.queryByTestId('follow-hint')).toBeNull()
+    } finally {
+      announce.mockRestore()
+    }
+  })
+
+  it('says the favourite did not go through', async () => {
+    session.useSession.mockReturnValue({ status: 'authenticated' })
+    saved.useToggleSaved.mockImplementation((kind: string) =>
+      kind === 'favorites' ? { ...idleToggle, isError: true, variables: false } : idleToggle
+    )
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+    try {
+      await render(<EstablishmentScreen />)
+      expect(announce).toHaveBeenCalledWith(
+        'Não foi possível remover Café da Praça dos favoritos agora.'
+      )
+    } finally {
+      announce.mockRestore()
+    }
+  })
+})

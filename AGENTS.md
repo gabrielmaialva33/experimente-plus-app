@@ -53,7 +53,9 @@ Stack declarada: Expo SDK 57, React Native 0.86, React 19, Expo Router, TypeScri
 
 Use `@/*` para `src/*` e `@/assets/*` para `assets/*`, conforme `tsconfig.json`. Preserve nomes kebab-case, convenções especiais de rotas (`_layout.tsx`, `[param]`, grupos entre parênteses), componentes PascalCase e variáveis/funções camelCase. A formatação é do Prettier (`.prettierrc.json`, os mesmos valores do backend: sem ponto e vírgula, aspas simples, 100 colunas); rode `pnpm format` antes de commitar. Reformatações mecânicas entram em `.git-blame-ignore-revs`.
 
-O root layout mantém o navigator montado e usa a splash para cobrir o carregamento da sessão. Preserve esse comportamento e o cleanup dos listeners de foco/rede. Os estados `loading`, `anonymous`, `authenticated` e `unavailable` são distintos.
+O root layout mantém o navigator montado e usa a splash para cobrir o carregamento da sessão. Preserve esse comportamento e o cleanup dos listeners de foco/rede. Os estados `loading`, `anonymous`, `authenticated` e `unavailable` são distintos. A leitura do contexto desiste em 10 s e cai em `unavailable`, sem descartar a credencial. Um `403` revalida o contexto sem voltar a `loading`: abas e telas abertas ficam até a resposta, que então se aplica.
+
+As rotas privadas empilhadas sobre as abas (`carteira/*`, `conta/perfil|excluir|avaliacoes`, `avaliar/*`, `validar/*`) ficam em `Stack.Protected` no root layout, com os guards de `useAreaOpen` (`src/wallet/access-gate.tsx`): conta para as primeiras, `validate` para a confirmação e `read` para histórico e comprovante do parceiro. Nada abre antes de o contexto resolver, e o que está aberto só fecha numa decisão. `AccessGate` repete a regra na tela como segunda camada. Rota privada nova entra no grupo correspondente.
 
 Abas: visitante tem Explorar/Entrar; consumidor tem Explorar/Carteira/Conta; parceiro habilitado acrescenta Validar. Histórico pertence ao fluxo de Validar. Lista e mapa compartilham um único estado de filtro em Explorar, sem criar uma aba de mapa ou duplicar controles.
 

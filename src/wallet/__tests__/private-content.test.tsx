@@ -40,11 +40,12 @@ jest.mock('expo-secure-store', () => ({
   },
 }))
 jest.mock('react-native-mmkv', () => ({ createMMKV: () => ({ getBoolean: () => true }) }))
+const partner = { partner: { redemptions: { validate: true, read: true } } }
 jest.mock('@/api/me', () => ({
   getContext: jest.fn(async () => ({
     user: { id: 1 },
     active_operation: { id: 1 },
-    capabilities: {},
+    capabilities: { partner: { redemptions: { validate: true, read: true } } },
   })),
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
@@ -64,7 +65,8 @@ const redemption = jest.requireMock('@/api/redemptions') as {
   previewRedemption: jest.Mock
   confirmRedemption: jest.Mock
 }
-const token = 'private-presentation-token'
+// Shaped like a real token: the confirmation refuses anything a scanner could not hand over.
+const token = `private${'p'.repeat(13)}.${'t'.repeat(43)}`
 const qr = 'data:image/png;base64,PRIVATE_QR'
 const validationUrl = `https://example.com/validate?token=${token}`
 const benefit = {
@@ -213,7 +215,7 @@ beforeEach(async () => {
   jest.requireMock('@/api/me').getContext.mockResolvedValue({
     user: { id: 1 },
     active_operation: { id: 1 },
-    capabilities: {},
+    capabilities: partner,
   })
   mockParams.accessId = '1'
   mockParams.offerId = '2'
@@ -341,6 +343,55 @@ it('uses expires_at, expires without extension, and requests a NEW presentation 
   client.clear()
 })
 
+// A phone whose clock runs behind the server's would read expires_at as later
+// than it is: the countdown is capped by the duration the server gave.
+it('never counts past the server deadline when the device clock runs behind', async () => {
+  jest.useFakeTimers()
+  api.createPresentation.mockImplementation(async () => ({
+    ...presentation(),
+    expires_at: new Date(Date.now() + 600_000).toISOString(),
+    expires_in_seconds: 300,
+  }))
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByLabelText('Código temporário do benefício')
+  expect(view.getByText('Válido por 5:00')).toBeTruthy()
+  expect(view.getByLabelText('Válido por 5 minutos')).toBeTruthy()
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(300_100)
+  })
+  expect(view.getByText('Expirado')).toBeTruthy()
+  expect(view.queryByLabelText('Código temporário do benefício')).toBeNull()
+  await view.unmount()
+  client.clear()
+})
+
+// The wallet is polled while the code shows, so a hold can take it away; the
+// poll itself must not blank the code in front of the partner's camera.
+it('keeps the code on screen while the wallet is polled in the background', async () => {
+  const { view, client } = await mount(<PresentScreen />)
+  await view.findByLabelText('Código temporário do benefício')
+  let finish!: (value: Wallet) => void
+  api.getWallet.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      })
+  )
+  await act(async () => {
+    void client.invalidateQueries({ queryKey: ['wallet'] })
+    // The query layer tells observers on the next macrotask.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  })
+  expect(client.isFetching({ queryKey: ['wallet'] })).toBe(1)
+  expect(view.getByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(view.queryByRole('progressbar')).toBeNull()
+  await act(async () => finish(wallet))
+  expect(view.getByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
+  await view.unmount()
+  client.clear()
+})
+
 it.each(['focus', 'reconnect'])(
   'repeats preview with the same token on %s, retaining the current preview until the response',
   async (trigger) => {
@@ -455,7 +506,7 @@ it('cannot revive the previous token after logout and a new authenticated sessio
   jest.requireMock('@/api/me').getContext.mockResolvedValue({
     user: { id: 2 },
     active_operation: { id: 2 },
-    capabilities: {},
+    capabilities: partner,
   })
   await fireEvent.press(view.getByText('Refresh session'))
   await act(async () => {
@@ -484,6 +535,30 @@ it('does not create a presentation if its eligibility read finishes after logout
   await act(async () => finish(wallet))
   expect(api.createPresentation).not.toHaveBeenCalled()
   expectNoPrivateCache(client)
+  await view.unmount()
+  client.clear()
+})
+
+// A 403 sends the context back to loading. The screen stays mounted through the
+// reload, so the refused presentation is not asked for again on its own.
+it('does not create a presentation again after a refusal revalidates the session', async () => {
+  const { ApiError } = jest.requireActual('@/api/transport') as typeof import('@/api/transport')
+  api.createPresentation.mockRejectedValue(new ApiError(403, null))
+  const { view, client } = await mount(<PresentScreen />)
+  expect(await view.findByText(/Não é possível apresentar este benefício agora/)).toBeOnTheScreen()
+  // The reload takes a round trip; while it is out the session reads `loading`.
+  let reloaded!: () => void
+  jest.requireMock('@/api/me').getContext.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        reloaded = () =>
+          resolve({ user: { id: 1 }, active_operation: { id: 1 }, capabilities: partner })
+      })
+  )
+  await act(async () => notifySessionEvent('context-invalidated'))
+  await act(async () => reloaded())
+  expect(await view.findByText(/Não é possível apresentar este benefício agora/)).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
   await view.unmount()
   client.clear()
 })

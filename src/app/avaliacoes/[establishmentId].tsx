@@ -4,7 +4,10 @@ import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { Chip } from '@/components/chip'
 import { ContentSkeleton } from '@/components/content-skeleton'
+import { EmptyState } from '@/components/empty-state'
+import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useContentFrame } from '@/components/content-frame'
+import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { ReviewCard } from '@/reviews/review-card'
 import { reportHref } from '@/reviews/report-link'
 import { useEstablishmentReviews } from '@/reviews/queries'
@@ -34,6 +37,8 @@ export default function EstablishmentReviewsScreen() {
     perPage: PER_PAGE,
     ...(rating ? { rating } : {}),
   })
+
+  const refreshControl = usePullToRefresh(query.refetch)
 
   const reviews = query.data?.data ?? []
 
@@ -72,6 +77,7 @@ export default function EstablishmentReviewsScreen() {
           data={reviews}
           keyExtractor={(review) => String(review.id)}
           contentContainerStyle={[styles.list, frame.padding]}
+          refreshControl={refreshControl}
           renderItem={({ item }) => (
             <ReviewCard
               review={item}
@@ -80,13 +86,27 @@ export default function EstablishmentReviewsScreen() {
             />
           )}
           ListEmptyComponent={
-            <Text style={[styles.empty, { color: colors.mutedForeground }]}>
-              {query.isError
-                ? 'Não foi possível carregar as avaliações agora.'
-                : rating
-                  ? 'Nenhuma avaliação com essa nota.'
-                  : 'Ainda não há avaliações deste lugar.'}
-            </Text>
+            query.isError ? (
+              <EmptyState
+                icon="cloud-offline-outline"
+                title="Não foi possível carregar as avaliações agora"
+                action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+                help={TROUBLESHOOTING_HELP}
+              />
+            ) : rating ? (
+              // A filter that empties the list offers the way back to every review.
+              <EmptyState
+                icon="star-outline"
+                title="Nenhuma avaliação com essa nota"
+                action={{ label: 'Ver todas', onPress: () => setRating(null) }}
+              />
+            ) : (
+              <EmptyState
+                icon="star-outline"
+                title="Ainda não há avaliações deste lugar"
+                action={{ label: 'Voltar ao lugar', onPress: () => router.back() }}
+              />
+            )
           }
         />
       )}
@@ -102,5 +122,4 @@ const styles = StyleSheet.create({
   filters: { flexGrow: 0 },
   filtersContent: { gap: spacing.sm },
   list: { gap: spacing.md, padding: spacing.gutter, paddingTop: spacing.md },
-  empty: { ...typography.body, padding: spacing.lg, textAlign: 'center' },
 })

@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { useAnnouncement } from '@/components/announce'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { ApiError } from '@/api/client'
@@ -50,10 +50,9 @@ export default function WriteReviewScreen() {
     failedPhotos === 1
       ? 'Uma foto não pôde ser enviada.'
       : `${failedPhotos} fotos não puderam ser enviadas.`
+  const sent = create.isSuccess ? sentTitle(create.data.review) : null
   useAnnouncement(
-    failedPhotos > 0
-      ? `Avaliação publicada. ${photosNotice}`
-      : create.isError && failureMessage(create.error)
+    failedPhotos > 0 ? `${sent}. ${photosNotice}` : create.isError && failureMessage(create.error)
   )
 
   const submit = () => {
@@ -64,7 +63,14 @@ export default function WriteReviewScreen() {
         body: { establishment_id: id, rating, ...(text ? { comment: text } : {}) },
         photos: photos.map(({ uri, fileName, mimeType }) => ({ uri, fileName, mimeType })),
       },
-      { onSuccess: ({ failed }) => (failed === 0 ? router.back() : undefined) }
+      {
+        onSuccess: ({ review, failed }) => {
+          if (failed > 0) return
+          // The form closes on success: the outcome is said, since nothing on the next screen says it.
+          announce(`${sentTitle(review)}.`)
+          router.back()
+        },
+      }
     )
   }
 
@@ -72,7 +78,7 @@ export default function WriteReviewScreen() {
     return (
       <View style={[styles.page, { backgroundColor: colors.background, flex: 1 }]}>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.foreground }]}>
-          Avaliação publicada
+          {sent}
         </Text>
         <Text
           style={[styles.error, { color: colors.destructiveAccent }]}
@@ -166,6 +172,13 @@ export function ReviewSubject({ name }: { name: string }) {
     </View>
   )
 }
+
+/**
+ * What became of a review that was sent. A rule of the operation can hold it
+ * out of public view at once (`hidden`), so "publicada" is only said when it is.
+ */
+export const sentTitle = (review: { status: string }) =>
+  review.status === 'published' ? 'Avaliação publicada' : 'Avaliação enviada, em análise'
 
 /**
  * The server states the rule it enforced; repeating its message is more useful

@@ -9,8 +9,9 @@ jest.mock('@/api/config', () => ({ resolveMediaUrl: (url: string) => url }))
 jest.mock('@/theme/use-colors', () => ({
   useColors: () => jest.requireActual('@/theme/tokens').palette.light,
 }))
+const mockBack = jest.fn()
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ back: jest.fn() }),
+  useRouter: () => ({ back: mockBack }),
   useLocalSearchParams: () => ({ id: '1' }),
 }))
 jest.mock('@/components/image-picker', () => {
@@ -122,4 +123,31 @@ it('offers no picker once the review holds as many photos as the operation allow
 
   expect(view.queryByTestId('photo-picker')).toBeNull()
   expect(view.getByTestId('remove-photo-12')).toBeTruthy()
+})
+
+// A list that did not load says nothing about the review; one that loaded without it does.
+it('offers a new attempt when the review could not be read, and a way back when it is gone', async () => {
+  const refetch = jest.fn()
+  queries.useMyReviews.mockReturnValue({ isPending: false, isError: true, refetch })
+  const failed = await render(<EditReviewScreen />)
+  await fireEvent.press(failed.getByRole('button', { name: 'Tentar de novo' }))
+  expect(refetch).toHaveBeenCalled()
+  await failed.unmount()
+
+  queries.useMyReviews.mockReturnValue({ isPending: false, data: { data: [] } })
+  const gone = await render(<EditReviewScreen />)
+  expect(gone.getByText('Esta avaliação não está mais disponível')).toBeOnTheScreen()
+  await fireEvent.press(gone.getByRole('button', { name: 'Voltar' }))
+  expect(mockBack).toHaveBeenCalled()
+})
+
+it('announces the saved review before going back', async () => {
+  const { AccessibilityInfo } = jest.requireActual('react-native')
+  queries.useMyReviews.mockReturnValue(withPhotos([]))
+  const mutate = jest.fn((_body, options) => options.onSuccess({ id: 1, status: 'published' }))
+  queries.useUpdateReview.mockReturnValue(idle({ mutate }))
+  const view = await render(<EditReviewScreen />)
+  await fireEvent.press(view.getByTestId('edit-submit'))
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Avaliação atualizada.')
+  expect(mockBack).toHaveBeenCalled()
 })

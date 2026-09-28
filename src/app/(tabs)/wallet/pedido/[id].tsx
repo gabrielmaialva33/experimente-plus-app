@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native'
 
+import { ApiError } from '@/api/client'
 import { useLoadingCopy } from '@/api/online'
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
@@ -18,6 +19,7 @@ import { useColors } from '@/theme/use-colors'
 import { cancelPurchase } from '@/purchases/cancel'
 import {
   EditionTerms,
+  PurchaseAction,
   PurchasePage,
   PurchaseText,
   RetryPurchase,
@@ -71,6 +73,14 @@ export default function PurchaseOrderScreen() {
     return (
       <PurchasePage>
         <PurchaseText>{consulting}</PurchaseText>
+      </PurchasePage>
+    )
+  // Not found, or not this account's: the server does not say which, and neither does this.
+  if (query.error instanceof ApiError && query.error.status === 404)
+    return (
+      <PurchasePage>
+        <PurchaseText>Este pedido não foi encontrado nesta conta.</PurchaseText>
+        <PurchaseAction label="Meus pedidos" onPress={() => router.navigate('/wallet/edicoes')} />
       </PurchasePage>
     )
   if (query.isError || !order || !state)

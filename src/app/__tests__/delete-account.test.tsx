@@ -44,6 +44,9 @@ it('signs out and leaves the form once the account is gone', async () => {
   expect(mockSignOut.mock.invocationCallOrder[0]).toBeLessThan(
     mockReplace.mock.invocationCallOrder[0]
   )
+  // The form goes with the account; the outcome is said.
+  const { AccessibilityInfo } = jest.requireActual('react-native')
+  expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Conta excluída.')
 })
 
 it('stays readable while it cannot delete yet, and offers a way out', async () => {

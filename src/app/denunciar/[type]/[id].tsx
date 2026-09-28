@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
+import { EmptyState } from '@/components/empty-state'
 import { FormTextInput, KeyboardForm } from '@/components/keyboard-form'
 import { useContentFrame } from '@/components/content-frame'
 import { ApiError } from '@/api/client'
@@ -116,6 +117,7 @@ export const reportableTarget = (value: string | undefined): ReportableTarget | 
 export default function ReportContentScreen() {
   const colors = useColors()
   const frame = useContentFrame()
+  const router = useRouter()
   // `nome` names what is reported, so the form can say it (audit A45).
   const { type, id, nome } = useLocalSearchParams<{ type: string; id: string; nome?: string }>()
   const target = reportableTarget(type)
@@ -167,10 +169,13 @@ export default function ReportContentScreen() {
 
   if (!target || !Number.isInteger(targetId) || targetId <= 0) {
     return (
-      <View style={[styles.page, styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.body, { color: colors.mutedForeground }]} testID="report-unsupported">
-          Não é possível denunciar este conteúdo por aqui.
-        </Text>
+      <View style={[styles.page, styles.unsupported, { backgroundColor: colors.background }]}>
+        <EmptyState
+          testID="report-unsupported"
+          icon="flag-outline"
+          title="Não é possível denunciar este conteúdo por aqui"
+          action={{ label: 'Voltar', onPress: () => router.back() }}
+        />
       </View>
     )
   }
@@ -203,7 +208,9 @@ export default function ReportContentScreen() {
             <Pressable
               key={value}
               accessibilityRole="radio"
-              accessibilityState={{ selected, checked: selected }}
+              // The reason is what is being sent: it holds still until the answer.
+              accessibilityState={{ selected, checked: selected, disabled: report.isPending }}
+              disabled={report.isPending}
               onPress={() => setReason(value)}
               style={[
                 styles.reason,
@@ -289,6 +296,7 @@ export default function ReportContentScreen() {
 const styles = StyleSheet.create({
   page: { gap: spacing.xl, padding: spacing.gutter, paddingBottom: spacing.xxl },
   center: { alignItems: 'center', flex: 1, gap: spacing.md, justifyContent: 'center' },
+  unsupported: { flex: 1, justifyContent: 'center' },
   centered: { textAlign: 'center' },
   done: {
     alignItems: 'center',

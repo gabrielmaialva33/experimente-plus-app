@@ -58,3 +58,30 @@ it('names the place, filters by chip and reports a review by name', async () => 
     '/denunciar/review/1?nome=Avalia%C3%A7%C3%A3o%20de%20Ana%20Ribeiro'
   )
 })
+
+// Every list state leads somewhere: a failure to a new attempt, a filter that
+// empties the list back to every review.
+it('offers a new attempt when the reviews could not be read', async () => {
+  const refetch = jest.fn()
+  queries.useEstablishmentReviews.mockReturnValue({ isPending: false, isError: true, refetch })
+  const view = await render(<EstablishmentReviewsScreen />)
+  expect(view.getByText('Não foi possível carregar as avaliações agora')).toBeOnTheScreen()
+  await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+  expect(refetch).toHaveBeenCalled()
+})
+
+it('leads a filter with no review back to every review', async () => {
+  const view = await render(<EstablishmentReviewsScreen />)
+  queries.useEstablishmentReviews.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { data: [] },
+  })
+  await fireEvent.press(view.getByRole('button', { name: '1 estrela' }))
+  expect(view.getByText('Nenhuma avaliação com essa nota')).toBeOnTheScreen()
+  await fireEvent.press(view.getByRole('button', { name: 'Ver todas' }))
+  expect(queries.useEstablishmentReviews).toHaveBeenLastCalledWith(7, { perPage: 20 })
+  expect(view.getByRole('button', { name: 'Todas' }).props.accessibilityState).toEqual({
+    selected: true,
+  })
+})

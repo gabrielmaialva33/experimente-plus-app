@@ -89,3 +89,21 @@ it('retains the exact pre-upgrade package body without exposing it to a voucher 
   expect(readIntent(1, 2, null)).toEqual(old)
   expect(readIntent(1, 2, 3)).toBeNull()
 })
+
+// A slot that no longer reads as an intent cannot be replayed as it was sent;
+// it is dropped rather than breaking the product screen on every render.
+it('drops a slot that does not read as an intent instead of throwing', () => {
+  const body: CreatePurchaseRequest = {
+    edition_id: 2,
+    amount_cents: 10000,
+    terms_version: 'a'.repeat(64),
+    method: 'pix',
+  }
+  purchaseIntent(1, body)
+  const [slot] = [...mockStorage.keys()]
+  for (const broken of ['{"key":', '"just text"', '{"key":"","body":{}}', '{"key":"k"}']) {
+    mockStorage.set(slot, broken)
+    expect(readIntent(1, 2)).toBeNull()
+    expect(mockStorage.has(slot)).toBe(false)
+  }
+})

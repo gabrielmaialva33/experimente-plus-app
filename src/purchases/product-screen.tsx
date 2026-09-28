@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 import Animated from 'react-native-reanimated'
 
+import { ApiError } from '@/api/client'
 import { useLoadingCopy } from '@/api/online'
 import { createPurchase } from '@/api/purchases'
 import type { PaymentMethod, PurchaseProduct } from '@/api/purchases'
@@ -54,6 +55,17 @@ const STARTABLE_METHODS = new Set(['pix'])
 
 const UNCONFIRMED =
   'Não recebemos a confirmação do pedido. Isso não significa que o pagamento falhou. Consulte seus pedidos ou retome a mesma solicitação.'
+const REFUSED =
+  'O pedido não foi criado e nada foi cobrado: as condições deste produto mudaram, ele não está mais à venda ou você já tem um pedido dele. Confira o produto e seus pedidos antes de tentar de novo.'
+
+/**
+ * A refusal the server decided before creating anything under the key
+ * (`purchase_service`: quote changed, product no longer on sale, an order
+ * already open, a key bound to another body). Unlike a lost answer, the same
+ * request can only be refused again, so the intent is not replayed.
+ */
+const refusedPurchase = (error: unknown) =>
+  error instanceof ApiError && [400, 404, 409, 422].includes(error.status)
 
 const count = (value: number, one: string, many: string) => `${value} ${value === 1 ? one : many}`
 
@@ -171,7 +183,15 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
           method,
         })
       }
-      const result = await createPurchase(intent.body, intent.key)
+      let result: Awaited<ReturnType<typeof createPurchase>>
+      try {
+        result = await createPurchase(intent.body, intent.key)
+      } catch (error) {
+        // Kept, a refused intent would replay the same refusal on every attempt.
+        if (refusedPurchase(error))
+          clearIntent(userId, intent.body.edition_id, intent.body.offer_id)
+        throw error
+      }
       if (!result || typeof result.id !== 'string' || !result.id)
         throw new Error('Purchase identity unavailable')
       clearIntent(userId, intent.body.edition_id, intent.body.offer_id)
@@ -182,10 +202,18 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
       void client.invalidateQueries({ queryKey: ['purchases'] })
       router.replace(`/wallet/pedido/${encodeURIComponent(order.id)}`, { withAnchor: true })
     },
+    onError: (error) => {
+      if (!refusedPurchase(error)) return
+      // What changed is the server's to say: the product as sold now, and any order already open.
+      void client.invalidateQueries({ queryKey: ['purchase-editions'] })
+      void client.invalidateQueries({ queryKey: ['purchases'] })
+    },
   })
+  const refused = start.isError && refusedPurchase(start.error)
+  const unconfirmed = start.isError && !refused
 
   // "Ir para o pagamento" without an answer: the one outcome the person must hear.
-  useAnnouncement(start.isError && UNCONFIRMED)
+  useAnnouncement(refused ? REFUSED : unconfirmed && UNCONFIRMED)
 
   const submit = async () => {
     if (sending.current) return
@@ -243,13 +271,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
     )
 
   const buying = Boolean(
-    product &&
-    userId &&
-    !existing &&
-    !orders.isError &&
-    !orders.isPending &&
-    !prior &&
-    !start.isError
+    product && userId && !existing && !orders.isError && !orders.isPending && !prior && !unconfirmed
   )
   const ready = Boolean(
     product &&
@@ -318,7 +340,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
             </>
           ) : orders.isPending ? (
             <Body>{consultingOrders}</Body>
-          ) : prior || start.isError ? (
+          ) : prior || unconfirmed ? (
             <>
               <Body>{UNCONFIRMED}</Body>
               <PurchaseAction
@@ -334,6 +356,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
             </>
           ) : product ? (
             <>
+              {refused ? <Body>{REFUSED}</Body> : null}
               {!product.purchasable ? <Body>Compra indisponível no momento.</Body> : null}
               {!product.payment_methods.length ? (
                 <Body>

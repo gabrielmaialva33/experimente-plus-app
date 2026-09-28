@@ -1,4 +1,4 @@
-import { extractPresentationToken } from '../presentation-token'
+import { extractPresentationToken, isPresentationToken } from '../presentation-token'
 
 const TOKEN = `${'a'.repeat(20)}.${'b'.repeat(43)}`
 
@@ -28,6 +28,18 @@ describe('extractPresentationToken', () => {
   it('refuses arbitrary scanned content instead of guessing', () => {
     for (const junk of ['', '   ', 'hello world', '{"token":"x"}', 'WIFI:S:net;;']) {
       expect(extractPresentationToken(junk)).toBeNull()
+    }
+  })
+})
+
+describe('isPresentationToken', () => {
+  // What a link may hand the confirmation directly: a bare token and nothing else.
+  it('accepts only a bare token, never the URL that carries one', () => {
+    expect(isPresentationToken(TOKEN)).toBe(true)
+    expect(isPresentationToken(`https://experimente.test/?token=${TOKEN}`)).toBe(false)
+    expect(isPresentationToken(` ${TOKEN}`)).toBe(false)
+    for (const junk of [undefined, null, 42, '', 'private-test-token']) {
+      expect(isPresentationToken(junk)).toBe(false)
     }
   })
 })

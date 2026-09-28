@@ -16,11 +16,12 @@ import {
 import type { Wallet, WalletBenefit } from '../types'
 
 const mockPush = jest.fn()
+const mockToken = `${'a'.repeat(20)}.${'b'.repeat(43)}`
 
 jest.mock('@/theme/use-colors', () => ({ useColors: jest.fn() }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), setParams: jest.fn() }),
-  useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: 'private-test-token' }),
+  useLocalSearchParams: () => ({ accessId: '1', offerId: '2', token: mockToken }),
   useFocusEffect: jest.fn(),
 }))
 jest.mock('expo-image', () => ({ Image: jest.requireActual('react-native').View }))
@@ -41,6 +42,7 @@ jest.mock('@/api/client', () => ({
 }))
 jest.mock('@/session/context', () => ({
   useSession: () => ({ status: 'authenticated', context: { user: { id: 1 } } }),
+  usePartnerAreas: () => ({ canValidate: true, canReadHistory: true }),
 }))
 jest.mock('@/api/wallet', () => ({ getWallet: jest.fn(), createPresentation: jest.fn() }))
 jest.mock('expo-web-browser', () => ({
@@ -200,11 +202,22 @@ it('explains a held presentation through the manual’s wallet section', async (
   expect(api.createPresentation).not.toHaveBeenCalled()
 })
 
-it('does not create a presentation when the fresh wallet cannot be read', async () => {
+it('does not create a presentation when the fresh wallet cannot be read, and offers to check again', async () => {
   api.getWallet.mockRejectedValue(new Error('offline'))
   const view = await page(<PresentScreen />)
-  expect(await view.findByText(/Não é possível apresentar/)).toBeOnTheScreen()
+  expect(await view.findByText(/Não foi possível conferir o benefício agora/)).toBeOnTheScreen()
   expect(api.createPresentation).not.toHaveBeenCalled()
+
+  // A failed read says nothing about the benefit: once it reads, the code is made.
+  api.getWallet.mockResolvedValue(wallet)
+  api.createPresentation.mockResolvedValue({
+    expires_at: new Date(Date.now() + 300_000).toISOString(),
+    qr_data_url: 'data:image/png;base64,test',
+    benefit: { offer_title: 'Benefício', establishment_name: 'Café', terms: null },
+  })
+  await fireEvent.press(view.getByRole('button', { name: 'Tentar de novo' }))
+  expect(await view.findByLabelText('Código temporário do benefício')).toBeOnTheScreen()
+  expect(api.createPresentation).toHaveBeenCalledTimes(1)
 })
 
 it('removes an already displayed code when a fresh wallet reports a hold', async () => {
@@ -458,7 +471,7 @@ it.each([400, 422])(
     expect(previewView.queryByRole('button', { name: 'Confirmar utilização' })).toBeNull()
     await previewView.unmount()
     redemptions.previewRedemption.mockResolvedValue({
-      token: 'private-test-token',
+      token: mockToken,
       holder: { full_name: 'Cliente' },
       benefit: {
         establishment_name: 'Café',

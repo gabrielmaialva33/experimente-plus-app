@@ -18,6 +18,8 @@ interface Props {
   accessory?: ReactNode
   /** In a grid, `{ flex: 1 }`: the cards of a row share the tallest one's height. */
   style?: StyleProp<ViewStyle>
+  /** "a 1,2 km": how far the place is, while the list is ordered by it. */
+  distance?: string | null
 }
 
 /** "4,5 ★ (2)" — only when someone has rated the place. */
@@ -28,9 +30,10 @@ export function ratingLabel(reviews: EstablishmentSummary['reviews'] | undefined
 
 /**
  * What the card says to a screen reader, in reading order: the name first, then
- * its state, and the rating as words — "★ (2)" would be read as a symbol name.
+ * how far it is when the list goes by distance, its state, and the rating as
+ * words — "★ (2)" would be read as a symbol name.
  */
-function cardLabel(establishment: EstablishmentSummary) {
+function cardLabel(establishment: EstablishmentSummary, distance: string | null) {
   const { reviews } = establishment
   const rating =
     reviews?.count && reviews.average != null
@@ -38,6 +41,7 @@ function cardLabel(establishment: EstablishmentSummary) {
       : null
   return [
     establishment.name,
+    distance,
     operatingStatus(establishment).label,
     establishment.primary_category?.name,
     establishment.address.district,
@@ -55,11 +59,19 @@ function cardLabel(establishment: EstablishmentSummary) {
  * the name is set in the display face. The seam under the photo stays, so a
  * photo edge never touches the text.
  */
-export function EstablishmentCard({ establishment, onPress, accessory, style }: Props) {
+export function EstablishmentCard({
+  establishment,
+  onPress,
+  accessory,
+  style,
+  distance = null,
+}: Props) {
   const colors = useColors()
   const oneLine = useLineCap(1)
   const twoLines = useLineCap(2)
+  // The distance leads the line, so a long category never cuts it off.
   const meta = [
+    distance,
     establishment.primary_category?.name,
     establishment.address.district,
     ratingLabel(establishment.reviews),
@@ -70,7 +82,7 @@ export function EstablishmentCard({ establishment, onPress, accessory, style }: 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={cardLabel(establishment)}
+      accessibilityLabel={cardLabel(establishment, distance)}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,

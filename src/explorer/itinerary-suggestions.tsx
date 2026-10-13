@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import type { Itinerary, ItinerarySuggestion } from '@/api/explorer'
 import { useLoadingCopy } from '@/api/online'
 import { useSelectedCity } from '@/catalog/city-store'
+import { distanceLabel } from '@/catalog/distance'
 import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { SectionHeader } from '@/components/section-header'
@@ -13,19 +14,6 @@ import { placeHref } from '@/place/links'
 import { useStackedLayout } from '@/theme/font-scale'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
-
-/**
- * "a 1,2 km" or "a 500 m", as distances are read in Brazil; nothing without
- * one. The server sends kilometres to one decimal, so metres come in hundreds.
- */
-export function distanceLabel(distanceKm: number | null): string | null {
-  if (distanceKm === null || !Number.isFinite(distanceKm) || distanceKm < 0) return null
-  const tenths = Math.round(distanceKm * 10)
-  if (tenths === 0) return 'a menos de 100 m'
-  if (tenths < 10) return `a ${tenths * 100} m`
-  const km = tenths / 10
-  return `a ${Number.isInteger(km) ? km : km.toFixed(1).replace('.', ',')} km`
-}
 
 /**
  * "Sugestões para o roteiro" — places to add next, from the server.

@@ -11,6 +11,7 @@ import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { defaultCity } from '@/catalog/default-city'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
+import { placeDistance } from '@/catalog/distance'
 import { useExploreSort } from '@/catalog/sort'
 import { SortRow } from '@/catalog/sort-row'
 import type { EstablishmentSummary } from '@/catalog/types'
@@ -56,12 +57,14 @@ const PlaceCell = memo(function PlaceCell({
   width,
   left,
   right,
+  distance,
   onOpen,
 }: {
   establishment: EstablishmentSummary
   width: number | null
   left: number
   right: number
+  distance: string | null
   onOpen: (slug: string) => void
 }) {
   return (
@@ -70,6 +73,7 @@ const PlaceCell = memo(function PlaceCell({
         establishment={establishment}
         onPress={() => onOpen(establishment.slug)}
         style={width != null ? styles.gridCard : undefined}
+        distance={distance}
       />
     </View>
   )
@@ -162,6 +166,8 @@ export default function ExploreScreen() {
   if (liveAttributes !== attributes) setAttributes(liveAttributes)
 
   const { sort, origin } = ordering
+  // "Mais perto" says how near each place is, from the position already in memory.
+  const nearestFrom = sort === 'distance' ? origin : null
   const params = useMemo<SearchParams>(
     () => ({
       q: debouncedTerm || undefined,
@@ -290,10 +296,11 @@ export default function ExploreScreen() {
         width={grid ? columnWidth : null}
         left={frameLeft}
         right={frameRight}
+        distance={placeDistance(nearestFrom, item.address)}
         onOpen={openEstablishment}
       />
     ),
-    [grid, columnWidth, frameLeft, frameRight, openEstablishment]
+    [grid, columnWidth, frameLeft, frameRight, nearestFrom, openEstablishment]
   )
 
   const results = search.data?.organic ?? []

@@ -2,7 +2,7 @@ import { fireEvent, render, within } from '@testing-library/react-native'
 import { AccessibilityInfo, Share } from 'react-native'
 
 import ItineraryScreen from '@/app/roteiros/[id]'
-import { distanceLabel } from '@/explorer/itinerary-suggestions'
+import { distanceLabel } from '@/catalog/distance'
 
 jest.mock('@/api/client', () => ({ ApiError: class ApiError extends Error {} }))
 jest.mock('@expo/vector-icons/Ionicons', () => 'Icon')

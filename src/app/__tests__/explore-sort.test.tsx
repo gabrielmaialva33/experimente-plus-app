@@ -199,6 +199,57 @@ it('asks for the location only when "Mais perto" is chosen and sends it with the
   expect(lastSearch()).not.toHaveProperty('sort')
 })
 
+// "Mais perto" is only an order the person can follow when each card says how near it is.
+it('shows how far each place is while "Mais perto" orders the list, and only then', async () => {
+  const place = (slug: string, name: string, latitude: number | null) => ({
+    slug,
+    name,
+    address: {
+      district: 'Centro',
+      latitude,
+      longitude: latitude === null ? null : POSITION.longitude,
+    },
+    business_status: 'open',
+    is_open_now: true,
+  })
+  queries.useSearch.mockReturnValue({
+    data: {
+      organic: [
+        // 0,0031° and 0,0108° of latitude from the position: about 350 m and 1,2 km.
+        place('cafe', 'Café da Praça', POSITION.latitude + 0.0031),
+        place('bar', 'Bar do Lago', POSITION.latitude + 0.0108),
+        place('sem-mapa', 'Sem Mapa', null),
+      ],
+      meta: { total: 3 },
+    },
+  })
+  const view = await render(<ExploreScreen />)
+  expect(view.queryByText(/^a \d/)).toBeNull()
+
+  await fireEvent.press(orders(view).getByRole('radio', { name: 'Mais perto' }))
+  await waitFor(() => expect(lastSearch()).toMatchObject({ sort: 'distance', origin: POSITION }))
+
+  expect(view.getByText('a 350 m · Centro')).toBeOnTheScreen()
+  expect(view.getByText('a 1,2 km · Centro')).toBeOnTheScreen()
+  expect(
+    view.getByRole('button', { name: /^Café da Praça, a 350 m, Aberto agora/ })
+  ).toBeOnTheScreen()
+  expect(view.getByRole('button', { name: /^Bar do Lago, a 1,2 km, / })).toBeOnTheScreen()
+  // A place without a point on the map says nothing rather than a wrong distance.
+  expect(view.getByRole('button', { name: /^Sem Mapa, Aberto agora/ })).toBeOnTheScreen()
+
+  // Computed here and nowhere else: the search sends the position, not the distances.
+  expect(JSON.stringify(queries.useSearch.mock.calls)).not.toMatch(/350|1,2 km/)
+  const { track } = jest.requireMock('@/analytics/events') as { track: jest.Mock }
+  expect(JSON.stringify(track.mock.calls)).not.toMatch(/km| m"|latitude/)
+
+  // Another order, and the position with it, takes the distances away.
+  await fireEvent.press(orders(view).getByRole('radio', { name: 'Relevância' }))
+  await waitFor(() => expect(lastSearch()).not.toHaveProperty('origin'))
+  expect(view.queryByText(/^a \d/)).toBeNull()
+  expect(view.getByRole('button', { name: /^Café da Praça, Aberto agora/ })).toBeOnTheScreen()
+})
+
 it('stays in relevance and says why when the location is refused', async () => {
   location.requestForegroundPermissionsAsync.mockResolvedValue(permission(false, true))
   const view = await render(<ExploreScreen />)
@@ -280,4 +331,13 @@ it('marks a card "Vale hoje" and reads it with the card', async () => {
     <EstablishmentCard establishment={{ ...place, benefit_today: false }} onPress={jest.fn()} />
   )
   expect(view.queryByText('Vale hoje')).toBeNull()
+
+  // With "Mais perto", the distance comes right after the name.
+  await view.rerender(
+    <EstablishmentCard establishment={place} onPress={jest.fn()} distance="a 1,2 km" />
+  )
+  expect(view.getByText('a 1,2 km · Centro')).toBeOnTheScreen()
+  expect(view.getByRole('button').props.accessibilityLabel).toBe(
+    'Café da Praça, a 1,2 km, Aberto agora, Centro, Vale hoje'
+  )
 })

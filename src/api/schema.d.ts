@@ -1138,6 +1138,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/savings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get what the consumer saved with their benefits
+         * @description Places visited, benefits used and money saved by the signed-in person in the active
+         *     operation: the editions still open for use together under `current`, and each edition
+         *     whose usage window has closed under `past`, newest first (only editions with a use).
+         *     Everything is derived on read from the immutable uses; the client never recalculates it.
+         *
+         *     Every use counts, including those of an access revoked later (a full refund revokes the
+         *     access, not the uses already made). A fixed-amount discount adds its amount to
+         *     `savings_exact_cents`; the use keeps no copy of the amount, so it is read from the offer
+         *     and a later edit of a paused offer changes it, while a later change of type leaves the use
+         *     without a value. A percentage discount is an estimate: the percentage of the place's
+         *     public "Ticket médio" (category attribute `average_ticket`, reais per person), once per
+         *     use, in `savings_estimated_cents`. A place without one adds nothing and the use counts in
+         *     `uses_without_estimate`. Buy one get one, courtesy items and custom benefits count only as
+         *     uses. Clients must present any estimated value as approximate.
+         */
+        get: operations["getBenefitSavings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/benefits/presentations": {
         parameters: {
             query?: never;
@@ -4131,6 +4164,55 @@ export interface components {
         Wallet: {
             summary: components["schemas"]["WalletSummary"];
             passes: components["schemas"]["WalletPass"][];
+        };
+        BenefitSavingsPlace: {
+            /** @description The place's name as it was at its latest use. */
+            name: string;
+            visits: number;
+        };
+        BenefitSavingsEdition: {
+            id: number;
+            name: string;
+            /** @description Year the edition's usage window opens, on its city's clock. */
+            year: number;
+        };
+        BenefitSavingsCurrent: {
+            /** @description Editions still open for use that the totals cover; empty before the first use. */
+            editions: components["schemas"]["BenefitSavingsEdition"][];
+            /** @description Distinct places with at least one use. */
+            places_visited: number;
+            /** @description Every use, whatever the benefit type. */
+            benefits_used: number;
+            /** @description Sum of the fixed-amount discounts used, in BRL cents. */
+            savings_exact_cents: number;
+            /** @description Percentage discounts applied to each place's "Ticket médio", in BRL cents. An estimate. */
+            savings_estimated_cents: number;
+            /** @description Uses of a money benefit whose value cannot be worked out, such as a percentage at a place without "Ticket médio". */
+            uses_without_estimate: number;
+            /** @description The most visited places, most uses first, then by name. */
+            top_places: components["schemas"]["BenefitSavingsPlace"][];
+        };
+        BenefitSavingsPastEdition: {
+            edition: components["schemas"]["BenefitSavingsEdition"];
+            /** @description Distinct places with at least one use. */
+            places_visited: number;
+            /** @description Every use, whatever the benefit type. */
+            benefits_used: number;
+            /** @description Sum of the fixed-amount discounts used, in BRL cents. */
+            savings_exact_cents: number;
+            /** @description Percentage discounts applied to each place's "Ticket médio", in BRL cents. An estimate. */
+            savings_estimated_cents: number;
+            /** @description Uses of a money benefit whose value cannot be worked out, such as a percentage at a place without "Ticket médio". */
+            uses_without_estimate: number;
+            /** @description The most visited places, most uses first, then by name. */
+            top_places: components["schemas"]["BenefitSavingsPlace"][];
+        };
+        BenefitSavings: {
+            /** @constant */
+            currency: "BRL";
+            current: components["schemas"]["BenefitSavingsCurrent"];
+            /** @description Editions whose usage window has closed, newest first; only those with a use. */
+            past: components["schemas"]["BenefitSavingsPastEdition"][];
         };
         BenefitSummary: {
             access_id: number;
@@ -9825,6 +9907,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Wallet"];
+                };
+            };
+            400: components["responses"]["PrivateBadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            403: components["responses"]["PrivateForbiddenError"];
+            429: components["responses"]["PrivateRateLimitError"];
+        };
+    };
+    getBenefitSavings: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional active operation override. Membership and active status are always validated. */
+                "x-tenant-id"?: components["parameters"]["tenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Savings of the current editions and of each past edition, zeros before any use */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    "X-Robots-Tag": components["headers"]["PrivateRobotsTag"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    "X-RateLimit-Limit": components["headers"]["RateLimitLimit"];
+                    "X-RateLimit-Remaining": components["headers"]["RateLimitRemaining"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenefitSavings"];
                 };
             };
             400: components["responses"]["PrivateBadRequestError"];

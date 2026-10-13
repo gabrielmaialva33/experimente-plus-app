@@ -24,6 +24,8 @@ import { useBandStatusBar } from '@/theme/system-bars'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
+import { useSavings, walletUses } from '@/wallet/savings'
+import { SavingsBlock } from '@/wallet/savings-view'
 import { AVAILABILITY_LABEL, type WalletBenefit, type WalletPass } from '@/wallet/types'
 import {
   canPresentBenefit,
@@ -41,7 +43,9 @@ export default function WalletScreen() {
   const { status } = useSession()
   const wallet = useWallet()
   const orders = usePurchases()
-  const refreshControl = usePullToRefresh(wallet.refetch, orders.refetch)
+  // Waits for the wallet, then reads again whenever a new use shows up in it.
+  const savings = useSavings({ enabled: !wallet.isPending, uses: walletUses(wallet.data) })
+  const refreshControl = usePullToRefresh(wallet.refetch, orders.refetch, savings.refetch)
   // A refresh that failed takes the tickets off screen until one succeeds (a ticket
   // read before may be on hold by now); this says why they went.
   useAnnouncement(wallet.isError && 'Não foi possível atualizar a carteira')
@@ -186,6 +190,8 @@ export default function WalletScreen() {
               ))}
             </View>
           ) : null}
+
+          <SavingsBlock query={savings} onOpen={() => router.push('/wallet/economia')} />
 
           <View style={styles.section}>
             <Text

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { announce } from '@/components/announce'
@@ -7,6 +7,7 @@ import { Badge, type BadgeTone } from '@/components/badge'
 import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
+import { RevealScrollFrame, useRevealOnOpen, useScrollReveal } from '@/components/keyboard-form'
 import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { usePullToRefresh } from '@/components/pull-to-refresh'
 import { useContentFrame } from '@/components/content-frame'
@@ -48,6 +49,11 @@ export default function MyReviewsScreen() {
   const router = useRouter()
   const query = useMyReviews({ perPage: 20 })
   const refreshControl = usePullToRefresh(query.refetch)
+  // A card's confirmation grows downwards; at the foot of the list it grew out of sight.
+  const list = useRef<FlatList<MyReview>>(null)
+  const scroll = useScrollReveal(
+    useCallback((offset: number) => list.current?.scrollToOffset({ offset, animated: true }), [])
+  )
 
   if (query.isPending) {
     return <ContentSkeleton label="Carregando suas avaliações" variant="catalog" />
@@ -56,35 +62,43 @@ export default function MyReviewsScreen() {
   const reviews = query.data?.data ?? []
 
   return (
-    <FlatList
-      {...LIST_CLIPPING}
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={[styles.list, frame.padding]}
-      data={reviews}
-      refreshControl={refreshControl}
-      keyExtractor={(review) => String(review.id)}
-      ListEmptyComponent={
-        query.isError ? (
-          <EmptyState
-            icon="cloud-offline-outline"
-            title="Não foi possível carregar suas avaliações agora"
-            action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
-            help={TROUBLESHOOTING_HELP}
-          />
-        ) : (
-          // Audit A34: an empty list says what goes here and where to start.
-          <EmptyState
-            icon="star-outline"
-            title="Nenhuma avaliação ainda"
-            text="Você ainda não avaliou nenhum lugar."
-            action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
-          />
-        )
-      }
-      renderItem={({ item }) => <MyReviewCard review={item} />}
-    />
+    <RevealScrollFrame controller={scroll}>
+      <FlatList
+        {...LIST_CLIPPING}
+        ref={list}
+        onScroll={scroll.onScroll}
+        scrollEventThrottle={16}
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={[styles.list, frame.padding]}
+        data={reviews}
+        refreshControl={refreshControl}
+        keyExtractor={(review) => String(review.id)}
+        ListEmptyComponent={
+          query.isError ? (
+            <EmptyState
+              icon="cloud-offline-outline"
+              title="Não foi possível carregar suas avaliações agora"
+              action={{ label: 'Tentar de novo', onPress: () => void query.refetch() }}
+              help={TROUBLESHOOTING_HELP}
+            />
+          ) : (
+            // Audit A34: an empty list says what goes here and where to start.
+            <EmptyState
+              icon="star-outline"
+              title="Nenhuma avaliação ainda"
+              text="Você ainda não avaliou nenhum lugar."
+              action={{ label: 'Explorar lugares', onPress: () => router.navigate('/') }}
+            />
+          )
+        }
+        renderItem={({ item }) => <MyReviewCard review={item} />}
+      />
+    </RevealScrollFrame>
   )
 }
+
+const DELETE_QUESTION = 'Excluir esta avaliação?'
+const DELETE_CONSEQUENCE = 'Ela sai da página do lugar, com as fotos. Não dá para desfazer.'
 
 /**
  * One review of this person. Deleting cannot be undone, so it asks first, in
@@ -98,6 +112,7 @@ function MyReviewCard({ review }: { review: MyReview }) {
   const router = useRouter()
   const remove = useDeleteReview()
   const [confirming, setConfirming] = useState(false)
+  const { block: question, onLayout: revealQuestion } = useRevealOnOpen()
   const when = formatDate(review.created_at)
   const archived = review.status === 'archived'
 
@@ -121,12 +136,15 @@ function MyReviewCard({ review }: { review: MyReview }) {
       ) : null}
 
       {archived ? null : confirming ? (
-        <View style={[styles.confirm, { backgroundColor: colors.destructiveSoft }]}>
-          <Text style={[styles.confirmTitle, { color: colors.foreground }]}>
-            Excluir esta avaliação?
-          </Text>
+        <View
+          ref={question}
+          onLayout={revealQuestion}
+          style={[styles.confirm, { backgroundColor: colors.destructiveSoft }]}
+          testID={`delete-review-confirmation-${review.id}`}
+        >
+          <Text style={[styles.confirmTitle, { color: colors.foreground }]}>{DELETE_QUESTION}</Text>
           <Text style={[styles.date, { color: colors.destructiveAccent }]}>
-            Ela sai da página do lugar, com as fotos. Não dá para desfazer.
+            {DELETE_CONSEQUENCE}
           </Text>
           {remove.isError ? (
             <Text accessibilityRole="alert" style={[styles.date, { color: colors.foreground }]}>
@@ -171,7 +189,10 @@ function MyReviewCard({ review }: { review: MyReview }) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Excluir avaliação de ${when}`}
-            onPress={() => setConfirming(true)}
+            onPress={() => {
+              setConfirming(true)
+              announce(`${DELETE_QUESTION} ${DELETE_CONSEQUENCE}`)
+            }}
             style={styles.delete}
             testID={`delete-review-${review.id}`}
           >

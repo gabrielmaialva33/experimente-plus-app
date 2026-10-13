@@ -11,7 +11,7 @@ import { Button } from '@/components/button'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { IconButton } from '@/components/icon-button'
-import { KeyboardForm } from '@/components/keyboard-form'
+import { KeyboardForm, useRevealOnOpen } from '@/components/keyboard-form'
 import { SectionHeader } from '@/components/section-header'
 import { TextField } from '@/components/text-field'
 import { useContentFrame } from '@/components/content-frame'
@@ -280,47 +280,22 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       <ItinerarySuggestions itinerary={itinerary} />
 
       {confirmingDelete ? (
-        <View
-          style={[
-            styles.stop,
-            { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
-          ]}
-        >
-          <Text style={[styles.body, { color: colors.foreground }]}>
-            Excluir este roteiro e todas as paradas? Isso não pode ser desfeito.
-          </Text>
-          {deleteFailure ? (
-            <Text
-              accessibilityRole="alert"
-              style={[styles.body, { color: colors.destructiveAccent }]}
-              testID="delete-itinerary-failure"
-            >
-              {deleteFailure}
-            </Text>
-          ) : null}
-          <View style={styles.confirm}>
-            <Button label="Cancelar" variant="ghost" onPress={() => setConfirmingDelete(false)} />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Excluir roteiro"
-              accessibilityState={{ disabled: destroy.isPending }}
-              disabled={destroy.isPending}
-              onPress={() =>
-                destroy.mutate(itinerary.id, { onSuccess: () => router.replace('/roteiros') })
-              }
-              style={[styles.destroy, { backgroundColor: colors.destructive }]}
-              testID="confirm-delete-itinerary"
-            >
-              <Text style={[styles.destroyLabel, { color: colors.destructiveForeground }]}>
-                Excluir
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        <DeleteConfirmation
+          failure={deleteFailure}
+          pending={destroy.isPending}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() =>
+            destroy.mutate(itinerary.id, { onSuccess: () => router.replace('/roteiros') })
+          }
+        />
       ) : (
         <Pressable
           accessibilityRole="button"
-          onPress={() => setConfirmingDelete(true)}
+          onPress={() => {
+            setConfirmingDelete(true)
+            // The question opens below where the person is looking: it is said as well as shown.
+            announce(DELETE_QUESTION)
+          }}
           style={styles.deleteLink}
           testID="delete-itinerary"
         >
@@ -330,6 +305,67 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
         </Pressable>
       )}
     </KeyboardForm>
+  )
+}
+
+const DELETE_QUESTION = 'Excluir este roteiro e todas as paradas? Isso não pode ser desfeito.'
+
+/**
+ * The last step before deleting, in place of the link that opened it. It opens
+ * at the foot of the page, so it scrolls itself whole into view, its buttons
+ * above the navigation bar, and again when a failure makes it taller.
+ */
+function DeleteConfirmation({
+  failure,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  failure: string | null
+  pending: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const colors = useColors()
+  const { block: question, onLayout: revealQuestion } = useRevealOnOpen()
+
+  return (
+    <View
+      ref={question}
+      onLayout={revealQuestion}
+      style={[
+        styles.stop,
+        { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive },
+      ]}
+      testID="delete-itinerary-confirmation"
+    >
+      <Text style={[styles.body, { color: colors.foreground }]}>{DELETE_QUESTION}</Text>
+      {failure ? (
+        <Text
+          accessibilityRole="alert"
+          style={[styles.body, { color: colors.destructiveAccent }]}
+          testID="delete-itinerary-failure"
+        >
+          {failure}
+        </Text>
+      ) : null}
+      <View style={styles.confirm}>
+        <Button label="Cancelar" variant="ghost" onPress={onCancel} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Excluir roteiro"
+          accessibilityState={{ disabled: pending }}
+          disabled={pending}
+          onPress={onConfirm}
+          style={[styles.destroy, { backgroundColor: colors.destructive }]}
+          testID="confirm-delete-itinerary"
+        >
+          <Text style={[styles.destroyLabel, { color: colors.destructiveForeground }]}>
+            Excluir
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   )
 }
 

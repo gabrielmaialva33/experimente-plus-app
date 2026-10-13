@@ -7,7 +7,7 @@ import type {
 import { notifyManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
-import { Linking } from 'react-native'
+import { AccessibilityInfo, Linking, ScrollView, View } from 'react-native'
 
 import { apiBaseUrl } from '@/api/config'
 
@@ -827,6 +827,37 @@ it('explains the next steps of a pending order and cancels it only after confirm
   expect(cancel).toHaveBeenCalledTimes(1)
   expect(cancel).toHaveBeenCalledWith(pending.id)
   expect(refetch).toHaveBeenCalled()
+})
+
+// The question grows downwards from its button: low on the page, its answers were out of sight.
+it('brings the cancel question whole into view, and says it', async () => {
+  type Locate = (this: { props: { testID?: string } }, done: (...frame: number[]) => void) => void
+  const proto = View.prototype as unknown as { measureInWindow: Locate }
+  const original = proto.measureInWindow
+  // The page's frame is 700 tall, 90 down the window; the question opens 560 into it.
+  proto.measureInWindow = function (done) {
+    if (this.props.testID === 'cancel-order-confirmation') done(16, 650, 358, 220)
+    else done(0, 90, 390, 700)
+  }
+  const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+  scrollTo.mockClear()
+  queries.usePurchase.mockReturnValue({ data: pending, refetch: jest.fn() })
+
+  try {
+    const view = await page(<OrderScreen />)
+    await fireEvent.press(view.getByRole('button', { name: 'Cancelar pedido' }))
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Cancelar este pedido? Cancele só se ainda não pagou. Um pagamento já feito é confirmado aqui; nesse caso, aguarde.'
+    )
+
+    await fireEvent(view.getByTestId('cancel-order-confirmation'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 600, width: 358, height: 220 } },
+    })
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+    expect(scrollTo).toHaveBeenCalledWith({ y: 650 - 90 + 220 + 24 - 700, animated: true })
+  } finally {
+    proto.measureInWindow = original
+  }
 })
 
 it('offers neither next steps nor cancellation once the payment is confirmed', async () => {

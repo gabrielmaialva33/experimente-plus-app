@@ -1,4 +1,5 @@
-import { fireEvent, render } from '@testing-library/react-native'
+import { act, fireEvent, render } from '@testing-library/react-native'
+import { AccessibilityInfo, FlatList, View } from 'react-native'
 
 import MyReviewsScreen from '@/app/conta/avaliacoes'
 
@@ -110,4 +111,43 @@ it('says a deletion failed, and offers no actions on a deleted review', async ()
   expect(view.queryByTestId('delete-review-2')).toBeNull()
   expect(view.getByTestId('my-review-2')).toHaveTextContent(/Excluída/)
   mockDelete.isError = false
+})
+
+// At the foot of the list a card's question grew under the fold, its buttons with it.
+it('brings a delete question whole into view, and says it', async () => {
+  type Locate = (this: { props: { testID?: string } }, done: (...frame: number[]) => void) => void
+  const proto = View.prototype as unknown as { measureInWindow: Locate }
+  const original = proto.measureInWindow
+  // The list's frame is 700 tall, 80 down the window; the question opens 620 into it.
+  proto.measureInWindow = function (done) {
+    if (this.props.testID === 'delete-review-confirmation-1') done(16, 700, 358, 200)
+    else done(0, 80, 390, 700)
+  }
+  const scrollToOffset = jest.spyOn(FlatList.prototype, 'scrollToOffset').mockImplementation()
+  mockDelete.isError = false
+  queries.useMyReviews.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { data: [review(1, 'published', false)] },
+  })
+
+  try {
+    const view = await render(<MyReviewsScreen />)
+    await fireEvent.press(view.getByTestId('delete-review-1'))
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+      'Excluir esta avaliação? Ela sai da página do lugar, com as fotos. Não dá para desfazer.'
+    )
+
+    await fireEvent(view.getByTestId('delete-review-confirmation-1'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 120, width: 358, height: 200 } },
+    })
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+    expect(scrollToOffset).toHaveBeenCalledWith({
+      offset: 700 - 80 + 200 + 24 - 700,
+      animated: true,
+    })
+  } finally {
+    proto.measureInWindow = original
+    scrollToOffset.mockRestore()
+  }
 })

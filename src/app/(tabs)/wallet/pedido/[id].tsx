@@ -1,18 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import { useLoadingCopy } from '@/api/online'
 import { paymentInstructions, type Purchase } from '@/api/purchases'
 import { Badge, type BadgeTone } from '@/components/badge'
-import { useAnnouncement } from '@/components/announce'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { decorative } from '@/components/decorative'
 import { SectionHeader } from '@/components/section-header'
 import { useContentFrame } from '@/components/content-frame'
+import { RevealScrollFrame, useRevealOnOpen, useScrollReveal } from '@/components/keyboard-form'
 import { HelpLink, TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
@@ -43,6 +44,9 @@ const OPENING_FAILED =
   'Não foi possível abrir o pagamento. Consulte o pedido antes de tentar novamente.'
 const CANCEL_REQUESTED = 'Cancelamento solicitado. O estado do pedido é atualizado em instantes.'
 const CANCEL_FAILED = 'Não foi possível cancelar agora. Consulte o pedido antes de tentar de novo.'
+const CANCEL_QUESTION = 'Cancelar este pedido?'
+const CANCEL_CAUTION =
+  'Cancele só se ainda não pagou. Um pagamento já feito é confirmado aqui; nesse caso, aguarde.'
 
 export default function PurchaseOrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -56,6 +60,11 @@ export default function PurchaseOrderScreen() {
   const frame = useContentFrame()
   useAnnouncement(openingError && OPENING_FAILED)
   const consulting = useLoadingCopy('Consultando pedido…')
+  // The cancel question grows downwards from where its button was, out of sight at the foot.
+  const page = useRef<ScrollView>(null)
+  const scroll = useScrollReveal(
+    useCallback((offset: number) => page.current?.scrollTo({ y: offset, animated: true }), [])
+  )
 
   const hasOrder = Boolean(order)
   const orderStatus = order?.status
@@ -101,91 +110,99 @@ export default function PurchaseOrderScreen() {
   const pending = state === 'pending'
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={[styles.page, frame.padding]}
-    >
-      <View
-        style={[
-          styles.card,
-          styles.summary,
-          { backgroundColor: colors.card, borderColor: colors.borderSubtle },
-        ]}
+    <RevealScrollFrame controller={scroll}>
+      <ScrollView
+        ref={page}
+        onScroll={scroll.onScroll}
+        scrollEventThrottle={16}
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={[styles.page, frame.padding]}
       >
-        <Badge label={copy.title} tone={ORDER_TONE[state]} />
-        <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
-          {order.snapshot.name}
-        </Text>
-        <Text style={[styles.price, { color: colors.foreground }]}>
-          {price(order.amount_cents, order.currency)}
-        </Text>
-        <Text style={[styles.body, { color: colors.mutedForeground }]}>{copy.message}</Text>
-      </View>
-
-      {/* A4: a pending order says what happens next, in order, instead of waiting mute. */}
-      {pending ? (
-        <NextSteps
-          order={order}
-          hasCode={Boolean(instructions.code)}
-          hasLink={Boolean(url)}
-          simulated={instructions.simulated}
-        />
-      ) : null}
-
-      {pending && instructions.code ? (
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: colors.foreground }]}>
-            Código de pagamento. Este código não apresenta um benefício.
+        <View
+          style={[
+            styles.card,
+            styles.summary,
+            { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+          ]}
+        >
+          <Badge label={copy.title} tone={ORDER_TONE[state]} />
+          <Text accessibilityRole="header" style={[styles.name, { color: colors.foreground }]}>
+            {order.snapshot.name}
           </Text>
-          <View style={[styles.code, { backgroundColor: colors.muted }]}>
-            <Text selectable style={[styles.codeText, { color: colors.foreground }]}>
-              {instructions.code}
+          <Text style={[styles.price, { color: colors.foreground }]}>
+            {price(order.amount_cents, order.currency)}
+          </Text>
+          <Text style={[styles.body, { color: colors.mutedForeground }]}>{copy.message}</Text>
+        </View>
+
+        {/* A4: a pending order says what happens next, in order, instead of waiting mute. */}
+        {pending ? (
+          <NextSteps
+            order={order}
+            hasCode={Boolean(instructions.code)}
+            hasLink={Boolean(url)}
+            simulated={instructions.simulated}
+          />
+        ) : null}
+
+        {pending && instructions.code ? (
+          <View style={styles.section}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              Código de pagamento. Este código não apresenta um benefício.
             </Text>
+            <View style={[styles.code, { backgroundColor: colors.muted }]}>
+              <Text selectable style={[styles.codeText, { color: colors.foreground }]}>
+                {instructions.code}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        <View style={styles.actions}>
+          {url ? (
+            <Button
+              label="Continuar pagamento"
+              variant="cta"
+              size={52}
+              icon="open-outline"
+              onPress={() => {
+                setOpeningError(false)
+                // Opening/returning from checkout is not a payment event. Only GET updates state.
+                void Linking.openURL(url).catch(() => setOpeningError(true))
+              }}
+            />
+          ) : null}
+          {openingError ? <PurchaseText>{OPENING_FAILED}</PurchaseText> : null}
+          {state === 'confirmed' ? (
+            <Button
+              label="Consultar carteira"
+              icon="wallet-outline"
+              onPress={() => router.navigate('/wallet')}
+            />
+          ) : null}
+          <RetryPurchase error={null} onRetry={() => void query.refetch()} />
+        </View>
+
+        {pending && order.status === 'pending' ? (
+          <CancelOrder id={order.id} onCancelled={() => void query.refetch()} />
+        ) : null}
+
+        {/* Every state of an order is explained there, from paying to a refund. */}
+        <HelpLink topic="purchase" label="Como funciona a compra" />
+
+        <View style={styles.section}>
+          <SectionHeader title="Condições" />
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+            ]}
+          >
+            <EditionTerms snapshot={order.snapshot} />
           </View>
         </View>
-      ) : null}
-
-      <View style={styles.actions}>
-        {url ? (
-          <Button
-            label="Continuar pagamento"
-            variant="cta"
-            size={52}
-            icon="open-outline"
-            onPress={() => {
-              setOpeningError(false)
-              // Opening/returning from checkout is not a payment event. Only GET updates state.
-              void Linking.openURL(url).catch(() => setOpeningError(true))
-            }}
-          />
-        ) : null}
-        {openingError ? <PurchaseText>{OPENING_FAILED}</PurchaseText> : null}
-        {state === 'confirmed' ? (
-          <Button
-            label="Consultar carteira"
-            icon="wallet-outline"
-            onPress={() => router.navigate('/wallet')}
-          />
-        ) : null}
-        <RetryPurchase error={null} onRetry={() => void query.refetch()} />
-      </View>
-
-      {pending && order.status === 'pending' ? (
-        <CancelOrder id={order.id} onCancelled={() => void query.refetch()} />
-      ) : null}
-
-      {/* Every state of an order is explained there, from paying to a refund. */}
-      <HelpLink topic="purchase" label="Como funciona a compra" />
-
-      <View style={styles.section}>
-        <SectionHeader title="Condições" />
-        <View
-          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
-        >
-          <EditionTerms snapshot={order.snapshot} />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </RevealScrollFrame>
   )
 }
 
@@ -257,6 +274,7 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
   const colors = useColors()
   const client = useQueryClient()
   const [confirming, setConfirming] = useState(false)
+  const { block: question, onLayout: revealQuestion } = useRevealOnOpen()
   const cancel = useMutation({
     retry: false,
     gcTime: 0,
@@ -289,23 +307,27 @@ function CancelOrder({ id, onCancelled }: { id: string; onCancelled: () => void 
         variant="ghost"
         size={44}
         icon="close-circle-outline"
-        onPress={() => setConfirming(true)}
+        onPress={() => {
+          setConfirming(true)
+          announce(`${CANCEL_QUESTION} ${CANCEL_CAUTION}`)
+        }}
       />
     )
   }
 
   return (
     <View
+      ref={question}
+      onLayout={revealQuestion}
       style={[
         styles.card,
         styles.confirm,
         { backgroundColor: colors.warningSoft, borderColor: colors.warningSoft },
       ]}
+      testID="cancel-order-confirmation"
     >
-      <Text style={[styles.label, { color: colors.foreground }]}>Cancelar este pedido?</Text>
-      <Text style={[styles.meta, { color: colors.warningAccent }]}>
-        Cancele só se ainda não pagou. Um pagamento já feito é confirmado aqui; nesse caso, aguarde.
-      </Text>
+      <Text style={[styles.label, { color: colors.foreground }]}>{CANCEL_QUESTION}</Text>
+      <Text style={[styles.meta, { color: colors.warningAccent }]}>{CANCEL_CAUTION}</Text>
       {cancel.isError ? (
         <Text style={[styles.meta, { color: colors.foreground }]}>{CANCEL_FAILED}</Text>
       ) : null}

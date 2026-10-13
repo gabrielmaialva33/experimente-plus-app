@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native'
-import { AccessibilityInfo } from 'react-native'
+import { AccessibilityInfo, ScrollView, View } from 'react-native'
 
 import InterestsScreen from '@/app/conta/interesses'
 import FavoritesScreen from '@/app/conta/favoritos'
@@ -521,6 +521,37 @@ describe('itinerary', () => {
 
     await fireEvent.press(view.getByTestId('confirm-delete-itinerary'))
     expect(mutate).toHaveBeenCalledWith(5, expect.any(Object))
+  })
+
+  // On a phone the question opened at the foot of the page, its buttons under the
+  // navigation bar: it scrolls itself whole into view and is said when it opens.
+  it('brings the delete question whole into view, and says it', async () => {
+    type Measure = (host: unknown, onSuccess: (...frame: number[]) => void) => void
+    const proto = View.prototype as unknown as { measureLayout: Measure }
+    const original = proto.measureLayout
+    proto.measureLayout = (_host, onSuccess) => onSuccess(0, 1500, 358, 180)
+    const scrollTo = (ScrollView.prototype as unknown as { scrollTo: jest.Mock }).scrollTo
+    try {
+      const view = await render(<ItineraryScreen />)
+      // The page shows 700 of its height; the question opens 1500 down.
+      await fireEvent(view.getByTestId('keyboard-form-scroll'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 700 } },
+      })
+
+      await fireEvent.press(view.getByTestId('delete-itinerary'))
+      expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+        'Excluir este roteiro e todas as paradas? Isso não pode ser desfeito.'
+      )
+
+      await fireEvent(view.getByTestId('delete-itinerary-confirmation'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 1500, width: 358, height: 180 } },
+      })
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+      expect(scrollTo).toHaveBeenCalledWith({ y: 1500 + 180 + 24 - 700, animated: true })
+      expect(view.getByTestId('confirm-delete-itinerary')).toBeOnTheScreen()
+    } finally {
+      proto.measureLayout = original
+    }
   })
 
   // Audit A26: the name is kept when the field is left; there is no button to find.

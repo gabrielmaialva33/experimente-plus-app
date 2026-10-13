@@ -66,7 +66,11 @@ export interface KeyboardFormController {
   onLayout: (event: LayoutChangeEvent) => void
   /** Pass as a field's `onFocus`: moving between fields keeps the new one in sight. */
   reveal: () => void
+  /** Scrolls a block of the form whole into the visible part, keyboard or not. */
+  revealView: (node: View | null) => void
 }
+
+type Placeable = Pick<View, 'measureLayout'>
 
 /**
  * Android draws edge to edge, so the window no longer shrinks for the keyboard
@@ -82,27 +86,40 @@ export function useKeyboardForm(): KeyboardFormController {
   const metrics = useRef<Metrics>({ scrollY: 0, viewport: 0, covered: 0 })
   const [inset, setInset] = useState(0)
 
+  const bring = useCallback((node: Placeable | null) => {
+    const host = contentRef.current
+    if (!node || !host) return
+    node.measureLayout(
+      host,
+      (_x, y, _width, height) => {
+        const target = revealOffset({
+          fieldY: y,
+          fieldHeight: height,
+          scrollY: metrics.current.scrollY,
+          viewportHeight: metrics.current.viewport,
+          covered: metrics.current.covered,
+        })
+        if (target !== null) scrollRef.current?.scrollTo({ y: target, animated: true })
+      },
+      () => {}
+    )
+  }, [])
+
   const reveal = useCallback(() => {
     requestAnimationFrame(() => {
-      const field = TextInput.State.currentlyFocusedInput()
-      const host = contentRef.current
-      if (!field || !host || metrics.current.covered === 0) return
-      field.measureLayout(
-        host,
-        (_x, y, _width, height) => {
-          const target = revealOffset({
-            fieldY: y,
-            fieldHeight: height,
-            scrollY: metrics.current.scrollY,
-            viewportHeight: metrics.current.viewport,
-            covered: metrics.current.covered,
-          })
-          if (target !== null) scrollRef.current?.scrollTo({ y: target, animated: true })
-        },
-        () => {}
-      )
+      if (metrics.current.covered === 0) return
+      bring(TextInput.State.currentlyFocusedInput())
     })
-  }, [])
+  }, [bring])
+
+  // A block that opened at the foot of the page grew under the fold, its buttons
+  // with it: the person saw the start of a question and nothing to answer it with.
+  const revealView = useCallback(
+    (node: View | null) => {
+      requestAnimationFrame(() => bring(node))
+    },
+    [bring]
+  )
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -142,7 +159,7 @@ export function useKeyboardForm(): KeyboardFormController {
     contentRef.current = node
   }, [])
 
-  return { container, scroll, content, inset, onScroll, onLayout, reveal }
+  return { container, scroll, content, inset, onScroll, onLayout, reveal, revealView }
 }
 
 /** What the keyboard leaves between a field's lower edge and itself. */
@@ -221,6 +238,109 @@ export function useKeyboardList(
   return { container, inset, onScroll, reveal }
 }
 
+export interface ScrollRevealController {
+  /** The view that holds the scroll and nothing else: what of the page is in sight. */
+  container: (node: View | null) => void
+  /** Pass to the scroll's `onScroll`, with a `scrollEventThrottle`. */
+  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  /** What `RevealScrollFrame` hands to the blocks inside the scroll. */
+  revealView: (node: View | null) => void
+}
+
+/**
+ * `revealView` for a page that scrolls without being a form, such as a list of
+ * cards: the block and the scroll's frame are measured in the window, and the
+ * scroll moves by what of the block is out of sight. `scrollToOffset` must keep
+ * its identity between renders.
+ */
+export function useScrollReveal(scrollToOffset: (offset: number) => void): ScrollRevealController {
+  const frame = useRef<View | null>(null)
+  const offset = useRef(0)
+
+  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    offset.current = event.nativeEvent.contentOffset.y
+  }, [])
+
+  const revealView = useCallback(
+    (node: View | null) => {
+      requestAnimationFrame(() => {
+        const viewport = frame.current
+        if (!node || !viewport) return
+        viewport.measureInWindow((_x, top, _width, height) => {
+          node.measureInWindow((_left, y, _blockWidth, blockHeight) => {
+            const target = revealOffset({
+              fieldY: offset.current + y - top,
+              fieldHeight: blockHeight,
+              scrollY: offset.current,
+              viewportHeight: height,
+              covered: 0,
+            })
+            if (target !== null) scrollToOffset(target)
+          })
+        })
+      })
+    },
+    [scrollToOffset]
+  )
+
+  const container = useCallback((node: View | null) => {
+    frame.current = node
+  }, [])
+
+  return { container, onScroll, revealView }
+}
+
+const RevealViewContext = createContext<(node: View | null) => void>(() => {})
+
+/**
+ * The frame of a scroll whose blocks bring themselves into view: wrap the
+ * ScrollView or FlatList in it, alone. `KeyboardForm` is one already.
+ */
+export function RevealScrollFrame({
+  controller,
+  children,
+}: {
+  controller: ScrollRevealController
+  children: ReactNode
+}) {
+  const { container, revealView } = controller
+  return (
+    <RevealViewContext.Provider value={revealView}>
+      <View ref={container} collapsable={false} style={styles.flex}>
+        {children}
+      </View>
+    </RevealViewContext.Provider>
+  )
+}
+
+/**
+ * For a block that opens in place, such as an inline confirmation: its first
+ * layout, and each change of its height (an error appearing inside it), scroll
+ * it whole into view. Being pushed by something above it does not. Pass `block`
+ * as the block's `ref` and `onLayout` as its own; closing it starts over.
+ */
+export function useRevealOnOpen() {
+  const revealView = useContext(RevealViewContext)
+  const node = useRef<View | null>(null)
+  const height = useRef<number | null>(null)
+
+  const block = useCallback((value: View | null) => {
+    node.current = value
+    if (!value) height.current = null
+  }, [])
+  const onLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const next = event.nativeEvent.layout.height
+      if (next === height.current) return
+      height.current = next
+      revealView(node.current)
+    },
+    [revealView]
+  )
+
+  return { block, onLayout }
+}
+
 const RevealContext = createContext<() => void>(() => {})
 
 /** A scrolling form whose focused field stays above the keyboard. */
@@ -233,25 +353,29 @@ export function KeyboardForm({
   style?: StyleProp<ViewStyle>
   contentContainerStyle?: StyleProp<ViewStyle>
 }) {
-  const { container, scroll, content, inset, onScroll, onLayout, reveal } = useKeyboardForm()
+  const { container, scroll, content, inset, onScroll, onLayout, reveal, revealView } =
+    useKeyboardForm()
 
   return (
     <RevealContext.Provider value={reveal}>
-      <View ref={container} style={[styles.flex, style]} testID="keyboard-form">
-        <ScrollView
-          ref={scroll}
-          style={styles.flex}
-          keyboardShouldPersistTaps="handled"
-          scrollEventThrottle={16}
-          onScroll={onScroll}
-          onLayout={onLayout}
-          contentContainerStyle={{ paddingBottom: inset }}
-        >
-          <View ref={content} collapsable={false} style={contentContainerStyle}>
-            {children}
-          </View>
-        </ScrollView>
-      </View>
+      <RevealViewContext.Provider value={revealView}>
+        <View ref={container} style={[styles.flex, style]} testID="keyboard-form">
+          <ScrollView
+            ref={scroll}
+            style={styles.flex}
+            keyboardShouldPersistTaps="handled"
+            scrollEventThrottle={16}
+            onScroll={onScroll}
+            onLayout={onLayout}
+            contentContainerStyle={{ paddingBottom: inset }}
+            testID="keyboard-form-scroll"
+          >
+            <View ref={content} collapsable={false} style={contentContainerStyle}>
+              {children}
+            </View>
+          </ScrollView>
+        </View>
+      </RevealViewContext.Provider>
     </RevealContext.Provider>
   )
 }

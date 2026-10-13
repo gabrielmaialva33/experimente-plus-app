@@ -1,17 +1,24 @@
-import { act, render } from '@testing-library/react-native'
-import { useEffect } from 'react'
-import { Keyboard, Platform, Text, TextInput } from 'react-native'
+import { act, fireEvent, render } from '@testing-library/react-native'
+import { useEffect, useState } from 'react'
+import { Keyboard, Platform, Pressable, Text, TextInput, View } from 'react-native'
 
 import {
   KeyboardForm,
+  RevealScrollFrame,
   hiddenUnderKeyboard,
   keyboardOverlap,
   revealOffset,
   useKeyboardForm,
   useKeyboardList,
+  useRevealOnOpen,
+  useScrollReveal,
   type KeyboardFormController,
   type KeyboardListController,
+  type ScrollRevealController,
 } from '@/components/keyboard-form'
+
+/** Lets the frame that `requestAnimationFrame` waits for go by. */
+const nextFrame = () => act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 
 describe('keyboardOverlap', () => {
   it('measures only the part of the view under the keyboard', () => {
@@ -140,4 +147,141 @@ it('lifts a field at the foot of a list above the keyboard, from where the list 
 
   await act(async () => listeners[hide]({ endCoordinates: { screenY: 2340 } }))
   expect(controller!.inset).toBe(0)
+})
+
+// The itinerary's delete question opened at the foot of the page, its buttons under the fold.
+it('brings a block of the form whole into view, with no keyboard up', async () => {
+  let controller: KeyboardFormController | undefined
+  function Probe() {
+    const keyboard = useKeyboardForm()
+    useEffect(() => {
+      controller = keyboard
+    })
+    return null
+  }
+
+  await render(<Probe />)
+  const scrollTo = jest.fn()
+  controller!.scroll({ scrollTo } as never)
+  controller!.content({} as never)
+  controller!.onLayout({
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 700 } },
+  } as never)
+
+  const block = (y: number) => ({
+    measureLayout: (
+      _host: unknown,
+      onSuccess: (x: number, y: number, w: number, h: number) => void
+    ) => onSuccess(0, y, 358, 180),
+  })
+
+  controller!.revealView(block(1500) as never)
+  await nextFrame()
+  expect(scrollTo).toHaveBeenCalledWith({ y: 1500 + 180 + 24 - 700, animated: true })
+
+  // Already in sight: the page stays where the person left it.
+  scrollTo.mockClear()
+  controller!.revealView(block(200) as never)
+  await nextFrame()
+  expect(scrollTo).not.toHaveBeenCalled()
+})
+
+describe('useScrollReveal', () => {
+  async function probe(scrollToOffset: jest.Mock) {
+    let controller: ScrollRevealController | undefined
+    function Probe() {
+      const reveal = useScrollReveal(scrollToOffset)
+      useEffect(() => {
+        controller = reveal
+      })
+      return null
+    }
+    await render(<Probe />)
+    // The list's frame: 700 tall, 80 from the top of the window, scrolled by 300.
+    controller!.container({
+      measureInWindow: (callback: (x: number, y: number, w: number, h: number) => void) =>
+        callback(0, 80, 390, 700),
+    } as never)
+    controller!.onScroll({ nativeEvent: { contentOffset: { x: 0, y: 300 } } } as never)
+    return controller!
+  }
+
+  const block = (top: number, height: number) =>
+    ({
+      measureInWindow: (callback: (x: number, y: number, w: number, h: number) => void) =>
+        callback(16, top, 358, height),
+    }) as never
+
+  // A card's confirmation at the foot of a list of cards grew under the fold.
+  it('scrolls a list by what of the block is below its frame', async () => {
+    const scrollToOffset = jest.fn()
+    const controller = await probe(scrollToOffset)
+
+    controller.revealView(block(700, 200))
+    await nextFrame()
+
+    // 620 into the frame and 200 tall: 144 of it, margin included, is out of sight.
+    expect(scrollToOffset).toHaveBeenCalledWith(300 + 700 - 80 + 200 + 24 - 700)
+  })
+
+  it('leaves a list alone when the block is already in sight', async () => {
+    const scrollToOffset = jest.fn()
+    const controller = await probe(scrollToOffset)
+
+    controller.revealView(block(200, 200))
+    await nextFrame()
+
+    expect(scrollToOffset).not.toHaveBeenCalled()
+  })
+})
+
+describe('useRevealOnOpen', () => {
+  function Block({ testID }: { testID: string }) {
+    const { block, onLayout } = useRevealOnOpen()
+    return <View ref={block} onLayout={onLayout} testID={testID} />
+  }
+
+  function Page() {
+    const [open, setOpen] = useState(true)
+    return (
+      <>
+        <Pressable accessibilityRole="button" onPress={() => setOpen(!open)}>
+          <Text>Alternar</Text>
+        </Pressable>
+        {open ? <Block testID="question" /> : null}
+      </>
+    )
+  }
+
+  const layout = (height: number) => ({
+    nativeEvent: { layout: { x: 0, y: 900, width: 358, height } },
+  })
+
+  it('reveals the block when it opens and when it grows, not when it is only pushed', async () => {
+    const revealView = jest.fn()
+    const controller = { container: jest.fn(), onScroll: jest.fn(), revealView }
+    const view = await render(
+      <RevealScrollFrame controller={controller}>
+        <Page />
+      </RevealScrollFrame>
+    )
+
+    await fireEvent(view.getByTestId('question'), 'layout', layout(180))
+    expect(revealView).toHaveBeenCalledTimes(1)
+    expect(revealView.mock.calls[0][0]).not.toBeNull()
+
+    // Something above moved it: same height, nothing to bring back.
+    await fireEvent(view.getByTestId('question'), 'layout', layout(180))
+    expect(revealView).toHaveBeenCalledTimes(1)
+
+    // A failure appeared inside it: taller, so it comes back whole.
+    await fireEvent(view.getByTestId('question'), 'layout', layout(240))
+    expect(revealView).toHaveBeenCalledTimes(2)
+
+    // Closed and opened again at the same height: a new opening, revealed again.
+    await fireEvent.press(view.getByRole('button', { name: 'Alternar' }))
+    await fireEvent.press(view.getByRole('button', { name: 'Alternar' }))
+    await fireEvent(view.getByTestId('question'), 'layout', layout(240))
+    expect(revealView).toHaveBeenCalledTimes(3)
+  })
 })

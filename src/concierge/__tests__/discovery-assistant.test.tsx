@@ -40,6 +40,25 @@ async function ask() {
 
 beforeEach(() => jest.clearAllMocks())
 
+it('keeps the ask button named while it is busy, and drops busy with the answer', async () => {
+  // Android rewrites a busy control's description only from an explicit
+  // label; without one the button read just "ocupado" and kept it.
+  let answer!: (value: unknown) => void
+  api.askAssistant.mockReturnValue(new Promise((resolve) => (answer = resolve)))
+  const view = await ask()
+
+  expect(view.getByRole('button', { name: 'Perguntar' }).props.accessibilityState).toMatchObject({
+    busy: true,
+  })
+
+  answer(reply(false))
+  await waitFor(() =>
+    expect(view.getByRole('button', { name: 'Perguntar' }).props.accessibilityState).toMatchObject({
+      busy: false,
+    })
+  )
+})
+
 it('says when the server applied interests', async () => {
   api.askAssistant.mockResolvedValue(reply(true))
 

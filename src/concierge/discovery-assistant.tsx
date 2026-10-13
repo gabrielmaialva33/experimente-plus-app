@@ -184,6 +184,10 @@ export function DiscoveryAssistant({
 
       <Pressable
         accessibilityRole="button"
+        // An explicit name: on Android, React Native rewrites the description
+        // of a busy control only from its label, so without one the button
+        // read just "ocupado" while asking and kept saying it after the answer.
+        accessibilityLabel="Perguntar"
         accessibilityState={{ disabled: !canAsk, busy: loading }}
         disabled={!canAsk}
         onPress={() => void submit()}

@@ -55,3 +55,21 @@ it('falls back to the public route when the session has expired', async () => {
   expect(publicApi.publicRequest).toHaveBeenCalled()
   expect(result).toEqual({ personalized: false })
 })
+
+it('sends the shortcuts with the question on either route', async () => {
+  const filtered = { ...question, filters: { open_now: true, kind: ['food' as const] } }
+
+  session.readCredentials.mockResolvedValue(null)
+  await askAssistant(filtered)
+  expect(publicApi.publicRequest).toHaveBeenLastCalledWith(
+    '/api/v1/catalog/concierge',
+    expect.objectContaining({ body: filtered })
+  )
+
+  session.readCredentials.mockResolvedValue({ accessToken: 'token' })
+  await askAssistant(filtered)
+  expect(client.request).toHaveBeenLastCalledWith(
+    '/api/v1/me/concierge',
+    expect.objectContaining({ body: filtered })
+  )
+})

@@ -551,7 +551,7 @@ export interface paths {
         put?: never;
         /**
          * Ask the discovery assistant about places published in the catalogue
-         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything. This route never reads credentials; the personal variant is `/api/v1/me/concierge`. How much of the catalogue a question sees, and whether a model is consulted at all, follow the operation's Concierge policy; this route has no person to count and is bounded by its per-address throttle instead of the daily quota.
+         * @description Answers from the published catalogue only. Every place named in the reply is checked against the items handed to the model and anything else is removed, so the assistant cannot present a place that does not exist. Subjects outside discovery receive a fixed refusal without consulting any model, and the module has no write path: it never reserves, purchases or confirms anything. This route never reads credentials; the personal variant is `/api/v1/me/concierge`. How much of the catalogue a question sees, and whether a model is consulted at all, follow the operation's Concierge policy; this route has no person to count and is bounded by its per-address throttle instead of the daily quota. Optional `filters` narrow the catalogue before the model sees it; a filter that leaves nothing yields the degraded reply with no items.
          */
         post: operations["askCatalogConcierge"];
         delete?: never;
@@ -3622,7 +3622,7 @@ export interface paths {
         put?: never;
         /**
          * Ask the discovery assistant, considering the caller's interests
-         * @description Same answer rules as the public route (Anexo I item 11). The caller's active interests decide which discoverable places enter a prompt that cannot hold them all; they add no place, remove none that would have fit, never reorder search, and are not sent to the model provider. Each model call counts against the operation's daily questions per person (civil day in America/Sao_Paulo); past it, and whenever the operation switched the assistant off, the reply is the degraded one — the catalogue, no model. Refusals and replies without a model call do not count.
+         * @description Same answer rules as the public route (Anexo I item 11). The caller's active interests decide which discoverable places enter a prompt that cannot hold them all; they add no place, remove none that would have fit, never reorder search, and are not sent to the model provider. Each model call counts against the operation's daily questions per person (civil day in America/Sao_Paulo); past it, and whenever the operation switched the assistant off, the reply is the degraded one — the catalogue, no model. Refusals and replies without a model call do not count. Optional `filters` narrow the catalogue first and the interests reorder only what survived them; a filtered question still counts against the quota when a model is called.
          */
         post: operations["askMyConcierge"];
         delete?: never;
@@ -6254,6 +6254,18 @@ export interface components {
             question: string;
             /** @description Restricts grounding to one city of the operation */
             city?: string;
+            filters?: components["schemas"]["ConciergeFilters"];
+        };
+        /** @description Optional shortcuts ticked next to the question. Each one narrows, in the database and before any model is consulted, the catalogue items the reply may draw on; the question stays free text. Filters combine with each other and with `city` (all must hold); within `kind` and `price` any listed value matches, and an empty list is no restriction. Content (experiences and events) is filtered by the place that hosts it. When nothing survives, the reply is the degraded one with no items. Filters never bypass the topic refusal, the operation's policy or the daily quota. */
+        ConciergeFilters: {
+            /** @description Places open at this moment by their published opening hours, in their city's timezone (the same rule as the public `is_open_now`); experiences of places open now; events whose approved window contains this moment. */
+            open_now?: boolean;
+            /** @description Places with a category in one of the matching families: `food` is `comer-e-beber`; `leisure` is `cultura-e-lazer` and `ar-livre-e-esportes`; `services` is `bem-estar-e-estilo` and `servicos-locais`. */
+            kind?: ("food" | "leisure" | "services")[];
+            /** @description Minimum public review average. A place without published reviews has no average and does not match. */
+            min_rating?: number;
+            /** @description Buckets of the place's public "Ticket médio" attribute (`average_ticket`, reais per person): `up_to_50` is at most 50, `50_100` is above 50 and at most 100, `over_100` is above 100. A place that does not publish the attribute matches no bucket. */
+            price?: ("up_to_50" | "50_100" | "over_100")[];
         };
         /** @description A catalogue item backing a reply. `ref` is a citation token (`<kind>:<id>`), never an address; the public link is built from `city_slug` and `establishment_slug`. */
         ConciergeGroundingItem: {
@@ -8455,7 +8467,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Question missing or outside the accepted length */
+            /** @description Question missing or outside the accepted length, or a filter outside its vocabulary or range */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -16874,7 +16886,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Question missing or outside the accepted length */
+            /** @description Question missing or outside the accepted length, or a filter outside its vocabulary or range */
             422: {
                 headers: {
                     [name: string]: unknown;

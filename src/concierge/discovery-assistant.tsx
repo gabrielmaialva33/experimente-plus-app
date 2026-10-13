@@ -16,6 +16,8 @@ import {
   type ConciergeReferenceView,
   referenceHighlight,
 } from './references'
+import { ShortcutChips } from './shortcut-chips'
+import { conciergeFiltersOf, type ConciergeShortcut } from './shortcuts'
 
 interface DiscoveryAssistantProps {
   citySlug: string | null
@@ -33,6 +35,9 @@ export const ASK_ACTION_ROOM = spacing.md + 48
 const FAILED = 'Não foi possível consultar agora. Tente novamente em instantes.'
 /** Offline the question never left: "em instantes" would promise what the network decides. */
 const OFFLINE = `${OFFLINE_MESSAGE} Pergunte de novo quando a conexão voltar.`
+/** The shortcuts narrowed the catalogue to nothing: the catalogue's answer, not a failure. */
+const NOTHING_MATCHED =
+  'Nenhum lugar publicado combina com esses atalhos agora. Desmarque algum e pergunte de novo.'
 
 export function DiscoveryAssistant({
   citySlug,
@@ -43,7 +48,11 @@ export function DiscoveryAssistant({
   const colors = useColors()
   const router = useRouter()
   const [question, setQuestion] = useState('')
+  const [shortcuts, setShortcuts] = useState<ReadonlySet<ConciergeShortcut>>(() => new Set())
   const [reply, setReply] = useState<ConciergeReply | null>(null)
+  // Whether the reply on screen was asked with shortcuts: ticking one after
+  // the answer must not change what the answer says about itself.
+  const [askedWithShortcuts, setAskedWithShortcuts] = useState(false)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
   const request = useRef<AbortController | null>(null)
@@ -61,11 +70,15 @@ export function DiscoveryAssistant({
       : reply.outcome === 'refused'
         ? 'Posso ajudar com descoberta local'
         : 'Sugestões do catálogo'
+  const nothingMatched =
+    reply?.outcome === 'degraded' && reply.items.length === 0 && askedWithShortcuts
   const answerText =
     reply?.text ||
-    (reply?.outcome === 'degraded'
-      ? 'O assistente está indisponível agora, então trouxe opções publicadas no catálogo.'
-      : null)
+    (nothingMatched
+      ? NOTHING_MATCHED
+      : reply?.outcome === 'degraded'
+        ? 'O assistente está indisponível agora, então trouxe opções publicadas no catálogo.'
+        : null)
   // The answer arrives after the question: said once, the label and the reply,
   // while the suggestions stay below to be read one by one.
   useAnnouncement(failed ?? (reply && [answerLabel, answerText].filter(Boolean).join('. ')))
@@ -82,6 +95,14 @@ export function DiscoveryAssistant({
     []
   )
 
+  const toggleShortcut = (id: ConciergeShortcut) =>
+    setShortcuts((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
   const submit = async () => {
     if (!canAsk || !citySlug) return
 
@@ -92,9 +113,17 @@ export function DiscoveryAssistant({
     setFailed(null)
     setReply(null)
 
+    // The shortcuts travel with the question and the server applies them; with
+    // none ticked the question goes out exactly as before.
+    const filters = conciergeFiltersOf(shortcuts)
+
     try {
-      const result = await askAssistant({ question: trimmed, city: citySlug }, controller.signal)
+      const result = await askAssistant(
+        { question: trimmed, city: citySlug, ...(filters ? { filters } : {}) },
+        controller.signal
+      )
       if (!controller.signal.aborted) {
+        setAskedWithShortcuts(filters !== null)
         setReply(result)
       }
     } catch {
@@ -127,6 +156,8 @@ export function DiscoveryAssistant({
           publicados no Experimente+.
         </Text>
       </View>
+
+      <ShortcutChips selected={shortcuts} onToggle={toggleShortcut} />
 
       <TextInput
         accessibilityLabel="Pergunta para o Concierge"

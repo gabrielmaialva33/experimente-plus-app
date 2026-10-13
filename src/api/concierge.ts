@@ -6,6 +6,8 @@ import { readCredentials, SessionExpiredError } from './session'
 type Schemas = components['schemas']
 
 export type ConciergeQuestion = Schemas['ConciergeQuestion']
+/** The shortcuts sent with a question; the server narrows the catalogue with them. */
+export type ConciergeFilters = Schemas['ConciergeFilters']
 export type ConciergeReply = Schemas['ConciergeReply']
 export type ConciergeOutcome = ConciergeReply['outcome']
 

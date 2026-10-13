@@ -72,7 +72,7 @@ export interface paths {
         put?: never;
         /**
          * Record a small batch of privacy-safe discovery events
-         * @description Resolves the public operation from the hostname, validates targets against the published catalog, deduplicates events and updates daily aggregates. Raw IP addresses, user agents and authenticated user IDs are not stored.
+         * @description Resolves the public operation from the hostname, validates targets against the published catalog, deduplicates events and updates daily aggregates. Raw IP addresses, user agents and authenticated user IDs are not stored. A request whose user agent names a known crawler, headless browser or HTTP library gets the same validation and the same answer, but nothing is stored and no analytics cookie is set.
          */
         post: operations["ingestDiscoveryAnalyticsEvents"];
         delete?: never;
@@ -90,7 +90,7 @@ export interface paths {
         };
         /**
          * Redirect to an allowlisted establishment action
-         * @description Derives the destination exclusively from the published catalog and records the corresponding action event. Arbitrary redirect destinations are never accepted.
+         * @description Derives the destination exclusively from the published catalog and records the corresponding action event. Arbitrary redirect destinations are never accepted. Known crawlers, by user agent, are redirected the same way without recording; production `robots.txt` disallows `/go/` and the web marks these links `nofollow`.
          */
         get: operations["redirectTrackedEstablishmentAction"];
         put?: never;

@@ -28,7 +28,9 @@ const mockNavigate = jest.fn()
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, navigate: mockNavigate }),
   useLocalSearchParams: jest.fn(),
+  useNavigation: () => ({ dispatch: jest.fn() }),
 }))
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }))
 jest.mock('@/catalog/city-store', () => ({ useSelectedCity: jest.fn(() => 'londrina') }))
 jest.mock('@/catalog/queries', () => ({ useCategories: jest.fn() }))
 jest.mock('@/explorer/queries', () => ({

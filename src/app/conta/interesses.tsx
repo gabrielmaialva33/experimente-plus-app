@@ -1,11 +1,13 @@
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useNavigation, useRouter } from 'expo-router'
+import { usePreventRemove, type NavigationAction } from 'expo-router/react-navigation'
+import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import type { Interest } from '@/api/explorer'
 import { useCategories } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
 import { announce, useAnnouncement } from '@/components/announce'
+import { BottomSheet } from '@/components/bottom-sheet'
 import { Button } from '@/components/button'
 import { Checkbox } from '@/components/checkbox'
 import { ContentSkeleton } from '@/components/content-skeleton'
@@ -19,7 +21,7 @@ import {
 } from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
 import { TROUBLESHOOTING_HELP } from '@/help/help-link'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -213,7 +215,113 @@ function InterestsForm({
           onPress={() => router.navigate('/')}
         />
       ) : null}
+
+      <LeaveUnsaved changed={changed} onSave={(outcome) => save.mutate([...selected], outcome)} />
     </ScrollView>
+  )
+}
+
+/** Where leaving with unsaved interests stands: asked, saving first, or leaving them. */
+interface Leaving {
+  action: NavigationAction
+  stage: 'asking' | 'saving' | 'discarding'
+}
+
+/**
+ * Leaving with interests marked but not saved used to drop them without a word.
+ * Every way out — the back arrow, the system's back, the swipe — now stops at a
+ * sheet, the app's own, not a system alert: save and go, leave them, or stay.
+ * Saving goes through the form's own request and leaves only once the server
+ * took it; a failure keeps the person here, with the sheet saying so (the form
+ * announces it, as it does for its own button).
+ */
+function LeaveUnsaved({
+  changed,
+  onSave,
+}: {
+  changed: boolean
+  onSave: (outcome: { onSuccess: () => void; onError: () => void }) => void
+}) {
+  const colors = useColors()
+  const navigation = useNavigation()
+  const [leaving, setLeaving] = useState<Leaving | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  // Down while saving or discarding, so the way out held here goes through.
+  usePreventRemove(changed && (leaving === null || leaving.stage === 'asking'), ({ data }) => {
+    setFailed(false)
+    setLeaving({ action: data.action, stage: 'asking' })
+  })
+
+  // Discarding leaves on the commit that took the guard down.
+  useEffect(() => {
+    if (leaving?.stage === 'discarding') navigation.dispatch(leaving.action)
+  }, [leaving, navigation])
+
+  const saving = leaving?.stage === 'saving'
+  const stay = () => {
+    if (!saving) setLeaving(null)
+  }
+  const saveAndLeave = () => {
+    if (!leaving || saving) return
+    const { action } = leaving
+    setFailed(false)
+    setLeaving({ action, stage: 'saving' })
+    onSave({
+      onSuccess: () => navigation.dispatch(action),
+      onError: () => {
+        setFailed(true)
+        setLeaving({ action, stage: 'asking' })
+      },
+    })
+  }
+
+  return (
+    <BottomSheet
+      visible={leaving !== null && leaving.stage !== 'discarding'}
+      onClose={stay}
+      closeLabel="Continuar editando"
+      style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
+      testID="leave-interests"
+    >
+      <Text accessibilityRole="header" style={[styles.sheetTitle, { color: colors.foreground }]}>
+        Salvar seus interesses?
+      </Text>
+      <Text style={[styles.lead, { color: colors.mutedForeground }]}>
+        Você mudou os interesses marcados e ainda não salvou.
+      </Text>
+      {failed ? (
+        <Text accessibilityRole="alert" style={[styles.lead, { color: colors.destructiveAccent }]}>
+          Não foi possível salvar agora.
+        </Text>
+      ) : null}
+      <View style={styles.sheetActions}>
+        <Button
+          label={saving ? 'Salvando…' : 'Salvar'}
+          accessibilityLabel="Salvar"
+          size={52}
+          fill
+          disabled={saving}
+          onPress={saveAndLeave}
+        />
+        <Button
+          label="Descartar"
+          variant="outline"
+          size={52}
+          fill
+          disabled={saving}
+          onPress={() => leaving && setLeaving({ ...leaving, stage: 'discarding' })}
+        />
+        <Button
+          label="Continuar editando"
+          variant="ghost"
+          size={52}
+          fill
+          disabled={saving}
+          onPress={stay}
+        />
+      </View>
+    </BottomSheet>
   )
 }
 
@@ -250,4 +358,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   option: { minHeight: 52, justifyContent: 'center' },
+  // The sheet reserves the navigation bar; its last button keeps its own air above it.
+  sheet: {
+    borderBottomWidth: 0,
+    borderWidth: 1,
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.gutter,
+    paddingTop: spacing.lg,
+  },
+  sheetTitle: { ...typography.heading, ...textWeight('700') },
+  sheetActions: { gap: spacing.sm, paddingTop: spacing.xs },
 })

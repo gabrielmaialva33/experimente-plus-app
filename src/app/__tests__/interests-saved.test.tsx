@@ -15,7 +15,11 @@ jest.mock('@/catalog/queries', () => ({
   }),
 }))
 jest.mock('@/api/explorer', () => ({ listInterests: jest.fn(), replaceInterests: jest.fn() }))
-jest.mock('expo-router', () => ({ useRouter: () => mockRouter }))
+jest.mock('expo-router', () => ({
+  useRouter: () => mockRouter,
+  useNavigation: () => ({ dispatch: jest.fn() }),
+}))
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }))
 
 const mockRouter = { navigate: jest.fn(), push: jest.fn() }
 

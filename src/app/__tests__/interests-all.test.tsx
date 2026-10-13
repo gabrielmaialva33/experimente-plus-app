@@ -13,7 +13,11 @@ jest.mock('@/catalog/queries', () => ({
   useCategories: () => ({ isPending: false, data: { categories: mockCategories } }),
 }))
 jest.mock('@/api/explorer', () => ({ listInterests: jest.fn(), replaceInterests: jest.fn() }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), push: jest.fn() }) }))
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ navigate: jest.fn(), push: jest.fn() }),
+  useNavigation: () => ({ dispatch: jest.fn() }),
+}))
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }))
 
 let mockCategories = [
   { slug: 'cafes', name: 'Cafés' },

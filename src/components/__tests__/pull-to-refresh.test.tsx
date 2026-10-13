@@ -35,6 +35,10 @@ jest.mock('@/explorer/queries', () => ({
   useToggleSaved: () => ({ mutate: jest.fn(), isPending: false }),
 }))
 jest.mock('@/wallet/queries', () => ({ useWallet: jest.fn() }))
+jest.mock('@/wallet/savings', () => ({
+  ...jest.requireActual('@/wallet/savings'),
+  useSavings: jest.fn(),
+}))
 jest.mock('@/purchases/queries', () => ({
   usePurchaseEditions: jest.fn(),
   usePurchases: jest.fn(),
@@ -46,6 +50,7 @@ const explorer = jest.requireMock('@/explorer/queries') as {
   useSavedList: jest.Mock
 }
 const wallet = jest.requireMock('@/wallet/queries') as { useWallet: jest.Mock }
+const savings = jest.requireMock('@/wallet/savings') as { useSavings: jest.Mock }
 const purchases = jest.requireMock('@/purchases/queries') as {
   usePurchaseEditions: jest.Mock
   usePurchases: jest.Mock
@@ -153,18 +158,21 @@ describe('lists the server fills can be pulled to refresh', () => {
     expect(query.refetch).toHaveBeenCalledTimes(1)
   })
 
-  it('the wallet, with the orders it announces', async () => {
+  it('the wallet, with the orders it announces and the savings', async () => {
     const query = loaded({
       passes: [],
       summary: { passes: 0, benefits: 0, available: 0, upcoming: 0, redeemed: 0 },
     })
     const orders = loaded({ purchases: [] })
+    const economy = loaded(undefined)
     wallet.useWallet.mockReturnValue(query)
     purchases.usePurchases.mockReturnValue(orders)
+    savings.useSavings.mockReturnValue(economy)
     const view = await render(<WalletScreen />)
     await act(async () => refreshAround(view, 'Sua carteira está vazia').onRefresh?.())
     expect(query.refetch).toHaveBeenCalledTimes(1)
     expect(orders.refetch).toHaveBeenCalledTimes(1)
+    expect(economy.refetch).toHaveBeenCalledTimes(1)
   })
 
   it('packages, vouchers and orders together', async () => {

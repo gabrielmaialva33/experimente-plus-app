@@ -16,6 +16,7 @@ export default function WalletLayout() {
       <Stack.Screen name="edicoes" options={{ title: 'Pacotes, vouchers e pedidos' }} />
       <Stack.Screen name="edicao/[id]" options={{ title: 'Comprar benefício' }} />
       <Stack.Screen name="pedido/[id]" options={{ title: 'Meu pedido' }} />
+      <Stack.Screen name="economia" options={{ title: 'Sua economia' }} />
     </Stack>
   )
 }

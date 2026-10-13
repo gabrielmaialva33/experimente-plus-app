@@ -661,6 +661,25 @@ export interface paths {
          *     than `last_page`, the response returns the real last page and its rows.
          *     Searches with no organic results use page 1. The `meta.page` value and all
          *     pagination URLs always describe that effective page.
+         *
+         *     Orders (`sort`): `relevance` (default), `name`, `recent`, `rating` (public
+         *     average, then review count, places without published reviews last),
+         *     `distance` (nearest to `lat`/`lng` first, places without coordinates last)
+         *     and `price` (the public "Ticket médio" attribute, key `average_ticket`,
+         *     lowest first, places that do not declare it last). Every order ends on the
+         *     establishment id, so pages never overlap or skip a place.
+         *
+         *     `sort=distance` requires both `lat` and `lng` and answers 422 without them.
+         *     The position is read for that order only: it is never cached, logged,
+         *     stored, echoed in `query` or in the pagination URLs (append the same `lat`
+         *     and `lng` to follow them), and any request that carries it is answered
+         *     with `Cache-Control: private, no-store`.
+         *
+         *     `benefit_today=true` ("Vale hoje") keeps only places with an active benefit
+         *     offer of a published edition that can still be used today: inside the
+         *     edition and offer usage windows, on a weekday allowed by the offer's
+         *     weekday mask and within its daily window, in the edition city's timezone.
+         *     Every item carries the same answer as `benefit_today`, filter or not.
          */
         get: operations["searchCatalogEstablishments"];
         put?: never;
@@ -5150,10 +5169,14 @@ export interface components {
             q: string | null;
             category: string | null;
             open_now: boolean;
+            benefit_today: boolean;
             /** @description The applied attribute filter, deduplicated and sorted so an equivalent filter always echoes the same value. */
             attributes: string[];
-            /** @enum {string} */
-            sort: "relevance" | "name" | "recent";
+            /**
+             * @description The order applied. The position of a `distance` search is never echoed.
+             * @enum {string}
+             */
+            sort: "relevance" | "name" | "recent" | "rating" | "distance" | "price";
         };
         CatalogSearchItem: {
             slug: string;
@@ -5179,6 +5202,8 @@ export interface components {
             };
             is_sponsored: boolean;
             reviews: components["schemas"]["CatalogReviewSummary"];
+            /** @description "Vale hoje": an offer of this place can still be used today, by the rules redemption applies, in the edition city's timezone. */
+            benefit_today: boolean;
             /** Format: date-time */
             published_at: string;
             /** Format: date-time */
@@ -8560,6 +8585,8 @@ export interface operations {
                 /** @description A well-formed but unknown or inactive slug produces the canonical empty 200 response; a malformed slug produces 422. */
                 category?: string;
                 open_now?: boolean;
+                /** @description "Vale hoje": only places with a benefit offer still usable today. */
+                benefit_today?: boolean;
                 /**
                  * @description Public boolean attribute keys, comma separated. Semantics are conjunctive:
                  *     an establishment must declare every requested attribute as true. Keys come
@@ -8568,7 +8595,11 @@ export interface operations {
                 attributes?: string;
                 page?: number;
                 per_page?: number;
-                sort?: "relevance" | "name" | "recent";
+                sort?: "relevance" | "name" | "recent" | "rating" | "distance" | "price";
+                /** @description The visitor's latitude. Required with, and only read for, `sort=distance`; requires `lng`. */
+                lat?: number;
+                /** @description The visitor's longitude. Required with, and only read for, `sort=distance`; requires `lat`. */
+                lng?: number;
             };
             header?: never;
             path: {

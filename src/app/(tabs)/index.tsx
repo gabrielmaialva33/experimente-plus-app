@@ -11,6 +11,8 @@ import { CityAgenda } from '@/catalog/city-agenda'
 import { selectCity, useSelectedCity } from '@/catalog/city-store'
 import { defaultCity } from '@/catalog/default-city'
 import { useCategories, useCities, useFilters, useSearch } from '@/catalog/queries'
+import { useExploreSort } from '@/catalog/sort'
+import { SortRow } from '@/catalog/sort-row'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { useAnnouncement } from '@/components/announce'
 import { ChoiceRow } from '@/components/choice-row'
@@ -84,7 +86,10 @@ export default function ExploreScreen() {
   const [debouncedTerm, setDebouncedTerm] = useState('')
   const [category, setCategory] = useState<string | undefined>()
   const [openNow, setOpenNow] = useState(false)
+  const [benefitToday, setBenefitToday] = useState(false)
   const [attributes, setAttributes] = useState<string[]>([])
+  // The order, and the position of "Mais perto" while it is the order, in memory only.
+  const ordering = useExploreSort()
   // List and map are two views of one filter state, never two destinations.
   const [view, setView] = useState<'list' | 'map'>('list')
   const [choosingCity, setChoosingCity] = useState(false)
@@ -153,14 +158,18 @@ export default function ExploreScreen() {
   if (liveCategory !== category) setCategory(liveCategory)
   if (liveAttributes !== attributes) setAttributes(liveAttributes)
 
+  const { sort, origin } = ordering
   const params = useMemo<SearchParams>(
     () => ({
       q: debouncedTerm || undefined,
       category: liveCategory,
       openNow,
       attributes: liveAttributes,
+      ...(benefitToday ? { benefitToday } : {}),
+      ...(sort !== 'relevance' ? { sort } : {}),
+      ...(sort === 'distance' && origin ? { origin } : {}),
     }),
-    [debouncedTerm, liveCategory, openNow, liveAttributes]
+    [debouncedTerm, liveCategory, openNow, liveAttributes, benefitToday, sort, origin]
   )
   // Without a city to search in (the list of cities failed, or none is published),
   // the feed waits on the cities instead of a search that has nothing to ask.
@@ -196,6 +205,7 @@ export default function ExploreScreen() {
       ? (offeredCategories?.find((item) => item.slug === liveCategory)?.name ?? liveCategory)
       : null,
     openNow ? 'Aberto agora' : null,
+    benefitToday ? 'Vale hoje' : null,
     ...liveAttributes.map(
       (key) => filters.data?.attributes.find((item) => item.key === key)?.name ?? key
     ),
@@ -209,6 +219,7 @@ export default function ExploreScreen() {
     }
     setCategory(undefined)
     setOpenNow(false)
+    setBenefitToday(false)
     setAttributes([])
   }
 
@@ -362,6 +373,12 @@ export default function ExploreScreen() {
               selected={openNow}
               onPress={() => setOpenNow(!openNow)}
             />
+            <Chip
+              maxWidth={maxWidth}
+              label="Vale hoje"
+              selected={benefitToday}
+              onPress={() => setBenefitToday(!benefitToday)}
+            />
             {categories.data?.categories.map((item) => (
               <Chip
                 key={item.slug}
@@ -384,6 +401,7 @@ export default function ExploreScreen() {
           </>
         )}
       </ChoiceRow>
+      <SortRow state={ordering} gutter={frame} />
     </View>
   )
 

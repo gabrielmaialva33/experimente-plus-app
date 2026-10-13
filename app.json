@@ -28,8 +28,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "br.com.experimentemais",
       "blockedPermissions": [
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -88,6 +86,18 @@
           "photosPermission": "O Experimente+ abre suas fotos só para você escolher as imagens que quer publicar numa avaliação.",
           "cameraPermission": "O Experimente+ usa a câmera só para ler o código de benefício que o cliente apresenta, quando você valida benefícios como parceiro.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Experimente+ usa sua localização só quando você escolhe ver os lugares mais perto, para ordenar a lista. Ela não fica salva.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false,
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ],
       "@maplibre/maplibre-react-native"

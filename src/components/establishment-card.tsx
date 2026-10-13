@@ -42,6 +42,7 @@ function cardLabel(establishment: EstablishmentSummary) {
     establishment.primary_category?.name,
     establishment.address.district,
     rating,
+    establishment.benefit_today ? 'Vale hoje' : null,
     establishment.is_sponsored ? 'Patrocinado' : null,
     establishment.short_description,
   ]
@@ -116,8 +117,16 @@ export function EstablishmentCard({ establishment, onPress, accessory, style }: 
             {establishment.short_description}
           </Text>
         ) : null}
-        {/* Paid placement is always labelled, per the trust principles. */}
-        {establishment.is_sponsored ? <Badge label="Patrocinado" tone="neutral" /> : null}
+        {establishment.benefit_today || establishment.is_sponsored ? (
+          <View style={styles.badges}>
+            {/* A benefit of the place can still be used today, in the server's reading. */}
+            {establishment.benefit_today ? (
+              <Badge label="Vale hoje" tone="benefit" icon="ticket-outline" />
+            ) : null}
+            {/* Paid placement is always labelled, per the trust principles. */}
+            {establishment.is_sponsored ? <Badge label="Patrocinado" tone="neutral" /> : null}
+          </View>
+        ) : null}
       </View>
     </Pressable>
   )
@@ -147,4 +156,5 @@ const styles = StyleSheet.create({
   name: { ...typography.heading, fontSize: 19, lineHeight: 24 },
   meta: typography.meta,
   description: typography.meta,
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 })

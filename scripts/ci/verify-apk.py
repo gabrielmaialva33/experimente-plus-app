@@ -45,12 +45,16 @@ analyzer = sdk_tool(sdk, "cmdline-tools", "bin/apkanalyzer")
 if run(analyzer, "manifest", "debuggable", str(apk)) != "false":
     raise SystemExit("Expected release runtime: developer support must be disabled")
 
-# The camera reads the benefit QR for partners; the network reaches the API.
-# Anything else a library adds (location, microphone, storage, biometrics,
-# overlay, advertising ID) must be reviewed and blocked in app.json
-# (android.blockedPermissions) or added here on purpose, never shipped silently.
+# The camera reads the benefit QR for partners; the network reaches the API;
+# the foreground location orders Explorar by "Mais perto", asked only when the
+# person picks that order. Anything else a library adds (background location,
+# microphone, storage, biometrics, overlay, advertising ID) must be reviewed and
+# blocked in app.json (android.blockedPermissions) or added here on purpose,
+# never shipped silently.
 ALLOWED_PERMISSIONS = {
     "android.permission.CAMERA",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.ACCESS_FINE_LOCATION",
     "android.permission.INTERNET",
     "android.permission.ACCESS_NETWORK_STATE",
     "android.permission.ACCESS_WIFI_STATE",

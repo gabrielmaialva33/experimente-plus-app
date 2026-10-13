@@ -49,7 +49,7 @@ export function navigationBarPlane(
  * than a 1,280 dp slab with its few rows stretched across it; it also keeps
  * clear of a camera cutout at the side in landscape. The modal draws under the
  * system navigation bar, so the sheet reserves it: whatever the sheet holds
- * ends above the gesture bar or the buttons.
+ * ends above the gesture bar or the buttons, a bottom padding in `style` with it.
  */
 export function BottomSheet({
   visible = true,
@@ -76,6 +76,13 @@ export function BottomSheet({
   const scheme = useColorScheme()
   const insets = useSafeAreaInsets()
   const frame = useContentFrame(SHEET_MAX_WIDTH, 0)
+  // A sheet's own bottom padding is the air its last row keeps above the bar,
+  // added to the bar: given as the whole padding, it put "Continuar editando"
+  // under the three buttons.
+  const own = StyleSheet.flatten(style) ?? {}
+  const ownBottom = [own.paddingBottom, own.paddingVertical, own.padding].find(
+    (value): value is number => typeof value === 'number'
+  )
 
   return (
     <Modal
@@ -98,8 +105,9 @@ export function BottomSheet({
           testID={testID}
           style={[
             styles.sheet,
-            { marginLeft: frame.left, maxHeight, paddingBottom: insets.bottom, width: frame.width },
+            { marginLeft: frame.left, maxHeight, width: frame.width },
             style,
+            { paddingBottom: insets.bottom + (ownBottom ?? 0) },
           ]}
         >
           {children}

@@ -1338,7 +1338,7 @@ export interface paths {
         };
         /**
          * Verify user email
-         * @description Atomically consumes the exact canonical token from the query string. The token is single-use and is never accepted from a request body or normalized.
+         * @description Atomically consumes the exact canonical token from the query string. The token is single-use and is never accepted from a request body or normalized. Confirmation e-mails link to the web page `/verificar-email`; a request that prefers `text/html` over JSON (a browser following an older e-mail) is redirected there with the same query token, and consumes nothing here.
          */
         get: operations["verifyEmail"];
         put?: never;
@@ -1671,7 +1671,7 @@ export interface paths {
         };
         /**
          * List files in the active workspace
-         * @description Returns a paginated tenant-scoped file list. Requires `files.list` and an active workspace.
+         * @description Returns a paginated tenant-scoped file list. Requires `files.list` and an active workspace. Platform staff (root, admin, moderator) see every file of the workspace; anyone else sees only the files they uploaded.
          */
         get: operations["listFiles"];
         put?: never;
@@ -3514,6 +3514,46 @@ export interface paths {
         post?: never;
         /** Remove a stop from an itinerary */
         delete: operations["removeMyItineraryStop"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/itineraries/{id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggest places to add to an itinerary
+         * @description Owner only: another person's itinerary answers 404. Reads the public catalogue and the operation's aggregate views, never anyone's saves or follows. `city` is the city the app is showing, used only while no stop can be located; an unknown, foreign, inactive or malformed city is refused as the public catalogue refuses it.
+         */
+        get: operations["listMyItinerarySuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/following/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the places the caller follows published
+         * @description Published experiences, events that have not ended and showcase items of the establishments the caller follows and the public catalogue still shows, most recently published first. A withdrawn place stops contributing without its follow being deleted.
+         */
+        get: operations["listMyFollowingUpdates"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6170,6 +6210,15 @@ export interface components {
             note: string | null;
             /** @description Null when the stop points at an establishment that left the catalogue. The stop keeps its place: dropping it would rewrite a route its author wrote. */
             establishment: components["schemas"]["ExplorerEstablishmentCard"] | null;
+            /** @description The public address of the stop's place, from the same projection as its card, so the route can be shared with where each place is. Null together with `establishment`. */
+            address: components["schemas"]["ExplorerStopAddress"] | null;
+        };
+        ExplorerStopAddress: {
+            street: string | null;
+            number: string | null;
+            without_number: boolean;
+            complement: string | null;
+            district: string | null;
         };
         ExplorerItinerary: {
             id: number;
@@ -6205,6 +6254,56 @@ export interface components {
         /** @description The whole sequence, not a stop and a destination. It must contain exactly the stops of the itinerary, each once. */
         ReorderExplorerItineraryStopsRequest: {
             stop_ids: number[];
+        };
+        /** @description Places to add to an itinerary: discoverable, open, not in it yet, at most six. `nearby` when a stop has coordinates — nearest to the stops' centroid (haversine over the public coordinates, in steps of 100 m), ties broken by establishment views of the last 30 days. `popular` when no stop can be located — most viewed of the first stop's city, of the `city` asked for, or of the operation. Views only order the list and are never returned. */
+        ExplorerItinerarySuggestions: {
+            /** @enum {string} */
+            basis: "nearby" | "popular";
+            data: components["schemas"]["ExplorerItinerarySuggestion"][];
+        };
+        ExplorerItinerarySuggestion: {
+            establishment: components["schemas"]["ExplorerEstablishmentCard"];
+            /** @description From the stops' centroid, to one decimal. Null when the basis is `popular` or the place has no coordinates. */
+            distance_km: number | null;
+        };
+        /** @description One public item of a followed establishment, from the approved snapshot. An event is listed until it ends; a showcase price is displayed, never charged. */
+        ExplorerFollowingUpdate: {
+            /** @enum {string} */
+            kind: "experience" | "event" | "showcase_item";
+            id: number;
+            title: string;
+            description: string | null;
+            /** Format: date-time */
+            published_at: string;
+            /**
+             * Format: date-time
+             * @description Events only.
+             */
+            starts_at: string | null;
+            /**
+             * Format: date-time
+             * @description Events only.
+             */
+            ends_at: string | null;
+            /** @description Showcase items only. Displayed, never charged. */
+            informational_price_cents: number | null;
+            cover: {
+                url: string;
+                alt_text: string;
+            } | null;
+            establishment: components["schemas"]["ExplorerEstablishmentCard"];
+        };
+        ExplorerPageMeta: {
+            total: number;
+            per_page: number;
+            current_page: number;
+            last_page: number;
+        };
+        /** @description What the caller's followed places published, most recent first. `has_follows` says whether the caller follows any place that is public now, separating "follow places to see this" from "nothing new". */
+        ExplorerFollowingUpdates: {
+            data: components["schemas"]["ExplorerFollowingUpdate"][];
+            has_follows: boolean;
+            meta: components["schemas"]["ExplorerPageMeta"];
         };
     };
     responses: {
@@ -10127,6 +10226,16 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EmailVerificationResponse"];
                 };
+            };
+            /** @description The client asked for HTML (`Accept` prefers `text/html` over JSON). Redirects to the web confirmation page, carrying the query token when one was given; the token is consumed there. */
+            302: {
+                headers: {
+                    Location: string;
+                    "Cache-Control": components["headers"]["PrivateCacheControl"];
+                    "Referrer-Policy": components["headers"]["PrivateReferrerPolicy"];
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description The verification token expired or its email is already verified */
             400: {
@@ -16493,6 +16602,94 @@ export interface operations {
             };
             /** @description Itinerary or stop not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyItinerarySuggestions: {
+        parameters: {
+            query?: {
+                city?: string;
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The suggestions, possibly empty */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerItinerarySuggestions"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Itinerary or city not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyFollowingUpdates: {
+        parameters: {
+            query?: {
+                page?: number;
+                per_page?: number;
+            };
+            header: {
+                /** @description Identificador do tenant ativo para operações privadas. */
+                "x-tenant-id": components["parameters"]["TenantHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of updates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExplorerFollowingUpdates"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failed */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

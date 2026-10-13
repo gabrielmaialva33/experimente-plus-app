@@ -56,14 +56,34 @@ beforeEach(() => jest.clearAllMocks())
 it.each(['loading', 'anonymous', 'unavailable'])(
   'offers a visitor’s tabs while the session is %s',
   async (status) => {
-    expect(await tabsFor(status)).toEqual(['index', 'sign-in'])
+    expect(await tabsFor(status)).toEqual(['index', 'news', 'sign-in'])
   }
 )
 
 it('offers the consumer tabs once the context resolves', async () => {
-  expect(await tabsFor('authenticated')).toEqual(['index', 'wallet', 'account'])
+  expect(await tabsFor('authenticated')).toEqual(['index', 'news', 'wallet', 'account'])
 })
 
 it('adds Validar only with the validate capability', async () => {
-  expect(await tabsFor('authenticated', true)).toEqual(['index', 'wallet', 'validate', 'account'])
+  expect(await tabsFor('authenticated', true)).toEqual([
+    'index',
+    'news',
+    'wallet',
+    'validate',
+    'account',
+  ])
+})
+
+/** Novidades is everyone's, so no guard of the session may ever hide it. */
+it('keeps Novidades outside every guard, right after Explorar', async () => {
+  await tabsFor('anonymous')
+  const { Tabs } = jest.requireMock('expo-router') as { Tabs: jest.Mock & { Protected: unknown } }
+  const { children } = Tabs.mock.calls[Tabs.mock.calls.length - 1][0] as { children: ReactNode }
+  const top = Children.toArray(children).filter(isValidElement) as ReactElement<{
+    name?: string
+    options?: { title?: string }
+  }>[]
+  expect(top[1].type).not.toBe(Tabs.Protected)
+  expect(top[1].props.name).toBe('news')
+  expect(top[1].props.options?.title).toBe('Novidades')
 })

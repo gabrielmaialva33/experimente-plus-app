@@ -43,3 +43,30 @@ export function selectionChanged(selected: Set<string>, chosen: Interest[]): boo
   if (selected.size !== chosen.length) return true
   return chosen.some((interest) => !selected.has(interest.category.slug))
 }
+
+/**
+ * The state of "Marcar todos": checked when every category the city offers is
+ * marked, unchecked when nothing is, and mixed in between. A retired interest
+ * still marked counts as something marked, since "Desmarcar todos" clears it.
+ */
+export function allInterestsState(
+  options: InterestOption[],
+  selected: Set<string>
+): boolean | 'mixed' {
+  const offered = options.filter((option) => !option.retired)
+  if (offered.length > 0 && offered.every((option) => selected.has(option.slug))) return true
+  return selected.size === 0 ? false : 'mixed'
+}
+
+/**
+ * What one tap on the control leaves marked. With everything offered already
+ * marked, it clears the whole set, retired ones included; otherwise it marks
+ * every category offered and keeps what was marked. A retired category is
+ * never added back: it is only offered so that it can be removed.
+ */
+export function toggleAllInterests(options: InterestOption[], selected: Set<string>): Set<string> {
+  if (allInterestsState(options, selected) === true) return new Set()
+  const next = new Set(selected)
+  for (const option of options) if (!option.retired) next.add(option.slug)
+  return next
+}

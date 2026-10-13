@@ -44,6 +44,7 @@ jest.mock('@/explorer/queries', () => ({
   useRemoveItineraryStop: jest.fn(),
   useDeleteItinerary: jest.fn(),
   useAddItineraryStop: jest.fn(),
+  useItinerarySuggestions: jest.fn(),
 }))
 
 const router = jest.requireMock('expo-router') as { useLocalSearchParams: jest.Mock }
@@ -84,6 +85,11 @@ beforeEach(() => {
     queries[hook].mockReturnValue(idle())
   }
   queries.useSavedContent.mockReturnValue({ isPending: false, data: { data: [], unavailable: 0 } })
+  queries.useItinerarySuggestions.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { basis: 'popular', data: [] },
+  })
 })
 
 describe('favourites', () => {

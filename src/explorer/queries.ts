@@ -1,13 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   addItineraryStop,
   createItinerary,
   deleteItinerary,
   getItinerary,
+  listFollowingUpdates,
   listForYou,
   listInterests,
   listItineraries,
+  listItinerarySuggestions,
   listSaved,
   listSavedContent,
   removeItineraryStop,
@@ -43,6 +45,14 @@ export const explorerKeys = {
     ['explorer', 'for-you', operationId, userId, citySlug] as const,
   itineraries: ['explorer', 'itineraries'] as const,
   itinerary: (id: number) => ['explorer', 'itineraries', id] as const,
+  /** Under the itinerary's key, so removing the itinerary removes them too. */
+  suggestionsAll: (id: number) => ['explorer', 'itineraries', id, 'suggestions'] as const,
+  suggestions: (id: number, citySlug: string | null) =>
+    ['explorer', 'itineraries', id, 'suggestions', citySlug ?? ''] as const,
+  followingUpdatesAll: ['explorer', 'following-updates'] as const,
+  /** Keyed by operation and person, like "Para você": the cache outlives a sign-out. */
+  followingUpdates: (operationId: number, userId: number) =>
+    ['explorer', 'following-updates', operationId, userId] as const,
 }
 
 export const useSavedList = (kind: SavedKind) =>
@@ -109,6 +119,9 @@ export const useToggleSaved = (kind: SavedKind, establishmentId: number) => {
     onSuccess: (status) => {
       client.setQueryData(key, status)
       void client.invalidateQueries({ queryKey: explorerKeys.saved(kind) })
+      // Following or not changes what "Dos lugares que você segue" lists.
+      if (kind === 'follows')
+        void client.invalidateQueries({ queryKey: explorerKeys.followingUpdatesAll })
     },
   })
 }
@@ -171,9 +184,35 @@ const useItineraryWrite = <TVariables>(
     onSuccess: (itinerary) => {
       client.setQueryData(explorerKeys.itinerary(itinerary.id), itinerary)
       void client.invalidateQueries({ queryKey: explorerKeys.itineraries, exact: true })
+      // A new or removed stop moves the centroid and what is already in the route.
+      void client.invalidateQueries({ queryKey: explorerKeys.suggestionsAll(itinerary.id) })
     },
   })
 }
+
+/** "Sugestões para o roteiro": computed by the server from this itinerary alone. */
+export const useItinerarySuggestions = (id: number, citySlug: string | null) =>
+  useQuery({
+    queryKey: explorerKeys.suggestions(id, citySlug),
+    queryFn: () => listItinerarySuggestions(id, citySlug),
+  })
+
+/** How many updates of followed places one page brings. */
+export const FOLLOWING_UPDATES_PAGE = 10
+
+/**
+ * "Dos lugares que você segue", page by page. Only asked for a person: a
+ * visitor follows nothing and would only get a 401.
+ */
+export const useFollowingUpdates = (identity: ForYouIdentity | null) =>
+  useInfiniteQuery({
+    queryKey: explorerKeys.followingUpdates(identity?.operationId ?? 0, identity?.userId ?? 0),
+    queryFn: ({ pageParam }) => listFollowingUpdates(pageParam, FOLLOWING_UPDATES_PAGE),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.meta.current_page < last.meta.last_page ? last.meta.current_page + 1 : undefined,
+    enabled: Boolean(identity),
+  })
 
 export const useCreateItinerary = () =>
   useItineraryWrite((body: ItineraryInput) => createItinerary(body))

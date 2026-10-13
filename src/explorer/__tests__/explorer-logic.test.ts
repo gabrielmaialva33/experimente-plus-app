@@ -1,5 +1,10 @@
 import type { Interest } from '@/api/explorer'
-import { interestOptions, selectionChanged } from '@/explorer/interest-options'
+import {
+  allInterestsState,
+  interestOptions,
+  selectionChanged,
+  toggleAllInterests,
+} from '@/explorer/interest-options'
 import { moveStop } from '@/explorer/itinerary-order'
 
 const interest = (slug: string, name = slug, isActive = true): Interest => ({
@@ -55,5 +60,37 @@ describe('selectionChanged', () => {
     expect(selectionChanged(new Set(['cafes']), chosen)).toBe(true)
     expect(selectionChanged(new Set(['cafes', 'bares', 'museus']), chosen)).toBe(true)
     expect(selectionChanged(new Set(['cafes', 'museus']), chosen)).toBe(true)
+  })
+})
+
+describe('Marcar todos', () => {
+  const city = [
+    { slug: 'cafes', name: 'Cafés' },
+    { slug: 'bares', name: 'Bares' },
+  ]
+  const options = interestOptions(city, [interest('museus', 'Museus', false)])
+
+  it('is checked with everything offered, unchecked with nothing and mixed in between', () => {
+    expect(allInterestsState(options, new Set(['cafes', 'bares']))).toBe(true)
+    expect(allInterestsState(options, new Set())).toBe(false)
+    expect(allInterestsState(options, new Set(['cafes']))).toBe('mixed')
+    // A retired interest still marked is something "Desmarcar todos" would clear.
+    expect(allInterestsState(options, new Set(['museus']))).toBe('mixed')
+  })
+
+  it('marks every category offered and keeps what was already marked', () => {
+    expect([...toggleAllInterests(options, new Set(['museus']))].sort()).toEqual([
+      'bares',
+      'cafes',
+      'museus',
+    ])
+  })
+
+  it('never brings back a retired category, which is only listed to be removed', () => {
+    expect([...toggleAllInterests(options, new Set())].sort()).toEqual(['bares', 'cafes'])
+  })
+
+  it('clears the whole set, retired ones included, once everything offered is marked', () => {
+    expect(toggleAllInterests(options, new Set(['cafes', 'bares', 'museus'])).size).toBe(0)
   })
 })

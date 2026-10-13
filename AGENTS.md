@@ -57,7 +57,7 @@ O root layout mantém o navigator montado e usa a splash para cobrir o carregame
 
 As rotas privadas empilhadas sobre as abas (`carteira/*`, `conta/perfil|excluir|avaliacoes`, `avaliar/*`, `validar/*`) ficam em `Stack.Protected` no root layout, com os guards de `useAreaOpen` (`src/wallet/access-gate.tsx`): conta para as primeiras, `validate` para a confirmação e `read` para histórico e comprovante do parceiro. Nada abre antes de o contexto resolver, e o que está aberto só fecha numa decisão. `AccessGate` repete a regra na tela como segunda camada. Rota privada nova entra no grupo correspondente.
 
-Abas: visitante tem Explorar/Entrar; consumidor tem Explorar/Carteira/Conta; parceiro habilitado acrescenta Validar. Histórico pertence ao fluxo de Validar. Lista e mapa compartilham um único estado de filtro em Explorar, sem criar uma aba de mapa ou duplicar controles.
+Abas: visitante tem Explorar/Novidades/Entrar; consumidor tem Explorar/Novidades/Carteira/Conta; parceiro habilitado acrescenta Validar. Novidades é de todos e fica fora dos guards: suas seções pessoais ("Para você" e "Dos lugares que você segue") só são pedidas depois de a sessão resolver para uma pessoa. Histórico pertence ao fluxo de Validar. Lista e mapa compartilham um único estado de filtro em Explorar, sem criar uma aba de mapa ou duplicar controles.
 
 Use `src/theme/tokens.ts` e `useColors`; os tokens derivam de `../experimente-plus/inertia/css/app.css`. Preserve `primary` para marca/navegação, `cta` para conversão, estados semânticos e suporte claro/escuro. A paleta e os componentes do template Expo (`src/constants/theme.ts`, `ThemedText`, `ThemedView`) foram removidos; não os recrie nem crie outra paleta.
 

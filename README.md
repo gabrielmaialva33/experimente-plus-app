@@ -113,11 +113,11 @@ _"Descoberta primeiro: o catálogo é público, a conta é para guardar, comprar
 
 ## O que o app faz
 
-| Quem       | Abas                                  | O que encontra                                                                                                                                                                              |
-| ---------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Visitante  | Explorar · Entrar                     | Lista e mapa com um só estado de filtros, busca, cidade, página do lugar (contatos, horários, avaliações, "Para viver aqui"), agenda, novidades e o Concierge de descoberta.                |
-| Consumidor | Explorar · Carteira · Conta           | Tudo acima, mais carteira de benefícios, compra de pacotes e vouchers por Pix, apresentação do benefício por QR, histórico de usos, favoritos, seguidos, roteiros, interesses e avaliações. |
-| Parceiro   | Explorar · Carteira · Validar · Conta | Leitura do QR do cliente, prévia sem resgate, confirmação explícita e histórico de utilizações. A aba só aparece quando a API concede a capability.                                         |
+| Quem       | Abas                                              | O que encontra                                                                                                                                                                                                                                                |
+| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visitante  | Explorar · Novidades · Entrar                     | Lista e mapa com um só estado de filtros, busca, cidade, página do lugar (contatos, horários, avaliações, "Para viver aqui"), agenda, novidades e o Concierge de descoberta.                                                                                  |
+| Consumidor | Explorar · Novidades · Carteira · Conta           | Tudo acima, mais carteira de benefícios, compra de pacotes e vouchers por Pix, apresentação do benefício por QR, histórico de usos, favoritos, seguidos, roteiros, interesses e avaliações. Em Novidades, "Para você" e o que os lugares seguidos publicaram. |
+| Parceiro   | Explorar · Novidades · Carteira · Validar · Conta | Leitura do QR do cliente, prévia sem resgate, confirmação explícita e histórico de utilizações. A aba só aparece quando a API concede a capability.                                                                                                           |
 
 A composição das abas vem de `GET /api/v1/me/context`; o app nunca decide sozinho que alguém é
 parceiro. Em homologação o provedor de pagamento é simulado: o pedido diz que nada é cobrado e a

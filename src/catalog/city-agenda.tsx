@@ -61,8 +61,6 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
   const router = useRouter()
   const agenda = useCityAgenda(citySlug)
   const data = agenda.data
-  const oneLine = useLineCap(1)
-  const twoLines = useLineCap(2)
   // The feed's column: on a wide window the day's events sit side by side, like the places above.
   const frame = useScreenFrame()
   const grid = useCardGrid()
@@ -115,60 +113,16 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
               {band.title}
             </Text>
             <View style={styles.events}>
-              {band.items.map((item) => {
-                // The tile carries the day, so the row itself only needs the hours.
-                const hours = formatAgendaWindow(item, timeZone, false)
-                const spoken = formatAgendaWindow(item, timeZone, band.withDate)
-                const meta = [hours, item.establishmentName].filter(Boolean).join(' · ')
-
-                return (
-                  <Pressable
-                    key={`${item.kind}-${item.id}`}
-                    testID={`agenda-card-${item.kind}-${item.id}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={[item.title, item.establishmentName, spoken]
-                      .filter(Boolean)
-                      .join(', ')}
-                    onPress={() => open(item)}
-                    style={({ pressed }) => [
-                      styles.event,
-                      {
-                        width: eventWidth,
-                        backgroundColor: colors.card,
-                        borderColor: colors.borderSubtle,
-                        opacity: pressed ? 0.92 : 1,
-                      },
-                    ]}
-                  >
-                    <View
-                      accessibilityElementsHidden
-                      importantForAccessibility="no-hide-descendants"
-                    >
-                      <DateTile
-                        iso={item.startsAt}
-                        timeZone={timeZone}
-                        tone={band.key === 'happening-today' ? 'strong' : 'soft'}
-                      />
-                    </View>
-                    <View style={styles.eventCopy}>
-                      <Text
-                        style={[styles.eventTitle, { color: colors.foreground }]}
-                        numberOfLines={twoLines}
-                      >
-                        {item.title}
-                      </Text>
-                      {meta ? (
-                        <Text
-                          style={[styles.eventMeta, { color: colors.mutedForeground }]}
-                          numberOfLines={oneLine}
-                        >
-                          {meta}
-                        </Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                )
-              })}
+              {band.items.map((item) => (
+                <AgendaEventCard
+                  key={`${item.kind}-${item.id}`}
+                  item={item}
+                  timeZone={timeZone}
+                  today={band.key === 'happening-today'}
+                  width={eventWidth}
+                  onPress={() => open(item)}
+                />
+              ))}
             </View>
           </View>
         ))}
@@ -211,6 +165,67 @@ export function CityAgenda({ citySlug }: CityAgendaProps) {
         </View>
       ) : null}
     </View>
+  )
+}
+
+/**
+ * One event of a city's agenda: a date tile, the title and the hours with the
+ * place. Today's events need no date in what is said, since their band says it.
+ */
+export function AgendaEventCard({
+  item,
+  timeZone,
+  today,
+  width,
+  onPress,
+}: {
+  item: AgendaEventView
+  timeZone: string | null
+  today: boolean
+  width: number | '100%'
+  onPress: () => void
+}) {
+  const colors = useColors()
+  const oneLine = useLineCap(1)
+  const twoLines = useLineCap(2)
+  // The tile carries the day, so the row itself only needs the hours.
+  const hours = formatAgendaWindow(item, timeZone, false)
+  const spoken = formatAgendaWindow(item, timeZone, !today)
+  const meta = [hours, item.establishmentName].filter(Boolean).join(' · ')
+
+  return (
+    <Pressable
+      testID={`agenda-card-${item.kind}-${item.id}`}
+      accessibilityRole="button"
+      accessibilityLabel={[item.title, item.establishmentName, spoken].filter(Boolean).join(', ')}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.event,
+        {
+          width,
+          backgroundColor: colors.card,
+          borderColor: colors.borderSubtle,
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+    >
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <DateTile iso={item.startsAt} timeZone={timeZone} tone={today ? 'strong' : 'soft'} />
+      </View>
+      <View style={styles.eventCopy}>
+        <Text style={[styles.eventTitle, { color: colors.foreground }]} numberOfLines={twoLines}>
+          {item.title}
+        </Text>
+        {meta ? (
+          <Text
+            style={[styles.eventMeta, { color: colors.mutedForeground }]}
+            numberOfLines={oneLine}
+          >
+            {meta}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
   )
 }
 

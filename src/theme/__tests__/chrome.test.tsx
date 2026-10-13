@@ -102,6 +102,7 @@ it.each(['light', 'dark'] as const)(
     )
     expect(tabScreens.map((screen) => screen.props.options.title)).toEqual([
       'Explorar',
+      'Novidades',
       'Carteira',
       'Validar',
       'Conta',
@@ -110,8 +111,8 @@ it.each(['light', 'dark'] as const)(
     expect(
       tabScreens.find((screen) => screen.props.name === 'wallet')?.props.options.headerShown
     ).toBe(false)
-    // Explorar, Carteira and Entrar draw their own header band instead of the native bar
-    // (Conta hides it from inside the screen).
+    // Explorar, Novidades, Carteira and Entrar draw their own header band instead of the
+    // native bar (Conta hides it from inside the screen).
     expect(
       tabScreens.find((screen) => screen.props.name === 'index')?.props.options.headerShown
     ).toBe(false)
@@ -119,7 +120,7 @@ it.each(['light', 'dark'] as const)(
       tabScreens
         .filter((screen) => screen.props.options.headerShown === false)
         .map((screen) => screen.props.name)
-    ).toEqual(['index', 'wallet', 'sign-in'])
+    ).toEqual(['index', 'news', 'wallet', 'sign-in'])
 
     await render(<WalletLayout />)
     const wallet = Stack.mock.calls.at(-1)[0]

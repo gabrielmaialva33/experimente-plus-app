@@ -119,14 +119,14 @@ describe('tabs', () => {
   it('keeps the partner’s tabs while a 403 revalidates, then applies the new capabilities', async () => {
     me.getContext.mockResolvedValueOnce(partner(true))
     await renderTabs()
-    expect(mountedTabs()).toEqual(['index', 'wallet', 'validate', 'account'])
+    expect(mountedTabs()).toEqual(['index', 'news', 'wallet', 'validate', 'account'])
 
     const reload = pendingContext()
     await act(async () => notifySessionEvent('context-invalidated'))
-    expect(mountedTabs()).toEqual(['index', 'wallet', 'validate', 'account'])
+    expect(mountedTabs()).toEqual(['index', 'news', 'wallet', 'validate', 'account'])
 
     await act(async () => reload.answer(partner(false)))
-    expect(mountedTabs()).toEqual(['index', 'wallet', 'account'])
+    expect(mountedTabs()).toEqual(['index', 'news', 'wallet', 'account'])
     expect(session.clearCredentials).not.toHaveBeenCalled()
   })
 
@@ -140,7 +140,7 @@ describe('tabs', () => {
     const reload = pendingContext()
     await act(async () => notifySessionEvent('context-invalidated'))
     await act(async () => reload.fail(new SessionExpiredError()))
-    expect(mountedTabs()).toEqual(['index', 'sign-in'])
+    expect(mountedTabs()).toEqual(['index', 'news', 'sign-in'])
   })
 })
 

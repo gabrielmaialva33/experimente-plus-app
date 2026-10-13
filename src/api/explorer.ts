@@ -21,6 +21,11 @@ export type Itinerary = Schemas['ExplorerItinerary']
 export type ItineraryStop = Schemas['ExplorerItineraryStop']
 export type ItinerarySummary = Schemas['ExplorerItinerarySummary']
 export type ItineraryInput = Schemas['ExplorerItineraryRequest']
+export type StopAddress = Schemas['ExplorerStopAddress']
+export type ItinerarySuggestions = Schemas['ExplorerItinerarySuggestions']
+export type ItinerarySuggestion = Schemas['ExplorerItinerarySuggestion']
+export type FollowingUpdate = Schemas['ExplorerFollowingUpdate']
+export type FollowingUpdates = Schemas['ExplorerFollowingUpdates']
 
 export type SavedKind = 'favorites' | 'follows'
 
@@ -110,6 +115,28 @@ export const reorderItineraryStops = (id: number, stopIds: number[]) =>
     authenticated: true,
     body: { stop_ids: stopIds },
   })
+
+/**
+ * Places to add to an itinerary. `city` is the city Explorar is showing; the
+ * server only uses it while no stop can be located.
+ */
+export const listItinerarySuggestions = (id: number, citySlug: string | null) =>
+  request<ItinerarySuggestions>(
+    `/api/v1/me/itineraries/${id}/suggestions${
+      citySlug ? `?${new URLSearchParams({ city: citySlug })}` : ''
+    }`,
+    { authenticated: true }
+  )
+
+/** What the followed places published, newest first, one page at a time. */
+export const listFollowingUpdates = (page: number, perPage: number) =>
+  request<FollowingUpdates>(
+    `/api/v1/me/following/updates?${new URLSearchParams({
+      page: String(page),
+      per_page: String(perPage),
+    })}`,
+    { authenticated: true }
+  )
 
 export const listSavedContent = () =>
   request<SavedContentList>('/api/v1/me/favorites/content', { authenticated: true })

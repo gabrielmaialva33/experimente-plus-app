@@ -6,6 +6,7 @@ import ExploreScreen from '@/app/(tabs)/index'
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
   useFocusEffect: jest.fn(),
+  useScrollToTop: jest.fn(),
 }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,

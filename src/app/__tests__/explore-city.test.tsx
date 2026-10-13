@@ -8,6 +8,7 @@ const mockRouter = { push: jest.fn() }
 jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useFocusEffect: jest.fn(),
+  useScrollToTop: jest.fn(),
 }))
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.requireActual('react-native').View,

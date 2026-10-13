@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { useRouter } from 'expo-router'
+import { useRouter, useScrollToTop } from 'expo-router'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -96,6 +96,8 @@ export default function ExploreScreen() {
   const [choosingCity, setChoosingCity] = useState(false)
   const [asking, setAsking] = useState(false)
   const list = useRef<FlatList<EstablishmentSummary>>(null)
+  // Tapping Explorar while it is open goes back to the top, as tab bars do.
+  useScrollToTop(list)
   // The Concierge's field sits at the feed's foot: the feed lifts it above the keyboard.
   const scrollFeedTo = useCallback(
     (offset: number) => list.current?.scrollToOffset({ offset, animated: true }),

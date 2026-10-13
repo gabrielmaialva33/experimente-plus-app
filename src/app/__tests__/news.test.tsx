@@ -18,6 +18,7 @@ const mockPush = jest.fn()
 const mockNavigate = jest.fn()
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
+  useScrollToTop: jest.fn(),
   useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
 }))
 jest.mock('@/session/context', () => ({ useSession: jest.fn() }))

@@ -1,3 +1,5 @@
+import { useScrollToTop } from 'expo-router'
+import { useRef } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -35,6 +37,9 @@ export default function NewsScreen() {
   // A phone's column, or a wider grid on a tablet and an unfolded phone.
   const { frame } = useFeedLayout()
   useBandStatusBar()
+  // Tapping Novidades while it is open goes back to the top, as tab bars do.
+  const scroll = useRef<ScrollView>(null)
+  useScrollToTop(scroll)
 
   const { status, context } = useSession()
   const identity =
@@ -66,6 +71,7 @@ export default function NewsScreen() {
         {/* The band scrolls with the page; the status bar keeps its colour. */}
         <View style={{ backgroundColor: colors.chrome, height: insets.top }} />
         <ScrollView
+          ref={scroll}
           testID="news-scroll"
           style={styles.fill}
           contentContainerStyle={styles.page}

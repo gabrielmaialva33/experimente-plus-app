@@ -168,8 +168,8 @@ describe('suggestions for the itinerary', () => {
     expect(view.getByText('Sugestões para o roteiro')).toBeOnTheScreen()
     expect(view.getByText('Perto das suas paradas')).toBeOnTheScreen()
     expect(view.queryByTestId('suggestion-7')).toBeNull()
-    expect(view.getByLabelText('Sorveteria da Praça, Cafés · Londrina · a 400 m')).toBeOnTheScreen()
-    expect(view.getByLabelText('Museu do Café, Cafés · Londrina · a 2,5 km')).toBeOnTheScreen()
+    expect(view.getByLabelText('Sorveteria da Praça, a 400 m · Cafés · Londrina')).toBeOnTheScreen()
+    expect(view.getByLabelText('Museu do Café, a 2,5 km · Cafés · Londrina')).toBeOnTheScreen()
 
     await fireEvent.press(
       view.getByRole('button', { name: 'Adicionar Sorveteria da Praça ao roteiro' })
@@ -180,7 +180,7 @@ describe('suggestions for the itinerary', () => {
       'Sorveteria da Praça adicionado ao roteiro.'
     )
 
-    await fireEvent.press(view.getByLabelText('Museu do Café, Cafés · Londrina · a 2,5 km'))
+    await fireEvent.press(view.getByLabelText('Museu do Café, a 2,5 km · Cafés · Londrina'))
     expect(mockPush).toHaveBeenCalledWith('/estabelecimento/londrina/lugar-10')
   })
 
@@ -251,14 +251,33 @@ describe('suggestions for the itinerary', () => {
       'Não foi possível adicionar agora.'
     )
   })
+
+  it('holds every "+" while a place is being added', async () => {
+    const mutate = jest.fn()
+    queries.useAddItineraryStop.mockReturnValue(idle({ isPending: true, mutate }))
+    queries.useItinerarySuggestions.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        basis: 'popular',
+        data: [{ establishment: card(9, 'Sorveteria'), distance_km: null }],
+      },
+    })
+    const view = await render(<ItineraryScreen />)
+
+    const plus = view.getByRole('button', { name: 'Adicionar Sorveteria ao roteiro' })
+    expect(plus).toBeDisabled()
+    await fireEvent.press(plus)
+    expect(mutate).not.toHaveBeenCalled()
+  })
 })
 
 describe('distanceLabel', () => {
-  it('reads metres under a kilometre and kilometres with a comma above it', () => {
+  it('reads metres under a kilometre and kilometres above it', () => {
     expect(distanceLabel(0)).toBe('a menos de 100 m')
     expect(distanceLabel(0.5)).toBe('a 500 m')
     expect(distanceLabel(1)).toBe('a 1 km')
-    expect(distanceLabel(12.3)).toBe('a 12,3 km')
+    expect(distanceLabel(12.3)).toBe('a 12 km')
     expect(distanceLabel(null)).toBeNull()
   })
 })

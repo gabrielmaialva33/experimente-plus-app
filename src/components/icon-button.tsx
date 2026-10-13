@@ -14,6 +14,8 @@ interface IconButtonProps {
   /** `surface` sits on a card, `image` on a photo, `chrome` on the header band. */
   tone?: 'surface' | 'image' | 'chrome' | 'plain'
   selected?: boolean
+  /** Keeps the circle, its icon muted, and says so to a screen reader. */
+  disabled?: boolean
   testID?: string
 }
 
@@ -25,6 +27,7 @@ export function IconButton({
   onPress,
   tone = 'surface',
   selected,
+  disabled = false,
   testID,
 }: IconButtonProps) {
   const colors = useColors()
@@ -49,6 +52,9 @@ export function IconButton({
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={selected === undefined ? undefined : { selected }}
+      // Only when held: Pressable writes `disabled` into the state it is given,
+      // and an enabled circle says nothing about it, as before.
+      disabled={disabled || undefined}
       onPress={onPress}
       testID={testID}
       hitSlop={4}
@@ -61,7 +67,11 @@ export function IconButton({
         },
       ]}
     >
-      <Ionicons name={icon} size={22} color={appearance.foreground} />
+      <Ionicons
+        name={icon}
+        size={22}
+        color={disabled ? colors.mutedForeground : appearance.foreground}
+      />
     </Pressable>
   )
 }

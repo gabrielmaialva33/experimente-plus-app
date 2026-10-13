@@ -30,8 +30,15 @@ describe('distanceLabel', () => {
     // 980 m rounds to a kilometre, not to "1000 m".
     expect(distanceLabel(0.98)).toBe('a 1 km')
     expect(distanceLabel(1.2009)).toBe('a 1,2 km')
-    expect(distanceLabel(12.3352)).toBe('a 12,3 km')
+    expect(distanceLabel(9.94)).toBe('a 9,9 km')
     expect(distanceLabel(3)).toBe('a 3 km')
+  })
+
+  it('reads whole kilometres from ten on', () => {
+    // 9,96 km rounds to ten, and ten is read whole, not as "10,0".
+    expect(distanceLabel(9.96)).toBe('a 10 km')
+    expect(distanceLabel(12.3352)).toBe('a 12 km')
+    expect(distanceLabel(298.8)).toBe('a 299 km')
   })
 
   it('says nothing without a distance', () => {

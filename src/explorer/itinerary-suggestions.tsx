@@ -7,11 +7,11 @@ import { useSelectedCity } from '@/catalog/city-store'
 import { distanceLabel } from '@/catalog/distance'
 import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
+import { IconButton } from '@/components/icon-button'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentCardRow } from '@/explorer/establishment-card-row'
 import { useAddItineraryStop, useItinerarySuggestions } from '@/explorer/queries'
 import { placeHref } from '@/place/links'
-import { useStackedLayout } from '@/theme/font-scale'
 import { radius, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
@@ -30,8 +30,6 @@ export function ItinerarySuggestions({ itinerary }: { itinerary: Itinerary }) {
   const query = useItinerarySuggestions(itinerary.id, citySlug)
   const add = useAddItineraryStop()
   const loading = useLoadingCopy('Carregando sugestões…')
-  // With large text, "Adicionar" goes under the place instead of squeezing its name.
-  const stacked = useStackedLayout()
 
   useAnnouncement(add.isError && 'Não foi possível adicionar agora.')
 
@@ -88,33 +86,26 @@ export function ItinerarySuggestions({ itinerary }: { itinerary: Itinerary }) {
           style={[styles.list, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
         >
           {items.map((item) => {
-            const action = (
-              <Button
-                label="Adicionar"
-                icon="add"
-                variant="outline"
-                size={44}
-                disabled={add.isPending}
-                accessibilityLabel={`Adicionar ${item.establishment.name} ao roteiro`}
-                onPress={() => addPlace(item)}
-                testID={`suggestion-add-${item.establishment.id}`}
-              />
-            )
             return (
-              <View
-                key={item.establishment.id}
-                style={styles.item}
-                testID={`suggestion-${item.establishment.id}`}
-              >
+              <View key={item.establishment.id} testID={`suggestion-${item.establishment.id}`}>
                 <EstablishmentCardRow
                   card={item.establishment}
                   detail={distanceLabel(item.distance_km)}
                   onPress={() =>
                     router.push(placeHref(item.establishment.city_slug, item.establishment.slug))
                   }
-                  trailing={stacked ? undefined : action}
+                  // A "+" circle, named in full for a screen reader: the pill
+                  // "Adicionar" took the width the place's name needed.
+                  trailing={
+                    <IconButton
+                      icon="add"
+                      disabled={add.isPending}
+                      accessibilityLabel={`Adicionar ${item.establishment.name} ao roteiro`}
+                      onPress={() => addPlace(item)}
+                      testID={`suggestion-add-${item.establishment.id}`}
+                    />
+                  }
                 />
-                {stacked ? action : null}
               </View>
             )
           })}
@@ -140,5 +131,4 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg,
   },
-  item: { gap: spacing.sm },
 })

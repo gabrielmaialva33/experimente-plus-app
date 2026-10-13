@@ -16,10 +16,11 @@ export function distanceKm(from: Origin, to: Origin): number {
 }
 
 /**
- * "a 1,2 km" or "a 350 m", as distances are read in Brazil; nothing without
- * one. Metres go in steps of 50 and kilometres to one decimal: closer than that
- * says more than a phone's position knows. The itinerary's suggestions come
- * from the server in tenths of a kilometre, and read the same here.
+ * "a 1,2 km", "a 350 m" or "a 298 km", as distances are read in Brazil; nothing
+ * without one. Metres go in steps of 50, kilometres to one decimal and, from
+ * ten on, whole: closer than that says more than a phone's position knows, and
+ * "a 298,8 km" read as a precision nobody needs. The itinerary's suggestions
+ * come from the server in tenths of a kilometre, and read the same here.
  */
 export function distanceLabel(distanceKm: number | null): string | null {
   if (distanceKm === null || !Number.isFinite(distanceKm) || distanceKm < 0) return null
@@ -27,6 +28,7 @@ export function distanceLabel(distanceKm: number | null): string | null {
   const metres = Math.round(distanceKm * 20) * 50
   if (metres < 1000) return `a ${metres} m`
   const km = Math.round(distanceKm * 10) / 10
+  if (km >= 10) return `a ${Math.round(distanceKm)} km`
   return `a ${Number.isInteger(km) ? km : km.toFixed(1).replace('.', ',')} km`
 }
 

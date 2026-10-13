@@ -23,11 +23,14 @@ export function EstablishmentCardRow({
   card: EstablishmentCard
   onPress?: () => void
   trailing?: ReactNode
-  /** One more fact after the category and the city, such as how far the place is. */
+  /**
+   * One more fact, such as how far the place is. It leads the line: after a
+   * long category it was the part cut off, and it is why the row is there.
+   */
   detail?: string | null
 }) {
   const colors = useColors()
-  const meta = [card.category, card.city_name, detail].filter(Boolean).join(' · ')
+  const meta = [detail, card.category, card.city_name].filter(Boolean).join(' · ')
   const lines = useLineCap(1)
 
   return (

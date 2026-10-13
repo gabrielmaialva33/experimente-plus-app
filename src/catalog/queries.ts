@@ -45,6 +45,9 @@ export const useFilters = (citySlug: string | null) =>
 export const useSearch = (citySlug: string | null, params: SearchParams) =>
   useQuery({
     queryKey: catalogKeys.search(citySlug ?? '', params),
+    // A search from somewhere keeps the position in its key: it leaves memory as
+    // soon as nothing shows it, instead of waiting for the usual collection.
+    ...(params.origin ? { gcTime: 0 } : {}),
     queryFn: async () => {
       const result = await searchEstablishments(citySlug as string, params)
       return {

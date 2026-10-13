@@ -352,26 +352,31 @@ Imports usam `@/` para `src/` e `@/assets/` para `assets/`.
 
 O app pede só o que usa, e a CI impede que uma dependência acrescente outra coisa em silêncio.
 
-| Plataforma | Pedido                                                  | Para quê                                              |
-| ---------- | ------------------------------------------------------- | ----------------------------------------------------- |
-| Android    | `CAMERA`                                                | Ler o QR do benefício em Validar (parceiro)           |
-| Android    | `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` | Falar com a API e saber quando a conexão cai ou volta |
-| iOS        | Câmera (`NSCameraUsageDescription`)                     | Ler o QR do benefício                                 |
-| iOS        | Fotos (`NSPhotoLibraryUsageDescription`)                | Escolher as fotos de uma avaliação                    |
-| iOS        | Rede local (`NSLocalNetworkUsageDescription`)           | Só no development build, para achar o Metro           |
+| Plataforma | Pedido                                                     | Para quê                                                |
+| ---------- | ---------------------------------------------------------- | ------------------------------------------------------- |
+| Android    | `CAMERA`                                                   | Ler o QR do benefício em Validar (parceiro)             |
+| Android    | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION`           | Ordenar Explorar por "Mais perto", só em primeiro plano |
+| Android    | `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`    | Falar com a API e saber quando a conexão cai ou volta   |
+| iOS        | Câmera (`NSCameraUsageDescription`)                        | Ler o QR do benefício                                   |
+| iOS        | Localização em uso (`NSLocationWhenInUseUsageDescription`) | Ordenar Explorar por "Mais perto"                       |
+| iOS        | Fotos (`NSPhotoLibraryUsageDescription`)                   | Escolher as fotos de uma avaliação                      |
+| iOS        | Rede local (`NSLocalNetworkUsageDescription`)              | Só no development build, para achar o Metro             |
 
 - Fotos no Android vêm do seletor do sistema, sem permissão de armazenamento ou mídia.
 - A tela fica acesa enquanto o QR de um benefício aparece (`expo-keep-awake`, com tag própria, em
   `src/wallet/keep-awake.ts`): no Android é a flag `FLAG_KEEP_SCREEN_ON` da janela, no iOS o
   `isIdleTimerDisabled`. Nenhuma das duas é permissão, e o brilho não muda.
+- A localização é pedida só quando a pessoa escolhe "Mais perto" em Explorar, nunca ao abrir o app,
+  e só em primeiro plano (`expo-location`, sem modo de segundo plano nem as chaves "Always" do iOS).
+  A posição vai apenas na busca e fica em memória enquanto a ordem está escolhida.
 - `android.blockedPermissions` em [`app.json`](app.json) remove o que as bibliotecas declaram por
-  padrão: localização, microfone, armazenamento e mídia, sobreposição de tela, biometria,
+  padrão: localização em segundo plano, microfone, armazenamento e mídia, sobreposição de tela, biometria,
   **vibração** (o app não usa haptics) e o ID de publicidade. O Face ID do SecureStore e o
   microfone dos plugins de câmera também estão desligados.
 - A rede local vem do plugin do `expo-dev-client`, que a declara em todo build iOS; o texto em
   português fica em `ios.infoPlist` no `app.json`, porque o plugin só preenche a chave vazia.
 - [`scripts/ci/verify-apk.py`](scripts/ci/verify-apk.py) lê o manifesto do APK gerado na CI e
-  falha se aparecer qualquer permissão fora do conjunto revisado (as quatro acima e a permissão
+  falha se aparecer qualquer permissão fora do conjunto revisado (as seis acima e a permissão
   interna `br.com.experimentemais.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`), ou se a câmera
   sumir. Uma permissão nova só entra com justificativa, no `app.json` e na lista do script.
 

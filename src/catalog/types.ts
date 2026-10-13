@@ -60,6 +60,8 @@ export interface EstablishmentSummary {
   cover: Media
   is_sponsored: boolean
   reviews: ReviewSummary
+  /** "Vale hoje": a benefit of this place can still be used today. */
+  benefit_today?: boolean
   published_at: string
   updated_at: string
 }

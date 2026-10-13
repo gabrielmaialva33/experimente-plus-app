@@ -33,4 +33,39 @@ describe('catalog search parameters', () => {
     expect(path).toContain('open_now=true')
     expect(path).toContain('page=3')
   })
+
+  it('sends the orders and "Vale hoje" the server knows', async () => {
+    expect(await pathFor({ sort: 'rating' })).toBe(
+      '/api/v1/catalog/cities/londrina/establishments?sort=rating'
+    )
+    expect(await pathFor({ sort: 'price', benefitToday: true })).toBe(
+      '/api/v1/catalog/cities/londrina/establishments?benefit_today=true&sort=price'
+    )
+    expect(await pathFor({ benefitToday: false })).toBe(
+      '/api/v1/catalog/cities/londrina/establishments'
+    )
+  })
+
+  it('sends the position with nearest first only, kept out of every cache', async () => {
+    const origin = { latitude: -23.3105, longitude: -51.1628 }
+
+    request.mockClear()
+    await searchEstablishments('londrina', { sort: 'distance', origin })
+    expect(request).toHaveBeenLastCalledWith(
+      '/api/v1/catalog/cities/londrina/establishments?sort=distance&lat=-23.3105&lng=-51.1628',
+      { sensitive: true }
+    )
+
+    // Without a position the server would refuse nearest first: the default order goes.
+    expect(await pathFor({ sort: 'distance' })).toBe(
+      '/api/v1/catalog/cities/londrina/establishments'
+    )
+    // A position left over beside another order is not sent.
+    request.mockClear()
+    await searchEstablishments('londrina', { sort: 'rating', origin })
+    expect(request).toHaveBeenLastCalledWith(
+      '/api/v1/catalog/cities/londrina/establishments?sort=rating',
+      undefined
+    )
+  })
 })

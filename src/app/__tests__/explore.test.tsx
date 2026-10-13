@@ -205,8 +205,10 @@ it('marks the chosen city with the full choice contour and marker, without an ac
   expect(city).toHaveStyle({ borderWidth: 2, minHeight: 48 })
   expect(city).not.toHaveStyle({ borderBottomWidth: 2 })
   expect(view.getByRole('radio', { name: 'Cambé, PR', checked: false })).toBeOnTheScreen()
-  // One marker: the city. No filter is on, and the view switch is an action, not a choice.
-  expect(view.getAllByText('✓', { includeHiddenElements: true })).toHaveLength(1)
+  // Two markers: the city and the default order. No filter is on, and the view switch is
+  // an action, not a choice.
+  expect(view.getAllByText('✓', { includeHiddenElements: true })).toHaveLength(2)
+  expect(view.getByRole('radio', { name: 'Relevância', checked: true })).toBeOnTheScreen()
 })
 
 it('bounds every scrolling choice to its measured viewport, including after a narrow resize', async () => {

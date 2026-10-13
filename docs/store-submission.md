@@ -32,16 +32,17 @@ receber segredo versionado.
     avaliação vêm da galeria, não da câmera.
   - **Fotos** no iOS, para escolher imagens da avaliação. No Android elas vêm
     do seletor do sistema, sem permissão de armazenamento ou de mídia.
+  - **Localização em primeiro plano**, só quando a pessoa escolhe ordenar
+    Explorar por "Mais perto". Não há localização em segundo plano, e a posição
+    não é guardada nem enviada a estatísticas: declare "localização aproximada e
+    precisa, usada para funcionalidade do app, não compartilhada" nos
+    formulários de privacidade das lojas.
   - **Rede** (`INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`).
-  - **Bloqueadas em `android.blockedPermissions`**: localização, microfone,
+  - **Bloqueadas em `android.blockedPermissions`**: localização em segundo plano, microfone,
     armazenamento e mídia (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`,
     `READ_MEDIA_*`), sobreposição de tela, biometria, vibração e o ID de
     publicidade. O plugin do seletor de imagens declarava `RECORD_AUDIO` e o
     SecureStore declarava Face ID, ambos por padrão, e o app não usa nenhum.
-  - **Localização não é pedida**, porque o app não usa a posição do aparelho.
-    Se o comportamento em falha de GPS (item 15) introduzir localização, a
-    permissão entra no plugin `expo-maps` (`requestLocationPermission`)
-    junto com o texto de uso, e na lista do `verify-apk.py`.
 - **Criptografia de exportação:** `ios.config.usesNonExemptEncryption: false`.
   O app só usa HTTPS e hash da plataforma, que é a categoria isenta. O
   contratante confirma a declaração como publicador.

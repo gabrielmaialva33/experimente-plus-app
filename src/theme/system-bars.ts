@@ -33,7 +33,7 @@ let bands = 0
 
 /**
  * Light status bar icons while a screen whose navy band runs under the status
- * bar is in front: Explorar, Carteira, Conta, Entrar and a product's page.
+ * bar is in front: Explorar, Novidades, Carteira, Conta, Entrar and a product's page.
  *
  * Conta and Entrar drew the band without asking for light icons, so theirs
  * were whatever the previous screen left: dark icons on navy after a stack

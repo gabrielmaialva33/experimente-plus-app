@@ -24,6 +24,8 @@ export type ItineraryInput = Schemas['ExplorerItineraryRequest']
 export type StopAddress = Schemas['ExplorerStopAddress']
 export type ItinerarySuggestions = Schemas['ExplorerItinerarySuggestions']
 export type ItinerarySuggestion = Schemas['ExplorerItinerarySuggestion']
+export type FollowingUpdate = Schemas['ExplorerFollowingUpdate']
+export type FollowingUpdates = Schemas['ExplorerFollowingUpdates']
 
 export type SavedKind = 'favorites' | 'follows'
 
@@ -123,6 +125,16 @@ export const listItinerarySuggestions = (id: number, citySlug: string | null) =>
     `/api/v1/me/itineraries/${id}/suggestions${
       citySlug ? `?${new URLSearchParams({ city: citySlug })}` : ''
     }`,
+    { authenticated: true }
+  )
+
+/** What the followed places published, newest first, one page at a time. */
+export const listFollowingUpdates = (page: number, perPage: number) =>
+  request<FollowingUpdates>(
+    `/api/v1/me/following/updates?${new URLSearchParams({
+      page: String(page),
+      per_page: String(perPage),
+    })}`,
     { authenticated: true }
   )
 

@@ -12,9 +12,12 @@ import { useColors } from '@/theme/use-colors'
  * The tab set is derived from the session and from server-projected
  * capabilities (ADR-0023 §2).
  *
- *   sem sessão    Explorar · Entrar
- *   consumidor    Explorar · Carteira · Conta
- *   parceiro      Explorar · Carteira · Validar · Conta
+ *   sem sessão    Explorar · Novidades · Entrar
+ *   consumidor    Explorar · Novidades · Carteira · Conta
+ *   parceiro      Explorar · Novidades · Carteira · Validar · Conta
+ *
+ * Novidades is open to everyone, like Explorar, and sits outside every guard:
+ * its personal sections ask for the session themselves, once it has resolved.
  *
  * `Tabs.Protected` is the documented way to do this: a guarded screen is not
  * merely hidden, it is unreachable — including by deep link. The server still
@@ -77,6 +80,16 @@ export default function TabsLayout() {
           title: 'Explorar',
           headerShown: false,
           tabBarIcon: icon('compass-outline', 'compass'),
+        }}
+      />
+
+      <Tabs.Screen
+        name="news"
+        // Like Explorar, Novidades draws its own header band.
+        options={{
+          title: 'Novidades',
+          headerShown: false,
+          tabBarIcon: icon('sparkles-outline', 'sparkles'),
         }}
       />
 

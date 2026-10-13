@@ -18,13 +18,16 @@ export function EstablishmentCardRow({
   card,
   onPress,
   trailing,
+  detail,
 }: {
   card: EstablishmentCard
   onPress?: () => void
   trailing?: ReactNode
+  /** One more fact after the category and the city, such as how far the place is. */
+  detail?: string | null
 }) {
   const colors = useColors()
-  const meta = [card.category, card.city_name].filter(Boolean).join(' · ')
+  const meta = [card.category, card.city_name, detail].filter(Boolean).join(' · ')
   const lines = useLineCap(1)
 
   return (

@@ -8,6 +8,7 @@ import {
   listForYou,
   listInterests,
   listItineraries,
+  listItinerarySuggestions,
   listSaved,
   listSavedContent,
   removeItineraryStop,
@@ -43,6 +44,10 @@ export const explorerKeys = {
     ['explorer', 'for-you', operationId, userId, citySlug] as const,
   itineraries: ['explorer', 'itineraries'] as const,
   itinerary: (id: number) => ['explorer', 'itineraries', id] as const,
+  /** Under the itinerary's key, so removing the itinerary removes them too. */
+  suggestionsAll: (id: number) => ['explorer', 'itineraries', id, 'suggestions'] as const,
+  suggestions: (id: number, citySlug: string | null) =>
+    ['explorer', 'itineraries', id, 'suggestions', citySlug ?? ''] as const,
 }
 
 export const useSavedList = (kind: SavedKind) =>
@@ -171,9 +176,18 @@ const useItineraryWrite = <TVariables>(
     onSuccess: (itinerary) => {
       client.setQueryData(explorerKeys.itinerary(itinerary.id), itinerary)
       void client.invalidateQueries({ queryKey: explorerKeys.itineraries, exact: true })
+      // A new or removed stop moves the centroid and what is already in the route.
+      void client.invalidateQueries({ queryKey: explorerKeys.suggestionsAll(itinerary.id) })
     },
   })
 }
+
+/** "Sugestões para o roteiro": computed by the server from this itinerary alone. */
+export const useItinerarySuggestions = (id: number, citySlug: string | null) =>
+  useQuery({
+    queryKey: explorerKeys.suggestions(id, citySlug),
+    queryFn: () => listItinerarySuggestions(id, citySlug),
+  })
 
 export const useCreateItinerary = () =>
   useItineraryWrite((body: ItineraryInput) => createItinerary(body))

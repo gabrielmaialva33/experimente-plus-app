@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native'
 
 import { ApiError } from '@/api/client'
 import type { EstablishmentCard, Itinerary } from '@/api/explorer'
@@ -18,6 +18,8 @@ import { useContentFrame } from '@/components/content-frame'
 import { EstablishmentCardRow } from '@/explorer/establishment-card-row'
 import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { moveStop } from '@/explorer/itinerary-order'
+import { itineraryShareMessage } from '@/explorer/itinerary-share'
+import { ItinerarySuggestions } from '@/explorer/itinerary-suggestions'
 import { placeHref } from '@/place/links'
 import {
   useAddItineraryStop,
@@ -115,6 +117,19 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
       })
   }
 
+  // Sharing is the person's own act, through the system's sheet (WhatsApp is one of
+  // its targets): it sends the text of the route, never a link to the itinerary.
+  const shareable = itinerary.stops.some((stop) => stop.establishment)
+  const share = async () => {
+    const message = itineraryShareMessage(itinerary)
+    if (!message) return
+    try {
+      await Share.share({ title: itinerary.name, message })
+    } catch {
+      announce('Não foi possível abrir o compartilhamento agora.')
+    }
+  }
+
   const deleteFailure = destroy.isError ? 'Não foi possível excluir o roteiro agora.' : null
 
   const nameStatus = rename.isPending
@@ -157,6 +172,16 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
           itinerary.stops.length === 0
             ? null
             : `${itinerary.stops.length} ${itinerary.stops.length === 1 ? 'parada' : 'paradas'}`
+        }
+        action={
+          shareable
+            ? {
+                label: 'Compartilhar',
+                icon: 'share-social-outline',
+                accessibilityLabel: 'Compartilhar roteiro',
+                onPress: () => void share(),
+              }
+            : undefined
         }
       />
 
@@ -251,6 +276,8 @@ function ItineraryDetail({ itinerary }: { itinerary: Itinerary }) {
           testID="add-stop"
         />
       )}
+
+      <ItinerarySuggestions itinerary={itinerary} />
 
       {confirmingDelete ? (
         <View

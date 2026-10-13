@@ -16,6 +16,7 @@ import { formatDate } from '@/reviews/review-card'
 import { Stars } from '@/reviews/stars'
 import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 // The statuses the server has: `pending_moderation` never existed — the API
 // document advertised it — and `archived`, which a deleted review has, fell
@@ -56,6 +57,7 @@ export default function MyReviewsScreen() {
 
   return (
     <FlatList
+      {...LIST_CLIPPING}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.list, frame.padding]}
       data={reviews}

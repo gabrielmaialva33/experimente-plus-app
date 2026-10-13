@@ -34,6 +34,7 @@ import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
 import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 /** The server rejects a longer term with 422; clamping keeps that off-screen. */
 const MAX_TERM_LENGTH = 120
@@ -606,6 +607,7 @@ export default function ExploreScreen() {
             {/* One scroll for the whole feed: the band, the controls, the places and
               the editorial rows move together, so no fixed block eats the phone. */}
             <FlatList
+              {...LIST_CLIPPING}
               ref={list}
               // A list cannot change its columns in place: a new count (a rotation, a fold)
               // lays it out afresh.

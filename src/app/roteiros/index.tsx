@@ -15,6 +15,7 @@ import { useCreateItinerary, useItineraries } from '@/explorer/queries'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 /**
  * The person's itineraries — Anexo I item 10.
@@ -39,6 +40,7 @@ export default function ItinerariesScreen() {
 
   return (
     <FlatList
+      {...LIST_CLIPPING}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.list, frame.padding]}
       data={items}

@@ -12,6 +12,7 @@ import { spacing } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { ReceiptCard } from './receipt-card'
 import type { History, Receipt } from './types'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 interface Props {
   queryKey: readonly unknown[]
@@ -62,6 +63,7 @@ export function HistoryScreen({
 
   return (
     <FlatList
+      {...LIST_CLIPPING}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.list, frame.padding]}
       data={history.data?.redemptions ?? []}

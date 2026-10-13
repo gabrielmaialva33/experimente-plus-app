@@ -13,6 +13,7 @@ import { reportHref } from '@/reviews/report-link'
 import { useEstablishmentReviews } from '@/reviews/queries'
 import { displayWeight, spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 const PER_PAGE = 20
 const FILTERS = [null, 5, 4, 3, 2, 1] as const
@@ -74,6 +75,7 @@ export default function EstablishmentReviewsScreen() {
         <ContentSkeleton label="Carregando avaliações" variant="catalog" />
       ) : (
         <FlatList
+          {...LIST_CLIPPING}
           data={reviews}
           keyExtractor={(review) => String(review.id)}
           contentContainerStyle={[styles.list, frame.padding]}

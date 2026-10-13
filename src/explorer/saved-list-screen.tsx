@@ -19,6 +19,7 @@ import { placeHref } from '@/place/links'
 
 import { EstablishmentCardRow } from './establishment-card-row'
 import { useSavedList, useToggleSaved } from './queries'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 const COPY: Record<
   SavedKind,
@@ -101,6 +102,7 @@ export function SavedListScreen({
   return (
     <View style={[styles.fill, { backgroundColor: colors.background }]}>
       <FlatList
+        {...LIST_CLIPPING}
         style={styles.fill}
         contentContainerStyle={[styles.list, frame.padding]}
         data={items}

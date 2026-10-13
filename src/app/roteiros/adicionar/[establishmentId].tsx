@@ -17,6 +17,7 @@ import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { useLineCap } from '@/theme/font-scale'
 import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
+import { LIST_CLIPPING } from '@/components/list-clipping'
 
 /**
  * Adds an establishment to one of the person's itineraries, or to a new one.
@@ -143,6 +144,7 @@ export default function AddToItineraryScreen() {
 
   return (
     <FlatList
+      {...LIST_CLIPPING}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.list, frame.padding]}
       data={items}

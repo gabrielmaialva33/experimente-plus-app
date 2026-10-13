@@ -9,6 +9,10 @@ import { useColors } from '@/theme/use-colors'
  * A checkbox that always draws its box (audit A55: an unchecked term used to
  * show nothing at all). The box is 24 units inside a 44-unit target, and the
  * label is part of the target.
+ *
+ * `'mixed'` is the state of a box that stands for a group partly checked, such
+ * as "Marcar todos": a dash in the filled box, and the same state for a screen
+ * reader.
  */
 export function Checkbox({
   label,
@@ -24,7 +28,7 @@ export function Checkbox({
   /** A second line inside the target, such as why an option is set apart. */
   hint?: string | null
   accessibilityLabel?: string
-  checked: boolean
+  checked: boolean | 'mixed'
   onPress: () => void
   disabled?: boolean
   /** Extra content under the label, such as links to what is being accepted. */
@@ -32,6 +36,7 @@ export function Checkbox({
   testID?: string
 }) {
   const colors = useColors()
+  const filled = checked !== false
 
   return (
     <View style={styles.wrap}>
@@ -49,13 +54,17 @@ export function Checkbox({
           style={[
             styles.box,
             {
-              backgroundColor: checked ? colors.primary : colors.card,
-              borderColor: checked ? colors.primary : colors.choiceBorder,
+              backgroundColor: filled ? colors.primary : colors.card,
+              borderColor: filled ? colors.primary : colors.choiceBorder,
             },
           ]}
         >
-          {checked ? (
-            <Ionicons name="checkmark" size={18} color={colors.primaryForeground} />
+          {filled ? (
+            <Ionicons
+              name={checked === 'mixed' ? 'remove' : 'checkmark'}
+              size={18}
+              color={colors.primaryForeground}
+            />
           ) : null}
         </View>
         <View style={styles.copy}>

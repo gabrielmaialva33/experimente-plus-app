@@ -5,13 +5,18 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import type { Interest } from '@/api/explorer'
 import { useCategories } from '@/catalog/queries'
 import { useSelectedCity } from '@/catalog/city-store'
-import { useAnnouncement } from '@/components/announce'
+import { announce, useAnnouncement } from '@/components/announce'
 import { Button } from '@/components/button'
 import { Checkbox } from '@/components/checkbox'
 import { ContentSkeleton } from '@/components/content-skeleton'
 import { EmptyState } from '@/components/empty-state'
 import { useContentFrame } from '@/components/content-frame'
-import { interestOptions, selectionChanged } from '@/explorer/interest-options'
+import {
+  allInterestsState,
+  interestOptions,
+  selectionChanged,
+  toggleAllInterests,
+} from '@/explorer/interest-options'
 import { useInterests, useReplaceInterests } from '@/explorer/queries'
 import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { radius, spacing, typography } from '@/theme/tokens'
@@ -110,6 +115,21 @@ function InterestsForm({
       return next
     })
 
+  // "Todos": one box for the whole list, mixed while only some are marked. It
+  // changes the form only; saving is still the one button below.
+  const offered = options.filter((option) => !option.retired)
+  const all = allInterestsState(options, selected)
+  const markedOffered = offered.filter((option) => selected.has(option.slug)).length
+  const toggleAll = () => {
+    const next = toggleAllInterests(options, selected)
+    setSelected(next)
+    announce(
+      next.size === 0
+        ? 'Todos os interesses desmarcados.'
+        : 'Todos os interesses marcados. Toque em Salvar interesses para guardar.'
+    )
+  }
+
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
@@ -120,6 +140,25 @@ function InterestsForm({
       </Text>
 
       {options.length === 0 ? <ChooseCity hasCity={hasCity} /> : null}
+
+      {offered.length > 1 ? (
+        <View
+          style={[
+            styles.options,
+            { backgroundColor: colors.card, borderColor: colors.borderSubtle },
+          ]}
+        >
+          <View style={styles.option}>
+            <Checkbox
+              label={all === true ? 'Desmarcar todos' : 'Marcar todos'}
+              hint={`${markedOffered} de ${offered.length} marcados`}
+              checked={all}
+              onPress={toggleAll}
+              testID="interests-all"
+            />
+          </View>
+        </View>
+      ) : null}
 
       {options.length > 0 ? (
         <View

@@ -275,7 +275,7 @@ it('offers the other view from the results header, with a 44-unit target', async
 it('names the city once, on the header band, and lists the cities only when asked', async () => {
   const view = await render(<ExploreScreen />)
   expect(view.getByRole('header', { name: 'O que você quer experimentar hoje?' })).toBeOnTheScreen()
-  expect(view.getByText('Experimente+')).toBeOnTheScreen()
+  expect(view.getByRole('image', { name: 'Experimente+' })).toBeOnTheScreen()
   expect(view.getAllByText('Londrina')).toHaveLength(1)
   expect(view.queryByText('Londrina · PR')).toBeNull()
   await openCities(view)

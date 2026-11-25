@@ -16,6 +16,7 @@ import { useExploreSort } from '@/catalog/sort'
 import { SortRow } from '@/catalog/sort-row'
 import type { EstablishmentSummary } from '@/catalog/types'
 import { useAnnouncement } from '@/components/announce'
+import { BrandLogo } from '@/components/brand-logo'
 import { ChoiceRow } from '@/components/choice-row'
 import { ChoiceControl } from '@/components/choice-control'
 import { Chip } from '@/components/chip'
@@ -33,7 +34,7 @@ import { ASK_ACTION_ROOM, DiscoveryAssistant } from '@/concierge/discovery-assis
 import { ForYouRow } from '@/explorer/for-you-row'
 import { useLineCap, useStackedLayout } from '@/theme/font-scale'
 import { useBandStatusBar } from '@/theme/system-bars'
-import { displayWeight, minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { minTouch, radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { LIST_CLIPPING } from '@/components/list-clipping'
 
@@ -310,7 +311,7 @@ export default function ExploreScreen() {
   const brand = (
     <>
       <View style={styles.brandRow}>
-        <Text style={[styles.wordmark, { color: colors.chromeForeground }]}>Experimente+</Text>
+        <BrandLogo />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Cidade: ${city?.name ?? 'nenhuma'}. Trocar cidade`}
@@ -685,7 +686,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     justifyContent: 'space-between',
   },
-  wordmark: { ...typography.heading, ...displayWeight('800'), fontSize: 20, letterSpacing: -0.4 },
   cityButton: {
     alignItems: 'center',
     borderRadius: radius.pill,

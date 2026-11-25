@@ -19,8 +19,19 @@ export function ReceiptCard({ receipt, compact = false }: { receipt: Receipt; co
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}>
       <View style={styles.head}>
-        <View style={[styles.mark, { backgroundColor: colors.successSoft }]} {...decorative}>
-          <Ionicons name="checkmark-done" size={20} color={colors.successAccent} />
+        <View
+          testID="receipt-mark"
+          style={[
+            styles.mark,
+            {
+              backgroundColor: colors.statusNeutral,
+              borderColor: colors.statusNeutralBorder,
+              borderWidth: 1,
+            },
+          ]}
+          {...decorative}
+        >
+          <Ionicons name="checkmark-done" size={20} color={colors.statusNeutralForeground} />
         </View>
         <View style={styles.headText}>
           <Text style={[styles.title, { color: colors.foreground }]}>{receipt.offer.title}</Text>

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render } from '@testing-library/react-native'
 
 import WalletHistoryScreen from '@/app/carteira/historico'
+import { palette } from '@/theme/tokens'
 import { HistoryScreen } from '../history-screen'
 import { ReceiptScreen } from '../receipt-screen'
 import type { Receipt } from '../types'
@@ -62,6 +63,10 @@ it('labels the package of a receipt in the product vocabulary', async () => {
   expect(view.getByText('Pacote')).toBeOnTheScreen()
   expect(view.queryByText(/Edição/)).toBeNull()
   expect(view.getByText('26/09/2026, 12:00')).toBeOnTheScreen()
+  expect(view.getByTestId('receipt-mark', { includeHiddenElements: true })).toHaveStyle({
+    backgroundColor: palette.light.statusNeutral,
+    borderColor: palette.light.statusNeutralBorder,
+  })
 })
 
 const receipt: Receipt = {

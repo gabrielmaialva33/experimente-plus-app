@@ -24,6 +24,7 @@ import { useBandStatusBar } from '@/theme/system-bars'
 import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { useWallet } from '@/wallet/queries'
+import { usedStamp } from '@/wallet/benefit-use'
 import { useSavings, walletUses } from '@/wallet/savings'
 import { SavingsBlock } from '@/wallet/savings-view'
 import { AVAILABILITY_LABEL, type WalletBenefit, type WalletPass } from '@/wallet/types'
@@ -315,17 +316,26 @@ function BenefitTicket({
   const descriptionLines = useLineCap(2)
   const usable = canPresentBenefit(pass, benefit)
   const blocked = financiallyBlocked(pass.access)
-  // A financial hold is explained once, above its tickets; each ticket names any other reason.
+  const effectiveAvailability =
+    pass.access.status === 'revoked'
+      ? 'revoked'
+      : pass.access.availability !== 'available'
+        ? pass.access.availability
+        : benefit.availability
+  const redeemed = !usable && !blocked && effectiveAvailability === 'redeemed'
+  const stamp =
+    redeemed && benefit.latest_redemption?.redeemed_at
+      ? usedStamp(benefit.latest_redemption.redeemed_at, pass.edition.city.timezone)
+      : null
+  // A financial hold is explained once, above its tickets; a spent benefit gets a
+  // neutral date stamp, and any other restriction names its reason.
   const reason =
     usable || blocked
       ? null
-      : AVAILABILITY_LABEL[
-          pass.access.status === 'revoked'
-            ? 'revoked'
-            : pass.access.availability !== 'available'
-              ? pass.access.availability
-              : benefit.availability
-        ]
+      : redeemed && stamp
+        ? `Utilizado em ${stamp}`
+        : AVAILABILITY_LABEL[effectiveAvailability]
+  const showRemaining = !redeemed && benefit.remaining_redemptions != null
   const place = benefit.establishment.public_name
   const day = (value: string) => purchaseDay(value, pass.edition.city.timezone)
 
@@ -334,6 +344,7 @@ function BenefitTicket({
       testID={`wallet-benefit-${benefit.key}`}
       stubLabel={benefit.title}
       title={place}
+      tone={redeemed ? 'neutral' : 'chrome'}
       meta={
         pass.access.availability === 'upcoming'
           ? `Válido de ${day(pass.access.usage_starts_at)} a ${day(pass.access.usage_ends_at)}`
@@ -348,23 +359,25 @@ function BenefitTicket({
           {benefit.description}
         </Text>
       ) : null}
-      {benefit.remaining_redemptions != null || reason ? (
+      {showRemaining || reason ? (
         <View style={styles.badges}>
-          {benefit.remaining_redemptions != null ? (
+          {showRemaining && benefit.remaining_redemptions != null ? (
             <Badge tone="benefit" label={uses(benefit.remaining_redemptions)} />
           ) : null}
           {reason ? <Badge tone="neutral" label={reason} /> : null}
         </View>
       ) : null}
-      <Button
-        label="Apresentar"
-        variant="cta"
-        size={44}
-        icon="qr-code-outline"
-        disabled={!usable}
-        accessibilityLabel={`Apresentar ${benefit.title} em ${place}`}
-        onPress={onPresent}
-      />
+      {redeemed ? null : (
+        <Button
+          label="Apresentar"
+          variant="cta"
+          size={44}
+          icon="qr-code-outline"
+          disabled={!usable}
+          accessibilityLabel={`Apresentar ${benefit.title} em ${place}`}
+          onPress={onPresent}
+        />
+      )}
     </TicketCard>
   )
 }

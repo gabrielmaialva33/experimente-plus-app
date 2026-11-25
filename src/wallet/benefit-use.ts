@@ -39,6 +39,17 @@ export function spentBenefit(
 /** Every operation of the pilot is in Paraná; the city's own zone wins when it is known. */
 const DEFAULT_TIME_ZONE = 'America/Sao_Paulo'
 
+function formatInZone(value: Date, timeZone: string, options: Intl.DateTimeFormatOptions) {
+  try {
+    return new Intl.DateTimeFormat('pt-BR', { ...options, timeZone }).format(value)
+  } catch {
+    // An unknown zone must not cost the time of use.
+    return new Intl.DateTimeFormat('pt-BR', { ...options, timeZone: DEFAULT_TIME_ZONE }).format(
+      value
+    )
+  }
+}
+
 /**
  * "28/09/2026 às 14:32", on the city's clock: the same instant must not read as
  * another day depending on where the phone is. Null for an unreadable instant.
@@ -46,17 +57,19 @@ const DEFAULT_TIME_ZONE = 'America/Sao_Paulo'
 export function usedAt(iso: string, timeZone: string): string | null {
   const value = new Date(iso)
   if (Number.isNaN(value.getTime())) return null
-  const format = (options: Intl.DateTimeFormatOptions) => {
-    try {
-      return new Intl.DateTimeFormat('pt-BR', { ...options, timeZone }).format(value)
-    } catch {
-      // An unknown zone must not cost the time of use.
-      return new Intl.DateTimeFormat('pt-BR', { ...options, timeZone: DEFAULT_TIME_ZONE }).format(
-        value
-      )
-    }
-  }
-  const day = format({ day: '2-digit', month: '2-digit', year: 'numeric' })
-  const time = format({ hour: '2-digit', minute: '2-digit' })
+  const day = formatInZone(value, timeZone, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const time = formatInZone(value, timeZone, { hour: '2-digit', minute: '2-digit' })
+  return `${day} às ${time}`
+}
+
+/**
+ * "28/09 às 14:32", on the city's clock, for a redeemed ticket's stamp in the
+ * wallet. Null for an unreadable instant.
+ */
+export function usedStamp(iso: string, timeZone: string): string | null {
+  const value = new Date(iso)
+  if (Number.isNaN(value.getTime())) return null
+  const day = formatInZone(value, timeZone, { day: '2-digit', month: '2-digit' })
+  const time = formatInZone(value, timeZone, { hour: '2-digit', minute: '2-digit' })
   return `${day} às ${time}`
 }

@@ -11,15 +11,16 @@ const STUB_WIDTH = 112
 const NOTCH = 24
 
 /**
- * A benefit drawn as a ticket (direction A): the navy stub names what it gives,
- * the body says where and for how long, and its action sits at the end. The two
- * notches are the voucher metaphor only — they carry no meaning and are hidden
- * from assistive technology.
+ * A benefit drawn as a ticket (direction A): the deep-purple stub names what it
+ * gives (neutral once redeemed), the body says where and for how long, and its
+ * action sits at the end. The two notches are the voucher metaphor only — they
+ * carry no meaning and are hidden from assistive technology.
  */
 export function TicketCard({
   stubLabel,
   title,
   meta,
+  tone = 'chrome',
   children,
   testID,
 }: {
@@ -28,27 +29,34 @@ export function TicketCard({
   /** Where it is used. */
   title: string
   meta?: string | null
+  /** `chrome` while the benefit can still be used; `neutral` once redeemed. */
+  tone?: 'chrome' | 'neutral'
   /** State notes and the action, stacked at the end of the body. */
   children?: ReactNode
   testID?: string
 }) {
   const colors = useColors()
   const stubLines = useLineCap(4)
+  const stubFill = tone === 'neutral' ? colors.muted : colors.chrome
+  const stubInk = tone === 'neutral' ? colors.mutedForeground : colors.chromeForeground
 
   return (
     <View
       testID={testID}
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
     >
-      <View style={[styles.stub, { backgroundColor: colors.chrome }]}>
-        <Ionicons name="ticket-outline" size={26} color={colors.chromeForeground} {...decorative} />
+      <View
+        testID={testID ? `${testID}-stub` : undefined}
+        style={[styles.stub, { backgroundColor: stubFill }]}
+      >
+        <Ionicons name="ticket-outline" size={26} color={stubInk} {...decorative} />
         {/* A long name shrinks a little before it is cut: the stub is narrow on purpose. */}
         <Text
           numberOfLines={stubLines}
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           android_hyphenationFrequency="normal"
-          style={[styles.stubLabel, { color: colors.chromeForeground }]}
+          style={[styles.stubLabel, { color: stubInk }]}
         >
           {stubLabel}
         </Text>

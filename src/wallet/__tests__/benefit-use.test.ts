@@ -1,4 +1,4 @@
-import { spentBenefit, usedAt } from '../benefit-use'
+import { spentBenefit, usedAt, usedStamp } from '../benefit-use'
 import type { Wallet, WalletBenefit } from '../types'
 
 const benefit = {
@@ -46,4 +46,7 @@ it('reads the time of use on the city clock and never guesses one', () => {
   // An unknown zone keeps the time, on the pilot's clock.
   expect(usedAt('2026-09-28T17:32:00Z', 'Nowhere/Unknown')).toBe('28/09/2026 às 14:32')
   expect(usedAt('', 'America/Sao_Paulo')).toBeNull()
+  expect(usedStamp('2026-09-28T17:32:00Z', 'America/Sao_Paulo')).toBe('28/09 às 14:32')
+  expect(usedStamp('2026-09-28T17:32:00Z', 'Nowhere/Unknown')).toBe('28/09 às 14:32')
+  expect(usedStamp('', 'America/Sao_Paulo')).toBeNull()
 })

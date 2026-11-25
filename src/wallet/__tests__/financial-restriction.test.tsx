@@ -392,7 +392,6 @@ it.each([
   ['paused', 'Pausado'],
   ['expired', 'Expirado'],
   ['revoked', 'Revogado'],
-  ['redeemed', 'Já utilizado'],
 ] as const)(
   'shows server availability %s and disables use for both access and benefit restrictions',
   async (availability, label) => {
@@ -417,6 +416,70 @@ it.each([
       expect(action).toBeDisabled()
       await fireEvent.press(action)
       expect(mockPush).not.toHaveBeenCalled()
+      await view.unmount()
+    }
+  }
+)
+
+it.each(['light', 'dark'] as const)(
+  'draws a redeemed benefit with a neutral stub, the city-clock stamp and no action button in %s',
+  async (mode) => {
+    jest.requireMock('@/theme/use-colors').useColors.mockReturnValue(palette[mode])
+    api.getWallet.mockResolvedValue({
+      ...wallet,
+      passes: [
+        {
+          ...wallet.passes[0],
+          benefits: [
+            {
+              ...benefit,
+              availability: 'redeemed',
+              remaining_redemptions: 0,
+              latest_redemption: {
+                id: '7',
+                receipt_code: 'EXP-7',
+                redeemed_at: '2026-09-28T17:32:00Z',
+              },
+            },
+          ],
+        },
+      ],
+    })
+    const stamped = await page(<WalletScreen />)
+    expect(await stamped.findByText('Utilizado em 28/09 às 14:32')).toBeOnTheScreen()
+    expect(stamped.getByTestId('wallet-benefit-1:2-stub')).toHaveStyle({
+      backgroundColor: palette[mode].muted,
+    })
+    expect(stamped.getByText('Benefício')).toHaveStyle({
+      color: palette[mode].mutedForeground,
+    })
+    expect(stamped.queryByText(/uso restante/)).toBeNull()
+    expect(stamped.queryByRole('button', { name: /^Apresentar/ })).toBeNull()
+    await stamped.unmount()
+
+    for (const target of ['access', 'benefit'] as const) {
+      api.getWallet.mockResolvedValue({
+        ...wallet,
+        passes: [
+          {
+            ...wallet.passes[0],
+            access: {
+              ...wallet.passes[0].access,
+              ...(target === 'access' ? { availability: 'redeemed' } : {}),
+            },
+            benefits: [
+              {
+                ...benefit,
+                ...(target === 'benefit' ? { availability: 'redeemed' } : {}),
+                latest_redemption: null,
+              },
+            ],
+          },
+        ],
+      })
+      const view = await page(<WalletScreen />)
+      expect(await view.findByText('Já utilizado')).toBeOnTheScreen()
+      expect(view.queryByRole('button', { name: /^Apresentar/ })).toBeNull()
       await view.unmount()
     }
   }

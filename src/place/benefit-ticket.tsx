@@ -24,10 +24,25 @@ const MIN_TERMS_WIDTH = 200
 export const ticketStacks = (columnWidth: number, largeText: boolean) =>
   largeText || columnWidth - SIDE < MIN_TERMS_WIDTH
 
+/** Purchasable single-offer vouchers sold for this place; empty while offline or absent. */
+export function usePlaceOffers(citySlug: string, slug: string): PurchaseProduct[] {
+  const catalog = usePurchaseEditions()
+  if (catalog.isError) return []
+  return (
+    catalog.data?.products.filter(
+      (product) =>
+        product.product_type === 'offer' &&
+        product.purchasable &&
+        product.city.slug === citySlug &&
+        product.establishment?.slug === slug
+    ) ?? []
+  )
+}
+
 /**
  * The benefits sold for this place, each as a ticket (audit A11): what it is,
  * until when it is valid, the price, and "Ver oferta" — the page's one
- * conversion colour. Public and optional: a failed or empty catalogue leaves
+ * conversion action. Public and optional: a failed or empty catalogue leaves
  * the rest of the page as it was.
  */
 export function PlaceBenefits({
@@ -39,17 +54,8 @@ export function PlaceBenefits({
   slug: string
   timeZone: string
 }) {
-  const catalog = usePurchaseEditions()
+  const products = usePlaceOffers(citySlug, slug)
   const router = useRouter()
-  const products = catalog.isError
-    ? []
-    : (catalog.data?.products.filter(
-        (product) =>
-          product.product_type === 'offer' &&
-          product.purchasable &&
-          product.city.slug === citySlug &&
-          product.establishment?.slug === slug
-      ) ?? [])
   if (products.length === 0) return null
 
   return (

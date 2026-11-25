@@ -18,8 +18,9 @@ const FOLLOW_HINT = 'Você segue este lugar. Ele fica na sua lista Seguindo, em 
 
 /**
  * The page's main action — "Como chegar", or the first contact when there is
- * no route — in the brand's navy (audit A11: orange is for the benefit), next
- * to following the place and adding it to an itinerary.
+ * no route — filled in violet when alone, and outlined when a benefit ticket
+ * already carries the page's single conversion CTA (audit A11), next to
+ * following the place and adding it to an itinerary.
  *
  * Following needs saying once (audit A27): the first time a person follows a
  * place, a line tells them where it went. After that the bell is enough.
@@ -28,10 +29,13 @@ export function PlaceActions({
   establishmentId,
   name,
   primary,
+  secondary = false,
 }: {
   establishmentId: number
   name: string
   primary?: { label: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }
+  /** True when a conversion CTA is already drawn on the page, demoting this action to outline. */
+  secondary?: boolean
 }) {
   const colors = useColors()
   const router = useRouter()
@@ -74,7 +78,14 @@ export function PlaceActions({
   })
 
   const main = primary ? (
-    <Button label={primary.label} icon={primary.icon} size={52} fill onPress={primary.onPress} />
+    <Button
+      label={primary.label}
+      variant={secondary ? 'outline' : 'primary'}
+      icon={primary.icon}
+      size={52}
+      fill
+      onPress={primary.onPress}
+    />
   ) : null
 
   return (

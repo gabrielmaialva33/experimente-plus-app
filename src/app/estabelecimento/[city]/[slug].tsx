@@ -26,7 +26,7 @@ import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { OperatingStatus } from '@/components/operating-status'
 import { SectionHeader } from '@/components/section-header'
 import { EstablishmentPartnerContent } from '@/partner-content/establishment-content'
-import { PlaceBenefits } from '@/place/benefit-ticket'
+import { PlaceBenefits, usePlaceOffers } from '@/place/benefit-ticket'
 import { HIGHLIGHT_PARAM, highlightParam, publicSlug } from '@/place/links'
 import { PlaceActions } from '@/place/place-actions'
 import { PlaceChrome, PlaceHero, offsetBelowBar, placeBarRange } from '@/place/place-hero'
@@ -146,6 +146,7 @@ function Detail({
   colors: ReturnType<typeof useColors>
 }) {
   const { contacts, address } = detail
+  const hasOffers = usePlaceOffers(citySlug, detail.slug).length > 0
   const insets = useSafeAreaInsets()
   // The photo spans the window; what the page says keeps to a readable column.
   const frame = useContentFrame()
@@ -292,7 +293,12 @@ function Detail({
               <OperatingStatus establishment={detail} />
               {detail.is_sponsored ? <Badge label="Patrocinado" /> : null}
             </View>
-            <PlaceActions establishmentId={detail.id} name={detail.name} primary={primaryAction} />
+            <PlaceActions
+              establishmentId={detail.id}
+              name={detail.name}
+              primary={primaryAction}
+              secondary={hasOffers}
+            />
           </View>
 
           <PlaceBenefits citySlug={citySlug} slug={detail.slug} timeZone={detail.city.timezone} />

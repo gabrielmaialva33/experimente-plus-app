@@ -144,10 +144,10 @@ afterEach(() => {
 })
 
 describe('establishment presentation', () => {
-  // Direction A (audit A11): orange is kept for the benefit, so the route is the
-  // page's navy main action, and contacts are rows of the practical block.
+  // Direction A (audit A11): when no benefit ticket is sold on the page, the route
+  // takes the filled violet main action, and contacts are rows of the practical block.
   it.each(['light', 'dark'] as const)(
-    'gives directions the navy main action and lists contacts as rows in %s',
+    'gives directions the filled primary main action and lists contacts as rows in %s',
     async (mode) => {
       theme.useColors.mockReturnValue(palette[mode])
       const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
@@ -706,6 +706,10 @@ describe('place page in direction A', () => {
     expect(cta).toHaveStyle({ backgroundColor: palette.light.cta })
     expect(view.getByText('BENEFÍCIO')).toBeOnTheScreen()
     expect(view.getByText('Peça um e ganhe outro igual. Válido até 09/05/2027.')).toBeOnTheScreen()
+    expect(view.getByRole('button', { name: 'Como chegar' })).toHaveStyle({
+      backgroundColor: 'transparent',
+      borderColor: palette.light.primary,
+    })
     expect(view.getByRole('button', { name: 'Como chegar' })).not.toHaveStyle({
       backgroundColor: palette.light.cta,
     })

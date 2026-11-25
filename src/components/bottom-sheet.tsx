@@ -30,7 +30,7 @@ const BUTTON_BAR_MIN = 40
  * A modal is a window of its own, and React Native does not pass it the
  * activity's dark navigation buttons; with the system's contrast scrim turned
  * off (`enforceContrast: false`), the three buttons stay white and vanished
- * over a light sheet. Behind them the sheet lays the band's navy, the plane
+ * over a light sheet. Behind them the sheet lays the band's deep purple, the plane
  * direction A already draws white on. The gesture bar picks its own contrast,
  * and a dark sheet already carries white buttons.
  */

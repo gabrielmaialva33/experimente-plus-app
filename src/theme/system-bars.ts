@@ -28,15 +28,15 @@ export function useNavigationBarStyle() {
   }, [scheme])
 }
 
-/** Screens in front whose navy band runs under the status bar. */
+/** Screens in front whose deep-purple band runs under the status bar. */
 let bands = 0
 
 /**
- * Light status bar icons while a screen whose navy band runs under the status
+ * Light status bar icons while a screen whose deep-purple band runs under the status
  * bar is in front: Explorar, Novidades, Carteira, Conta, Entrar and a product's page.
  *
  * Conta and Entrar drew the band without asking for light icons, so theirs
- * were whatever the previous screen left: dark icons on navy after a stack
+ * were whatever the previous screen left: dark icons on deep purple after a stack
  * screen in the light theme. Bands are counted, so a tab that gains focus
  * before the previous one lets go keeps its light icons.
  */

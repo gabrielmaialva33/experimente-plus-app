@@ -13,7 +13,7 @@ import { ApiError } from '@/api/client'
 import type { ReportReason, ReportTargetType } from '@/api/reviews'
 import { useReportAnonymously, useReportContent } from '@/reviews/queries'
 import { useSession } from '@/session/context'
-import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   title: typography.title,
   subject: { gap: spacing.xs },
   overline: typography.overline,
-  subjectName: { ...typography.heading, ...displayWeight('800') },
+  subjectName: typography.heading,
   heading: { ...typography.label, ...textWeight('700') },
   reasons: { gap: spacing.sm },
   reason: {
@@ -343,5 +343,10 @@ const styles = StyleSheet.create({
   },
   body: typography.body,
   note: typography.meta,
-  protocol: { ...typography.title, letterSpacing: 1 },
+  protocol: {
+    ...typography.title,
+    ...textWeight('700'),
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 1,
+  },
 })

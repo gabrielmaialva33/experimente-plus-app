@@ -8,7 +8,7 @@ import { price, purchaseDay } from '@/purchases/components'
 import { productKey, productRoute } from '@/purchases/products'
 import { usePurchaseEditions } from '@/purchases/queries'
 import { useStackedLayout } from '@/theme/font-scale'
-import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const SIDE = 136
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     width: SIDE,
   },
   action: { alignSelf: 'stretch', flexDirection: 'row' },
-  price: { ...typography.heading, ...displayWeight('800'), fontSize: 20 },
+  price: { ...textWeight('700'), fontSize: 20, lineHeight: 23, fontVariant: ['tabular-nums'] },
   notch: { borderRadius: NOTCH / 2, height: NOTCH, position: 'absolute', width: NOTCH },
   aside: { right: SIDE - NOTCH / 2 + 1 },
   top: { top: -NOTCH / 2 },

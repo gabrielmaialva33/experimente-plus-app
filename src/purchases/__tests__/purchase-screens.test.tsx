@@ -707,10 +707,10 @@ it('keeps the total beside the conversion action in a pinned footer', async () =
   expect(view.getAllByText('Edição 2026')).toHaveLength(1)
 })
 
-// The band names the product; once its title slides under the navy strip, the
+// The band names the product; once its title slides under the chrome strip, the
 // strip names it instead, so the title is never lost — and never read twice.
 it.each(['light', 'dark'] as const)(
-  'hands the product name to the navy strip once the band scrolls under it in %s',
+  'hands the product name to the chrome strip once the band scrolls under it in %s',
   async (mode) => {
     jest.spyOn(jest.requireActual('@/theme/use-colors'), 'useColors').mockReturnValue(palette[mode])
     const view = await page(<EditionScreen />)

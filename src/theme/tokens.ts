@@ -1,55 +1,55 @@
 /**
- * Canonical web foundation: inertia/css/app.css and docs/design/catalog_tokens.md
- * (2026-09-08, approved Neutral cool / option B). Converted to rounded 8-bit sRGB in gamut.
- * E0 page and fixed chrome, E1 bounded content, E2 transient overlays.
- * Primary is brand/navigation; CTA fills actions, ctaAccent is text, ctaHover a fill.
+ * Canonical web foundation: inertia/css/app.css (Identity v3).
+ * Converted to rounded 8-bit sRGB in gamut, with exact round-trip parity.
+ * E0 warm off-white page, E1 bounded content cards, E2 transient overlays;
+ * violet carries navigation, selection and conversion, and deep purple carries chrome.
  */
 const lightSurfaces = {
-  surfaceBase: '#f3f5f7',
+  surfaceBase: '#f8f5ef',
   surfaceRaised: '#ffffff',
   surfaceOverlay: '#ffffff',
 } as const
 
 const darkSurfaces = {
-  surfaceBase: '#11131c',
-  surfaceRaised: '#1d2134',
-  surfaceOverlay: '#282e4d',
+  surfaceBase: '#151319',
+  surfaceRaised: '#251f33',
+  surfaceOverlay: '#34294a',
 } as const
 
 const basePalette = {
   light: {
     ...lightSurfaces,
     background: lightSurfaces.surfaceBase,
-    foreground: '#1e2227',
+    foreground: '#151319',
     card: lightSurfaces.surfaceRaised,
-    cardForeground: '#1e2227',
+    cardForeground: '#151319',
     popover: lightSurfaces.surfaceOverlay,
-    popoverForeground: '#1e2227',
-    primary: '#13467c',
-    primaryHover: '#0d3866',
+    popoverForeground: '#151319',
+    primary: '#5e39ed',
+    primaryHover: '#4c28d9',
     primaryForeground: '#ffffff',
-    primarySoft: '#e9f2fe',
-    primaryAccent: '#13467c',
+    primarySoft: '#e8e0ff',
+    primaryAccent: '#5e39ed',
     secondary: '#ffffff',
-    secondaryForeground: '#1e2227',
-    muted: '#e8ecf1',
-    mutedForeground: '#535961',
-    accent: '#e9f2fe',
-    accentForeground: '#13467c',
-    cta: '#e2661a',
-    ctaHover: '#eb7b42',
-    ctaForeground: '#26160f',
-    ctaSoft: '#feeae1',
-    ctaAccent: '#833f1b',
+    secondaryForeground: '#151319',
+    muted: '#ede8df',
+    mutedForeground: '#4f4959',
+    accent: '#e8e0ff',
+    accentForeground: '#5e39ed',
+    cta: '#5e39ed',
+    ctaHover: '#4c28d9',
+    ctaForeground: '#ffffff',
+    ctaSoft: '#e8e0ff',
+    ctaAccent: '#5e39ed',
     destructive: '#b72822',
     destructiveHover: '#9b1f1b',
     destructiveForeground: '#ffffff',
     destructiveSoft: '#feeeeb',
     destructiveAccent: '#94221d',
-    border: '#c7cbd0',
-    input: '#73787f',
-    ring: '#1a5695',
-    scrim: '#06070e',
+    border: '#cfc8be',
+    input: '#787181',
+    ring: '#5e39ed',
+    scrim: '#0b0812',
     success: '#117342',
     successForeground: '#ffffff',
     successSoft: '#e3f6e9',
@@ -62,62 +62,62 @@ const basePalette = {
     infoForeground: '#ffffff',
     infoSoft: '#e3f4fd',
     infoAccent: '#185771',
-    chart1: '#195fa9',
+    chart1: '#5e39ed',
     chart2: '#eb550a',
     chart3: '#148cb8',
     chart4: '#2c966f',
-    chart5: '#804dcb',
-    contentAbsent: '#d3d6da',
-    contentAbsentForeground: '#49515b',
-    contentAbsentBorder: '#6a727d',
-    borderSubtle: '#dde1e6',
-    // Direction A header band: the brand navy in light, its soft plane in dark,
-    // where primary is a light blue that white text cannot sit on.
-    chrome: '#13467c',
-    chromeRaised: '#0d3866',
+    chart5: '#ba9320',
+    contentAbsent: '#e0dad0',
+    contentAbsentForeground: '#4c4654',
+    contentAbsentBorder: '#6f6878',
+    borderSubtle: '#e2dcd2',
+    // Structural chrome (header band and active ticket stubs): brand deep purple,
+    // distinct from the violet action role in both themes.
+    chrome: '#2c145c',
+    chromeRaised: '#3d1e7d',
     chromeForeground: '#ffffff',
-    chromeMuted: '#d3e3f8',
-    temporalEmphasis: '#f9fbfe',
-    temporalEmphasisForeground: '#333840',
-    temporalEmphasisBorder: '#687380',
-    choiceBorder: '#6e829b',
+    chromeMuted: '#ddd4f6',
+    temporalEmphasis: '#fcfaf6',
+    temporalEmphasisForeground: '#2d2934',
+    temporalEmphasisBorder: '#6c6576',
+    choiceBorder: '#776d8a',
   },
   dark: {
     ...darkSurfaces,
     background: darkSurfaces.surfaceBase,
-    foreground: '#f7f6f2',
+    foreground: '#f8f5ef',
     card: darkSurfaces.surfaceRaised,
-    cardForeground: '#f7f6f2',
+    cardForeground: '#f8f5ef',
     popover: darkSurfaces.surfaceOverlay,
-    popoverForeground: '#f7f6f2',
-    primary: '#75b0f0',
-    primaryHover: '#9ac5f4',
-    primaryForeground: '#0f1324',
-    primarySoft: '#23374d',
-    primaryAccent: '#9ecafa',
-    secondary: '#1d2134',
-    secondaryForeground: '#f7f6f2',
-    // Below surfaceRaised, like the light muted under white (web --muted, oklch 0.222).
-    muted: '#171a28',
-    mutedForeground: '#cec6b6',
-    accent: '#23374d',
-    accentForeground: '#9ecafa',
-    cta: '#f98c4d',
-    ctaHover: '#f8bb8c',
-    ctaForeground: '#29150a',
-    ctaSoft: '#492f1d',
-    ctaAccent: '#f8bb8c',
+    popoverForeground: '#f8f5ef',
+    primary: '#b49dff',
+    primaryHover: '#c8b6ff',
+    primaryForeground: '#151319',
+    primarySoft: '#312358',
+    primaryAccent: '#d2c4ff',
+    secondary: '#251f33',
+    secondaryForeground: '#f8f5ef',
+    // Below surfaceRaised, like the light muted under white (web --muted).
+    muted: '#1b1724',
+    mutedForeground: '#d1cbc2',
+    accent: '#312358',
+    accentForeground: '#d2c4ff',
+    cta: '#b49dff',
+    ctaHover: '#c8b6ff',
+    ctaForeground: '#151319',
+    ctaSoft: '#312358',
+    ctaAccent: '#d2c4ff',
     destructive: '#ed6e6e',
     destructiveHover: '#f29292',
     destructiveForeground: '#240f0f',
     destructiveSoft: '#4c2424',
     destructiveAccent: '#f9a9a9',
-    border: '#40486d',
-    input: '#9197b6',
-    ring: '#75b0f0',
-    scrim: '#06070e',
+    border: '#4b4062',
+    input: '#9d93b0',
+    ring: '#b49dff',
+    scrim: '#0b0812',
     success: '#51d689',
-    successForeground: '#11131c',
+    successForeground: '#151319',
     successSoft: '#244230',
     successAccent: '#9aeabb',
     warning: '#f6b951',
@@ -125,26 +125,26 @@ const basePalette = {
     warningSoft: '#453821',
     warningAccent: '#f9d894',
     info: '#69cdf2',
-    infoForeground: '#11131c',
+    infoForeground: '#151319',
     infoSoft: '#203c46',
     infoAccent: '#a1e0f7',
-    chart1: '#519cec',
+    chart1: '#b49dff',
     chart2: '#f97f39',
     chart3: '#3abeee',
     chart4: '#3ecc98',
-    chart5: '#a274e7',
-    contentAbsent: '#191b1d',
-    contentAbsentForeground: '#c1c8d1',
-    contentAbsentBorder: '#515962',
-    borderSubtle: '#2e3450',
-    chrome: '#23374d',
-    chromeRaised: '#1d2134',
-    chromeForeground: '#f7f6f2',
-    chromeMuted: '#c9d6e6',
-    temporalEmphasis: '#383e45',
-    temporalEmphasisForeground: '#d8dfe8',
-    temporalEmphasisBorder: '#94a0ae',
-    choiceBorder: '#8ba1ba',
+    chart5: '#e5c057',
+    contentAbsent: '#1a181f',
+    contentAbsentForeground: '#cbc6d2',
+    contentAbsentBorder: '#6a6375',
+    borderSubtle: '#372e4a',
+    chrome: '#2c145c',
+    chromeRaised: '#391c75',
+    chromeForeground: '#f8f5ef',
+    chromeMuted: '#d5caf0',
+    temporalEmphasis: '#3e374b',
+    temporalEmphasisForeground: '#e8e3f0',
+    temporalEmphasisBorder: '#a198b0',
+    choiceBorder: '#988cb0',
   },
 } as const
 
@@ -244,15 +244,14 @@ export const minTouch = 44
  */
 export const fontFamilies = {
   text: {
-    400: 'InstrumentSans_400Regular',
-    500: 'InstrumentSans_500Medium',
-    600: 'InstrumentSans_600SemiBold',
-    700: 'InstrumentSans_700Bold',
-  },
-  display: {
+    400: 'PlusJakartaSans_400Regular',
+    500: 'PlusJakartaSans_500Medium',
     600: 'PlusJakartaSans_600SemiBold',
     700: 'PlusJakartaSans_700Bold',
-    800: 'PlusJakartaSans_800ExtraBold',
+  },
+  display: {
+    600: 'Fredoka_600SemiBold',
+    700: 'Fredoka_700Bold',
   },
 } as const
 
@@ -265,30 +264,30 @@ export function textWeight(weight: WeightInput) {
   return { fontFamily: fontFamilies.text[step] }
 }
 
-/** A display weight as its face. Display starts at 600. */
+/** A display weight as its face. Fredoka spans 600–700; heavier asks cap at 700. */
 export function displayWeight(weight: WeightInput) {
   const value = Number(weight)
-  const step = value >= 800 ? 800 : value >= 700 ? 700 : 600
+  const step = value >= 700 ? 700 : 600
   return { fontFamily: fontFamilies.display[step] }
 }
 
 /**
- * Direction A scale. Display roles (display, title, heading) use Plus Jakarta
- * Sans; everything read uses Instrument Sans. Line heights are explicit so a
- * face swap never moves the layout.
+ * Identity v3 scale. Display roles at 18 and above (display, title, heading) use
+ * Fredoka without negative tracking; everything read, operational or numeric uses
+ * Plus Jakarta Sans. Line heights are explicit so a face swap never moves layout.
  */
 export const typography = {
   display: {
-    fontFamily: fontFamilies.display[800],
+    fontFamily: fontFamilies.display[700],
     fontSize: 30,
     lineHeight: 34,
-    letterSpacing: -0.6,
+    letterSpacing: 0,
   },
   title: {
-    fontFamily: fontFamilies.display[800],
+    fontFamily: fontFamilies.display[700],
     fontSize: 21,
     lineHeight: 26,
-    letterSpacing: -0.2,
+    letterSpacing: 0,
   },
   heading: { fontFamily: fontFamilies.display[700], fontSize: 18, lineHeight: 23 },
   body: { fontFamily: fontFamilies.text[400], fontSize: 16, lineHeight: 23 },

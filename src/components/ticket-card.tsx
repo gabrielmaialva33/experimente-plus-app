@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { decorative } from '@/components/decorative'
 import { useLineCap } from '@/theme/font-scale'
-import { displayWeight, radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const STUB_WIDTH = 112
@@ -90,9 +90,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     width: STUB_WIDTH,
   },
-  stubLabel: { ...displayWeight('800'), fontSize: 15, lineHeight: 18, textAlign: 'center' },
+  stubLabel: { ...textWeight('700'), fontSize: 15, lineHeight: 18, textAlign: 'center' },
   body: { flex: 1, gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: 14 },
-  title: { ...typography.heading, fontSize: 17, lineHeight: 22 },
+  title: { ...textWeight('700'), fontSize: 17, lineHeight: 22 },
   meta: typography.meta,
   end: { gap: spacing.sm, marginTop: 'auto', paddingTop: spacing.sm },
   notch: {

@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.card, borderWidth: 1, padding: spacing.lg },
   summary: { gap: spacing.sm },
   name: typography.heading,
-  price: { ...typography.display, fontSize: 28, lineHeight: 32 },
+  price: { ...textWeight('700'), fontSize: 28, lineHeight: 32, fontVariant: ['tabular-nums'] },
   body: typography.body,
   section: { gap: spacing.md },
   label: { ...typography.label, ...textWeight('700') },

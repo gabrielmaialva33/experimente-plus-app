@@ -11,7 +11,7 @@ import { TROUBLESHOOTING_HELP } from '@/help/help-link'
 import { ReviewCard } from '@/reviews/review-card'
 import { reportHref } from '@/reviews/report-link'
 import { useEstablishmentReviews } from '@/reviews/queries'
-import { displayWeight, spacing, typography } from '@/theme/tokens'
+import { spacing, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 import { LIST_CLIPPING } from '@/components/list-clipping'
 
@@ -119,7 +119,7 @@ export default function EstablishmentReviewsScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   top: { gap: spacing.md, paddingTop: spacing.lg },
-  place: { ...typography.title, ...displayWeight('800') },
+  place: typography.title,
   // The row scrolls to the screen's edge; the column's edge is its first inset.
   filters: { flexGrow: 0 },
   filtersContent: { gap: spacing.sm },

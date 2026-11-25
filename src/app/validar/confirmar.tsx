@@ -179,7 +179,7 @@ export default function ConfirmRedemptionScreen() {
         </Text>
       </View>
 
-      {/* The benefit as the customer's ticket: the navy stub names it and its place. */}
+      {/* The benefit as the customer's ticket: the deep-purple stub names it and its place. */}
       <View
         style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   fields: { gap: spacing.md, padding: spacing.gutter },
   field: { gap: 2 },
   value: { ...typography.body, ...textWeight('600') },
-  emphasis: typography.heading,
+  emphasis: { ...typography.heading, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   notice: {
     alignItems: 'flex-start',
     borderRadius: radius.surface,

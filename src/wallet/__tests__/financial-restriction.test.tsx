@@ -297,7 +297,7 @@ it.each(['light', 'dark'] as const)(
 )
 
 // The catalog and past uses are whole cards (support plane and subtle border);
-// CTA orange stays reserved for presenting a benefit.
+// the filled CTA stays reserved for presenting a benefit.
 it.each(['light', 'dark'] as const)(
   'leads to the catalog and past uses from cards and reserves CTA for presenting in %s',
   async (mode) => {

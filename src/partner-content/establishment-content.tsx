@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   overline: typography.overline,
   title: typography.title,
   meta: { ...typography.meta, ...textWeight('600') },
-  price: { ...typography.heading },
+  price: { ...typography.heading, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   body: typography.body,
   caption: typography.caption,
   actions: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

@@ -698,7 +698,7 @@ describe('place page in direction A', () => {
       sort_order: 0,
     }))
 
-  it('sells the place’s benefit as a ticket with the page’s one orange action (A11)', async () => {
+  it('sells the place’s benefit as a ticket with the page’s one filled conversion action (A11)', async () => {
     purchases.usePurchaseEditions.mockReturnValue({ data: { products: [offer] } })
     const view = await render(<EstablishmentScreen />)
 
@@ -847,7 +847,7 @@ describe('place page in direction A', () => {
       const title = within(bar).getByText('Café da Praça')
       expect(title).toHaveStyle({
         color: palette[mode].foreground,
-        fontFamily: fontFamilies.display[800],
+        fontFamily: fontFamilies.display[700],
       })
       expect(title.props.numberOfLines).toBe(1)
       for (const name of labels) {

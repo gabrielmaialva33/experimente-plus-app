@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
   copy: { flex: 1, gap: 2, justifyContent: 'center', minHeight: minTouch - 4 },
   title: { ...typography.label, ...textWeight('700') },
-  headline: { ...typography.heading, fontFamily: typography.title.fontFamily },
+  headline: typography.heading,
   subtitle: typography.meta,
   go: {
     alignItems: 'center',

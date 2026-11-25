@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 
-import { displayWeight, radius } from '@/theme/tokens'
+import { radius, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /** First and last initials of a name; one letter for a single word, "?" for none. */
@@ -46,5 +46,5 @@ export function Avatar({
 
 const styles = StyleSheet.create({
   circle: { alignItems: 'center', borderRadius: radius.pill, justifyContent: 'center' },
-  initials: displayWeight('800'),
+  initials: textWeight('700'),
 })

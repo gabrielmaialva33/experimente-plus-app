@@ -45,7 +45,7 @@ export function manualLabel(label: string): string {
   return `Abrir o manual: ${label.charAt(0).toLocaleLowerCase('pt-BR')}${label.slice(1)}`
 }
 
-// The brand's navy, as the header band draws it: the browser reads as part of the app.
+// The brand's deep purple, as the header band draws it: the browser reads as part of the app.
 const BROWSER_OPTIONS: WebBrowser.WebBrowserOpenOptions = {
   toolbarColor: palette.light.chrome,
   controlsColor: palette.light.chromeForeground,

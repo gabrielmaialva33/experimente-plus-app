@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 
-import { radius, typography } from '@/theme/tokens'
+import { radius, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 function parts(iso: string, timeZone: string | null) {
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   weekday: { ...typography.overline, letterSpacing: 0.7 },
-  day: { ...typography.title, fontSize: 26, lineHeight: 28 },
+  day: { ...textWeight('700'), fontSize: 26, lineHeight: 28, fontVariant: ['tabular-nums'] },
   month: { ...typography.caption },
 })

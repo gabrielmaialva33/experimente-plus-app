@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
   },
-  price: { ...typography.title, fontSize: 22, lineHeight: 26 },
+  price: { ...textWeight('700'), fontSize: 22, lineHeight: 26, fontVariant: ['tabular-nums'] },
   go: { alignItems: 'center', flexDirection: 'row', gap: 2, minHeight: 44 },
   goLabel: { ...typography.label, ...textWeight('700') },
   order: {

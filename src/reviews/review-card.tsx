@@ -5,7 +5,7 @@ import { ActionMenu } from '@/components/action-menu'
 import { ReviewPhotos } from '@/reviews/review-photos'
 import { Stars } from '@/reviews/stars'
 import { useLineCap } from '@/theme/font-scale'
-import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export interface ReportTarget {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
   },
-  initials: { ...typography.label, ...displayWeight('800') },
+  initials: { ...typography.label, ...textWeight('700') },
   identity: { flex: 1, gap: 2 },
   author: { ...typography.label, ...textWeight('700') },
   // The date wraps under the stars with large text instead of running under the "⋯".

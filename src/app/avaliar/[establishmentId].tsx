@@ -10,7 +10,7 @@ import { ImagePicker, type SelectedImage } from '@/components/image-picker'
 import { useContentFrame } from '@/components/content-frame'
 import { useAuthorRules, useCreateReviewWithPhotos } from '@/reviews/queries'
 import { StarsInput } from '@/reviews/stars'
-import { displayWeight, radius, spacing, typography, textWeight } from '@/theme/tokens'
+import { radius, spacing, typography, textWeight } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 const MAX_LENGTH = 4000
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   title: typography.title,
   subject: { gap: spacing.xs },
   overline: typography.overline,
-  subjectName: { ...typography.heading, ...displayWeight('800') },
+  subjectName: typography.heading,
   card: {
     alignItems: 'center',
     borderWidth: 1,

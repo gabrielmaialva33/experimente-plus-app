@@ -54,8 +54,8 @@ const INITIAL_ZOOM = 11
 
 /**
  * The basemap is the regional light style in either theme, so the marks keep
- * the light palette too: the navy of navigation with a white ring and halo. The
- * dark theme's primary is a pale blue that would vanish into a light map.
+ * the light palette too: the brand violet with a white ring and halo. The
+ * dark theme's primary is a pale lilac that would vanish into a light map.
  */
 const ink = palette.light.primary
 const paper = palette.light.primaryForeground

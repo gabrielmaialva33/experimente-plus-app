@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { useScreenFrame } from '@/components/content-frame'
 import { useStackedLayout } from '@/theme/font-scale'
-import { spacing, typography } from '@/theme/tokens'
+import { spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 /**
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   stacked: { alignItems: 'stretch', flexDirection: 'column', gap: spacing.md },
   amount: { flexShrink: 0 },
   caption: typography.caption,
-  value: { ...typography.display, fontSize: 24, lineHeight: 28 },
+  value: { ...textWeight('700'), fontSize: 24, lineHeight: 28, fontVariant: ['tabular-nums'] },
   action: { flex: 1, flexDirection: 'row' },
   // In a column, `flex: 1` would mean a zero height and a button spilling out.
   actionStacked: { flex: 0 },

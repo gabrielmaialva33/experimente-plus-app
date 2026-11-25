@@ -121,7 +121,7 @@ export default function TabsLayout() {
       <Tabs.Protected guard={!authenticated}>
         <Tabs.Screen
           name="sign-in"
-          // Like Carteira and Conta, Entrar draws its own navy band.
+          // Like Carteira and Conta, Entrar draws its own deep-purple band.
           options={{
             title: 'Entrar',
             headerShown: false,

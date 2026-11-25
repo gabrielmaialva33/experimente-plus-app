@@ -81,16 +81,16 @@ it('names a help control by where it leads, keeping its visible words', () => {
 })
 
 describe('openManual', () => {
-  it('opens the section in the in-app browser, tinted with the brand navy', async () => {
+  it('opens the section in the in-app browser, tinted with the brand deep purple', async () => {
     await openManual('validate')
 
     expect(browser).toHaveBeenCalledTimes(1)
     expect(browser).toHaveBeenCalledWith(
       `${apiBaseUrl}/manual#app-validar`,
       expect.objectContaining({
-        toolbarColor: '#13467c',
+        toolbarColor: '#2c145c',
         controlsColor: '#ffffff',
-        secondaryToolbarColor: '#13467c',
+        secondaryToolbarColor: '#2c145c',
       })
     )
     expect(Linking.openURL).not.toHaveBeenCalled()

@@ -33,7 +33,7 @@ export function IconButton({
   const colors = useColors()
   const appearance = {
     surface: { background: colors.card, border: colors.borderSubtle, foreground: colors.primary },
-    // Over a photo, in either theme: the light card and the brand navy, like the map's controls.
+    // Over a photo, in either theme: the light card and the brand violet, like the map's controls.
     image: {
       background: palette.light.surfaceRaised,
       border: palette.light.surfaceRaised,

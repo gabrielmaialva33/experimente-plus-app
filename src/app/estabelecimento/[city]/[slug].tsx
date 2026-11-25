@@ -33,7 +33,7 @@ import { PlaceChrome, PlaceHero, offsetBelowBar, placeBarRange } from '@/place/p
 import { PracticalInfo, type ContactAction } from '@/place/practical-info'
 import { EstablishmentReviews } from '@/reviews/establishment-reviews'
 import { Stars, ratingLabel } from '@/reviews/stars'
-import { displayWeight, minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
+import { minTouch, radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export default function EstablishmentScreen() {
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   header: { gap: 10 },
   meta: { ...typography.meta, ...textWeight('600') },
-  name: { ...typography.display, ...displayWeight('800') },
+  name: typography.display,
   // The rating link is a 44 target drawn in a 32 row: its extra height and the row's are
   // taken back by negative margins, so the header keeps its rhythm and the whole target
   // stays inside its parent, where Android delivers the touch.

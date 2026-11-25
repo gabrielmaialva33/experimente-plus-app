@@ -82,7 +82,7 @@ export default function PurchaseProductScreen() {
   const { userId } = usePurchaseScope()
   const identity = productIdentity(id, offerId)
 
-  // The native bar and the band below it read as one navy plane; the band carries the
+  // The native bar and the band below it read as one deep-purple plane; the band carries the
   // title, and hands it to the bar once it scrolls away (see `CompactTitle`).
   useBandStatusBar()
   const chrome = (
@@ -143,7 +143,7 @@ function Product({ editionId, offerId }: { editionId: number; offerId: number | 
   const [conditionsOpen, setConditionsOpen] = useState(false)
   const scroll = useRef<ScrollView>(null)
   const whenY = useRef(0)
-  // The band's title, in scroll offsets: as it slides under the navy strip, the strip takes the name.
+  // The band's title, in scroll offsets: as it slides under the chrome strip, the strip takes the name.
   const [titleSpan, setTitleSpan] = useState(TITLE_ESTIMATE)
   const header = useCompactHeader(titleSpan[0], titleSpan[1])
   const sending = useRef(false)
@@ -487,7 +487,7 @@ function ProductHeader({
 }
 
 /**
- * The product's name in the navy strip, once the band that carries it has
+ * The product's name in the chrome strip, once the band that carries it has
  * scrolled under the strip: the title is never lost. Screen readers reach it
  * only then; before, the band's own title is the one on screen.
  */
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
   dateTile: { borderRadius: 18, borderWidth: 1, flex: 1, gap: 2, padding: 14 },
   dateTileStacked: { flex: 0 },
   tileLabel: typography.caption,
-  tileValue: { ...typography.heading, fontFamily: typography.title.fontFamily },
+  tileValue: { ...typography.heading, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   usesRow: { alignItems: 'center', columnGap: spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },
   meta: typography.meta,
   link: { justifyContent: 'center', minHeight: minTouch },

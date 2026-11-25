@@ -23,7 +23,7 @@ import { useColors } from '@/theme/use-colors'
  * is for, labels that stay above the fields, a password that can be shown, and
  * creating an account as a real secondary button instead of a line of text.
  *
- * As a tab it opens under the navy band, like Carteira and Conta; inside the
+ * As a tab it opens under the deep-purple band, like Carteira and Conta; inside the
  * purchase flow the stack header already names the step, so the sentence stays
  * in the page.
  */
@@ -32,7 +32,7 @@ export default function SignInScreen({ purchase = false }: { purchase?: boolean 
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { status, refresh, signOut } = useSession()
-  // As a tab it opens under the navy band; in the purchase flow the stack header is plain.
+  // As a tab it opens under the deep-purple band; in the purchase flow the stack header is plain.
   useBandStatusBar(!purchase)
   // The band spans the window; the fields keep the readable column, clear of a side cutout.
   const frame = useContentFrame()

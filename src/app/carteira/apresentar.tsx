@@ -176,7 +176,7 @@ function PresentScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.page, frame.padding]}
     >
-      {/* The benefit as a ticket: the navy stub names it, the code is the part torn off. */}
+      {/* The benefit as a ticket: the deep-purple stub names it, the code is the part torn off. */}
       <View
         style={[styles.ticket, { backgroundColor: colors.card, borderColor: colors.borderSubtle }]}
       >

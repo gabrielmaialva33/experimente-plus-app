@@ -70,16 +70,16 @@ describe('BottomSheet', () => {
 })
 
 describe('what a sheet paints behind the navigation bar', () => {
-  const navy = palette.light.chrome
+  const chrome = palette.light.chrome
 
-  it('lays the navy plane under the white three-button bar of a light sheet', () => {
-    expect(navigationBarPlane(48, 'light', navy)).toBe(navy)
-    expect(navigationBarPlane(48, 'unspecified', navy)).toBe(navy)
+  it('lays the chrome plane under the white three-button bar of a light sheet', () => {
+    expect(navigationBarPlane(48, 'light', chrome)).toBe(chrome)
+    expect(navigationBarPlane(48, 'unspecified', chrome)).toBe(chrome)
   })
 
   it('leaves the gesture bar and a dark sheet as they are', () => {
-    expect(navigationBarPlane(24, 'light', navy)).toBe('transparent')
-    expect(navigationBarPlane(0, 'light', navy)).toBe('transparent')
-    expect(navigationBarPlane(48, 'dark', navy)).toBe('transparent')
+    expect(navigationBarPlane(24, 'light', chrome)).toBe('transparent')
+    expect(navigationBarPlane(0, 'light', chrome)).toBe('transparent')
+    expect(navigationBarPlane(48, 'dark', chrome)).toBe('transparent')
   })
 })

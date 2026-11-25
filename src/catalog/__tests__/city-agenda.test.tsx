@@ -73,7 +73,7 @@ it('leads each event with its date in the city, never with an empty photo box', 
 
   const today = view.getByTestId('agenda-card-event-1')
   const tile = within(today).getByTestId('date-tile', { includeHiddenElements: true })
-  expect(tile).toHaveStyle({ backgroundColor: palette.light.chrome })
+  expect(tile).toHaveStyle({ backgroundColor: palette.light.primary })
   expect(within(today).getByText('28', { includeHiddenElements: true })).toBeOnTheScreen()
   // The tile carries the day, so the row keeps only the hours and the place.
   expect(within(today).getByText('16:00–19:00 · Ateliê do Café')).toBeOnTheScreen()

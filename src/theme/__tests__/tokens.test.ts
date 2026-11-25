@@ -11,45 +11,50 @@ import {
   typography,
 } from '../tokens'
 
-// Exact canonical CSS OKLCH, 2026-09-08. Portable without the sibling checkout.
+// Exact canonical CSS OKLCH, 2026-11-25 (Identity v3). Portable without the sibling checkout.
 const canonicalOklch = {
   light: {
-    surfaceBase: 'oklch(0.969195527 0.003425761 247.858256445)',
+    surfaceBase: 'oklch(0.970803 0.008582 84.5727)',
     surfaceRaised: 'oklch(1 0 0)',
     surfaceOverlay: 'oklch(1 0 0)',
-    surfaceContext: 'oklch(0.969195527 0.003425761 247.858256445)',
-    contextForeground: 'oklch(0.25 0.012 255)',
-    background: 'oklch(0.969195527 0.003425761 247.858256445)',
-    foreground: 'oklch(0.25 0.012 255)',
+    surfaceContext: 'oklch(0.970803 0.008582 84.5727)',
+    contextForeground: 'oklch(0.191872 0.012335 300.4537)',
+    background: 'oklch(0.970803 0.008582 84.5727)',
+    foreground: 'oklch(0.191872 0.012335 300.4537)',
     card: 'oklch(1 0 0)',
-    cardForeground: 'oklch(0.25 0.012 255)',
+    cardForeground: 'oklch(0.191872 0.012335 300.4537)',
     popover: 'oklch(1 0 0)',
-    popoverForeground: 'oklch(0.25 0.012 255)',
-    primary: 'oklch(0.391842381 0.105523416 253.364477316)',
-    primaryHover: 'oklch(0.34 0.092 253.364477316)',
+    popoverForeground: 'oklch(0.191872 0.012335 300.4537)',
+    primary: 'oklch(0.512539 0.249145 282.559)',
+    primaryHover: 'oklch(0.459909 0.243842 280.1774)',
     primaryForeground: 'oklch(1 0 0)',
-    primarySoft: 'oklch(0.958 0.019 253.364477316)',
-    primaryAccent: 'oklch(0.391842381 0.105523416 253.364477316)',
+    primarySoft: 'oklch(0.92244 0.042546 297.3672)',
+    primaryAccent: 'oklch(0.512539 0.249145 282.559)',
     secondary: 'oklch(1 0 0)',
-    secondaryForeground: 'oklch(0.25 0.012 255)',
-    muted: 'oklch(0.941476798 0.007996977 253.85459596)',
-    mutedForeground: 'oklch(0.46 0.015 255)',
-    accent: 'oklch(0.958 0.019 253.364477316)',
-    accentForeground: 'oklch(0.391842381 0.105523416 253.364477316)',
-    cta: 'oklch(0.652931129 0.173621111 46.045497295)',
-    ctaHover: 'oklch(0.7 0.155 46.045497295)',
-    ctaForeground: 'oklch(0.22 0.028 46.045497295)',
-    ctaSoft: 'oklch(0.95 0.025 46.045497295)',
-    ctaAccent: 'oklch(0.45 0.105 46.045497295)',
+    secondaryForeground: 'oklch(0.191872 0.012335 300.4537)',
+    muted: 'oklch(0.93242 0.0132 82.4017)',
+    mutedForeground: 'oklch(0.41733 0.027292 302.2998)',
+    accent: 'oklch(0.92244 0.042546 297.3672)',
+    accentForeground: 'oklch(0.512539 0.249145 282.559)',
+    cta: 'oklch(0.512539 0.249145 282.559)',
+    ctaHover: 'oklch(0.459909 0.243842 280.1774)',
+    ctaForeground: 'oklch(1 0 0)',
+    ctaSoft: 'oklch(0.92244 0.042546 297.3672)',
+    ctaAccent: 'oklch(0.512539 0.249145 282.559)',
     destructive: 'oklch(0.51 0.18 28)',
     destructiveHover: 'oklch(0.45 0.16 28)',
     destructiveForeground: 'oklch(1 0 0)',
     destructiveSoft: 'oklch(0.96 0.018 28)',
     destructiveAccent: 'oklch(0.44 0.15 28)',
-    border: 'oklch(0.84 0.008 255)',
-    input: 'oklch(0.57 0.012 255)',
-    ring: 'oklch(0.45 0.12 253.364477316)',
-    scrim: 'oklch(0.133386 0.015892 273.521)',
+    border: 'oklch(0.835637 0.015803 77.0551)',
+    borderSubtle: 'oklch(0.896463 0.015011 80.7045)',
+    input: 'oklch(0.560405 0.025706 305.3086)',
+    ring: 'oklch(0.512539 0.249145 282.559)',
+    scrim: 'oklch(0.14425 0.022092 297.7801)',
+    chrome: 'oklch(0.276085 0.119466 291.8784)',
+    chromeRaised: 'oklch(0.340972 0.149065 291.3074)',
+    chromeForeground: 'oklch(1 0 0)',
+    chromeMuted: 'oklch(0.887683 0.047166 297.5432)',
     success: 'oklch(0.49 0.115 155)',
     successForeground: 'oklch(1 0 0)',
     successSoft: 'oklch(0.956 0.027 155)',
@@ -62,69 +67,74 @@ const canonicalOklch = {
     infoForeground: 'oklch(1 0 0)',
     infoSoft: 'oklch(0.957 0.022 230)',
     infoAccent: 'oklch(0.43 0.075 230)',
-    chart1: 'oklch(0.482999 0.136144 253.911)',
+    chart1: 'oklch(0.512539 0.249145 282.559)',
     chart2: 'oklch(0.643847 0.197989 40.1886)',
     chart3: 'oklch(0.600557 0.115234 230.003)',
     chart4: 'oklch(0.603664 0.11314 164.187)',
-    chart5: 'oklch(0.542357 0.187441 298.325)',
-    contentAbsent: 'oklch(0.875 0.006 255)',
-    contentAbsentForeground: 'oklch(0.43 0.02 255)',
-    contentAbsentBorder: 'oklch(0.55 0.02 255)',
-    temporalEmphasis: 'oklch(0.988 0.004 255)',
-    temporalEmphasisForeground: 'oklch(0.34 0.015 255)',
-    temporalEmphasisBorder: 'oklch(0.55 0.025 255)',
-    choiceBorder: 'oklch(0.6 0.045 253.364477316)',
-    statusNeutral: 'oklch(0.941476798 0.007996977 253.85459596)',
-    statusNeutralForeground: 'oklch(0.46 0.015 255)',
-    statusNeutralBorder: 'oklch(0.84 0.008 255)',
+    chart5: 'oklch(0.68 0.13 88)',
+    contentAbsent: 'oklch(0.890347 0.015036 80.7042)',
+    contentAbsentForeground: 'oklch(0.405382 0.02433 304.7342)',
+    contentAbsentBorder: 'oklch(0.529289 0.026074 305.2639)',
+    temporalEmphasis: 'oklch(0.985526 0.005706 84.566)',
+    temporalEmphasisForeground: 'oklch(0.289839 0.020505 301.7102)',
+    temporalEmphasisBorder: 'oklch(0.519198 0.027675 304.0952)',
+    choiceBorder: 'oklch(0.554441 0.045784 300.6741)',
+    statusNeutral: 'oklch(0.93242 0.0132 82.4017)',
+    statusNeutralForeground: 'oklch(0.41733 0.027292 302.2998)',
+    statusNeutralBorder: 'oklch(0.835637 0.015803 77.0551)',
     choiceBackground: 'oklch(1 0 0)',
-    choiceForeground: 'oklch(0.25 0.012 255)',
-    choiceSelected: 'oklch(0.958 0.019 253.364477316)',
-    choiceSelectedForeground: 'oklch(0.391842381 0.105523416 253.364477316)',
-    choiceSelectedBorder: 'oklch(0.391842381 0.105523416 253.364477316)',
-    actionSecondary: 'oklch(0.969195527 0.003425761 247.858256445)',
-    actionSecondaryForeground: 'oklch(0.25 0.012 255)',
-    actionSecondaryBorder: 'oklch(0.57 0.012 255)',
+    choiceForeground: 'oklch(0.191872 0.012335 300.4537)',
+    choiceSelected: 'oklch(0.92244 0.042546 297.3672)',
+    choiceSelectedForeground: 'oklch(0.512539 0.249145 282.559)',
+    choiceSelectedBorder: 'oklch(0.512539 0.249145 282.559)',
+    actionSecondary: 'oklch(0.970803 0.008582 84.5727)',
+    actionSecondaryForeground: 'oklch(0.191872 0.012335 300.4537)',
+    actionSecondaryBorder: 'oklch(0.560405 0.025706 305.3086)',
   },
   dark: {
-    surfaceBase: 'oklch(0.190579 0.018873 275.681)',
-    surfaceRaised: 'oklch(0.254256 0.036457 274.849)',
-    surfaceOverlay: 'oklch(0.311724 0.056823 274.068)',
-    surfaceContext: 'oklch(0.190579 0.018873 275.681)',
-    contextForeground: 'oklch(0.972339 0.004673 84.5636)',
-    background: 'oklch(0.190579 0.018873 275.681)',
-    foreground: 'oklch(0.972339 0.004673 84.5636)',
-    card: 'oklch(0.254256 0.036457 274.849)',
-    cardForeground: 'oklch(0.972339 0.004673 84.5636)',
-    popover: 'oklch(0.311724 0.056823 274.068)',
-    popoverForeground: 'oklch(0.972339 0.004673 84.5636)',
-    primary: 'oklch(0.743392 0.110862 251.054)',
-    primaryHover: 'oklch(0.81028 0.080506 250.516)',
-    primaryForeground: 'oklch(0.191511 0.034882 274.072)',
-    primarySoft: 'oklch(0.331538 0.04734 250.976)',
-    primaryAccent: 'oklch(0.825784 0.081948 250.514)',
-    secondary: 'oklch(0.254256 0.036457 274.849)',
-    secondaryForeground: 'oklch(0.972339 0.004673 84.5636)',
-    muted: 'oklch(0.222 0.0277 275.3)',
-    mutedForeground: 'oklch(0.828324 0.024104 84.5932)',
-    accent: 'oklch(0.331538 0.04734 250.976)',
-    accentForeground: 'oklch(0.825784 0.081948 250.514)',
-    cta: 'oklch(0.747823 0.15366 48.8186)',
-    ctaHover: 'oklch(0.836053 0.093504 58.4456)',
-    ctaForeground: 'oklch(0.221969 0.038615 49.8432)',
-    ctaSoft: 'oklch(0.331312 0.049114 53.907)',
-    ctaAccent: 'oklch(0.836053 0.093504 58.4456)',
+    surfaceBase: 'oklch(0.191872 0.012335 300.4537)',
+    surfaceRaised: 'oklch(0.255827 0.037783 297.4532)',
+    surfaceOverlay: 'oklch(0.309395 0.059196 298.2254)',
+    surfaceContext: 'oklch(0.191872 0.012335 300.4537)',
+    contextForeground: 'oklch(0.970803 0.008582 84.5727)',
+    background: 'oklch(0.191872 0.012335 300.4537)',
+    foreground: 'oklch(0.970803 0.008582 84.5727)',
+    card: 'oklch(0.255827 0.037783 297.4532)',
+    cardForeground: 'oklch(0.970803 0.008582 84.5727)',
+    popover: 'oklch(0.309395 0.059196 298.2254)',
+    popoverForeground: 'oklch(0.970803 0.008582 84.5727)',
+    primary: 'oklch(0.75462 0.139431 293.5685)',
+    primaryHover: 'oklch(0.817144 0.102837 295.3497)',
+    primaryForeground: 'oklch(0.191872 0.012335 300.4537)',
+    primarySoft: 'oklch(0.303444 0.091729 292.2217)',
+    primaryAccent: 'oklch(0.851565 0.082378 295.4794)',
+    secondary: 'oklch(0.255827 0.037783 297.4532)',
+    secondaryForeground: 'oklch(0.970803 0.008582 84.5727)',
+    muted: 'oklch(0.215641 0.025756 298.3349)',
+    mutedForeground: 'oklch(0.844406 0.014028 78.2525)',
+    accent: 'oklch(0.303444 0.091729 292.2217)',
+    accentForeground: 'oklch(0.851565 0.082378 295.4794)',
+    cta: 'oklch(0.75462 0.139431 293.5685)',
+    ctaHover: 'oklch(0.817144 0.102837 295.3497)',
+    ctaForeground: 'oklch(0.191872 0.012335 300.4537)',
+    ctaSoft: 'oklch(0.303444 0.091729 292.2217)',
+    ctaAccent: 'oklch(0.851565 0.082378 295.4794)',
     destructive: 'oklch(0.690037 0.157955 22.0757)',
     destructiveHover: 'oklch(0.759377 0.1158 20.1165)',
     destructiveForeground: 'oklch(0.200316 0.034587 20.5948)',
     destructiveSoft: 'oklch(0.315933 0.059434 20.9791)',
     destructiveAccent: 'oklch(0.812146 0.095733 19.3507)',
-    border: 'oklch(0.410811 0.063788 274.616)',
-    input: 'oklch(0.681873 0.045602 276.24)',
-    ring: 'oklch(0.743392 0.110862 251.054)',
-    scrim: 'oklch(0.133386 0.015892 273.521)',
+    border: 'oklch(0.397432 0.057737 298.613)',
+    borderSubtle: 'oklch(0.323808 0.049956 298.3488)',
+    input: 'oklch(0.681599 0.043515 300.9769)',
+    ring: 'oklch(0.75462 0.139431 293.5685)',
+    scrim: 'oklch(0.14425 0.022092 297.7801)',
+    chrome: 'oklch(0.276085 0.119466 291.8784)',
+    chromeRaised: 'oklch(0.326249 0.141534 291.4106)',
+    chromeForeground: 'oklch(0.970803 0.008582 84.5727)',
+    chromeMuted: 'oklch(0.859946 0.053324 298.5108)',
     success: 'oklch(0.784753 0.160935 154.357)',
-    successForeground: 'oklch(0.190579 0.018873 275.681)',
+    successForeground: 'oklch(0.191872 0.012335 300.4537)',
     successSoft: 'oklch(0.350415 0.048455 157.136)',
     successAccent: 'oklch(0.871761 0.101829 157.856)',
     warning: 'oklch(0.823357 0.138274 78.2444)',
@@ -132,32 +142,32 @@ const canonicalOklch = {
     warningSoft: 'oklch(0.347772 0.040173 80.4926)',
     warningAccent: 'oklch(0.894623 0.092856 84.1027)',
     info: 'oklch(0.802723 0.106996 224.388)',
-    infoForeground: 'oklch(0.190579 0.018873 275.681)',
+    infoForeground: 'oklch(0.191872 0.012335 300.4537)',
     infoSoft: 'oklch(0.338604 0.038788 223.55)',
     infoAccent: 'oklch(0.871998 0.070834 222.52)',
-    chart1: 'oklch(0.679133 0.140663 251.962)',
+    chart1: 'oklch(0.75462 0.139431 293.5685)',
     chart2: 'oklch(0.725074 0.169254 47.5318)',
     chart3: 'oklch(0.75134 0.129544 227.307)',
     chart4: 'oklch(0.755915 0.142212 164.125)',
-    chart5: 'oklch(0.65502 0.168272 300.277)',
-    contentAbsent: 'oklch(0.22 0.006 255)',
-    contentAbsentForeground: 'oklch(0.83 0.015 255)',
-    contentAbsentBorder: 'oklch(0.46 0.018 255)',
-    temporalEmphasis: 'oklch(0.36 0.015 255)',
-    temporalEmphasisForeground: 'oklch(0.9 0.015 255)',
-    temporalEmphasisBorder: 'oklch(0.7 0.025 255)',
-    choiceBorder: 'oklch(0.7 0.045 253.59)',
-    statusNeutral: 'oklch(0.254256 0.036457 274.849)',
-    statusNeutralForeground: 'oklch(0.828324 0.024104 84.5932)',
-    statusNeutralBorder: 'oklch(0.410811 0.063788 274.616)',
-    choiceBackground: 'oklch(0.254256 0.036457 274.849)',
-    choiceForeground: 'oklch(0.972339 0.004673 84.5636)',
-    choiceSelected: 'oklch(0.331538 0.04734 250.976)',
-    choiceSelectedForeground: 'oklch(0.825784 0.081948 250.514)',
-    choiceSelectedBorder: 'oklch(0.743392 0.110862 251.054)',
-    actionSecondary: 'oklch(0.190579 0.018873 275.681)',
-    actionSecondaryForeground: 'oklch(0.972339 0.004673 84.5636)',
-    actionSecondaryBorder: 'oklch(0.681873 0.045602 276.24)',
+    chart5: 'oklch(0.82 0.13 90)',
+    contentAbsent: 'oklch(0.214478 0.013892 298.2918)',
+    contentAbsentForeground: 'oklch(0.834167 0.017365 304.7572)',
+    contentAbsentBorder: 'oklch(0.512576 0.029253 303.0391)',
+    temporalEmphasis: 'oklch(0.352377 0.035347 300.62)',
+    temporalEmphasisForeground: 'oklch(0.923529 0.01821 303.403)',
+    temporalEmphasisBorder: 'oklch(0.695227 0.036045 302.5053)',
+    choiceBorder: 'oklch(0.663066 0.054247 300.165)',
+    statusNeutral: 'oklch(0.255827 0.037783 297.4532)',
+    statusNeutralForeground: 'oklch(0.844406 0.014028 78.2525)',
+    statusNeutralBorder: 'oklch(0.397432 0.057737 298.613)',
+    choiceBackground: 'oklch(0.255827 0.037783 297.4532)',
+    choiceForeground: 'oklch(0.970803 0.008582 84.5727)',
+    choiceSelected: 'oklch(0.303444 0.091729 292.2217)',
+    choiceSelectedForeground: 'oklch(0.851565 0.082378 295.4794)',
+    choiceSelectedBorder: 'oklch(0.75462 0.139431 293.5685)',
+    actionSecondary: 'oklch(0.191872 0.012335 300.4537)',
+    actionSecondaryForeground: 'oklch(0.970803 0.008582 84.5727)',
+    actionSecondaryBorder: 'oklch(0.681599 0.043515 300.9769)',
   },
 } as const
 
@@ -317,26 +327,36 @@ it('has only the canonical logical radii and a hard overlay contact edge', () =>
   })
 })
 
-it('preserves the dark planes and warm foreground while keeping the original light brand', () => {
-  expect(palette.light.primary).toBe('#13467c')
+it('preserves the dark planes and warm foreground while keeping the v3 light brand', () => {
+  expect(palette.light.primary).toBe('#5e39ed')
+  expect(palette.light.chrome).toBe('#2c145c')
   expect([
     palette.dark.surfaceBase,
     palette.dark.surfaceRaised,
     palette.dark.surfaceOverlay,
-  ]).toEqual(['#11131c', '#1d2134', '#282e4d'])
-  expect(palette.dark.foreground).toBe('#f7f6f2')
+  ]).toEqual(['#151319', '#251f33', '#34294a'])
+  expect(palette.dark.foreground).toBe('#f8f5ef')
   expect(luminance(palette.dark.surfaceRaised)).toBeGreaterThan(luminance(palette.dark.surfaceBase))
   expect(luminance(palette.dark.surfaceOverlay)).toBeGreaterThan(
     luminance(palette.dark.surfaceRaised)
   )
 })
 
-it('distinguishes light CTA text from its hover fill instead of reusing the dark accent', () => {
-  expect(palette.light.cta).toBe('#e2661a')
-  expect(palette.light.ctaForeground).toBe('#26160f')
-  expect(contrast(palette.light.ctaForeground, palette.light.ctaHover)).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(palette.light.ctaForeground, palette.light.ctaAccent)).toBeLessThan(4.5)
-})
+it.each(['light', 'dark'] as const)(
+  'unifies CTA with primary violet while keeping structural chrome perceptually distinct in %s',
+  (mode) => {
+    const colors = palette[mode]
+    expect(colors.cta).toBe(colors.primary)
+    expect(colors.ctaHover).toBe(colors.primaryHover)
+    expect(colors.ctaForeground).toBe(colors.primaryForeground)
+    expect(colors.ctaSoft).toBe(colors.primarySoft)
+    expect(colors.ctaAccent).toBe(colors.primaryAccent)
+    expect(contrast(colors.ctaForeground, colors.ctaHover)).toBeGreaterThanOrEqual(4.5)
+    const a = hexToOklab(colors.primary)
+    const b = hexToOklab(colors.chrome)
+    expect(Math.hypot(...a.map((channel, k) => channel - b[k]))).toBeGreaterThan(0.2)
+  }
+)
 
 // Distances use the rounded colors actually rendered, not the unrounded source.
 function hexToOklab(hex: string) {
@@ -403,6 +423,8 @@ it('gives every role of the direction A scale a loaded face and an explicit line
     typography.heading.fontSize,
     typography.body.fontSize,
   ]).toEqual([30, 21, 18, 16])
+  expect(typography.display.letterSpacing).toBe(0)
+  expect(typography.title.letterSpacing).toBe(0)
 })
 
 it('turns a weight into its real face and never past the family', () => {
@@ -411,7 +433,7 @@ it('turns a weight into its real face and never past the family', () => {
   expect(textWeight('800')).toEqual({ fontFamily: fontFamilies.text[700] })
   expect(displayWeight('400')).toEqual({ fontFamily: fontFamilies.display[600] })
   expect(displayWeight('700')).toEqual({ fontFamily: fontFamilies.display[700] })
-  expect(displayWeight(800)).toEqual({ fontFamily: fontFamilies.display[800] })
+  expect(displayWeight(800)).toEqual({ fontFamily: fontFamilies.display[700] })
 })
 
 it('adds the card, thumbnail and sheet radii, the gutter and the section rhythm of direction A', () => {

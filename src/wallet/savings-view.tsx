@@ -294,9 +294,9 @@ const styles = StyleSheet.create({
   // Two halves of the row; stacked, each takes its own height instead.
   share: { flexBasis: 0, flexGrow: 1 },
   statLabel: typography.overline,
-  statValue: typography.title,
+  statValue: { ...typography.title, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   money: { borderRadius: radius.surface, gap: spacing.xs, padding: spacing.md },
-  moneyValue: typography.title,
+  moneyValue: { ...typography.title, ...textWeight('700'), fontVariant: ['tabular-nums'] },
   note: typography.caption,
   meta: typography.meta,
   overline: typography.overline,

@@ -10,13 +10,13 @@ import {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { displayWeight, typography } from '@/theme/tokens'
+import { typography } from '@/theme/tokens'
 
 /** How far a compact title rises into place, when motion is welcome. */
 const RISE = 8
 
 /** One line naming the screen in a compact header, in the display face. */
-export const compactTitleText = { ...typography.heading, ...displayWeight('800') }
+export const compactTitleText = typography.heading
 
 /**
  * A compact header that takes over as a screen's own header scrolls away

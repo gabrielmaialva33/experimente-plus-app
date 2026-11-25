@@ -139,23 +139,26 @@ it('hands the map one point per spot, clustered by the places each stands for', 
   })
 })
 
-// The basemap is light in either theme, so the marks keep the navy of navigation.
-it.each(['light', 'dark'] as const)('draws the marks in navy on the %s theme', async (mode) => {
-  theme.useColors.mockReturnValue(palette[mode])
-  await render(
-    <MapLibreRenderer pins={[forno]} center={center} onSelect={jest.fn()} onOpen={jest.fn()} />
-  )
+// The basemap is light in either theme, so the marks keep the brand violet of navigation.
+it.each(['light', 'dark'] as const)(
+  'draws the marks in the light brand violet on the %s theme',
+  async (mode) => {
+    theme.useColors.mockReturnValue(palette[mode])
+    await render(
+      <MapLibreRenderer pins={[forno]} center={center} onSelect={jest.fn()} onOpen={jest.fn()} />
+    )
 
-  expect(mockLayers.places.paint).toMatchObject({
-    'icon-color': palette.light.primary,
-    'text-color': palette.light.primary,
-    'text-halo-color': '#ffffff',
-  })
-  expect(mockLayers['place-clusters'].paint).toMatchObject({
-    'icon-color': palette.light.primary,
-    'text-color': '#ffffff',
-  })
-})
+    expect(mockLayers.places.paint).toMatchObject({
+      'icon-color': palette.light.primary,
+      'text-color': palette.light.primary,
+      'text-halo-color': '#ffffff',
+    })
+    expect(mockLayers['place-clusters'].paint).toMatchObject({
+      'icon-color': palette.light.primary,
+      'text-color': '#ffffff',
+    })
+  }
+)
 
 it('picks a lone place from its mark, without leaving the map', async () => {
   const onSelect = jest.fn()

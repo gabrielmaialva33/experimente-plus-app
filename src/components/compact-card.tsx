@@ -6,7 +6,7 @@ import { useScreenFrame } from '@/components/content-frame'
 import { decorative } from '@/components/decorative'
 import { RemoteImage } from '@/components/remote-image'
 import { useLineCap, useScaledWidth } from '@/theme/font-scale'
-import { radius, spacing, typography } from '@/theme/tokens'
+import { radius, spacing, textWeight, typography } from '@/theme/tokens'
 import { useColors } from '@/theme/use-colors'
 
 export const COMPACT_CARD = { width: 220, height: 214, image: 124 } as const
@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
   fallback: { alignItems: 'center', justifyContent: 'center' },
   body: { flex: 1, gap: 2, paddingHorizontal: 14, paddingVertical: spacing.md },
   overline: typography.overline,
-  title: { ...typography.heading, fontSize: 16, lineHeight: 20 },
+  title: { ...textWeight('700'), fontSize: 16, lineHeight: 20 },
   meta: typography.caption,
 })
